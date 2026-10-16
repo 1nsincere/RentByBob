@@ -85,3 +85,5 @@ The suite creates its own fictional Auth user, runs the actual bootstrap twice, 
 ## Local UI and browser checks
 
 See ../README.md for npm.cmd run setup:local (optional fresh fictional owner) and npm.cmd run dev:local. Run npm.cmd run test:browser with the stack and invitation function available; installed Microsoft Edge is used headlessly. Fixtures are scoped and cleaned up without resetting the database. Credentials are held in process memory; traces/videos are disabled. STATUS.md records results and accessibility limits.
+
+Troubleshooting interactive setup: run `npm.cmd run setup:local -- -CheckOnly` for a read-only prerequisite check. Errors identify the stage without printing credentials. If failure occurs during Auth creation or bootstrap, review existing state before retrying; never reset the database to pass setup.
