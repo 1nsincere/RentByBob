@@ -1,0 +1,12 @@
+# Operations and handover plan
+Development currently local and fake-data only. No remote repository or service accounts created. Owner must control private GitHub, Cloudflare Pages, Supabase, billing, MFA recovery and any domain; developer receives limited access. Runtime must not depend on an AI subscription.
+
+Deployment preparation (not executed): private GitHub -> Cloudflare Pages, build `npm ci && npm run build`, output `dist`, supported Node 24. Configure only public Supabase URL/publishable key in frontend. Separate development and production projects. Recheck official provider deployment/security documentation, pricing, limits, CSP/connect-src and redirect URLs before setup. Disable public signup via supported provider configuration and enforce trusted provisioning. No paid recommendation yet.
+
+Release checklist: review migrations and grants, backup, tested recovery plan, staged migration, security/accounting/accessibility suite, owner acceptance, explicit production authorization. Record commit and migration identifiers and a versioned release record. Roll frontend back to previous known-good build; database changes require reviewed forward correction or tested restore, not blind destructive down-migration.
+
+Recovery plan to complete before launch: agree RPO/RTO, retention, access and independent encrypted copies. Use provider-supported database backups plus required auth/storage/config recovery coverage; verify what each backup includes. Restore into a separate environment, reconcile charges/settlements/allocations and permissions, verify files/config/access and record duration/evidence. Excel exports are not backups. Never test restoration against live production. Schedule recovery drills and document owner-held access.
+
+Handover must include startup/deploy/rollback commands, migration history, owner account inventory (no secrets), recovery ownership, approved billing rules, test results and known limitations. Proposed policies here are not evidence of completed restoration or operational readiness.
+
+Local development bootstrap: see supabase/README.md. The administrative script creates only the first fictional owner/property for an existing confirmed .invalid Auth user. It never connects to a hosted database. No persistent owner account was retained from verification; test fixtures were removed. Production owner provisioning and recovery still require a separately reviewed procedure.

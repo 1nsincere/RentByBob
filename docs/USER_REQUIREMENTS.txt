@@ -1,0 +1,601 @@
+Act as my senior full-stack developer, accessibility-focused product designer, and technical mentor. Help me build this rental-property tracker from scratch, step by step.
+
+I am a solo beginner using AI assistance. Explain important decisions plainly, keep the architecture manageable, and verify each milestone before expanding it.
+
+## 1. Start safely and preserve existing work
+
+First inspect the current workspace, applicable AGENTS.md instructions, installed tools, and existing configuration.
+
+Resolve my actual Windows Desktop location, including OneDrive redirection. Create a folder named `RentalPropertyTracker` there if it does not exist.
+
+Do not overwrite existing work. If I already have a configured project, inspect it and explain how to reuse it before moving or duplicating anything. Request filesystem permission if required; do not silently choose another directory.
+
+Never expose credentials in chat, logs, screenshots, generated documents, or commits.
+
+Do not install duplicate tools or scaffold over an existing application.
+
+## 2. Objective and schedule
+
+Build a browser-based rental-record system for one property containing approximately 20–40 residential and commercial tenants.
+
+Examples include boarding-house renters, Yamaha Motors, a barbershop, and a lotto outlet. These are examples, not hardcoded tenant types or business names.
+
+The system records payments received outside the website. It does not process money.
+
+Planning targets:
+- Working pilot by December 1, 2026.
+- Accepted first release before January 1, 2027.
+
+Check the current date and existing progress before estimating. Keep the schedule realistic and identify scope that threatens it. Do not skip security, accounting tests, or recovery testing to meet a deadline.
+
+## 3. Final technology stack
+
+Use:
+- React + TypeScript + Vite.
+- Tailwind CSS.
+- Supabase PostgreSQL.
+- Supabase Auth.
+- PostgreSQL functions for transactional financial operations.
+- Supabase Edge Functions only where trusted server operations are necessary.
+- Private GitHub repository.
+- Cloudflare Pages for the compiled React website.
+- Maintained libraries for Excel exports and printable/downloadable acknowledgments.
+
+Node.js runs development tools. Do not add a separate Node.js backend, another database, or another frontend framework without a concrete need.
+
+Verify current official documentation and dependency compatibility. Prefer stable maintained packages, strict TypeScript, and few dependencies.
+
+Use one application rather than microservices.
+
+## 4. Deployment and costs
+
+Architecture:
+GitHub → Cloudflare Pages frontend → Supabase backend.
+
+Use free services during development where appropriate. Consider Supabase Pro before official operation for its operational features and avoidance of inactivity pausing.
+
+Verify current prices and terms before recommending subscriptions. The infrastructure planning allowance is approximately ₱1,800–₱2,000 monthly, excluding coding-assistant subscriptions, optional domain, and independent professional review. This is an estimate, not a fixed quote.
+
+The owner controls production service accounts, billing, recovery access, and any domain. I receive appropriate developer access.
+
+Prepare deployment files and instructions, but do not purchase services, publish real tenant data, or deploy to production without explicit authorization.
+
+The website should continue operating independently of my AI subscription.
+
+## 5. Product boundary
+
+Renters pay cash or hand over checks to authorized collectors.
+
+No GCash, Maya, card processing, bank connections, or online payment gateway in version one.
+
+The property owner lives in the US and needs remote reports.
+
+James is the clerk who records and verifies collections. Sir Bob, the landlord, is over 70 and should not need to operate the website initially.
+
+Use Philippine pesos and Philippine business dates. Store actual timestamps consistently and use Asia/Manila for due dates and monthly reports, even when viewed from the US.
+
+Do not claim acknowledgments are official tax receipts or that the application replaces accounting advice.
+
+## 6. Design: basic, neat, readable
+
+Keep the product visually simple and inexpensive to operate.
+
+Prioritize older adults and people with limited technical confidence.
+
+Avoid:
+- Dashboard clutter.
+- Decorative charts.
+- Gradients and glass effects.
+- Unnecessary animation.
+- Tiny text.
+- Icon-only primary actions.
+- Unexplained technical labels.
+- Essential information hidden in tooltips.
+
+Use:
+- Light warm-neutral background.
+- White surfaces.
+- Dark charcoal text.
+- One restrained blue action color.
+- Clear borders.
+- Generous spacing.
+- Predictable navigation.
+- One clear primary action per task.
+- Plain-language confirmation and error messages.
+
+Starting color candidates:
+- Background: #F7F7F2.
+- Surface: #FFFFFF.
+- Main text: #202824.
+- Secondary text: #47534B.
+- Primary: #245A81 with white text.
+
+These are candidate tokens. Verify every actual color combination, including focus, hover, disabled, and status states. Adjust as needed.
+
+Accessibility:
+- Meet WCAG 2.2 AA for implemented flows.
+- Normal text contrast at least 4.5:1.
+- Large text contrast at least 3:1.
+- Required non-text controls and indicators meet applicable 3:1 contrast requirements.
+- Never communicate status by color alone.
+- Visible keyboard focus and logical focus order.
+- Semantic headings, labels, accessible dialogs, and error announcements.
+- Support 200% zoom and narrow-screen reflow.
+- Aim for touch targets at least 44×44 CSS pixels.
+- Do not disable browser zoom.
+- Respect reduced-motion settings.
+- Do not require hover for important information.
+
+Typography:
+- Use a single readable system sans-serif stack initially.
+- Body generally 18px.
+- Inputs and buttons generally 18px.
+- Secondary text generally at least 16px.
+- Section headings approximately 22–24px.
+- Page headings approximately 28–32px.
+- Main balances approximately 30–36px.
+- Use relative units and responsive sizing.
+- Body line height approximately 1.5.
+- Avoid thin weights and long uppercase labels.
+- Use tabular numerals for money.
+- Display dates clearly, such as “16 Oct 2026.”
+
+Forms:
+- Persistent labels.
+- Clear examples and field-level errors.
+- Preserve input after failures.
+- Show submission progress.
+- Prevent duplicate submissions.
+- Show a plain-language preview before financial confirmation.
+- Never show success until the server confirms it.
+- Explain failed or uncertain submissions and allow safe retries.
+
+Keep financial information current. Do not approve payments offline or introduce offline synchronization in version one. If connectivity fails, clearly show that changes were not saved.
+
+## 7. Atomic Design
+
+Use Atomic Design without excessive abstraction:
+
+- Atoms: buttons, inputs, labels, text, badges.
+- Molecules: labeled fields, search controls, summary items.
+- Organisms: payment forms, verification panels, tables.
+- Templates: renter and staff layouts.
+- Pages: authorized screens with actual data.
+
+Keep business logic outside visual components.
+
+Create a lightweight component reference covering default, focus, loading, empty, error, disabled, pending, verified, and clarification states.
+
+Document tokens, typography, spacing, and reusable patterns. Do not install large design-system infrastructure solely to demonstrate the methodology.
+
+Validate initial renter and staff prototypes with me before expanding the interface.
+
+## 8. Property, tenant, and agreement structure
+
+Support manually managed:
+- Properties.
+- Buildings or sections.
+- Units.
+- Beds where required.
+- Tenants.
+- Rental agreements.
+- Authorized tenant contacts.
+
+Examples:
+Main Property → Building 1 → Room 1.
+Main Property → Commercial Section → Unit A.
+
+Keep unit labels separate from occupant names.
+
+Support individual and business tenants. Separate tenant records from authentication accounts. A business may have authorized contacts using individual accounts.
+
+Keep version-one contact management simple while allowing multiple contacts later.
+
+Prevent conflicting active occupancy according to the actual unit/bed arrangement. Do not assume one renter per room.
+
+Archive units with history rather than deleting them.
+
+Rental agreements preserve:
+- Tenant and occupied unit/bed.
+- Effective dates.
+- Rent amount.
+- Billing schedule and due date.
+- Applicable agreed terms.
+
+Historical rent charges must not change when future rates or occupancy change.
+
+Before implementing affected rules, clarify:
+- Per-person, per-bed, or per-unit charging.
+- Calendar-month versus anniversary billing.
+- Due dates and grace periods.
+- Advance payments and credits.
+- Partial-month and move-out treatment.
+- Utilities, deposits, discounts, and penalties.
+- Commercial documentation requirements.
+
+Do not invent fees or silently adopt assumptions affecting balances.
+
+## 9. Roles and permissions
+
+Renter/contact:
+- Access only authorized tenant records.
+- View agreements, charges, balances, reports, payment history, and acknowledgments.
+- Submit or withdraw pending payment reports.
+- Cannot verify payments, alter charges, or assign roles.
+
+James/clerk:
+- Search tenants.
+- Enter payments.
+- Review reports.
+- Request clarification.
+- Verify cash receipt and check receipt.
+- Allocate payments under agreed rules.
+- Reconcile collections.
+- Export operational reports.
+- Cannot grant himself owner access.
+
+Owner:
+- Review property records and audit history.
+- Manage staff access and rental terms.
+- Authorize restricted adjustments and reversals.
+
+Document a permission matrix. Confirm whether James may record check clearance and reverse verified payments before implementing those permissions.
+
+Enforce all permissions through trusted server/database rules, not just hidden UI controls.
+
+## 10. Staff-issued accounts and paper credentials
+
+No public self-registration.
+
+James or the owner provisions accounts through an authorized trusted operation.
+
+Preferred onboarding:
+- Expiring invitation using a verified suitable email address.
+
+Paper-based alternative:
+- Unique username.
+- Cryptographically generated temporary password.
+- Simple credential slip.
+- Mandatory password replacement before rental data access.
+
+Before implementing username-only access, verify what Supabase Auth safely supports. Do not invent email addresses or build an improvised password system to bypass provider requirements.
+
+Explain supported options and resolve the onboarding design before implementation.
+
+Temporary credentials:
+- Expire under an agreed policy.
+- Are displayed/printed only at issuance.
+- Are never stored as readable passwords.
+- Never enter logs, audit payloads, analytics, or exports.
+- Are replaced if lost.
+
+Enforce any first-login restriction on trusted boundaries, not only in React.
+
+James cannot retrieve permanent passwords. Resets use fresh controlled credentials or invitations.
+
+Use generic login errors, login abuse controls, and secure recovery. Staff require MFA before production, enforced for sensitive operations.
+
+## 11. Cash-reporting workflow
+
+When James is absent:
+1. Jake pays Bob.
+2. Bob writes a numbered paper acknowledgment and retains a copy.
+3. Jake selects “Report a payment.”
+4. The screen states: “This website does not accept payments. Report money or a check already handed to an authorized collector.”
+5. Jake selects Cash or Check.
+6. He enters amount, actual handover date, recipient, optional paper reference, intended rental months, and an optional note.
+7. The report becomes Pending verification.
+8. James matches the report with Bob’s retained record or confirmation and collection handover.
+9. Authorized staff verifies the appropriate receipt/settlement state.
+10. The system produces the appropriate acknowledgment.
+
+Cash existing in the cash box does not establish who paid.
+
+Report statuses:
+- Pending verification.
+- Needs clarification, with explanation.
+- Verified.
+- Cancelled.
+
+Reports are claims, not settled payments. A pending report does not reduce official balances.
+
+Show:
+“Recorded balance: ₱8,000.”
+“Reported cash awaiting verification: ₱4,000.”
+“Your recorded balance updates after verification.”
+
+Preserve actual payment date, submission time, verifier, and verification time separately.
+
+James may enter payments directly without a renter report.
+
+Allow reports to be matched to already-recorded payments so late submissions do not duplicate payments.
+
+Use appropriate duplicate warnings without incorrectly preventing legitimate same-amount payments.
+
+## 12. Checks and settlement
+
+Separate:
+- Tenant report.
+- Instrument receipt.
+- Settlement of funds.
+
+For cash, verified receipt can settle the payment.
+
+For checks:
+1. Authorized collector receives the check.
+2. Staff verifies physical receipt.
+3. Staff records deposit where applicable.
+4. Authorized staff records bank-confirmed clearance.
+5. Only cleared funds reduce settled outstanding balances.
+
+Check states:
+- Received.
+- Deposited / awaiting clearance.
+- Cleared.
+- Returned / dishonored.
+- Cancelled.
+
+Report verification and check clearance are distinct states.
+
+Show “Check received — awaiting clearance,” not “Paid.”
+
+Capture only needed details:
+- Amount.
+- Receipt date.
+- Check date.
+- Bank name.
+- Check number.
+- Payer.
+- Collector.
+- Deposit date.
+- Clearance date.
+- Staff identity for transitions.
+
+Do not collect bank account numbers or check photos initially.
+
+Do not automatically clear checks based on elapsed time.
+
+Preserve intended allocations while pending. Revalidate balances at settlement and handle excess under the agreed credit policy.
+
+Clarify postdated checks, timely-payment rules, returned-check fees, and authority to clear/reverse checks.
+
+A returned check does not count as settled funds. A reversal after recorded clearance must be explicit and auditable.
+
+## 13. Financial integrity
+
+Separate database records for:
+- Charges.
+- Tenant reports.
+- Payment instruments/receipts.
+- Settlement events as needed.
+- Allocations.
+- Reconciliation.
+- Adjustments and reversals.
+- Acknowledgments.
+- Audit events.
+
+Choose the simplest schema that correctly represents cash and check lifecycles; document it before coding.
+
+Use exact monetary arithmetic consistently. Never rely on ordinary JavaScript floating-point calculations for money.
+
+Enforce amounts, allocation limits, state transitions, and authorization in PostgreSQL.
+
+Suggest oldest-unpaid-first allocation under the agreed policy. Show tenant intentions and final staff-confirmed allocation.
+
+Keep actual receipt date, settlement date, and rental period distinct.
+
+Make verification, settlement, allocation, and related status transitions transactional where applicable.
+
+Use idempotency keys, constraints, and concurrency controls to prevent double submissions and double settlement.
+
+Monthly charge generation must be idempotent.
+
+Verified financial records are not silently edited or deleted. Corrections require authorized adjustments/reversals with reasons and retained history.
+
+## 14. Reconciliation
+
+Provide a simple screen for James to match:
+- Tenant reports.
+- Bob’s paper references.
+- Cash handed over.
+- Checks received.
+- Existing payment entries.
+
+Record collection handovers with collector, date, expected amounts, actual amounts, and explained differences.
+
+Do not require a complicated accounting ledger for the initial interface, but preserve sufficient data to trace each collection.
+
+Keep unresolved differences visible. Never fabricate balancing entries.
+
+## 15. Move-out and archival
+
+Use a move-out process instead of “Delete renter.”
+
+- End the agreement.
+- Apply final agreed charges/credits.
+- Preserve outstanding balances.
+- Revoke or restrict contact access under policy.
+- Preserve financial history.
+- Release the unit/bed at the correct effective date.
+
+Enforce access revocation in database policies even when an old session token remains valid.
+
+A person may return under a new agreement without losing previous history.
+
+Document retention and any later personal-data deletion separately from routine archival.
+
+## 16. Screens and reminders
+
+Renter:
+- Recorded balance.
+- Monthly charge status.
+- Next due amount/date.
+- Pending reports.
+- Checks awaiting clearance.
+- History and acknowledgments.
+- Clear discrepancy-contact instructions.
+
+James:
+- Record payment.
+- Search tenants.
+- Review pending reports.
+- Verify/check clarification.
+- Reconcile collections.
+- Export reports.
+
+Owner:
+- Cash received.
+- Cleared checks.
+- Outstanding charges.
+- Pending reports.
+- Reconciliation exceptions.
+- Staff access and audit review.
+
+Use explicit labels and a few useful totals, not decorative charts.
+
+A charge becomes overdue only after its agreed deadline.
+
+Do not repeatedly demand payment for an amount already reported without acknowledging its pending status. Do not silently waive due dates because a report exists.
+
+Dashboard reminders first; email reminders can follow after the pilot.
+
+## 17. Acknowledgments
+
+Use:
+- Cash Payment Acknowledgment after verified receipt.
+- Check Received Acknowledgment — Subject to Clearance after confirmed receipt.
+- Linked clearance/settlement acknowledgment or visible status history after clearance.
+
+Include unique reference, tenant/unit, amount, method, actual receipt date, allocations where settled, collector, verifier, and issue time.
+
+Keep issued contents stable. Show reversals and subsequent status transparently.
+
+If a balance appears, label it “balance at issuance.” Display current balances separately.
+
+Do not generate a verified-payment acknowledgment solely from a renter submission.
+
+Start with simple accessible printable HTML; add complex PDF tooling only if necessary.
+
+## 18. Excel reporting
+
+Provide:
+- Collections by actual receipt date.
+- Settled collections by settlement date.
+- Balances by rental period.
+- Tenant statement.
+- Pending reports and reconciliation exceptions.
+- Checks received, pending clearance, cleared, and returned.
+
+Never combine unsettled checks with settled funds under an ambiguous total.
+
+Report formatting:
+- Clear title, property, reporting period, and generation date.
+- Readable text, generally 12–14pt where practical.
+- Frozen headers, filters, sensible widths.
+- Real date cells and peso number formats.
+- Clear totals.
+- No unnecessary charts or merged cells inside data.
+- Text statuses, not color alone.
+- Print settings and repeated headers where appropriate.
+- Minimum necessary personal data.
+
+Protect against spreadsheet formula injection. Verify totals and visually inspect representative exports.
+
+## 19. Security
+
+Follow current official Supabase guidance.
+
+- RLS on every exposed application table.
+- Explicit grants and deny unnecessary anonymous access.
+- Test isolation through direct API requests.
+- Keep roles and access membership outside user-editable metadata.
+- Never expose service-role keys or database passwords.
+- Treat frontend environment variables as public.
+- Privileged account administration stays in trusted server code.
+- Narrowly grant database functions.
+- SECURITY DEFINER only when necessary, with safe search paths, authorization checks, and restricted execution.
+- Established authentication and recovery.
+- Staff MFA and appropriate assurance checks.
+- Input validation at trusted boundaries.
+- Safe queries and rendering.
+- HTTPS and appropriate headers/CSP.
+- Private acknowledgments and storage.
+- Minimal personal information.
+- Safe logs with no credentials.
+- No initial attachments unless explicitly approved.
+
+Never describe the result as unhackable or fully secure. Document risks and independent-review needs.
+
+## 20. Tests and recovery
+
+Test:
+- Cross-tenant access.
+- Staff role escalation.
+- Account provisioning/reset authorization.
+- First-login restrictions where used.
+- Archived-user access revocation.
+- Business contact isolation.
+- Partial, late, advance, and multi-month payments.
+- September paid in October.
+- Duplicate/concurrent approvals.
+- Existing-payment matching.
+- Check receipt versus clearance.
+- Duplicate clearance.
+- Returned checks and reversals.
+- Historical rent and occupancy changes.
+- Idempotent charges.
+- Philippine date boundaries.
+- Report totals.
+- Keyboard, zoom, mobile, contrast, and error states.
+
+Use fake data in development and AI prompts.
+
+Document backups, retention, separate recovery copies, and restoration. Restore into a separate environment before launch.
+
+Excel is not a database backup.
+
+Keep production and development separate. Review migrations and make a recoverable plan before production changes.
+
+## 21. Persistent project documentation
+
+Maintain:
+- AGENTS.md.
+- docs/PROJECT_BRIEF.md.
+- docs/DECISIONS.md.
+- docs/DATA_MODEL.md.
+- docs/DESIGN_SYSTEM.md.
+- docs/SECURITY.md.
+- docs/ROADMAP.md.
+- docs/STATUS.md.
+- docs/OPERATIONS.md.
+- README.md.
+- .env.example with placeholders.
+
+Track decisions, unresolved business rules, verification evidence, limitations, and exact next steps.
+
+Future sessions should read these documents rather than rely on chat memory.
+
+Include deployment, rollback, backup, recovery, owner access, and developer handover instructions.
+
+## 22. Execution plan
+
+Work in small reviewable milestones.
+
+Begin by:
+1. Inspecting the environment and configuration.
+2. Resolving/creating the Desktop project folder safely.
+3. Creating project documentation.
+4. Identifying questions that block correct implementation.
+5. Establishing local startup.
+6. Preparing a small accessible design reference and prototype screens.
+7. Validating readability with me.
+8. Implementing and testing one complete cash-payment workflow.
+9. Adding checks, reconciliation, accounts, reports, and deployment preparation incrementally.
+
+Ask concise questions only when answers affect correctness or authorization. Continue independent work while awaiting answers.
+
+Do not build the entire application in one unreviewable step. Explain what changed, what was verified, what remains uncertain, and the next milestone.
+
+Before official launch, conduct independent review and run a pilot alongside existing records for a full payment cycle. Confirm opening balances and acceptance with James and the owner.
+
+Begin now.

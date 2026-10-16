@@ -1,0 +1,36 @@
+{
+  "name": "rent-tracker-system",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "dev:local": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/start-local-ui.ps1",
+    "setup:local": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/setup-local-owner.ps1",
+    "test:browser": "playwright test",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test tests/*.test.ts",
+    "test:supabase": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-supabase-api.ps1"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
+    "@playwright/test": "^1.64.1",
+    "@tailwindcss/vite": "~4.3.3",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "~6.1.2",
+    "supabase": "^2.121.0",
+    "tailwindcss": "~4.3.3",
+    "typescript": "~5.9.3",
+    "vite": "~8.3.4"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
