@@ -1,5 +1,9 @@
 # Onboarding and recovery — local access milestone
 
+## Using the app on a phone
+
+Renters have one main destination: the real rental records authorized for their account. They see whether access is pending, ready or disabled, a useful empty state when no records are shared, and sign-out in the compact account header. There are no payment, balance or placeholder tabs. Staff use the labeled **Workspace navigation** menu to reach implemented directory, location, invitation and owner-review sections; on larger screens the same links appear in a sidebar. Navigation stays in document flow and does not cover content while scrolling or when the software keyboard opens. See [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) for responsive behavior and verification limits.
+
 ## Identity and assignment contract
 
 Invitation delivery and permission assignment are separate. Supabase Auth invitation acceptance verifies control of the invited email; it does not prove real-world identity or add an application membership. Staff actions require AAL2, enforced in PostgreSQL, not just the interface.

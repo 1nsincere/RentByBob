@@ -114,14 +114,15 @@ export function InvitationReconciliation({ propertyId }: { propertyId: string })
     }
   }
 
-  return <section className="card">
-    <h2>Invitation attempts and reconciliation</h2>
+  return <section className="card" aria-labelledby="invitation-review-heading">
+    <p className="eyebrow">OWNER REVIEW</p>
+    <h2 id="invitation-review-heading">Invitation attempts and reconciliation</h2>
     <p>Only masked addresses and the minimum status evidence are shown. Provider issuance does not prove email delivery. Account existence does not prove that a particular invitation attempt succeeded. No review action sends an invitation or assigns access.</p>
     <Feedback message={error} error />
     <Feedback message={message} />
-    <Button disabled={!!busyId} onClick={() => void load()}>Refresh invitation attempts</Button>
-    {!loaded && !error && <p role="status">Loading invitation attempts…</p>}
-    {loaded && attempts.length === 0 && <p>No invitation attempts are recorded for this property.</p>}
+    <Button className="secondary-button" disabled={!!busyId} onClick={() => void load()}>Refresh invitation attempts</Button>
+    {!loaded && !error && <p role="status" className="loading-state">Loading invitation attempts…</p>}
+    {loaded && attempts.length === 0 && <div className="empty-state"><h3>No invitation attempts to review</h3><p>Attempts initiated for this property will appear here with their recorded status.</p></div>}
     {loaded && attempts.length > 0 && <ol className="records">{attempts.map(attempt => <li key={attempt.attempt_id}>
       <article>
         <h3>{attempt.account_type === 'tenant' ? 'Renter/contact invitation' : 'Staff invitation'}</h3>

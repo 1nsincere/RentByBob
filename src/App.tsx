@@ -9,20 +9,42 @@ import { AccessAudit } from './access/AccessAudit'
 import { InvitationReconciliation } from './access/InvitationReconciliation'
 
 type Snapshot = { access: AccessState; mfa: boolean; properties: Property[]; memberships: Membership[]; tenants: Tenant[] }
+type NavigationItem = { id: string; label: string }
+
 export function App() {
-  const [session, setSession] = useState<Session | null>(null); const [booting, setBooting] = useState(true)
-  const [setup, setSetup] = useState(false); const [callbackError, setCallbackError] = useState(''); const [error, setError] = useState('')
-  const [snapshot, setSnapshot] = useState<Snapshot | null>(null); const [propertyId, setPropertyId] = useState(''); const [backup, setBackup] = useState(false)
-  const [search, setSearch] = useState(''); const generation = useRef(0); const heading = useRef<HTMLHeadingElement>(null)
+  const [session, setSession] = useState<Session | null>(null)
+  const [booting, setBooting] = useState(true)
+  const [setup, setSetup] = useState(false)
+  const [callbackError, setCallbackError] = useState('')
+  const [error, setError] = useState('')
+  const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
+  const [propertyId, setPropertyId] = useState('')
+  const [backup, setBackup] = useState(false)
+  const [search, setSearch] = useState('')
+  const [activeSection, setActiveSection] = useState('')
+  const generation = useRef(0)
+  const heading = useRef<HTMLHeadingElement>(null)
+  const mobileNavigation = useRef<HTMLDetailsElement>(null)
+
   useEffect(() => {
     let alive = true
-    void initialized.then(value => { if (alive) { setSession(value.session); setSetup(value.setup); setCallbackError(value.failure); setBooting(false) } })
+    void initialized.then(value => {
+      if (alive) {
+        setSession(value.session)
+        setSetup(value.setup)
+        setCallbackError(value.failure)
+        setBooting(false)
+      }
+    })
     const subscription = supabase?.auth.onAuthStateChange((_event, value) => {
-      generation.current++; setSnapshot(null); setSession(value)
+      generation.current++
+      setSnapshot(null)
+      setSession(value)
       if (!value) { setSetup(false); setBackup(false) }
     }).data.subscription
     return () => { alive = false; subscription?.unsubscribe() }
   }, [])
+
   const refresh = useCallback(async () => {
     if (!supabase || !session || booting || callbackError) return
     const version = ++generation.current
@@ -36,64 +58,299 @@ export function App() {
       if (access.state === 'ready' && !mfa && !setup) {
         const [p, m, t] = await Promise.all([
           supabase.from('properties').select('id,name').order('name'),
-          supabase.from('staff_memberships').select('property_id,user_id,role,revoked_at').eq('user_id',session.user.id).is('revoked_at',null),
+          supabase.from('staff_memberships').select('property_id,user_id,role,revoked_at').eq('user_id', session.user.id).is('revoked_at', null),
           supabase.from('tenants').select('id,property_id,display_name,kind,archived_at').order('display_name'),
         ])
         if (p.error || m.error || t.error) throw p.error || m.error || t.error
-        properties = p.data; memberships = m.data; tenants = t.data
+        properties = p.data
+        memberships = m.data
+        tenants = t.data
       }
       if (version !== generation.current) return
-      setError(''); setSnapshot({ access, mfa, properties, memberships, tenants })
-      setPropertyId(previous => properties.some(p => p.id === previous) ? previous : properties[0]?.id ?? '')
-    } catch { if (version === generation.current) { setSnapshot(null); setError('Access could not be verified. Records are hidden. Check your connection, refresh access or sign in again.') } }
+      setError('')
+      setSnapshot({ access, mfa, properties, memberships, tenants })
+      setPropertyId(previous => properties.some(property => property.id === previous) ? previous : properties[0]?.id ?? '')
+    } catch {
+      if (version === generation.current) {
+        setSnapshot(null)
+        setError('Access could not be verified. Records are hidden. Check your connection, refresh access or sign in again.')
+      }
+    }
   }, [session, booting, callbackError, setup])
+
   useEffect(() => {
-    void refresh(); const timer = setInterval(() => void refresh(), 10000)
+    void refresh()
+    const timer = setInterval(() => void refresh(), 10000)
     const focus = () => { setSnapshot(null); void refresh() }
-    const visibility = () => { if (document.hidden) { generation.current++; setSnapshot(null) } else void refresh() }
-    window.addEventListener('focus', focus); document.addEventListener('visibilitychange',visibility)
-    return () => { generation.current++; clearInterval(timer); window.removeEventListener('focus',focus); document.removeEventListener('visibilitychange',visibility) }
+    const visibility = () => {
+      if (document.hidden) { generation.current++; setSnapshot(null) }
+      else void refresh()
+    }
+    window.addEventListener('focus', focus)
+    document.addEventListener('visibilitychange', visibility)
+    return () => {
+      generation.current++
+      clearInterval(timer)
+      window.removeEventListener('focus', focus)
+      document.removeEventListener('visibilitychange', visibility)
+    }
   }, [refresh])
-  const route = booting ? 'loading' : callbackError ? 'link-error' : !session ? 'sign-in' : !snapshot ? 'checking' : snapshot.mfa ? 'mfa' : setup ? 'password' : snapshot.access.state
+
+  const route = booting ? 'loading' : callbackError ? 'link-error' : !session ? 'sign-in'
+    : !snapshot ? 'checking' : snapshot.mfa ? 'mfa' : setup ? 'password' : snapshot.access.state
   useEffect(() => { heading.current?.focus() }, [route])
+
   async function signOut() {
-    generation.current++; setSnapshot(null)
+    generation.current++
+    setSnapshot(null)
     const { error } = await supabase!.auth.signOut({ scope: 'local' })
-    if (error) { setError('Sign-out could not be confirmed. Close this tab to clear this tab’s stored session.'); return }
-    setSession(null); setSetup(false); setCallbackError(''); setBackup(false); setError(''); history.replaceState(null,'','/')
+    if (error) {
+      setError('Sign-out could not be confirmed. Close this tab to clear this tab’s stored session.')
+      return
+    }
+    setSession(null)
+    setSetup(false)
+    setCallbackError('')
+    setBackup(false)
+    setError('')
+    history.replaceState(null, '', '/')
   }
-  const role = snapshot?.memberships.find(m => m.property_id === propertyId)?.role
-  const tenantList = snapshot?.tenants.filter(t => !role || t.property_id === propertyId) ?? []
-  return <><a className="skip" href="#main">Skip to content</a><div className="prototype">Local development · Fictional accounts only · Connected records</div>
-    <header><div className="shell header-row"><strong>Rental records</strong>{session && <div><span className="account-email">{session.user.email}</span><Button onClick={() => void signOut()}>Sign out</Button></div>}</div></header>
-    <div className="shell"><main id="main" tabIndex={-1}>
-      <h1 ref={heading} tabIndex={-1} className="route-heading">{route === 'loading' || route === 'checking' ? 'Checking access' : 'Your rental account'}</h1>
-      {!supabase ? <section className="card"><h2>Local connection is not configured</h2><p>Start this app with <code>npm.cmd run dev:local</code> after starting local Supabase. No prototype records are substituted.</p></section> : booting ? <p role="status">Loading your session…</p> : callbackError ? <><Feedback message={callbackError} error /><Button onClick={() => { setCallbackError(''); void signOut() }}>Return to sign-in</Button></> : !session ? <SignIn /> : <>
-        <Feedback message={error} error /><Button onClick={() => { setSnapshot(null); void refresh() }}>Refresh access</Button>
-        {!snapshot ? <p role="status">{error ? 'Records unavailable.' : 'Checking your current permissions...'}</p> : snapshot.mfa ? <Mfa done={() => void refresh()} /> : setup ? <PasswordSetup done={() => { sessionStorage.removeItem(`password-setup:${session.user.id}`); setSetup(false); void refresh() }} /> : snapshot.access.state !== 'ready' ? <section className="card"><h2>{stateLabels[snapshot.access.state]}</h2><p>{snapshot.access.state === 'disabled' ? 'Your previous access is disabled. Contact the owner to review it.' : 'You are signed in, but an owner has not assigned property or tenant access. Contact the owner with your account email.'}</p><p>No rental records are available to this account.</p></section> : <>
-          <p className="badge">Account ready</p>
-          {snapshot.properties.length > 0 && <><label htmlFor="property">Authorized property</label><select id="property" value={propertyId} onChange={e => { setPropertyId(e.target.value); setBackup(false); setSearch('') }}>{snapshot.properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></>}
-          <section className="card"><h2>{role ? `${role === 'owner' ? 'Owner' : 'Clerk'} tenant directory` : 'Your authorized rental records'}</h2>
-            <p>These records come from the local database. Charges, balances and payment posting are not implemented here.</p>
-            <label htmlFor="tenant-search">Find a tenant by name</label><input id="tenant-search" value={search} onChange={e => setSearch(e.target.value)} type="search" />
-            <ul className="records">{tenantList.filter(t => t.display_name.toLowerCase().includes(search.trim().toLowerCase())).map(t => <li key={t.id}><div><strong>{t.display_name}</strong><p>{t.kind === 'business' ? 'Business tenant' : 'Individual tenant'} · {t.archived_at ? 'Archived' : 'Active'}</p></div></li>)}</ul>
-            {!tenantList.some(t => t.display_name.toLowerCase().includes(search.trim().toLowerCase())) && <p>No authorized tenant records match this view.</p>}
-          </section>
-          {role && <><PropertyDirectory key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} /><CreateTenant key={`create:${propertyId}`} propertyId={propertyId} done={() => void refresh()} /><Invitations key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} />{role === 'owner' && <><ManageAccess key={`access:${propertyId}`} propertyId={propertyId} tenants={tenantList} changed={() => void refresh()} /><InvitationReconciliation key={`invitation-reconciliation:${propertyId}`} propertyId={propertyId} /><AccessAudit key={`audit:${propertyId}`} propertyId={propertyId} /></>}
-            <section className="card"><h2>Account security</h2><p>Enroll a backup authenticator on a separate device before losing access to your main one. Password recovery does not bypass MFA.</p><Button onClick={() => setBackup(!backup)}>{backup ? 'Close backup setup' : 'Add backup authenticator'}</Button>{backup && <Mfa backup done={() => { setBackup(false); void refresh() }} />}</section></>}
-        </>}
-      </>}
-    </main><footer>Local access milestone · Philippine property records · No online payments</footer></div></>
+
+  const role = snapshot?.memberships.find(membership => membership.property_id === propertyId)?.role
+  const tenantList = snapshot?.tenants.filter(tenant => !role || tenant.property_id === propertyId) ?? []
+  const navigationItems: NavigationItem[] = role ? [
+    { id: 'tenant-records', label: 'Tenant directory' },
+    { id: 'property-locations', label: 'Buildings and units' },
+    { id: 'create-tenant', label: 'Add tenant record' },
+    { id: 'invite-account', label: 'Invite account' },
+    ...(role === 'owner' ? [
+      { id: 'manage-access', label: 'Assign or disable access' },
+      { id: 'invitation-review', label: 'Invitation review' },
+      { id: 'access-history', label: 'Access history' },
+    ] : []),
+    { id: 'account-security', label: 'Account security' },
+  ] : []
+  const navigationKey = navigationItems.map(item => item.id).join('|')
+
+  useEffect(() => {
+    if (!navigationKey) return
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries.filter(entry => entry.isIntersecting)
+        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+      if (visible[0]) setActiveSection(visible[0].target.id)
+    }, { rootMargin: '-12% 0px -72% 0px', threshold: 0 })
+    for (const item of navigationItems) {
+      const section = document.getElementById(item.id)
+      if (section) observer.observe(section)
+    }
+    return () => observer.disconnect()
+  }, [navigationKey])
+
+  function staffNavigation() {
+    return <nav aria-label="Property workspace">
+      <ul className="workspace-links">{navigationItems.map(item =>
+        <li key={item.id}>
+          <a href={`#${item.id}`} aria-current={activeSection === item.id ? 'location' : undefined}
+            onClick={() => { setActiveSection(item.id); if (mobileNavigation.current) mobileNavigation.current.open = false }}>
+            {item.label}
+          </a>
+        </li>)}</ul>
+    </nav>
+  }
+
+  return <div className="app-shell">
+    <a className="skip-link" href="#main">Skip to content</a>
+    <div className="environment-note">Local development · Fictional accounts only</div>
+    <header className="site-header">
+      <div className="shell header-inner">
+        <a className="brand" href="/" aria-label="Rental records home"><span className="brand-mark" aria-hidden="true">R</span><span>Rental records</span></a>
+        {session && <div className="session-tools">
+          <span className="signed-in-label">Signed in as</span>
+          <span className="account-email">{session.user.email}</span>
+          <Button className="quiet-button" onClick={() => void signOut()}>Sign out</Button>
+        </div>}
+      </div>
+    </header>
+    <div className="shell page-shell">
+      <main id="main" tabIndex={-1} className={role && route === 'ready' ? 'staff-main' : ''}>
+        <div className="page-intro">
+          <p className="eyebrow">{role ? 'PROPERTY WORKSPACE' : session ? 'YOUR ACCOUNT' : 'RENTAL RECORDS'}</p>
+          <h1 ref={heading} tabIndex={-1} className="route-heading">
+            {route === 'loading' || route === 'checking' ? 'Checking access'
+              : route === 'ready' ? role ? `${role === 'owner' ? 'Owner' : 'Clerk'} workspace` : 'Your rental records'
+                : route === 'sign-in' ? 'Welcome back'
+                  : route === 'disabled' ? 'Access disabled'
+                        : route === 'pending' ? 'Invitation pending'
+                          : route === 'unassigned' ? 'Waiting for access' : 'Your rental account'}
+          </h1>
+          {route === 'sign-in' && <p className="page-summary">Sign in to view the rental records shared with you.</p>}
+          {route === 'ready' && !role && <p className="page-summary">View the rental records your property owner has shared with you.</p>}
+        </div>
+
+        {!supabase ? <section className="card auth-card">
+          <h2>Local connection is not configured</h2>
+          <p>Start this app with <code>npm.cmd run dev:local</code> after starting local Supabase. No prototype records are substituted.</p>
+        </section> : booting ? <p role="status">Loading your session…</p>
+          : callbackError ? <><Feedback message={callbackError} error /><Button className="primary" onClick={() => { setCallbackError(''); void signOut() }}>Return to sign-in</Button></>
+            : !session ? <SignIn />
+              : <>
+                <Feedback message={error} error />
+                {snapshot && !snapshot.mfa && !setup && <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>Refresh access</Button>}
+                {!snapshot ? <p role="status" className="loading-state">{error ? 'Records unavailable.' : 'Checking your current permissions…'}</p>
+                  : snapshot.mfa ? <Mfa done={() => void refresh()} />
+                    : setup ? <PasswordSetup done={() => { sessionStorage.removeItem(`password-setup:${session.user.id}`); setSetup(false); void refresh() }} />
+                      : snapshot.access.state !== 'ready' ? <section className="card access-state-card">
+                        <p className={`status status--${snapshot.access.state}`}>{stateLabels[snapshot.access.state] ?? 'Access not available'}</p>
+                        <h2>{snapshot.access.state === 'disabled' ? 'Your access has been turned off'
+                          : snapshot.access.state === 'pending' ? 'Your invitation is not yet confirmed'
+                            : 'Your account is waiting for access'}</h2>
+                        <p>{snapshot.access.state === 'disabled'
+                          ? 'Your previous access is disabled. Contact the property owner to review it.'
+                          : snapshot.access.state === 'pending'
+                            ? 'Follow the invitation link sent to your email address. If the invitation has expired or you cannot find it, contact the property owner.'
+                            : 'You are signed in, but an owner has not assigned property or tenant access yet. Contact the owner with this account email.'}</p>
+                        <p>No rental records are available to this account until access is assigned.</p>
+                      </section> : role ? <>
+                        <div className="mobile-workspace-navigation">
+                          <details ref={mobileNavigation}>
+                            <summary>Workspace navigation</summary>
+                            {staffNavigation()}
+                          </details>
+                        </div>
+                        <div className="workspace-layout">
+                          <aside className="workspace-sidebar">
+                            <p className="sidebar-label">WORKSPACE</p>
+                            {staffNavigation()}
+                          </aside>
+                          <div className="workspace-content">
+                            <div className="workspace-toolbar">
+                              <p className="status status--ready">Account ready</p>
+                              <div className="property-picker">
+                                <label htmlFor="property">Authorized property</label>
+                                <select id="property" value={propertyId} onChange={event => {
+                                  setPropertyId(event.target.value)
+                                  setBackup(false)
+                                  setSearch('')
+                                }}>{snapshot.properties.map(property => <option key={property.id} value={property.id}>{property.name}</option>)}</select>
+                              </div>
+                            </div>
+                            <section className="card directory-card" id="tenant-records" aria-labelledby="tenant-records-heading">
+                              <div className="section-heading">
+                                <div><p className="eyebrow">PEOPLE AND BUSINESSES</p><h2 id="tenant-records-heading">Tenant directory</h2></div>
+                                <span className="record-count">{tenantList.length} {tenantList.length === 1 ? 'record' : 'records'}</span>
+                              </div>
+                              <p>Search the authorized directory for this property. Rental charges, balances and payment posting are not available here.</p>
+                              <label htmlFor="tenant-search">Search tenants by name</label>
+                              <input id="tenant-search" value={search} onChange={event => setSearch(event.target.value)} type="search" autoComplete="off" aria-describedby="tenant-search-help" />
+                              <p className="field-help" id="tenant-search-help">Results update as you type.</p>
+                              {tenantList.length > 0 && <ul className="records tenant-records">
+                                {tenantList.filter(tenant => tenant.display_name.toLowerCase().includes(search.trim().toLowerCase())).map(tenant =>
+                                  <li key={tenant.id} className="tenant-record">
+                                    <span className="record-initial" aria-hidden="true">{tenant.display_name.trim().slice(0, 1).toLocaleUpperCase()}</span>
+                                    <div className="tenant-record-copy">
+                                      <strong>{tenant.display_name}</strong>
+                                      <p>{tenant.kind === 'business' ? 'Business tenant' : 'Individual tenant'}</p>
+                                    </div>
+                                    <span className={`status status--${tenant.archived_at ? 'archived' : 'ready'}`}>{tenant.archived_at ? 'Archived' : 'Active'}</span>
+                                  </li>)}
+                              </ul>}
+                              {tenantList.length === 0 && <div className="empty-state">
+                                <h3>No rental records yet</h3>
+                                <p>When the property owner shares a rental record with your account, it will appear here. If you expected to see one, contact the owner.</p>
+                              </div>}
+                              {tenantList.length > 0 && !tenantList.some(tenant => tenant.display_name.toLowerCase().includes(search.trim().toLowerCase())) && <div className="empty-state">
+                                <h3>No matches found</h3>
+                                <p>No tenant records match “{search.trim()}”. Clear the search to see the full directory.</p>
+                                <Button className="secondary-button" onClick={() => setSearch('')}>Clear search</Button>
+                              </div>}
+                            </section>
+                            <div id="property-locations" className="workspace-section"><PropertyDirectory key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} /></div>
+                            <div id="create-tenant" className="workspace-section"><CreateTenant key={`create:${propertyId}`} propertyId={propertyId} done={() => void refresh()} /></div>
+                            <div id="invite-account" className="workspace-section"><Invitations key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} /></div>
+                            {role === 'owner' && <>
+                              <div id="manage-access" className="workspace-section"><ManageAccess key={`access:${propertyId}`} propertyId={propertyId} tenants={tenantList} changed={() => void refresh()} /></div>
+                              <div id="invitation-review" className="workspace-section"><InvitationReconciliation key={`invitation-reconciliation:${propertyId}`} propertyId={propertyId} /></div>
+                              <div id="access-history" className="workspace-section"><AccessAudit key={`audit:${propertyId}`} propertyId={propertyId} /></div>
+                            </>}
+                            <section className="card account-security" id="account-security">
+                              <p className="eyebrow">SIGN-IN AND RECOVERY</p>
+                              <h2>Account security</h2>
+                              <p>Enroll a backup authenticator on a separate device before losing access to your main one. Password recovery does not bypass staff MFA.</p>
+                              <Button className="secondary-button" onClick={() => setBackup(!backup)}>{backup ? 'Close backup setup' : 'Add a backup authenticator'}</Button>
+                              {backup && <Mfa backup done={() => { setBackup(false); void refresh() }} />}
+                            </section>
+                          </div>
+                        </div>
+                      </> : <>
+                        <p className="status status--ready renter-status">Account ready</p>
+                        <section className="card renter-records-card" aria-labelledby="renter-records-heading">
+                          <div className="section-heading"><div><p className="eyebrow">SHARED WITH YOUR ACCOUNT</p><h2 id="renter-records-heading">Your rental records</h2></div></div>
+                          {snapshot.properties.length > 1 && <div className="property-picker">
+                            <label htmlFor="property">Property</label>
+                            <select id="property" value={propertyId} onChange={event => setPropertyId(event.target.value)}>
+                              {snapshot.properties.map(property => <option key={property.id} value={property.id}>{property.name}</option>)}
+                            </select>
+                          </div>}
+                          <p>These are the tenant records your property has authorized for this account. Payment history, balances and online payments are not available here.</p>
+                          {tenantList.length > 0 ? <ul className="records tenant-records">
+                            {tenantList.map(tenant =>
+                              <li key={tenant.id} className="tenant-record">
+                                <span className="record-initial" aria-hidden="true">{tenant.display_name.trim().slice(0, 1).toLocaleUpperCase()}</span>
+                                <div className="tenant-record-copy"><strong>{tenant.display_name}</strong><p>{tenant.kind === 'business' ? 'Business tenant' : 'Individual tenant'}</p></div>
+                                <span className={`status status--${tenant.archived_at ? 'archived' : 'ready'}`}>{tenant.archived_at ? 'Archived' : 'Active'}</span>
+                              </li>)}
+                          </ul> : <div className="empty-state">
+                            <h3>No rental records yet</h3>
+                            <p>There are no records shared with this account for the selected property. Contact the property owner if you expected to see one.</p>
+                          </div>}
+                        </section>
+                      </>}
+              </>}
+      </main>
+      <footer className="site-footer"><span>Rental records</span><span>Philippine property access · No online payments</span></footer>
+    </div>
+  </div>
 }
 
 function CreateTenant({ propertyId, done }: { propertyId: string; done: () => void }) {
-  const requestId = useRef(crypto.randomUUID()); const [busy,setBusy] = useState(false); const [message,setMessage] = useState(''); const [failed,setFailed] = useState(false)
-  return <section className="card"><h2>Add a tenant record</h2><p>This creates a directory record only, without occupancy, charges or account access.</p><Feedback message={message} error={failed} />
-    <form onSubmit={async e => { e.preventDefault(); const form=e.currentTarget; const f=new FormData(form); setBusy(true)
-      try { const {error}=await supabase!.rpc('create_tenant',{p_property_id:propertyId,p_tenant_id:requestId.current,p_display_name:String(f.get('tenant-name')).trim(),p_kind:String(f.get('tenant-kind'))}); if(error) throw error
-        requestId.current=crypto.randomUUID(); setFailed(false); setMessage('Tenant record saved. Account access remains separate.'); form.reset(); done()
-      } catch { setFailed(true); setMessage('Save could not be confirmed. Keep the same details when retrying; the request identifier prevents a duplicate record.') }
-      finally {setBusy(false)}
-    }}><label htmlFor="tenant-name">Tenant display name</label><input id="tenant-name" name="tenant-name" required maxLength={200} /><label htmlFor="tenant-kind">Tenant type</label><select id="tenant-kind" name="tenant-kind"><option value="individual">Individual</option><option value="business">Business</option></select><Button disabled={busy}>{busy?'Saving…':'Create tenant record'}</Button></form>
+  const requestId = useRef(crypto.randomUUID())
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const [failed, setFailed] = useState(false)
+  return <section className="card form-card" aria-labelledby="create-tenant-heading">
+    <p className="eyebrow">DIRECTORY MANAGEMENT</p>
+    <h2 id="create-tenant-heading">Add a tenant record</h2>
+    <p>This creates a directory record only. It does not set occupancy, charges or account access.</p>
+    <Feedback message={message} error={failed} />
+    <form onSubmit={async event => {
+      event.preventDefault()
+      if (busy) return
+      const form = event.currentTarget
+      const values = new FormData(form)
+      setBusy(true)
+      try {
+        const { error } = await supabase!.rpc('create_tenant', {
+          p_property_id: propertyId,
+          p_tenant_id: requestId.current,
+          p_display_name: String(values.get('tenant-name')).trim(),
+          p_kind: String(values.get('tenant-kind')),
+        })
+        if (error) throw error
+        requestId.current = crypto.randomUUID()
+        setFailed(false)
+        setMessage('Tenant record saved. Account access remains separate.')
+        form.reset()
+        done()
+      } catch {
+        setFailed(true)
+        setMessage('Save could not be confirmed. Keep the same details when retrying; the request identifier prevents a duplicate record.')
+      } finally { setBusy(false) }
+    }}>
+      <label htmlFor="tenant-name">Tenant display name</label>
+      <input id="tenant-name" name="tenant-name" autoComplete="off" required maxLength={200} />
+      <label htmlFor="tenant-kind">Tenant type</label>
+      <select id="tenant-kind" name="tenant-kind"><option value="individual">Individual</option><option value="business">Business</option></select>
+      <Button className="primary" disabled={busy}>{busy ? 'Saving tenant record…' : 'Create tenant record'}</Button>
+    </form>
   </section>
 }

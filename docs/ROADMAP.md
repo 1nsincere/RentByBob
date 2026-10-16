@@ -5,8 +5,8 @@ Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISION
 
 | Milestone | Current state | Remaining gate |
 | --- | --- | --- |
-| Local prototype and payment preview | Implemented with fictional data; non-saving | User readability review and full accessibility audit (selected browser checks pass) |
-| Database access foundation | Ten migrations implemented; local SQL/API/browser checks | Independent review of cumulative access boundary |
+| Local prototype and payment preview | Non-saving payment preview retained; live access UI redesigned with renter-first mobile layouts, staff navigation and measured color pairs | Manual user readability and assistive-technology review (selected browser checks do not establish conformance) |
+| Database access foundation | Eleven migrations implemented; local SQL/API/browser checks | Independent review of cumulative access boundary |
 | Local invitations | Stable attempt IDs, serialized claim, durable states, owner review, no-retry safety and local Auth dispatch implemented | Owner decision on reissue, evidence, expiry and recipient retention; then focused independent security review |
 | First-owner bootstrap | Implemented as a local administrative script | Parallel-session verification remains; no browser endpoint |
 | Frontend authentication and onboarding | Local sign-in, callback, owner assignment, MFA and backup-factor/password recovery implemented | No-email onboarding, all-factors-lost recovery drill, independent review |

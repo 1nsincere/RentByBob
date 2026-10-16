@@ -1,5 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
+import { mkdirSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import { fixtures, client, admin, totp, invitationLink, sql, api, anon } from './local-fixtures'
 
 async function signIn(page:Page,user:{email:string;password:string}) {
@@ -25,12 +27,11 @@ async function browserClient(page:Page) {
   const c=client(); const {error}=await c.auth.setSession(session);if(error)throw new Error('Cannot use browser session for API check');return c
 }
 async function checkReflow(page:Page) {
-  await page.setViewportSize({width:320,height:900})
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
-  await page.setViewportSize({width:1280,height:900})
-  await page.evaluate(()=>{document.documentElement.style.zoom='2'})
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
-  await page.evaluate(()=>{document.documentElement.style.zoom='1'})
+  for(const width of [160,320,360,390,430,768,1280]) {
+    await page.setViewportSize({width,height:900})
+    const layout=await page.evaluate(()=>({windowWidth:innerWidth,rootWidth:document.documentElement.scrollWidth,bodyWidth:document.body.scrollWidth,overflow:Array.from(document.querySelectorAll('body *')).map(element=>({tag:element.tagName,className:typeof element.className==='string'?element.className:'',text:element.textContent?.slice(0,40),client:element.clientWidth,scroll:element.scrollWidth,rect:Math.round(element.getBoundingClientRect().width)})).filter(element=>element.scroll>element.client+1).slice(0,20)}))
+    expect(layout.rootWidth<=layout.windowWidth,`unexpected horizontal overflow at ${width}px: ${JSON.stringify(layout)}`).toBe(true)
+  }
 }
 
 test('real local account flow, identity binding, MFA, isolation, revocation and recovery',async({browser})=>{
@@ -46,8 +47,13 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     const denied=await low.rpc('find_account_for_assignment',{p_property_id:f.property,p_email:f.users.alice.email})
     expect(denied.error?.code).toBe('42501')
     const ownerSecret=await enroll(owner)
-    await expect(owner.getByRole('heading',{name:'Owner tenant directory'})).toBeVisible()
+    await expect(owner.getByRole('heading',{name:'Owner workspace'})).toBeVisible()
     await owner.getByLabel('Authorized property').selectOption(f.property)
+    await owner.setViewportSize({width:390,height:844})
+    await expect(owner.locator('.workspace-sidebar')).toBeHidden()
+    await owner.getByText('Workspace navigation',{exact:true}).click()
+    await owner.getByRole('link',{name:'Tenant directory',exact:true}).click()
+    await expect(owner.locator('.mobile-workspace-navigation details')).not.toHaveAttribute('open','')
     const ownerApi=await browserClient(owner)
     const initialAudit=await ownerApi.rpc('read_access_audit',{p_property_id:f.property})
     expect(initialAudit.error).toBeNull()
@@ -128,7 +134,7 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     const renterApi=await browserClient(renter)
     expect((await renterApi.from('tenants').select('id').eq('id',f.tenantB)).data).toEqual([])
     await signIn(clerk,f.users.clerk);await enroll(clerk)
-    await expect(clerk.getByRole('heading',{name:'Clerk tenant directory'})).toBeVisible()
+    await expect(clerk.getByRole('heading',{name:'Clerk workspace'})).toBeVisible()
     await expect(clerk.getByRole('heading',{name:'Owner: assign or disable access'})).toHaveCount(0)
     await expect(clerk.getByRole('heading',{name:'Invitation attempts and reconciliation'})).toHaveCount(0)
     await expect(clerk.locator('#account-type option[value=staff]')).toHaveCount(0)
@@ -159,7 +165,7 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     await invited.getByLabel('New password (at least 12 characters)').fill(password)
     await invited.getByLabel('Confirm new password').fill(password)
     await invited.getByRole('button',{name:'Save password'}).click()
-    await expect(invited.getByRole('heading',{name:'Invitation accepted but access not assigned'})).toBeVisible()
+    await expect(invited.getByRole('heading',{name:'Your account is waiting for access'})).toBeVisible()
     const invitedApi=await browserClient(invited)
     expect((await invitedApi.from('tenants').select('id')).data).toEqual([])
     await owner.getByRole('button',{name:'Find account',exact:true}).click()
@@ -175,8 +181,17 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     await owner.getByRole('button',{name:'Confirm access change',exact:true}).click()
     await expect(owner.getByRole('status').filter({hasText:'Access change saved'})).toBeVisible()
     await invited.getByRole('button',{name:'Refresh access'}).click()
+    await expect(invited.getByRole('heading',{name:'Your rental records',level:1})).toBeVisible()
     await expect(invited.getByText(`Fictional Renter B ${f.tag}`,{exact:true})).toBeVisible()
     await expect(invited.getByText(`Fictional Renter A ${f.tag}`,{exact:true})).toHaveCount(0)
+    await expect(invited.getByRole('button',{name:'Sign out',exact:true})).toBeVisible()
+    await expect(invited.locator('.mobile-workspace-navigation')).toHaveCount(0)
+    if(process.env.CAPTURE_UI_REVIEW==='1') {
+      const destination=join(process.env.UI_REVIEW_SCREENSHOT_DIR??'test-results','rentbybob-renter-mobile.png')
+      mkdirSync(dirname(destination),{recursive:true})
+      await invited.setViewportSize({width:390,height:844})
+      await invited.screenshot({path:destination,fullPage:true})
+    }
 
     await owner.getByLabel('Action',{exact:true}).selectOption('disable')
     await owner.getByRole('button',{name:'Review assignment',exact:true}).click()
@@ -211,11 +226,11 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     await signIn(invited,{email,password})
     await expect(invited.getByRole('heading',{name:'Staff security check'})).toBeVisible()
     await enroll(invited)
-    await expect(invited.getByRole('heading',{name:'Clerk tenant directory'})).toBeVisible()
+    await expect(invited.getByRole('heading',{name:'Clerk workspace'})).toBeVisible()
 
     // A second enrolled factor is the supported self-service MFA recovery path.
     const beforeBackupFactors=(await admin.auth.admin.mfa.listFactors({userId:f.users.owner.id})).data?.factors??[]
-    await owner.getByRole('button',{name:'Add backup authenticator',exact:true}).click()
+    await owner.getByRole('button',{name:'Add a backup authenticator',exact:true}).click()
     const backupSecret=await enroll(owner)
     const backupFactors=(await admin.auth.admin.mfa.listFactors({userId:f.users.owner.id})).data?.factors??[]
     const backupFactor=backupFactors.find(factor=>!beforeBackupFactors.some(existing=>existing.id===factor.id))
@@ -230,7 +245,7 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
       await owner.getByLabel('Six-digit authenticator code').fill(totp(backupSecret))
       await owner.getByRole('button',{name:'Verify code',exact:true}).click()
       try {
-        await owner.getByRole('heading',{name:'Owner tenant directory'}).waitFor({state:'visible',timeout:5000})
+        await owner.getByRole('heading',{name:'Owner workspace'}).waitFor({state:'visible',timeout:5000})
         recovered=true
         break
       } catch {
@@ -239,7 +254,7 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
       }
     }
     expect(recovered).toBe(true)
-    await expect(owner.getByRole('heading',{name:'Owner tenant directory'})).toBeVisible()
+    await expect(owner.getByRole('heading',{name:'Owner workspace'})).toBeVisible()
     // Clerk cannot use Admin Auth to reset an owner's factors.
     const clerkSession=(await clerkApi.auth.getSession()).data.session!
     const factors=await admin.auth.admin.mfa.listFactors({userId:f.users.owner.id})
@@ -257,7 +272,7 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     await recoveryPage.getByLabel('New password (at least 12 characters)').fill(resetPassword)
     await recoveryPage.getByLabel('Confirm new password').fill(resetPassword)
     await recoveryPage.getByRole('button',{name:'Save password'}).click()
-    await expect(recoveryPage.getByRole('heading',{name:'Owner tenant directory'})).toBeVisible()
+    await expect(recoveryPage.getByRole('heading',{name:'Owner workspace'})).toBeVisible()
     expect((await low.rpc('find_account_for_assignment',{p_property_id:f.property,p_email:f.users.alice.email})).error?.code).toBe('42501')
 
     // Revoke clerk with an existing session, without touching any other property.

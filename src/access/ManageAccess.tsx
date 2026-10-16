@@ -33,11 +33,12 @@ export function Invitations({ propertyId, owner }: { propertyId: string; owner: 
       setMessage('The current attempt could not be confirmed. Keep its reference and ask an owner to review it. Do not start another send.')
     } finally { setBusy(false) }
   }
-  return <section className="card"><h2>Invite an account</h2><p>Invitation delivery does not grant property or tenant access. An owner must approve each assignment separately.</p>
+  return <section className="card form-card" aria-labelledby="invite-account-heading"><p className="eyebrow">ACCOUNT INVITATION</p><h2 id="invite-account-heading">Invite an account</h2><p>Invitation delivery does not grant property or tenant access. An owner must approve each assignment separately.</p>
     <Feedback message={message} error={error} />
     <form onSubmit={submit}>
-      <label htmlFor="invite-email">Invitation email</label><input id="invite-email" name="invite-email" type="email" required disabled={busy || attempted} value={email} onChange={event => setEmail(event.target.value)} placeholder="person@example.invalid" />
-      <label htmlFor="account-type">Invitation purpose</label><select id="account-type" name="account-type" disabled={busy || attempted} value={accountType} onChange={event => setAccountType(event.target.value)}><option value="tenant">Renter/contact</option>{owner && <option value="staff">Staff</option>}</select>
+      <label htmlFor="invite-email">Invitation email</label><input id="invite-email" name="invite-email" type="email" autoComplete="email" required disabled={busy || attempted} value={email} onChange={event => setEmail(event.target.value)} placeholder="person@example.invalid" aria-describedby="invite-email-help" />
+      <p className="field-help" id="invite-email-help">Local testing accepts fictional addresses ending in .invalid only.</p>
+      <label htmlFor="account-type">Account type</label><select id="account-type" name="account-type" disabled={busy || attempted} value={accountType} onChange={event => setAccountType(event.target.value)}><option value="tenant">Renter/contact</option>{owner && <option value="staff">Staff</option>}</select>
       <Button className="primary" disabled={busy}>{busy ? 'Checking same attempt…' : attempted ? 'Check or continue this same attempt' : 'Start invitation attempt'}</Button>
     </form>
     {attempted && <><p>Attempt reference: <code>{attemptId}</code></p>{attemptStatus && <p>Attempt status: {attemptStatus}</p>}
@@ -59,15 +60,16 @@ export function ManageAccess({ propertyId, tenants, changed }: { propertyId: str
     setAccount(data as Account | null)
     return data
   }
-  return <section className="card"><h2>Owner: assign or disable access</h2>
+  return <section className="card form-card" aria-labelledby="manage-access-heading"><p className="eyebrow">OWNER APPROVAL</p><h2 id="manage-access-heading">Assign or disable account access</h2>
     <p>Confirm the intended person’s email with them outside this app. Look up that exact address, review the account and target below, then retype the email. A verified email proves mailbox access, not a person’s real-world identity.</p>
     <Feedback message={message} error={error} />
     <form onSubmit={async e => {
-      e.preventDefault(); setBusy(true); setMessage(''); setAccount(null); setReview(false); setConfirmation('')
+      e.preventDefault(); if (busy) return
+      setBusy(true); setMessage(''); setAccount(null); setReview(false); setConfirmation('')
       try { const data = await lookup(); setError(false); if (!data) setMessage('No account matches this exact email. Check the address or invite the intended person first.') }
       catch { setError(true); setMessage('Account lookup failed. Owner access and MFA are required. No assignment was made.') }
       finally { setBusy(false) }
-    }}><label htmlFor="lookup-email">Exact account email</label><input id="lookup-email" type="email" required value={email} onChange={e => { setEmail(e.target.value); setAccount(null); setReview(false) }} /><Button disabled={busy}>Find account</Button></form>
+    }}><label htmlFor="lookup-email">Exact account email</label><input id="lookup-email" type="email" autoComplete="email" required value={email} onChange={e => { setEmail(e.target.value); setAccount(null); setReview(false) }} /><Button className="secondary-button" disabled={busy}>{busy ? 'Searching…' : 'Find account'}</Button></form>
     {account && <div className="divider"><h3>Matched account</h3><p><strong>{account.email}</strong></p><p>{stateLabels[account.state]}</p>
       <p>Current staff access: {account.staff_role ?? 'None'}</p>
       <ul>{account.contacts.map(c => <li key={c.tenant_id}>{c.name}: {c.enabled ? 'Enabled' : 'Disabled'}</li>)}</ul>
@@ -90,9 +92,12 @@ export function ManageAccess({ propertyId, tenants, changed }: { propertyId: str
           <label htmlFor="assignment-kind">Access type</label><select id="assignment-kind" value={kind} onChange={e => setKind(e.target.value)}><option value="contact">Tenant/contact</option><option value="staff">Property staff</option></select>
           {kind === 'contact' ? <><label htmlFor="assignment-tenant">Tenant record</label><select id="assignment-tenant" required value={tenant} onChange={e => setTenant(e.target.value)}><option value="">Choose a tenant</option>{activeTenants.map(t => <option key={t.id} value={t.id}>{t.display_name} ({t.kind})</option>)}</select></> : <><label htmlFor="assignment-role">Staff role</label><select id="assignment-role" value={role} onChange={e => setRole(e.target.value)}><option value="clerk">Clerk</option><option value="owner">Owner</option></select></>}
           <label htmlFor="assignment-action">Action</label><select id="assignment-action" value={enabled ? 'enable' : 'disable'} onChange={e => setEnabled(e.target.value === 'enable')}><option value="enable">Enable access</option><option value="disable">Disable access</option></select>
-          <label htmlFor="assignment-reason">Reason for this change</label><input id="assignment-reason" value={reason} onChange={e => setReason(e.target.value)} required maxLength={500} />
+          <label htmlFor="assignment-reason">Reason for this change</label><input id="assignment-reason" value={reason} onChange={e => setReason(e.target.value)} required maxLength={500} aria-describedby="assignment-reason-help" />
+          <p className="field-help" id="assignment-reason-help">This reason is retained in the property access history.</p>
         </fieldset>
-        {review && <div className="notice"><h3>Confirm access change</h3><p>{enabled ? 'Enable' : 'Disable'} {kind === 'contact' ? `contact access to ${activeTenants.find(t => t.id === tenant)?.display_name}` : `${role} access to this property`} for <strong>{account.email}</strong>.</p><p>Reason: {reason}</p><label htmlFor="confirm-email">Retype the matched account email</label><input id="confirm-email" type="email" required value={confirmation} onChange={e => setConfirmation(e.target.value)} autoComplete="off" /><Button type="button" onClick={() => { setReview(false); setMessage('') }}>Edit assignment</Button></div>}
+        {review && <div className="notice access-review" aria-labelledby="access-review-heading"><h3 id="access-review-heading">Review before saving</h3><p>{enabled ? 'Enable' : 'Disable'} {kind === 'contact' ? `contact access to ${activeTenants.find(t => t.id === tenant)?.display_name}` : `${role} access to this property`} for <strong>{account.email}</strong>.</p>
+          {!enabled && <p>Disabling removes this selected access. Other tenant or property memberships are unchanged; access history is retained. An owner can enable access again with a new reviewed change.</p>}
+          <p>Reason: {reason}</p><label htmlFor="confirm-email">Retype the matched account email</label><input id="confirm-email" type="email" required value={confirmation} onChange={e => setConfirmation(e.target.value)} autoComplete="off" aria-describedby="confirm-email-help" /><p className="field-help" id="confirm-email-help">This extra check helps prevent changes to the wrong account.</p><Button type="button" className="secondary-button" onClick={() => { setReview(false); setMessage('') }}>Edit assignment</Button></div>}
         <Button className="primary" disabled={busy}>{busy ? 'Saving…' : review ? 'Confirm access change' : 'Review assignment'}</Button>
       </form>}
     </div>}

@@ -73,9 +73,12 @@ function LocationMaintenance({
     <Button disabled={busy || !name.trim() || !reason.trim()} onClick={() => void save('rename')}>
       {busy ? 'Saving…' : `Save ${labelForKind} name`}
     </Button>
-    {confirmArchive && <p className="notice">
-      {building ? 'Archiving this building will also archive every unit in it. History is retained and this cannot be undone here.' : 'This unit will remain in the directory as archived history and cannot be reactivated here.'}
-    </p>}
+    {confirmArchive && <div className="notice archive-confirmation" role="group" aria-label="Archive confirmation">
+      <h3>Confirm archive: {label}</h3>
+      <p>{building
+        ? `This will archive “${label}” and every unit within it. The building, units and their history remain in the directory. This cannot be undone in the app.`
+        : `This will archive “${label}”. The unit and its history remain in the directory. This cannot be undone in the app.`}</p>
+    </div>}
     <Button disabled={busy || !reason.trim()} onClick={() => {
       if (confirmArchive) void save('archive')
       else setConfirmArchive(true)
@@ -91,44 +94,53 @@ export function PropertyDirectory({ propertyId, owner }: { propertyId: string; o
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState(false)
   const [kind, setKind] = useState('building')
   const requestId = useRef(crypto.randomUUID())
   const load = useCallback(async () => {
-    const [b, u] = await Promise.all([
-      supabase!.from('buildings').select('id,label,archived_at').eq('property_id', propertyId).order('label'),
-      supabase!.from('units').select('id,label,building_id,archived_at').eq('property_id', propertyId).order('label'),
-    ])
-    if (b.error || u.error) {
+    setLoading(true)
+    try {
+      const [b, u] = await Promise.all([
+        supabase!.from('buildings').select('id,label,archived_at').eq('property_id', propertyId).order('label'),
+        supabase!.from('units').select('id,label,building_id,archived_at').eq('property_id', propertyId).order('label'),
+      ])
+      if (b.error || u.error) throw b.error || u.error
+      setBuildings(b.data)
+      setUnits(u.data)
+      setLoaded(true)
+      setError('')
+    } catch {
       setBuildings([])
       setUnits([])
       setError('Property directory could not be loaded. No sample locations are substituted.')
       setLoaded(false)
-      return
+    } finally {
+      setLoading(false)
     }
-    setBuildings(b.data)
-    setUnits(u.data)
-    setLoaded(true)
-    setError('')
   }, [propertyId])
   useEffect(() => { void load() }, [load])
 
-  return <section className="card">
-    <h2>Buildings, sections and units</h2>
+  return <section className="card form-card" aria-labelledby="property-locations-heading">
+    <p className="eyebrow">PROPERTY DIRECTORY</p>
+    <h2 id="property-locations-heading">Buildings, sections and units</h2>
     <p>Directory labels only. These records do not assign occupants, set capacity or create rent charges.</p>
     <Feedback message={error} error />
     <Feedback message={message} />
-    <Button onClick={() => void load()}>Refresh locations</Button>
+    {loading && !loaded && !error && <p role="status" className="loading-state">Loading property locations…</p>}
+    <Button className="secondary-button" disabled={loading} onClick={() => void load()}>{loading ? 'Refreshing locations…' : 'Refresh locations'}</Button>
     {loaded && <ul className="records">{buildings.map(building => {
       const children = units.filter(unit => unit.building_id === building.id)
-      return <li key={building.id}><div>
+      return <li key={building.id}><article className={`location-record ${building.archived_at ? 'location-record--archived' : ''}`}>
+        <div className="location-heading">
         <strong>{building.label}</strong>
-        <p>{building.archived_at ? 'Archived building or section' : 'Active building or section'}</p>
+        <span className={`status status--${building.archived_at ? 'archived' : 'ready'}`}>{building.archived_at ? 'Archived building or section' : 'Active building or section'}</span>
+        </div>
         {children.length > 0
-          ? <ul>{children.map(unit => <li key={unit.id}>
-            <div>
+          ? <ul className="unit-list">{children.map(unit => <li key={unit.id} className={unit.archived_at ? 'location-record--archived' : ''}>
+            <div className="unit-heading">
               <strong>{unit.label}</strong>
-              <p>{unit.archived_at ? 'Archived unit' : 'Active unit'}</p>
+              <span className={`status status--${unit.archived_at ? 'archived' : 'ready'}`}>{unit.archived_at ? 'Archived unit' : 'Active unit'}</span>
               {owner && <LocationMaintenance
                 propertyId={propertyId}
                 locationId={unit.id}
@@ -148,32 +160,40 @@ export function PropertyDirectory({ propertyId, owner }: { propertyId: string; o
           building
           onSaved={() => void load()}
         />}
-      </div></li>
+      </article></li>
     })}</ul>}
-    {loaded && buildings.length === 0 && <p>No buildings or sections recorded yet.</p>}
+    {loaded && buildings.length === 0 && <div className="empty-state">
+      <h3>No locations recorded yet</h3>
+      <p>Add a building or section when you are ready to organize this property directory. Locations do not define occupancy or rent.</p>
+    </div>}
     {owner && <form onSubmit={async event => {
       event.preventDefault()
+      if (busy) return
       const form = event.currentTarget
       const values = new FormData(form)
       setBusy(true)
       setMessage('')
       setError('')
-      const { error } = await supabase!.rpc('create_property_location', {
-        p_property_id: propertyId,
-        p_id: requestId.current,
-        p_label: String(values.get('location-label')).trim(),
-        p_building_id: kind === 'unit' ? String(values.get('building-id')) : null,
-      })
-      if (error) {
-        setError('Save could not be confirmed. Keep the same details when retrying; duplicate labels and archived buildings are rejected.')
-      } else {
+      try {
+        const { error } = await supabase!.rpc('create_property_location', {
+          p_property_id: propertyId,
+          p_id: requestId.current,
+          p_label: String(values.get('location-label')).trim(),
+          p_building_id: kind === 'unit' ? String(values.get('building-id')) : null,
+        })
+        if (error) throw error
         requestId.current = crypto.randomUUID()
         form.reset()
         setMessage('Location saved without occupancy or billing rules.')
         await load()
+      } catch {
+        setError('Save could not be confirmed. Keep the same details when retrying; duplicate labels and archived buildings are rejected.')
+      } finally {
+        setBusy(false)
       }
-      setBusy(false)
     }}>
+      <fieldset disabled={busy} className="form-section">
+      <legend>Add a location</legend>
       <label htmlFor="location-kind">Location type</label>
       <select id="location-kind" value={kind} onChange={event => setKind(event.target.value)}>
         <option value="building">Building or section</option>
@@ -190,7 +210,8 @@ export function PropertyDirectory({ propertyId, owner }: { propertyId: string; o
       </>}
       <label htmlFor="location-label">Location label</label>
       <input id="location-label" name="location-label" maxLength={200} required />
-      <Button disabled={busy}>{busy ? 'Saving…' : 'Create location'}</Button>
+      </fieldset>
+      <Button className="primary" disabled={busy}>{busy ? 'Saving location…' : 'Create location'}</Button>
     </form>}
   </section>
 }

@@ -1,5 +1,15 @@
 # Status - 16 Oct 2026, Asia/Manila
-## Current milestone: invitation dispatch reliability and owner reconciliation
+## Current milestone: mobile-first access interface
+
+The real Supabase-backed renter and staff screens now use a restrained ivory/white/sage/deep-teal system. Renters see their authorized directory records, readable pending/unassigned/disabled states, useful empty states and sign-out without staff MFA controls or invented payment destinations. Owners and clerks get labeled section navigation in a mobile drawer and desktop sidebar. Directory search/results, staff forms, invitation messages, access review, archive confirmation and history are grouped and spaced for phone use. No data, authorization, MFA, invitation, membership, or database contract was changed for the visual refresh.
+
+The app uses the approximate 60–30–10 palette in [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). Measured foreground/background and control-border pairs meet the listed WCAG contrast thresholds. Browser checks cover 160px (zoom-equivalent stress viewport), 320, 360, 390, 430, 768 and 1280 CSS px, mobile staff navigation, long email reflow, focus, control size and enlarged text. These checks are not an accessibility audit or WCAG conformance claim.
+
+Verification on 16 Oct 2026: `npm.cmd test` passed 33 tests; `npm.cmd run build` passed strict TypeScript and Vite; `npm.cmd run test:browser` passed both local browser scenarios (owner/renter/staff workflows, backup MFA/password recovery, revocation, invitation acceptance, keyboard focus and responsive checks); `git diff --check` passed. The browser run captured [the fictional renter mobile screenshot](screenshots/rentbybob-renter-mobile.png) at 390px. Visual inspection confirmed it shows only `.invalid` fixture identity and directory data, with no password, invitation link/token, MFA secret or real user data. The browser suite does not emulate native browser zoom; its narrow viewport and enlarged-text checks are bounded responsive tests, not an accessibility audit. No schema or hosted system changed.
+
+Exact next milestone: user readability review of the captured renter screen and manual keyboard/screen-reader checks of sign-in, renter records, staff navigation, archive confirmation and access review. Do not claim WCAG conformance until a complete audit; keep the separate invitation reissue/retention decision and financial policy gates open.
+
+## Previous completed milestone: invitation dispatch reliability and owner reconciliation
 
 Migrations `202610160009`–`202610160011` are applied to local Supabase only. Invitation intents now use a stable UUID bound to property, recipient and account type. PostgreSQL serializes competing requests; only a persisted `prepared` attempt can be claimed for dispatch. Repeating the same intent returns its saved state, while changed payloads and any new attempt for an already-attempted property/recipient are rejected. No resend action is implemented.
 

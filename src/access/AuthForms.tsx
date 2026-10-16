@@ -5,7 +5,7 @@ import { supabase } from './client'
 export function Feedback({ message, error = false }: { message: string; error?: boolean }) {
   const ref = useRef<HTMLParagraphElement>(null)
   useEffect(() => { if (message) ref.current?.focus() }, [message])
-  return message ? <p ref={ref} tabIndex={-1} role={error ? 'alert' : 'status'} className={`notice ${error ? 'error' : ''}`}>{message}</p> : null
+  return message ? <p ref={ref} tabIndex={-1} role={error ? 'alert' : 'status'} className={`notice ${error ? 'notice--error' : ''}`}>{message}</p> : null
 }
 
 export function SignIn() {
@@ -13,8 +13,9 @@ export function SignIn() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState(false)
-  return <section className="card auth-card"><h2>{recovery ? 'Reset your password' : 'Sign in'}</h2>
-    <p>Use the email address associated with your account. There is no public registration.</p>
+  const [showPassword, setShowPassword] = useState(false)
+  return <section className="card auth-card"><p className="eyebrow">SECURE ACCOUNT ACCESS</p><h2>{recovery ? 'Reset your password' : 'Sign in'}</h2>
+    <p>Use the email address associated with your account. New accounts are invited by the property owner or clerk.</p>
     <Feedback message={message} error={error} />
     <form onSubmit={async e => {
       e.preventDefault(); if (busy) return
@@ -32,17 +33,22 @@ export function SignIn() {
       } catch { setError(true); setMessage(recovery ? 'The request could not be completed. Wait and try again, or contact the owner.' : 'Sign-in failed. Check your email and password, or try again when connected.') }
       finally { setBusy(false) }
     }}>
-      <label htmlFor="email">Email address</label><input id="email" name="email" type="email" autoComplete="username" required maxLength={320} />
-      {!recovery && <><label htmlFor="password">Password</label><input id="password" name="password" type="password" autoComplete="current-password" required /></>}
+      <label htmlFor="email">Email address</label><input id="email" name="email" type="email" autoComplete="username" required maxLength={320} aria-describedby="email-help" />
+      <p className="field-help" id="email-help">Enter the email address where you received your account invitation.</p>
+      {!recovery && <><label htmlFor="password">Password</label><div className="password-input-row">
+        <input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required />
+        <Button type="button" className="secondary-button password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Hide' : 'Show'}</Button>
+      </div></>}
       <Button className="primary" disabled={busy}>{busy ? 'Please wait…' : recovery ? 'Send reset link' : 'Sign in'}</Button>
     </form>
-    <Button onClick={() => { setRecovery(!recovery); setMessage('') }}>{recovery ? 'Back to sign-in' : 'Forgot password?'}</Button>
-    <p className="small">No usable email? Contact the owner. Username-only or paper-password sign-in is not available in this version.</p>
+    <Button className="secondary-button" onClick={() => { setRecovery(!recovery); setMessage(''); setError(false) }}>{recovery ? 'Back to sign-in' : 'Forgot password?'}</Button>
+    <p className="small">Password reset does not remove staff MFA. If you cannot use your email or authenticator, contact the property owner.</p>
   </section>
 }
 
 export function PasswordSetup({ done }: { done: () => void }) {
   const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   return <section className="card auth-card"><h2>Set your password</h2><p>Choose your own password. Staff cannot retrieve it. Setting a password does not assign rental access.</p>
     <Feedback message={message} error />
     <form onSubmit={async e => {
@@ -56,8 +62,11 @@ export function PasswordSetup({ done }: { done: () => void }) {
       } catch { setMessage('The password could not be saved. Your session may need an authenticator code, or the link may no longer be valid. Contact the owner if this continues.') }
       finally { setBusy(false) }
     }}>
-      <label htmlFor="new-password">New password (at least 12 characters)</label><input id="new-password" name="new-password" type="password" autoComplete="new-password" minLength={12} required />
-      <label htmlFor="confirm-password">Confirm new password</label><input id="confirm-password" name="confirm-password" type="password" autoComplete="new-password" minLength={12} required />
+      <label htmlFor="new-password">New password (at least 12 characters)</label><div className="password-input-row">
+        <input id="new-password" name="new-password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={12} required aria-describedby="password-help" />
+        <Button type="button" className="secondary-button password-toggle" aria-label={showPassword ? 'Hide passwords' : 'Show passwords'} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Hide' : 'Show'}</Button>
+      </div><p className="field-help" id="password-help">Use at least 12 characters. Your password is never shown to staff.</p>
+      <label htmlFor="confirm-password">Confirm new password</label><input id="confirm-password" name="confirm-password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={12} required />
       <Button className="primary" disabled={busy}>{busy ? 'Saving…' : 'Save password'}</Button>
     </form>
   </section>

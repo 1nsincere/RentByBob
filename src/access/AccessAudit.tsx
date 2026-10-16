@@ -41,31 +41,35 @@ export function AccessAudit({ propertyId }: { propertyId: string }) {
   const [events, setEvents] = useState<AccessAuditEvent[]>([])
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase!.rpc('read_access_audit', { p_property_id: propertyId })
-    if (error) {
+    setLoading(true)
+    try {
+      const { data, error } = await supabase!.rpc('read_access_audit', { p_property_id: propertyId })
+      if (error) throw error
+      setEvents(data as AccessAuditEvent[])
+      setLoaded(true)
+      setError('')
+    } catch {
       setEvents([])
       setLoaded(false)
-      setError(error.code === '42501'
-        ? 'Owner access and MFA are required to view this history.'
-        : 'Access history could not be loaded. Refresh and try again; ask the system administrator if the problem continues.')
-      return
+      setError('Access history could not be loaded. Owner access and MFA are required; refresh and try again.')
+    } finally {
+      setLoading(false)
     }
-    setEvents(data as AccessAuditEvent[])
-    setLoaded(true)
-    setError('')
   }, [propertyId])
 
   useEffect(() => { void load() }, [load])
 
-  return <section className="card">
-    <h2>Recent account and contact access history</h2>
+  return <section className="card" aria-labelledby="access-history-heading">
+    <p className="eyebrow">OWNER AUDIT HISTORY</p>
+    <h2 id="access-history-heading">Recent account and contact access history</h2>
     <p>Shows up to 100 recent access changes and invitation dispatch events for this property. Times are shown in Philippine time.</p>
     <Feedback message={error} error />
-    <Button onClick={() => void load()}>Refresh access history</Button>
-    {!loaded && !error && <p role="status">Loading access history…</p>}
-    {loaded && events.length === 0 && <p>No account or contact access history is recorded yet.</p>}
+    <Button className="secondary-button" disabled={loading} onClick={() => void load()}>{loading ? 'Refreshing history…' : 'Refresh access history'}</Button>
+    {!loaded && !error && <p role="status" className="loading-state">Loading access history…</p>}
+    {loaded && events.length === 0 && <div className="empty-state"><h3>No access changes recorded</h3><p>Invitation and account changes for this property will appear here when recorded.</p></div>}
     {loaded && events.length > 0 && <ol className="records">{events.map(event => <li key={event.event_id}>
       <div>
         <strong>{actionLabels[event.action] ?? 'Account access event'}</strong>

@@ -37,7 +37,10 @@ Local invitations/reset messages appear in Mailpit at **http://127.0.0.1:54324**
 - Owner identity-confirmed access assignment and disabling; no browser ID-only access mutations.
 - Durable invitation states and owner/MFA reconciliation; no automatic retry, resend or access assignment on acceptance.
 - Authorized tenant directory/search/create; staff property/building/unit reads; owner location creation, rename/archive and access-history review.
+- Mobile-first renter record view with clear access and empty states; staff get a labeled mobile workspace menu and desktop sidebar.
 - No financial posting, balances, agreements, occupancy assignments or exports. Pending reports and uncleared checks must never reduce settled balances.
+
+Renters have a single records destination and account sign-out; the app does not invent payment or dashboard tabs. Staff use workspace navigation to reach implemented directory, location, invitation, owner-access and security sections. Layouts stack on phones and add a staff sidebar on wide screens. See the [design system](docs/DESIGN_SYSTEM.md) for responsive behavior, contrast measurements and accessibility limitations.
 
 Old fictional payment/design screens remain in `src/prototype/PrototypeApp.tsx`, separate from the runtime entry point and production bundle. Payment preview/domain tests are preserved. There is no runtime role selector.
 
