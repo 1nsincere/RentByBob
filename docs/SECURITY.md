@@ -1,5 +1,5 @@
 # Security plan
-Current local access UI is connected to Supabase. Six local migrations enforce identity-bound owner assignment, tenant isolation, current membership revocation and staff MFA. Browser tests exercise actual enrollment/challenge, backup factors and password recovery without an assurance bypass; a clerk cannot administer an owner's factors. The runtime never falls back to prototype records. Self-routing exposes only the caller's access status before MFA.
+Current local access UI is connected to Supabase. Eight local migrations enforce identity-bound owner assignment, tenant isolation, current membership revocation and staff MFA. Browser tests exercise actual enrollment/challenge, backup factors and password recovery without an assurance bypass; a clerk cannot administer an owner's factors. The runtime never falls back to prototype records. Self-routing exposes only the caller's access status before MFA. Directory rename/archive and a bounded owner/MFA-gated account/contact audit feed are enforced in PostgreSQL, not only the UI.
 
 See STATUS.md for latest test evidence and ONBOARDING.md for identity confirmation, paper-delivery limitations, 10-second UI refresh, and recovery. Remaining work includes uncertain dispatch reconciliation, safe resend, injected partial-failure tests, real elapsed expiry, parallel transactions, all-factors-lost recovery drill and independent review. No hosted/production security claim.
 
@@ -36,6 +36,12 @@ Migration 202610160004 restricts caller audit writes to requests. Only service_r
 Intended invitation addresses are registered for cleanup before dispatch. Injected partial-delivery failure cleanup remains untested. Dispatch reconciliation and send idempotency across Auth and SQL remain open; do not automatically retry uncertain sends.
 
 The bootstrap is a local administrative transaction for confirmed fictional .invalid Auth identities. It locks initialization, creates property/owner/audit atomically and rejects conflicting initialized states. No RPC or password is created; MFA is still required. This is not a production bootstrap or recovery procedure.
+
+## Directory maintenance and access audit — 16 Oct 2026
+
+Migration 202610160007 makes directory rename/archive owner-only with current AAL2, property locking and atomic audit. Building archive retains the building and archives its current units in the same transaction. The create function rejects archived parents and no browser role has direct table mutation grants. The owner audit function returns only the latest 100 account/contact access, tenant archive and invitation-dispatch events for the requested property; clerk and AAL1 calls are denied. It returns actor/target email where relevant, tenant name and the recorded reason, so owners should keep reasons limited to what is needed. Invitation “sent” still means the trusted dispatch operation returned successfully, not inbox delivery. No independent security review or production claim is implied.
+
+Migration 202610160008 corrects the audit RPC's Auth email output types for the local Supabase schema. The browser/API suite caught a mismatch that the PGlite fixture, whose email field is text, did not reproduce. Local integration tests passed after the follow-up migration; the result does not establish hosted-provider behavior.
 
 Privilege guidance checked: https://supabase.com/docs/guides/database/functions
 

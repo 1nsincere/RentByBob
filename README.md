@@ -35,7 +35,7 @@ Local invitations/reset messages appear in Mailpit at **http://127.0.0.1:54324**
 - Sign-in, callback/password setup, password recovery, MFA enrollment/challenge/backup factor, sign-out.
 - Unassigned/disabled screens, tenant isolation, server-enforced role/MFA checks and revocation.
 - Owner identity-confirmed access assignment and disabling; no browser ID-only access mutations.
-- Authorized tenant directory/search/create; staff property/building/unit reads and owner location creation.
+- Authorized tenant directory/search/create; staff property/building/unit reads; owner location creation, rename/archive and access-history review.
 - No financial posting, balances, agreements, occupancy assignments or exports. Pending reports and uncleared checks must never reduce settled balances.
 
 Old fictional payment/design screens remain in `src/prototype/PrototypeApp.tsx`, separate from the runtime entry point and production bundle. Payment preview/domain tests are preserved. There is no runtime role selector.

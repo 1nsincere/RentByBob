@@ -6,11 +6,11 @@ Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISION
 | Milestone | Current state | Remaining gate |
 | --- | --- | --- |
 | Local prototype and payment preview | Implemented with fictional data; non-saving | User readability review and full accessibility audit (selected browser checks pass) |
-| Database access foundation | Six migrations implemented; local SQL/API/browser checks | Parallel-connection tests and independent review |
+| Database access foundation | Eight migrations implemented; local SQL/API/browser checks | Parallel-connection tests and independent review |
 | Local invitations | Dispatch, password setup/sign-in and link replay tested through APIs | Dispatch reconciliation, failure/retry, resend and real elapsed expiry (backdated expiry tested) |
 | First-owner bootstrap | Implemented as a local administrative script | Parallel-session verification remains; no browser endpoint |
 | Frontend authentication and onboarding | Local sign-in, callback, owner assignment, MFA and backup-factor/password recovery implemented | No-email onboarding, all-factors-lost recovery drill, independent review |
-| Basic property and tenant directories | Authorized reads, tenant search/create and owner building/unit creation | Next: rename/archive with retained history and audit review |
+| Basic property and tenant directories | Authorized reads, tenant search/create, owner building/unit create/rename/archive, and owner access-audit review | Broader accessibility review; agreement/occupancy lifecycle remains out of scope |
 | Financial workflows | Non-saving preview/exact-money foundation; policy-independent work may continue | BUSINESS_RULES.md maps policy-dependent features; no invented posting rules |
 | Reports, recovery and pilot | Not implemented | Export verification, restore rehearsal, opening balances and owner acceptance |
 

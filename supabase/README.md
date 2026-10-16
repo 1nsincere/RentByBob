@@ -17,7 +17,7 @@ This does **not** run Supabase Auth, PostgREST, JWT signature verification or pa
 
 The Supabase CLI is a project-local development dependency. `supabase/config.toml` was generated in the existing project and reviewed: the API exposes only `public` and `graphql_public` (not `private`), new public objects are not automatically exposed, public signup and seed loading are disabled, and auth redirects are restricted to the local Vite origin. `supabase/.temp/` and `supabase/.branches/` are ignored.
 
-The CLI configuration is not an application connection and does not create a hosted project. WSL 2 and Docker Desktop were installed and the local Docker engine verified during setup. All six migrations (`202610160001` through `202610160006`) were applied to the disposable local database. Running processes do not persist reliably across handoffs. Startup downloads the service images the first time. To start the stack:
+The CLI configuration is not an application connection and does not create a hosted project. WSL 2 and Docker Desktop were installed and the local Docker engine verified during setup. Migrations `202610160001` through `202610160008` are applied to the local database. Running processes do not persist reliably across handoffs. Startup downloads the service images the first time. To start the stack:
 
 ```powershell
 $env:PATH = 'C:\Program Files\Docker\Docker\resources\bin;' + $env:PATH
@@ -54,11 +54,13 @@ The first property and owner membership require a one-time trusted bootstrap aft
 | `find_account_for_assignment(property, email)` | Owner with MFA | Exact-email account lookup for reviewed assignment |
 | `assign_account_access(property, user, expected_email, kind, tenant, role, enabled, reason)` | Owner with MFA | Verified identity binding, property scope and atomic audited mutation |
 | `create_property_location(property, id, label, building?)` | Owner with MFA | Building/unit creation with retry UUID and atomic audit |
+| `manage_property_location(property, location, action, label, reason)` | Owner with MFA | Rename or archive a building/unit; building archival also archives child units atomically |
+| `read_access_audit(property)` | Owner with MFA | Up to 100 recent access, tenant-archive and invitation-dispatch events with minimum necessary identity details; Auth email type compatibility is fixed in migration 008 |
 | `archive_tenant(tenant_id, reason)` | Active owner with MFA | Archives identity record, revokes contacts atomically and retains record/audit; repeat is a no-op |
 
 Definer functions use an empty search path and qualified relations. Staff operations check current membership and MFA; property mutations serialize through the property row. Self-routing is available before MFA and returns only minimal caller state. Anonymous execution is revoked. The two private policy helpers accept resource IDs but always derive the requesting user from Auth.
 
-Archival here is **not a completed move-out workflow**. Before agreements/payments are added, extend it to enforce the agreed move-out lifecycle and preserve occupancy/debt rules. There is no financial deletion or settlement operation in this migration. Membership history is retained through revocation timestamps and append-only application audit; only database administrators can bypass these controls.
+Tenant archival here is **not a completed move-out workflow**. Before agreements/payments are added, extend it to enforce the agreed move-out lifecycle and preserve occupancy/debt rules. Location archival retains records; archived buildings archive their units, archived parents reject new units, and archived names can be reused by new active records. No financial deletion or settlement operation is included. Membership history is retained through revocation timestamps and append-only application audit; only database administrators can bypass these controls.
 
 Never rewrite a migration once applied to a shared environment. This migration is applied to the disposable local database and is also exercised in PGlite tests. Follow-up changes must become new versioned migrations after initial application.
 

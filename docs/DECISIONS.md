@@ -1,11 +1,11 @@
 # Decisions and open questions
 ## Current access and repository decisions - 16 Oct 2026
 - User authorized private GitHub repository 1nsincere/RentByBob; main is connected and prior commits preserved.
-- Local access UI and basic directory creation are implemented. See STATUS.md for current evidence; earlier next-step notes below are historical.
+- Local access UI, directory maintenance and owner account/contact access-audit review are implemented. See STATUS.md for current evidence; earlier next-step notes below are historical.
 - Every contact or staff assignment requires owner MFA and verified email/UUID binding. James's renter invitation authority does not include assignment authority.
 - Keep email-based onboarding for this slice. Paper invitation links are a documented future delivery option, not username-only access. No fake operational emails or custom password storage.
 - Backup authenticator recovery is implemented. Email password reset does not bypass MFA; all-factors-lost operator recovery requires a separate reviewed procedure.
-- Next milestone is directory maintenance and audit review. Financial dependencies are mapped in BUSINESS_RULES.md; independent work may proceed.
+- Migration 202610160007 adds owner/MFA-only directory maintenance and a bounded access-audit view. Financial dependencies are mapped in BUSINESS_RULES.md; independent work may proceed.
 
 ## Earlier confirmed decisions, still applicable unless superseded
 - Use existing `C:\Users\acegr\Desktop\Rent Tracker System`; skip creating/resolving a replacement Desktop folder.
@@ -43,3 +43,9 @@ The current review reconciles the progress tracker and setup instructions; it do
 ## Local access hardening and bootstrap - 16 Oct 2026
 
 Continue under the user's development authorization. Bootstrap is local-only, accepts an existing confirmed fictional .invalid Auth UUID, and creates the first fictional property/owner atomically. Identical retries are no-ops; any different initialized state is refused. No real owner account is created. Invitation outcome audit is service-only; uncertain dispatch still requires review before retrying. Next feature slice: frontend sign-in and invitation callback/password setup, followed by recovery/MFA and owner access-assignment UX.
+
+## Directory maintenance and access-audit decisions — 16 Oct 2026
+
+Migration 202610160007 adds owner/MFA-authorized rename and archive for buildings and units. Archiving a building archives all its units in the same transaction. Archived records remain visible to staff with their history, cannot be renamed or reactivated through the UI, and cannot parent new units. Active labels must be unique; labels from archived records may be reused because identity and audit history remain attached to the original IDs. These location labels do not imply occupancy, capacity or rent rules.
+
+The owner access-history view exposes at most 100 recent access assignment/revocation, tenant archival and invitation-dispatch events. It displays event time, action, actor/target email where applicable, tenant name and reason. Access is enforced by a trusted owner/MFA database function. Invitation outcomes remain dispatch results, not proof of inbox delivery. This migration must be locally applied only after migration, API and browser checks pass.
