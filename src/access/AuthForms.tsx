@@ -13,7 +13,7 @@ export function SignIn() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState(false)
-  return <section className="card auth-card"><h1>{recovery ? 'Reset your password' : 'Sign in'}</h1>
+  return <section className="card auth-card"><h2>{recovery ? 'Reset your password' : 'Sign in'}</h2>
     <p>Use the email address associated with your account. There is no public registration.</p>
     <Feedback message={message} error={error} />
     <form onSubmit={async e => {
@@ -43,7 +43,7 @@ export function SignIn() {
 
 export function PasswordSetup({ done }: { done: () => void }) {
   const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false)
-  return <section className="card auth-card"><h1>Set your password</h1><p>Choose your own password. Staff cannot retrieve it. Setting a password does not assign rental access.</p>
+  return <section className="card auth-card"><h2>Set your password</h2><p>Choose your own password. Staff cannot retrieve it. Setting a password does not assign rental access.</p>
     <Feedback message={message} error />
     <form onSubmit={async e => {
       e.preventDefault(); const form = new FormData(e.currentTarget)
@@ -74,7 +74,7 @@ export function Mfa({ done, backup = false }: { done: () => void; backup?: boole
       setFactors(data.totp); if (!backup) setFactorId(data.totp[0]?.id ?? ''); setLoaded(true)
     }); return () => { live = false }
   }, [backup])
-  return <section className="card auth-card"><h1>{backup ? 'Add a backup authenticator' : 'Staff security check'}</h1>
+  return <section className="card auth-card"><h2>{backup ? 'Add a backup authenticator' : 'Staff security check'}</h2>
     <p>{backup ? 'Use a separate device you control. Keep it available if your main authenticator is lost.' : 'Staff must verify an authenticator code before opening property records or managing access.'}</p>
     <Feedback message={message} error />
     {loaded && (backup || factors.length === 0) && !secret && <Button disabled={busy} onClick={async () => {

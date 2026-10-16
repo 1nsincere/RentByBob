@@ -42,4 +42,4 @@ export async function initializeAuth() {
 }
 
 // One callback exchange, even under React StrictMode.
-export const initialized = initializeAuth()
+export const initialized = initializeAuth().catch(() => ({ session: null, setup: false, failure: 'Your session could not be verified. Return to sign-in and try again when connected.' }))
