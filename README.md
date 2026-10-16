@@ -28,13 +28,14 @@ npm.cmd run dev:local
 
 Open **http://127.0.0.1:5173**. Sign in and enroll an authenticator; MFA is required before staff data/actions. The launcher captures the local public URL/anonymous key into the child process without printing or writing keys. Service credentials never go to Vite. Plain `npm.cmd run dev` without configuration shows a configuration screen.
 
-Local invitations/reset messages appear in Mailpit at **http://127.0.0.1:54324**. Use the link to set a password. An owner must separately look up the exact email and assign contact/staff access. James/clerk may invite renters but cannot assign access or staff roles. Do not automatically retry uncertain invitation sends.
+Local invitations/reset messages appear in Mailpit at **http://127.0.0.1:54324**. Use the link to set a password. Each attempt has a stable reference; repeating it checks persisted state rather than sending again. Owners with MFA can review masked attempts, continue only requests known not yet sent, and append evidence notes without changing unresolved state. Provider issuance does not prove inbox delivery. An owner must separately look up the exact email and assign contact/staff access. James/clerk may invite renters but cannot assign access or staff roles. Reissue for the same property/recipient is unavailable pending an approved policy.
 
 ## Working features and boundaries
 
 - Sign-in, callback/password setup, password recovery, MFA enrollment/challenge/backup factor, sign-out.
 - Unassigned/disabled screens, tenant isolation, server-enforced role/MFA checks and revocation.
 - Owner identity-confirmed access assignment and disabling; no browser ID-only access mutations.
+- Durable invitation states and owner/MFA reconciliation; no automatic retry, resend or access assignment on acceptance.
 - Authorized tenant directory/search/create; staff property/building/unit reads; owner location creation, rename/archive and access-history review.
 - No financial posting, balances, agreements, occupancy assignments or exports. Pending reports and uncleared checks must never reduce settled balances.
 

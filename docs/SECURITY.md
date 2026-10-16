@@ -1,7 +1,32 @@
 # Security plan
-Current local access UI is connected to Supabase. Eight local migrations enforce identity-bound owner assignment, tenant isolation, current membership revocation and staff MFA. Browser tests exercise actual enrollment/challenge, backup factors and password recovery without an assurance bypass; a clerk cannot administer an owner's factors. The runtime never falls back to prototype records. Self-routing exposes only the caller's access status before MFA. Directory rename/archive and a bounded owner/MFA-gated account/contact audit feed are enforced in PostgreSQL, not only the UI.
+Current local access UI is connected to Supabase. Ten local migrations enforce identity-bound owner assignment, tenant isolation, current membership revocation, staff MFA and durable invitation attempt tracking. Browser tests exercise actual enrollment/challenge, backup factors, password recovery and invitation reconciliation without an assurance bypass; a clerk cannot administer an owner's factors or reconcile attempts. The runtime never falls back to prototype records. Self-routing exposes only the caller's access status before MFA. Directory rename/archive and bounded owner/MFA-gated access and invitation review are enforced in PostgreSQL, not only the UI.
 
-See STATUS.md for latest test evidence and ONBOARDING.md for identity confirmation, paper-delivery limitations, 10-second UI refresh, and recovery. Remaining work includes uncertain dispatch reconciliation, safe resend, injected partial-failure tests, real elapsed expiry, parallel transactions, all-factors-lost recovery drill and independent review. No hosted/production security claim.
+See STATUS.md for the exact current test evidence and ONBOARDING.md for identity confirmation, invitation states, resend limits, paper-delivery limitations, 10-second UI refresh, and recovery. No hosted/production security claim.
+
+## Invitation dispatch reliability — migrations 202610160009 through 202610160011
+
+Every invitation intent has a caller-generated stable UUID. The trusted `prepare_account_invitation` transaction binds it to the property, normalized `.invalid` recipient and `tenant`/`staff` type, and writes the request audit record atomically. Reuse with changed details is rejected. A unique property/recipient index prevents a second intent for that recipient, including after a definitive rejection or provider-confirmed issuance; this deliberately keeps reissue unavailable pending a separate policy decision.
+
+| State | Evidence and allowed transition |
+| --- | --- |
+| `prepared` | Request and request audit committed; no provider call has started. Only this state can be claimed. An owner may explicitly continue this exact saved request after current authorization is rechecked. |
+| `dispatching` | The database claim and start audit committed. The external call may or may not have started; process death can occur between claim and call. Never retry the provider call from this state. |
+| `issued` | Supabase Auth returned a user ID and the completion state/audit committed. This confirms provider issuance only, not inbox delivery or real-world identity. |
+| `rejected` | Auth returned an explicitly allowlisted definitive HTTP rejection (400, 401, 403, 404 or 422) and completion/audit committed. Other statuses and transport failures are uncertain. Reissue is not enabled. |
+| `uncertain` | Provider outcome could not be established and that outcome/audit committed. No automatic retry. |
+| `accepted` | An owner/MFA reconciliation read found the exact provider-returned user ID with the exact invited email confirmed after the request baseline. This establishes Auth email confirmation for that linked account only. |
+
+PostgreSQL locks the property and attempt while preparing/claiming. A stable ID, payload consistency check and transactional claim ensure competing requests cannot both receive a successful claim; only the winner calls Auth. `issued`, `rejected`, `uncertain` and `accepted` states are returned for repeated requests without another provider call. If provider success is followed by completion/audit failure, the completion transaction rolls back and `dispatching` remains unresolved. If the client response is lost after completion, retrying the same ID returns the persisted state. This is a database claim plus safe no-retry behavior, **not** an atomic transaction with Auth, exactly-once delivery, or proof of email arrival.
+
+Owner review requires current owner membership and AAL2. It shows fixed-format masked recipient information and the minimum status evidence, and appends actor/reason/evidence source without changing the original state. Review text rejects links, credential-like terms and email addresses; the general audit reason remains a fixed message. A matching Auth account is shown as evidence but does not prove a specific attempt. No reconciliation action resends, grants access or fabricates delivery. Automatic `accepted` reconciliation is limited to the provider-linked Auth ID/email/confirmation timestamp evidence above.
+
+Migration 010 also stores the actual dispatching staff actor on the attempt; provider outcome audit attributes to that dispatcher rather than assuming the requester sent it. Automatic acceptance reconciliation is attributed to the owner who performed the reconciliation. The normalized recipient is retained in `private.invitation_attempts`, with no direct browser/service-role table grant; only the trusted Edge Function obtains it for an explicitly authorized `prepared` continuation. Owners see a masked address. This private row is retained indefinitely in the current implementation because it enforces the no-reissue constraint; database administrators/backups remain within the trusted boundary. The approved retention duration and resulting reissue policy remain open. Recipient addresses, invitation tokens, links, passwords, MFA secrets and raw provider bodies are not written to general audit payloads or application logs.
+
+Authorization and the external send cannot be atomic. The claim checks current role and MFA, but a revocation can commit after claim and before the Auth call; an invitation may therefore issue during that narrow race. Invitation acceptance still creates no staff membership or tenant contact, so the recipient receives no application access until a separate owner assignment.
+
+Evidence: PGlite applies migrations 009 through 011 and tests idempotency, changed payload, role/MFA, revocation, serialization, rollback on request/completion audit failure, provider outcome transitions, owner review and acceptance audit attribution when the request actor differs from the reconciling owner. Dependency-injected workflow tests simulate provider rejection/timeout, concurrent claim results, provider success plus audit failure, and lost responses. The 22-check local Supabase suite exercises actual Auth/MFA/PostgREST/Mailpit issuance, same-ID/concurrent HTTP calls, no assignment on acceptance, audit preservation and fixture cleanup. Its local-only fault test lets Auth issue a message, then injects a database constraint preventing the outcome audit; the attempt remains unresolved and a retry does not dispatch again. This does not simulate an Auth timeout or prove provider behavior outside local Supabase. See [STATUS.md](STATUS.md) for current complete test results.
+
+Unresolved owner policy: what evidence, elapsed time, and approval permit reissue after definitive rejection, uncertain outcome, provider expiry, or issuance without delivery confirmation, and how long recipient details may be retained. Until a policy is approved, same-property/same-address reissue is blocked.
 
 The following foundation description and counts are historical; the current access milestone supersedes statements that the UI/bootstrap/recovery are missing.
 
@@ -29,11 +54,11 @@ Required additional tests: actual elapsed-time invitation expiry, first-owner bo
 
 No attachments initially. Minimize PII, redact logs, private acknowledgments/storage, HTTPS and reviewed CSP/headers before deployment. No production credentials in repository or AI prompts. Independent security/accounting review required before launch; no claim of full security.
 
-## Hardening update (16 Oct 2026)
+## Prior hardening record (superseded by migrations 009/010)
 
 Migration 202610160004 restricts caller audit writes to requests. Only service_role can complete an existing request. Completion inherits its actor/property, locks the request row, accepts identical retries and rejects conflicting outcomes. The Edge Function uses its admin client for completion. This records dispatcher results, not proof of inbox delivery.
 
-Intended invitation addresses are registered for cleanup before dispatch. Injected partial-delivery failure cleanup remains untested. Dispatch reconciliation and send idempotency across Auth and SQL remain open; do not automatically retry uncertain sends.
+At that earlier stage, intended invitation addresses were registered for cleanup before dispatch, but injected partial-delivery cleanup was not yet tested and dispatch reconciliation/idempotency remained open. Migrations 009–011 and the current test evidence below supersede those gaps; never automatically retry uncertain sends.
 
 The bootstrap is a local administrative transaction for confirmed fictional .invalid Auth identities. It locks initialization, creates property/owner/audit atomically and rejects conflicting initialized states. No RPC or password is created; MFA is still required. This is not a production bootstrap or recovery procedure.
 
@@ -45,12 +70,12 @@ Migration 202610160008 corrects the audit RPC's Auth email output types for the 
 
 Privilege guidance checked: https://supabase.com/docs/guides/database/functions
 
-## Review findings — 16 Oct 2026
+## Historical review findings — 16 Oct 2026
 
-Historical findings: outcome provenance and fixture pre-registration are repaired. Cross-service dispatch/retry and injected-failure coverage remain open.
+The following findings were the prior-state review and are addressed by migrations 009/010 and the implementation above. Their old descriptions are retained as historical evidence, not current open defects.
 
 - **Invitation audit provenance:** `record_account_invitation` is executable by authenticated users and permits appropriately authorized staff to supply `requested`, `sent` or `failed` directly. The function checks role/MFA but does not prove an Auth invitation occurred or enforce an ordered outcome transition. A `sent` event alone is therefore not trustworthy dispatch evidence. Before operational use, restrict outcome recording to a trusted dispatch path and test direct-client spoofing and conflicting outcomes. Use a new migration; preserve applied migrations.
 - **Dispatch is not atomic with audit:** the Edge Function authorizes, records a request, calls Auth and records the outcome in separate operations. Revocation or audit failure between calls can leave an issued invitation without a confirmed outcome. Retry handling needs an explicit reconciliation/idempotency design; the current random ID per request does not deduplicate repeated sends.
 - **Integration cleanup on failure:** the test script registers invited email addresses for cleanup only after a successful response. An Auth send followed by an audit/response failure can leave fictional users or messages behind. Register intended fixture addresses before dispatch and exercise partial-failure cleanup in the next test-hardening slice.
 
-These are source-review findings, not newly exercised failure scenarios. Existing passing checks cover successful local flows and selected denials; they do not close these gaps. Invitations still do not grant application membership.
+The deterministic fault tests above exercise the transactional and orchestration failure boundaries; actual local Auth remains a success-path integration, not a simulated provider timeout. Invitations still do not grant application membership.

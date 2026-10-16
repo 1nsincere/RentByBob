@@ -1,30 +1,49 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Button } from '../components/atoms'
 import { Feedback } from './AuthForms'
 import { supabase, stateLabels, type Account, type Tenant } from './client'
 
 export function Invitations({ propertyId, owner }: { propertyId: string; owner: boolean }) {
   const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [error, setError] = useState(false)
-  const [attempted, setAttempted] = useState(false)
+  const [attempted, setAttempted] = useState(false); const [email, setEmail] = useState('')
+  const [accountType, setAccountType] = useState('tenant'); const [attemptId, setAttemptId] = useState(() => crypto.randomUUID())
+  const [attemptStatus, setAttemptStatus] = useState('')
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (busy) return
+    if (!email.toLowerCase().endsWith('.invalid')) {
+      setError(true); setMessage('Use a fictional .invalid address for this local application.'); return
+    }
+    setBusy(true); setAttempted(true); setMessage(''); setError(false)
+    try {
+      const { data, error } = await supabase!.functions.invoke('invite-account', {
+        body: { propertyId, accountType, email, attemptId },
+      })
+      if (error || !data?.status || !data?.message) {
+        setAttemptStatus('unconfirmed')
+        setError(true)
+        setMessage('The current attempt could not be confirmed. Keep its reference and ask an owner to review it. Do not start another send.')
+        return
+      }
+      setAttemptStatus(String(data.status))
+      setMessage(String(data.message))
+    } catch {
+      setAttemptStatus('unconfirmed')
+      setError(true)
+      setMessage('The current attempt could not be confirmed. Keep its reference and ask an owner to review it. Do not start another send.')
+    } finally { setBusy(false) }
+  }
   return <section className="card"><h2>Invite an account</h2><p>Invitation delivery does not grant property or tenant access. An owner must approve each assignment separately.</p>
     <Feedback message={message} error={error} />
-    <form onSubmit={async e => {
-      e.preventDefault(); if (busy || attempted) return
-      const f = new FormData(e.currentTarget); const email = String(f.get('invite-email')).trim()
-      if (!email.toLowerCase().endsWith('.invalid')) { setError(true); setMessage('Use a fictional .invalid address for this local application.'); return }
-      setBusy(true); setAttempted(true); setMessage('')
-      try {
-        const { error } = await supabase!.functions.invoke('invite-account', { body: { propertyId, accountType: String(f.get('account-type')), email } })
-        if (error) throw error
-        setError(false); setMessage('Invitation pending. The local message is in Mailpit. After acceptance, an owner must separately assign access.')
-      } catch { setError(true); setMessage('Invitation delivery could not be confirmed. Do not resend automatically. Ask an owner to review Auth, Mailpit and the audit record before another attempt.') }
-      finally { setBusy(false) }
-    }}>
-      <label htmlFor="invite-email">Invitation email</label><input id="invite-email" name="invite-email" type="email" required disabled={attempted} placeholder="person@example.invalid" />
-      <label htmlFor="account-type">Invitation purpose</label><select id="account-type" name="account-type" disabled={attempted}><option value="tenant">Renter/contact</option>{owner && <option value="staff">Staff</option>}</select>
-      <Button className="primary" disabled={busy || attempted}>{busy ? 'Sending once…' : 'Send invitation'}</Button>
+    <form onSubmit={submit}>
+      <label htmlFor="invite-email">Invitation email</label><input id="invite-email" name="invite-email" type="email" required disabled={busy || attempted} value={email} onChange={event => setEmail(event.target.value)} placeholder="person@example.invalid" />
+      <label htmlFor="account-type">Invitation purpose</label><select id="account-type" name="account-type" disabled={busy || attempted} value={accountType} onChange={event => setAccountType(event.target.value)}><option value="tenant">Renter/contact</option>{owner && <option value="staff">Staff</option>}</select>
+      <Button className="primary" disabled={busy}>{busy ? 'Checking same attempt…' : attempted ? 'Check or continue this same attempt' : 'Start invitation attempt'}</Button>
     </form>
-    {attempted && !error && <Button onClick={() => { setAttempted(false); setMessage('') }}>Prepare another invitation</Button>}
+    {attempted && <><p>Attempt reference: <code>{attemptId}</code></p>{attemptStatus && <p>Attempt status: {attemptStatus}</p>}
+      <p>Checking again uses the same reference. It will continue only a request known not to have reached the provider; it will not repeat a provider call whose outcome is uncertain.</p>
+      <Button disabled={busy} onClick={() => { setAttempted(false); setMessage(''); setError(false); setAttemptStatus(''); setEmail(''); setAccountType('tenant'); setAttemptId(crypto.randomUUID()) }}>Prepare a different invitation</Button>
+    </>}
   </section>
 }
 

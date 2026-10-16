@@ -6,6 +6,7 @@ import { Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
 import { Invitations, ManageAccess } from './access/ManageAccess'
 import { PropertyDirectory } from './access/PropertyDirectory'
 import { AccessAudit } from './access/AccessAudit'
+import { InvitationReconciliation } from './access/InvitationReconciliation'
 
 type Snapshot = { access: AccessState; mfa: boolean; properties: Property[]; memberships: Membership[]; tenants: Tenant[] }
 export function App() {
@@ -78,7 +79,7 @@ export function App() {
             <ul className="records">{tenantList.filter(t => t.display_name.toLowerCase().includes(search.trim().toLowerCase())).map(t => <li key={t.id}><div><strong>{t.display_name}</strong><p>{t.kind === 'business' ? 'Business tenant' : 'Individual tenant'} · {t.archived_at ? 'Archived' : 'Active'}</p></div></li>)}</ul>
             {!tenantList.some(t => t.display_name.toLowerCase().includes(search.trim().toLowerCase())) && <p>No authorized tenant records match this view.</p>}
           </section>
-          {role && <><PropertyDirectory key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} /><CreateTenant key={`create:${propertyId}`} propertyId={propertyId} done={() => void refresh()} /><Invitations key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} />{role === 'owner' && <><ManageAccess key={`access:${propertyId}`} propertyId={propertyId} tenants={tenantList} changed={() => void refresh()} /><AccessAudit key={`audit:${propertyId}`} propertyId={propertyId} /></>}
+          {role && <><PropertyDirectory key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} /><CreateTenant key={`create:${propertyId}`} propertyId={propertyId} done={() => void refresh()} /><Invitations key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} />{role === 'owner' && <><ManageAccess key={`access:${propertyId}`} propertyId={propertyId} tenants={tenantList} changed={() => void refresh()} /><InvitationReconciliation key={`invitation-reconciliation:${propertyId}`} propertyId={propertyId} /><AccessAudit key={`audit:${propertyId}`} propertyId={propertyId} /></>}
             <section className="card"><h2>Account security</h2><p>Enroll a backup authenticator on a separate device before losing access to your main one. Password recovery does not bypass MFA.</p><Button onClick={() => setBackup(!backup)}>{backup ? 'Close backup setup' : 'Add backup authenticator'}</Button>{backup && <Mfa backup done={() => { setBackup(false); void refresh() }} />}</section></>}
         </>}
       </>}

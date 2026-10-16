@@ -1,8 +1,11 @@
 # Decisions and open questions
 ## Current access and repository decisions - 16 Oct 2026
 - User authorized private GitHub repository 1nsincere/RentByBob; main is connected and prior commits preserved.
-- Local access UI, directory maintenance and owner account/contact access-audit review are implemented. See STATUS.md for current evidence; earlier next-step notes below are historical.
+- Local access UI, directory maintenance, owner account/contact access-audit review, durable invitation tracking and owner invitation reconciliation are implemented locally. See STATUS.md for current evidence; earlier next-step notes below are historical.
 - Every contact or staff assignment requires owner MFA and verified email/UUID binding. James's renter invitation authority does not include assignment authority.
+- One stable UUID represents a single invitation intent. Same-ID/same-payload retries read saved state; changed payloads are rejected. A property/recipient may have only one recorded attempt, so reissue is intentionally unavailable until a separate policy is approved.
+- Provider acceptance is not inbox delivery; account existence is not attempt evidence. Only a provider-linked Auth account confirmed after the request can move an issued attempt to accepted. Owner review preserves unresolved status and does not send or assign access.
+- Keep recipient data in the restricted attempt table indefinitely for now to enforce no reissue. Retention duration is not a policy decision and must be confirmed before changing this guard or removing records.
 - Keep email-based onboarding for this slice. Paper invitation links are a documented future delivery option, not username-only access. No fake operational emails or custom password storage.
 - Backup authenticator recovery is implemented. Email password reset does not bypass MFA; all-factors-lost operator recovery requires a separate reviewed procedure.
 - Migration 202610160007 adds owner/MFA-only directory maintenance and a bounded access-audit view. Financial dependencies are mapped in BUSINESS_RULES.md; independent work may proceed.
@@ -24,14 +27,14 @@ Per-unit/bed/person charging; calendar/anniversary billing; deadline and grace p
 ## Blocking access rules
 Latest user direction supersedes the earlier readability gate: routine UI decisions may proceed without approval; build small complete slices beginning with migrations. Live database modifications, public deployment, purchases and real-data import remain unauthorized.
 
-Latest update on 16 Oct 2026: user chose email addresses instead. This supersedes the earlier no-email preference and proposed phone/password direction. Use Supabase email/password and the original brief's staff-initiated expiring invitation flow: the owner may invite renters or staff; James may invite renters only. The authenticated `invite-account` Edge Function implements that authorization and invitation dispatch. The recipient sets their own password; staff never see or retrieve permanent passwords. Public signup remains disabled; invitation alone must not grant staff roles or tenant access. Tests use only fictional `.invalid` accounts and local Mailpit; no real invitations/accounts were created.
+Current invitation implementation: the owner may invite renters or staff; James may invite renters only. The recipient sets their own password; invitation acceptance assigns no staff role or tenant access. Public signup remains disabled. Tests use fictional `.invalid` accounts and local Mailpit; no real invitations/accounts were created.
 
-Use real individual email addresses, including for business contacts. Verified link acceptance, recipient password setup and sign-in, one-time link/replay handling, invitation authority and local Mailpit delivery have been tested against local Supabase. Invitation lifetime is configured to one hour, but elapsed expiry has not been tested. Generic login/recovery responses, frontend setup and recovery, first-owner bootstrap, safe resend, access assignment after invitation, production redirect/email configuration and recovery operations remain open. Staff MFA was verified for trusted local calls; enrollment/recovery UX remains untested. No hosted email or purchase is authorized. Paper temporary passwords and voucher-only login are not the selected version-one path.
+Use of real individual email addresses, including for business contacts, remains an operational policy choice. Local link acceptance, recipient password setup/sign-in, one-time replay rejection, invitation authority, stable attempt retry, owner reconciliation and Mailpit delivery are tested. Invitation lifetime is configured to one hour, but elapsed expiry has not been tested. The system cannot prove inbox delivery. Safe resend/reissue and recipient retention remain undecided and unavailable; owner/MFA assignment remains separate. No hosted email, purchase or production redirect is authorized. Paper temporary passwords and voucher-only login are not the selected version-one path.
 Approval evidence, authorized collectors, contact access after move-out, retention and issuance policy remain open.
 
-## Review clarification — 16 Oct 2026
+## Historical review clarification — 16 Oct 2026
 
-The current review reconciles the progress tracker and setup instructions; it does not start the next feature milestone or change financial policy. First-owner bootstrap remains the next planned development slice. Invitation audit provenance and partial-failure cleanup are open hardening work recorded in SECURITY.md and must be resolved before operational use.
+At that review, first-owner bootstrap remained the next planned development slice. Migration 009 and the current invitation reliability milestone supersede that direction. Historical invitation findings are addressed as described in SECURITY.md; no financial policy is changed here.
 
 ## Official references checked
 - https://vite.dev/guide/
@@ -40,12 +43,18 @@ The current review reconciles the progress tracker and setup instructions; it do
 - https://supabase.com/docs/guides/database/postgres/row-level-security
 - https://supabase.com/docs/guides/auth/managing-user-data
 
-## Local access hardening and bootstrap - 16 Oct 2026
+## Historical local access hardening and bootstrap - 16 Oct 2026
 
-Continue under the user's development authorization. Bootstrap is local-only, accepts an existing confirmed fictional .invalid Auth UUID, and creates the first fictional property/owner atomically. Identical retries are no-ops; any different initialized state is refused. No real owner account is created. Invitation outcome audit is service-only; uncertain dispatch still requires review before retrying. Next feature slice: frontend sign-in and invitation callback/password setup, followed by recovery/MFA and owner access-assignment UX.
+Bootstrap is local-only, accepts an existing confirmed fictional .invalid Auth UUID, and creates the first fictional property/owner atomically. Identical retries are no-ops; any different initialized state is refused. This is a historical completed slice; see current STATUS.md. No real owner account is created.
 
 ## Directory maintenance and access-audit decisions — 16 Oct 2026
 
 Migration 202610160007 adds owner/MFA-authorized rename and archive for buildings and units. Archiving a building archives all its units in the same transaction. Archived records remain visible to staff with their history, cannot be renamed or reactivated through the UI, and cannot parent new units. Active labels must be unique; labels from archived records may be reused because identity and audit history remain attached to the original IDs. These location labels do not imply occupancy, capacity or rent rules.
 
 The owner access-history view exposes at most 100 recent access assignment/revocation, tenant archival and invitation-dispatch events. It displays event time, action, actor/target email where applicable, tenant name and reason. Access is enforced by a trusted owner/MFA database function. Invitation outcomes remain dispatch results, not proof of inbox delivery. This migration must be locally applied only after migration, API and browser checks pass.
+
+## Invitation retry and retention policy — unresolved
+
+Migration 202610160009 makes a best-effort external dispatch safe by refusing to repeat a provider call once the database claim is made. It cannot determine whether a crashed `dispatching` attempt reached Auth. Definitive provider rejection, uncertain outcome, expired invitations, and issued-but-undelivered invitations all currently remain non-reissuable for the same property/recipient. No resend UI or manual status override exists.
+
+Before relaxing that guard, decide who may authorize reissue, what evidence qualifies, whether any waiting period applies, how provider expiry is proven, and whether provider API behavior supports a safe resend. Also decide recipient-data retention duration and archival/deletion effects on idempotency. Do not infer these rules from Auth account existence, delivery assumptions, or a local test.

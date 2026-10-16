@@ -58,7 +58,7 @@ function New-LocalMfaSession([string]$Email, [string]$Password, [string]$ApiUrl,
   return $verified
 }
 
-function Invoke-LocalInvitation($Local, [string]$Token, [string]$PropertyId, [string]$AccountType, [string]$Email) {
+function Invoke-LocalInvitation($Local, [string]$Token, [string]$PropertyId, [string]$AccountType, [string]$Email, [string]$AttemptId) {
   return Invoke-WebRequest -Uri "$($Local.API_URL)/functions/v1/invite-account" -Headers @{
     apikey = $Local.ANON_KEY
     Authorization = "Bearer $Token"
@@ -67,7 +67,36 @@ function Invoke-LocalInvitation($Local, [string]$Token, [string]$PropertyId, [st
     propertyId = $PropertyId
     accountType = $AccountType
     email = $Email
+    attemptId = $AttemptId
   } | ConvertTo-Json) -UseBasicParsing -ErrorAction Stop
+}
+
+function Invoke-LocalInvitationPair($Local, [string]$Token, [string]$PropertyId, [string]$AccountType, [string]$Email, [string]$AttemptId) {
+  Add-Type -AssemblyName System.Net.Http
+  $client = [System.Net.Http.HttpClient]::new()
+  try {
+    $client.DefaultRequestHeaders.Add('apikey', $Local.ANON_KEY)
+    $client.DefaultRequestHeaders.Add('Authorization', "Bearer $Token")
+    $client.DefaultRequestHeaders.Add('Origin', 'http://127.0.0.1:5173')
+    $body = @{
+      propertyId = $PropertyId; accountType = $AccountType; email = $Email; attemptId = $AttemptId
+    } | ConvertTo-Json -Compress
+    $content = [System.Net.Http.StringContent]::new($body, [System.Text.Encoding]::UTF8, 'application/json')
+    $otherContent = [System.Net.Http.StringContent]::new($body, [System.Text.Encoding]::UTF8, 'application/json')
+    $first = $client.PostAsync("$($Local.API_URL)/functions/v1/invite-account", $content)
+    $second = $client.PostAsync("$($Local.API_URL)/functions/v1/invite-account", $otherContent)
+    [System.Threading.Tasks.Task]::WaitAll(@($first, $second))
+    $results = [System.Collections.Generic.List[object]]::new()
+    foreach ($task in @($first, $second)) {
+      $response = $task.Result
+      $responseBody = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult() | ConvertFrom-Json
+      $results.Add([pscustomobject]@{ StatusCode = [int]$response.StatusCode; Body = $responseBody })
+      $response.Dispose()
+    }
+    return $results.ToArray()
+  } finally {
+    $client.Dispose()
+  }
 }
 
 function Get-MailpitMessagesForAddresses($Messages, [string[]]$Addresses) {
@@ -116,9 +145,12 @@ $tenantB = [guid]::NewGuid().ToString()
 $attemptTenant = [guid]::NewGuid().ToString()
 $createdUsers = [System.Collections.Generic.List[string]]::new()
 $invitedEmails = [System.Collections.Generic.List[string]]::new()
+$invitationAttemptIds = [System.Collections.Generic.List[string]]::new()
 $mailpitMessageIds = [System.Collections.Generic.List[string]]::new()
 $passed = [System.Collections.Generic.List[string]]::new()
 $sqlFixturesStarted = $false
+$auditConstraintAdded = $false
+$auditFailureConstraint = "reject_test_provider_issued_$testId"
 $stage = 'read local migration history'
 $failed = $false
 
@@ -253,6 +285,10 @@ try {
 
   $stage = 'verify renter cannot issue invitations'
   $inviteStatus = 0
+  $renterAttemptId = [guid]::NewGuid().ToString()
+  $renterRejectedEmail = "must-not-send-$testId@example.invalid"
+  $invitationAttemptIds.Add($renterAttemptId)
+  $invitedEmails.Add($renterRejectedEmail)
   try {
     $null = Invoke-WebRequest -Uri "$($local.API_URL)/functions/v1/invite-account" -Headers @{
       apikey = $local.ANON_KEY
@@ -261,7 +297,8 @@ try {
     } -Method Post -ContentType 'application/json' -Body (@{
       propertyId = $propertyId
       accountType = 'staff'
-      email = "must-not-send-$testId@example.invalid"
+      email = $renterRejectedEmail
+      attemptId = $renterAttemptId
     } | ConvertTo-Json) -UseBasicParsing -ErrorAction Stop
     $inviteStatus = 200
   } catch {
@@ -272,16 +309,44 @@ try {
 
   $stage = 'verify clerk can invite renters but cannot invite staff'
   $clerkInviteEmail = "invite-tenant-$testId@example.invalid"
+  $clerkInviteAttemptId = [guid]::NewGuid().ToString()
   $invitedEmails.Add($clerkInviteEmail)
-  $clerkInviteResponse = Invoke-LocalInvitation $local $clerkToken $propertyId 'tenant' $clerkInviteEmail
-  if ([int]$clerkInviteResponse.StatusCode -ne 202) { throw 'Authorized clerk renter invitation did not return 202.' }
-  $clerkInvite = $clerkInviteResponse.Content | ConvertFrom-Json
-  if (-not $clerkInvite.invitationId) { throw 'Clerk renter invitation did not return its audit reference.' }
-  $passed.Add('MFA clerk can issue a renter invitation')
+  $invitationAttemptIds.Add($clerkInviteAttemptId)
+  $clerkInviteResponses = @(Invoke-LocalInvitationPair $local $clerkToken $propertyId 'tenant' $clerkInviteEmail $clerkInviteAttemptId)
+  if ($clerkInviteResponses.Count -ne 2 -or @($clerkInviteResponses | Where-Object { $_.StatusCode -ne 200 }).Count -gt 0) {
+    throw 'Concurrent authorized clerk invitation requests did not return persisted attempt responses.'
+  }
+  if (@($clerkInviteResponses | Where-Object { $_.Body.status -notin @('issued', 'dispatching') }).Count -gt 0) {
+    throw 'Concurrent invitation requests returned an invalid attempt state.'
+  }
+  $clerkInvite = $clerkInviteResponses[0].Body
+  $passed.Add('MFA clerk can issue renter invitations with one concurrent provider claim')
+
+  $stage = 'retry the same invitation identifier after a lost response'
+  $clerkRetry = Invoke-LocalInvitation $local $clerkToken $propertyId 'tenant' $clerkInviteEmail $clerkInviteAttemptId
+  if ([int]$clerkRetry.StatusCode -ne 200 -or ($clerkRetry.Content | ConvertFrom-Json).status -ne 'issued') {
+    throw 'Retrying the same invitation attempt did not return its persisted issued state.'
+  }
+  $changedPayloadStatus = 0
+  $changedPayloadEmail = "changed-$testId@example.invalid"
+  $invitedEmails.Add($changedPayloadEmail)
+  try {
+    $null = Invoke-LocalInvitation $local $clerkToken $propertyId 'tenant' $changedPayloadEmail $clerkInviteAttemptId
+    $changedPayloadStatus = 200
+  } catch {
+    if ($_.Exception.Response) { $changedPayloadStatus = [int]$_.Exception.Response.StatusCode }
+    else { throw 'Changed-payload invitation request failed unexpectedly.' }
+  }
+  if ($changedPayloadStatus -ne 409) { throw "Reusing an invitation identifier with changed details returned HTTP $changedPayloadStatus." }
+  $passed.Add('Same identifier retry uses persisted state and changed payload is rejected')
 
   $clerkStaffStatus = 0
+  $clerkStaffAttemptId = [guid]::NewGuid().ToString()
+  $clerkStaffEmail = "clerk-staff-$testId@example.invalid"
+  $invitationAttemptIds.Add($clerkStaffAttemptId)
+  $invitedEmails.Add($clerkStaffEmail)
   try {
-    $null = Invoke-LocalInvitation $local $clerkToken $propertyId 'staff' "clerk-staff-$testId@example.invalid"
+    $null = Invoke-LocalInvitation $local $clerkToken $propertyId 'staff' $clerkStaffEmail $clerkStaffAttemptId
     $clerkStaffStatus = 202
   } catch {
     if ($_.Exception.Response) { $clerkStaffStatus = [int]$_.Exception.Response.StatusCode } else { throw 'Clerk staff invitation request failed unexpectedly.' }
@@ -291,26 +356,96 @@ try {
 
   $stage = 'verify owner can issue renter and staff invitations'
   $ownerTenantEmail = "owner-tenant-$testId@example.invalid"
+  $ownerTenantAttemptId = [guid]::NewGuid().ToString()
   $invitedEmails.Add($ownerTenantEmail)
+  $invitationAttemptIds.Add($ownerTenantAttemptId)
   $ownerStaffEmail = "owner-staff-$testId@example.invalid"
+  $ownerStaffAttemptId = [guid]::NewGuid().ToString()
   $invitedEmails.Add($ownerStaffEmail)
-  $ownerTenantResponse = Invoke-LocalInvitation $local $ownerToken $propertyId 'tenant' $ownerTenantEmail
-  if ([int]$ownerTenantResponse.StatusCode -ne 202) { throw 'Authorized owner renter invitation did not return 202.' }
+  $invitationAttemptIds.Add($ownerStaffAttemptId)
+  $ownerTenantResponse = Invoke-LocalInvitation $local $ownerToken $propertyId 'tenant' $ownerTenantEmail $ownerTenantAttemptId
+  if ([int]$ownerTenantResponse.StatusCode -ne 200 -or ($ownerTenantResponse.Content | ConvertFrom-Json).status -ne 'issued') { throw 'Authorized owner renter invitation was not confirmed as issued.' }
   $ownerTenantInvite = $ownerTenantResponse.Content | ConvertFrom-Json
-  if (-not $ownerTenantInvite.invitationId) { throw 'Owner renter invitation did not return an audit reference.' }
-  $ownerStaffResponse = Invoke-LocalInvitation $local $ownerToken $propertyId 'staff' $ownerStaffEmail
-  if ([int]$ownerStaffResponse.StatusCode -ne 202) { throw 'Authorized owner staff invitation did not return 202.' }
+  if ($ownerTenantInvite.attemptId -ne $ownerTenantAttemptId) { throw 'Owner renter invitation returned a different attempt reference.' }
+  $ownerStaffResponse = Invoke-LocalInvitation $local $ownerToken $propertyId 'staff' $ownerStaffEmail $ownerStaffAttemptId
+  if ([int]$ownerStaffResponse.StatusCode -ne 200 -or ($ownerStaffResponse.Content | ConvertFrom-Json).status -ne 'issued') { throw 'Authorized owner staff invitation was not confirmed as issued.' }
   $ownerStaffInvite = $ownerStaffResponse.Content | ConvertFrom-Json
-  if (-not $ownerStaffInvite.invitationId) { throw 'Owner staff invitation did not return an audit reference.' }
+  if ($ownerStaffInvite.attemptId -ne $ownerStaffAttemptId) { throw 'Owner staff invitation returned a different attempt reference.' }
   $passed.Add('MFA owner can issue renter and staff invitations')
+
+  $stage = 'simulate local provider issuance followed by outcome audit failure'
+  $partialEmail = "partial-audit-$testId@example.invalid"
+  $partialAttemptId = [guid]::NewGuid().ToString()
+  $invitedEmails.Add($partialEmail)
+  $invitationAttemptIds.Add($partialAttemptId)
+  $null = Invoke-LocalSql "ALTER TABLE public.audit_events ADD CONSTRAINT $auditFailureConstraint CHECK(action <> 'account_invitation_provider_issued') NOT VALID"
+  $auditConstraintAdded = $true
+  $partialStatus = 0
+  $partialBody = $null
+  try {
+    $partialResponse = Invoke-LocalInvitation $local $ownerToken $propertyId 'tenant' $partialEmail $partialAttemptId
+    $partialStatus = [int]$partialResponse.StatusCode
+    $partialBody = $partialResponse.Content | ConvertFrom-Json
+  } catch {
+    if ($_.Exception.Response) {
+      $partialStatus = [int]$_.Exception.Response.StatusCode
+      $responseStream = $_.Exception.Response.GetResponseStream()
+      $reader = [System.IO.StreamReader]::new($responseStream)
+      try { $partialBody = $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
+    } else {
+      throw 'The simulated partial invitation request failed without an HTTP response.'
+    }
+  } finally {
+    if ($auditConstraintAdded) {
+      $null = Invoke-LocalSql "ALTER TABLE public.audit_events DROP CONSTRAINT $auditFailureConstraint"
+      $auditConstraintAdded = $false
+    }
+  }
+  if ($partialStatus -ne 503 -or $partialBody.status -ne 'dispatching') {
+    throw 'Provider issuance followed by audit failure did not remain explicitly unresolved.'
+  }
+  $partialRetry = Invoke-LocalInvitation $local $ownerToken $propertyId 'tenant' $partialEmail $partialAttemptId
+  if ([int]$partialRetry.StatusCode -ne 200 -or ($partialRetry.Content | ConvertFrom-Json).status -ne 'dispatching') {
+    throw 'Retry after an audit failure did not return the persisted unresolved state.'
+  }
+  $partialMail = Invoke-RestMethod -Uri "$($local.MAILPIT_URL)/api/v1/messages?start=0&limit=100" -Method Get -ErrorAction Stop
+  if (@(Get-MailpitMessagesForAddresses $partialMail.messages @($partialEmail)).Count -ne 1) {
+    throw 'The partial-success fixture did not retain exactly one local Mailpit message after retry.'
+  }
+  $partialAttempts = Invoke-RestMethod -Uri "$($local.API_URL)/rest/v1/rpc/read_invitation_attempts" -Headers @{
+    apikey = $local.ANON_KEY
+    Authorization = "Bearer $ownerToken"
+  } -Method Post -ContentType 'application/json' -Body (@{ p_property_id = $propertyId } | ConvertTo-Json) -ErrorAction Stop
+  $partialAttempt = @($partialAttempts | Where-Object { $_.attempt_id -eq $partialAttemptId })[0]
+  if (-not $partialAttempt -or $partialAttempt.status -ne 'dispatching' -or -not $partialAttempt.auth_account_matches) {
+    throw 'Owner reconciliation did not preserve uncertainty despite a matching local Auth account.'
+  }
+  $null = Invoke-RestMethod -Uri "$($local.API_URL)/rest/v1/rpc/record_invitation_attempt_review" -Headers @{
+    apikey = $local.ANON_KEY
+    Authorization = "Bearer $ownerToken"
+  } -Method Post -ContentType 'application/json' -Body (@{
+    p_property_id = $propertyId
+    p_attempt_id = $partialAttemptId
+    p_reason = 'Local test observed audit failure after Auth issuance'
+    p_evidence_source = 'Local Mailpit test'
+  } | ConvertTo-Json) -ErrorAction Stop
+  $partialAttempts = Invoke-RestMethod -Uri "$($local.API_URL)/rest/v1/rpc/read_invitation_attempts" -Headers @{
+    apikey = $local.ANON_KEY
+    Authorization = "Bearer $ownerToken"
+  } -Method Post -ContentType 'application/json' -Body (@{ p_property_id = $propertyId } | ConvertTo-Json) -ErrorAction Stop
+  $partialAttempt = @($partialAttempts | Where-Object { $_.attempt_id -eq $partialAttemptId })[0]
+  if ($partialAttempt.status -ne 'dispatching' -or [int]$partialAttempt.review_count -ne 1) {
+    throw 'Owner review changed the unresolved state or was not persisted.'
+  }
+  $passed.Add('Actual local Auth issuance plus injected audit failure remains unresolved, retries once only, and cleans up')
 
   $stage = 'deny browser invitation outcome forgery'
   $spoofStatus = 0
   try {
-    $null = Invoke-WebRequest -Uri "$($local.API_URL)/rest/v1/rpc/complete_account_invitation" -Headers @{
+    $null = Invoke-WebRequest -Uri "$($local.API_URL)/rest/v1/rpc/complete_account_invitation_dispatch" -Headers @{
       apikey = $local.ANON_KEY; Authorization = "Bearer $ownerToken"
     } -Method Post -ContentType 'application/json' -Body (@{
-      p_invitation_id = $ownerStaffInvite.invitationId; p_outcome = 'failed'
+      p_attempt_id = $ownerStaffAttemptId; p_outcome = 'rejected'; p_provider_user_id = $null; p_provider_http_status = 422
     } | ConvertTo-Json) -UseBasicParsing -ErrorAction Stop
   } catch {
     if ($_.Exception.Response) { $spoofStatus = [int]$_.Exception.Response.StatusCode } else { throw 'Outcome denial request failed unexpectedly.' }
@@ -319,7 +454,7 @@ try {
   $passed.Add('Even MFA owner cannot call dispatcher outcome RPC')
 
   $stage = 'verify invitations create no application access and avoid email in audit'
-  $invitationAccess = Invoke-LocalSql "SELECT count(*) AS access_count FROM (SELECT user_id FROM public.staff_memberships UNION ALL SELECT user_id FROM public.tenant_contacts) access_rows JOIN auth.users u ON u.id = access_rows.user_id WHERE lower(u.email) IN ('$clerkInviteEmail','$ownerTenantEmail','$ownerStaffEmail')"
+  $invitationAccess = Invoke-LocalSql "SELECT count(*) AS access_count FROM (SELECT user_id FROM public.staff_memberships UNION ALL SELECT user_id FROM public.tenant_contacts) access_rows JOIN auth.users u ON u.id = access_rows.user_id WHERE lower(u.email) IN ('$clerkInviteEmail','$ownerTenantEmail','$ownerStaffEmail','$partialEmail')"
   $invitationAccessText = $invitationAccess -join "`n"
   $accessStart = $invitationAccessText.IndexOf('{')
   $accessEnd = $invitationAccessText.LastIndexOf('}')
@@ -343,24 +478,36 @@ try {
   $auditActions = @($audit | ForEach-Object { $_.action })
   $auditReasons = @($audit | ForEach-Object { $_.reason })
   $emailInAudit = @($auditReasons | Where-Object { $_ -match '@' }).Count -gt 0
-  if ($auditActions.Count -ne 6 -or $emailInAudit) {
+  $expectedActionCounts = @{
+    account_invitation_requested = 4
+    account_invitation_dispatch_started = 4
+    account_invitation_provider_issued = 3
+    account_invitation_reviewed = 1
+  }
+  $actionCountsValid = $auditActions.Count -eq 12
+  foreach ($actionName in $expectedActionCounts.Keys) {
+    if (@($auditActions | Where-Object { $_ -eq $actionName }).Count -ne $expectedActionCounts[$actionName]) {
+      $actionCountsValid = $false
+    }
+  }
+  if (-not $actionCountsValid -or $emailInAudit) {
     $actionSummary = $auditActions -join ','
-    $failureDetail = "Expected six audit events; database count: $databaseAuditCount; owner API count: $($auditActions.Count); actions: $actionSummary; email present: $emailInAudit."
+    $failureDetail = "Expected twelve pre-acceptance invitation audit events; database count: $databaseAuditCount; owner API count: $($auditActions.Count); actions: $actionSummary; email present: $emailInAudit."
     throw 'Invitation audit records are incomplete or contain an email address.'
   }
-  $passed.Add('Invitations grant no app access and audit contains no email address')
+  $passed.Add('Invitations grant no app access and audits contain no email address')
 
   $stage = 'verify local invitations reached the mail catcher'
   $mail = Invoke-RestMethod -Uri "$($local.MAILPIT_URL)/api/v1/messages?start=0&limit=100" -Method Get -ErrorAction Stop
-  $invitedMail = @(Get-MailpitMessagesForAddresses $mail.messages @($clerkInviteEmail, $ownerTenantEmail, $ownerStaffEmail))
-  if ($invitedMail.Count -ne 3) {
-    $failureDetail = "Expected three local invitation emails; received $($invitedMail.Count)."
-    throw 'Local Mailpit did not receive the expected invitation emails.'
+  $invitedMail = @(Get-MailpitMessagesForAddresses $mail.messages @($clerkInviteEmail, $ownerTenantEmail, $ownerStaffEmail, $partialEmail))
+  if ($invitedMail.Count -ne 4) {
+    $failureDetail = "Expected four local invitation emails; received $($invitedMail.Count)."
+    throw 'Local Mailpit did not receive the expected authorized and injected-partial invitation emails.'
   }
   foreach ($message in $invitedMail) {
     if ($message.ID) { $mailpitMessageIds.Add([string]$message.ID) }
   }
-  $passed.Add('Three authorized invitation emails reached local Mailpit')
+  $passed.Add('Three authorized and one injected-partial invitation email reached local Mailpit')
 
   $stage = 'read invitation email from local Mailpit'
   $clerkInviteMessage = @($invitedMail | Where-Object {
@@ -414,6 +561,23 @@ try {
   $acceptedAccessState = $acceptedAccessText.Substring($acceptedAccessStart, $acceptedAccessEnd - $acceptedAccessStart + 1) | ConvertFrom-Json
   if ([int]$acceptedAccessState.rows[0].access_count -ne 0) { throw 'Accepting an invitation unexpectedly granted application access.' }
   $passed.Add('Accepted invitation still grants no app membership')
+  $stage = 'reconcile accepted invitation without granting access'
+  $reconciledInvitations = Invoke-RestMethod -Uri "$($local.API_URL)/rest/v1/rpc/read_invitation_attempts" -Headers @{
+    apikey = $local.ANON_KEY
+    Authorization = "Bearer $ownerToken"
+  } -Method Post -ContentType 'application/json' -Body (@{ p_property_id = $propertyId } | ConvertTo-Json) -ErrorAction Stop
+  $acceptedAttempt = @($reconciledInvitations | Where-Object { $_.attempt_id -eq $clerkInviteAttemptId })[0]
+  if (-not $acceptedAttempt -or $acceptedAttempt.status -ne 'accepted') {
+    throw 'Owner reconciliation did not link the confirmed Auth account to its issued invitation.'
+  }
+  $reconciliationAudit = Invoke-RestMethod -Uri "$($local.API_URL)/rest/v1/rpc/read_access_audit" -Headers @{
+    apikey = $local.ANON_KEY
+    Authorization = "Bearer $ownerToken"
+  } -Method Post -ContentType 'application/json' -Body (@{ p_property_id = $propertyId } | ConvertTo-Json) -ErrorAction Stop
+  if (@($reconciliationAudit | Where-Object { $_.action -eq 'account_invitation_accepted' }).Count -ne 1) {
+    throw 'Invitation acceptance reconciliation did not preserve its owner-visible audit event.'
+  }
+  $passed.Add('Owner reconciliation recognizes linked email confirmation without granting access')
   $stage = 'verify invitation replay rejection'
   $replay = Get-InviteLinkResponse $inviteUri.AbsoluteUri $local.ANON_KEY
   $replayRejected = $replay.Status -ge 400
@@ -429,6 +593,10 @@ try {
 
   $stage = 'verify disallowed origin cannot issue invitations'
   $originStatus = 0
+  $originRejectedEmail = "must-not-send-origin-$testId@example.invalid"
+  $originAttemptId = [guid]::NewGuid().ToString()
+  $invitedEmails.Add($originRejectedEmail)
+  $invitationAttemptIds.Add($originAttemptId)
   try {
     $null = Invoke-WebRequest -Uri "$($local.API_URL)/functions/v1/invite-account" -Headers @{
       apikey = $local.ANON_KEY
@@ -437,7 +605,8 @@ try {
     } -Method Post -ContentType 'application/json' -Body (@{
       propertyId = $propertyId
       accountType = 'tenant'
-      email = "must-not-send-origin-$testId@example.invalid"
+      email = $originRejectedEmail
+      attemptId = $originAttemptId
     } | ConvertTo-Json) -UseBasicParsing -ErrorAction Stop
     $originStatus = 200
   } catch {
@@ -496,6 +665,18 @@ try {
   $failureType = $_.Exception.GetType().Name
   if ($_.Exception.Response) { $failureHttpStatus = [int]$_.Exception.Response.StatusCode }
 } finally {
+  if ($auditConstraintAdded) {
+    try {
+      $null = Invoke-LocalSql "ALTER TABLE public.audit_events DROP CONSTRAINT $auditFailureConstraint"
+      $auditConstraintAdded = $false
+    } catch {
+      if (-not $failed) {
+        $failed = $true
+        $failureStage = 'remove local fault-injection audit constraint'
+        $failureType = $_.Exception.GetType().Name
+      }
+    }
+  }
   if ($invitedEmails.Count -gt 0) {
     try {
       $mail = Invoke-RestMethod -Uri "$($local.MAILPIT_URL)/api/v1/messages?start=0&limit=100" -Method Get -ErrorAction Stop
@@ -535,6 +716,11 @@ try {
   }
   if ($sqlFixturesStarted) {
     try {
+      if ($invitationAttemptIds.Count -gt 0) {
+        $attemptList = ($invitationAttemptIds | ForEach-Object { "'" + $_.Replace("'", "''") + "'" }) -join ','
+        $null = Invoke-LocalSql "DELETE FROM private.invitation_attempt_reviews WHERE attempt_id IN ($attemptList)"
+        $null = Invoke-LocalSql "DELETE FROM private.invitation_attempts WHERE attempt_id IN ($attemptList)"
+      }
       $null = Invoke-LocalSql "DELETE FROM public.audit_events WHERE property_id='$propertyId'"
       $null = Invoke-LocalSql "DELETE FROM public.tenant_contacts WHERE tenant_id IN ('$tenantA','$tenantB')"
       $null = Invoke-LocalSql "DELETE FROM public.tenants WHERE id IN ('$tenantA','$tenantB','$attemptTenant')"

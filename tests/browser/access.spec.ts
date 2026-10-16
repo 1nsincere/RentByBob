@@ -41,7 +41,6 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     const owner=await open(), renter=await open(), clerk=await open(), invited=await open()
     await signIn(owner,f.users.owner)
     await expect(owner.getByRole('heading',{name:'Staff security check'})).toBeVisible()
-    await checkReflow(owner)
     const low=client(); await low.auth.signInWithPassword(f.users.owner)
     expect((await low.from('tenants').select('id')).data).toEqual([])
     const denied=await low.rpc('find_account_for_assignment',{p_property_id:f.property,p_email:f.users.alice.email})
@@ -52,6 +51,41 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     const ownerApi=await browserClient(owner)
     const initialAudit=await ownerApi.rpc('read_access_audit',{p_property_id:f.property})
     expect(initialAudit.error).toBeNull()
+    const preparedAttemptId=randomUUID()
+    const preparedEmail=`prepared-${f.tag}@example.invalid`;f.invitedEmails.push(preparedEmail)
+    const prepared=await ownerApi.rpc('prepare_account_invitation',{
+      p_property_id:f.property,p_attempt_id:preparedAttemptId,p_account_type:'tenant',p_email:preparedEmail,
+    })
+    expect(prepared.error).toBeNull()
+    const uncertainAttemptId=randomUUID()
+    const uncertainEmail=`uncertain-${f.tag}@example.invalid`;f.invitedEmails.push(uncertainEmail)
+    const uncertain=await ownerApi.rpc('prepare_account_invitation',{
+      p_property_id:f.property,p_attempt_id:uncertainAttemptId,p_account_type:'tenant',p_email:uncertainEmail,
+    })
+    expect(uncertain.error).toBeNull()
+    const claim=await ownerApi.rpc('claim_account_invitation_dispatch',{p_attempt_id:uncertainAttemptId})
+    expect(claim.data.claimed).toBe(true)
+    expect(claim.error).toBeNull()
+    await expect(owner.getByRole('heading',{name:'Invitation attempts and reconciliation'})).toBeVisible()
+    await owner.getByRole('button',{name:'Refresh invitation attempts'}).click()
+    const preparedCard=owner.locator('article').filter({hasText:'p***@***.invalid'})
+    await expect(preparedCard.getByText('Status: Not sent: provider call has not started')).toBeVisible()
+    await preparedCard.getByRole('button',{name:'Continue this unsent attempt'}).click()
+    await expect(preparedCard.getByText('Status: Provider confirmed issuance; email delivery is not confirmed')).toBeVisible()
+    const uncertainCard=owner.locator('article').filter({hasText:'u***@***.invalid'})
+    await expect(uncertainCard.getByText('Status: Unresolved: provider call may have started')).toBeVisible()
+    await uncertainCard.getByLabel('Evidence source checked').fill('Simulated database claim; no provider call made by this fixture')
+    await uncertainCard.getByLabel('Evidence source checked').press('Tab')
+    await expect(uncertainCard.getByLabel('What did you find?')).toBeFocused()
+    await uncertainCard.getByLabel('What did you find?').fill('Browser test leaves provider result unresolved')
+    await uncertainCard.getByRole('button',{name:'Record review without changing status'}).click()
+    await expect(owner.getByRole('status').filter({hasText:'Owner review recorded'})).toBeVisible()
+    await expect(uncertainCard.getByText('Status: Unresolved: provider call may have started')).toBeVisible()
+    const ownerAttempts=await ownerApi.rpc('read_invitation_attempts',{p_property_id:f.property})
+    expect(ownerAttempts.error).toBeNull()
+    expect(ownerAttempts.data.find((row:{attempt_id:string})=>row.attempt_id===uncertainAttemptId)?.review_count).toBe(1)
+    expect(ownerAttempts.data.find((row:{attempt_id:string})=>row.attempt_id===uncertainAttemptId)?.status).toBe('dispatching')
+    await checkReflow(owner)
     await owner.getByLabel('Location label').fill('Fictional section')
     await owner.getByRole('button',{name:'Create location',exact:true}).click()
     await expect(owner.getByText('Location saved without occupancy or billing rules.',{exact:true})).toBeVisible()
@@ -90,11 +124,13 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     await signIn(renter,f.users.alice)
     await expect(renter.getByText(`Fictional Renter A ${f.tag}`,{exact:true})).toBeVisible()
     await expect(renter.getByText(`Fictional Renter B ${f.tag}`,{exact:true})).toHaveCount(0)
+    await expect(renter.getByRole('heading',{name:'Invitation attempts and reconciliation'})).toHaveCount(0)
     const renterApi=await browserClient(renter)
     expect((await renterApi.from('tenants').select('id').eq('id',f.tenantB)).data).toEqual([])
     await signIn(clerk,f.users.clerk);await enroll(clerk)
     await expect(clerk.getByRole('heading',{name:'Clerk tenant directory'})).toBeVisible()
     await expect(clerk.getByRole('heading',{name:'Owner: assign or disable access'})).toHaveCount(0)
+    await expect(clerk.getByRole('heading',{name:'Invitation attempts and reconciliation'})).toHaveCount(0)
     await expect(clerk.locator('#account-type option[value=staff]')).toHaveCount(0)
     await expect(clerk.getByRole('button',{name:'Create location',exact:true})).toHaveCount(0)
     const clerkApi=await browserClient(clerk)
@@ -109,12 +145,12 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     expect((await ownerApi.rpc('set_staff_access',{p_property_id:f.property,p_user_id:f.users.unassigned.id,p_role:'owner',p_reason:'Bypass attempt'})).error).toBeTruthy()
 
     const email=`invited-${f.tag}@example.invalid`;f.invitedEmails.push(email)
-    await clerk.getByLabel('Invitation email').fill(email);await clerk.getByRole('button',{name:'Send invitation',exact:true}).click()
-    await expect(clerk.getByRole('status')).toContainText('Invitation pending')
+    await clerk.getByLabel('Invitation email').fill(email);await clerk.getByRole('button',{name:'Start invitation attempt',exact:true}).click()
+    await expect(clerk.getByRole('status')).toContainText('Supabase Auth confirmed issuance')
     await owner.getByLabel('Exact account email').fill(email);await owner.getByRole('button',{name:'Find account',exact:true}).click()
     await expect(owner.getByText('Invitation pending',{exact:true})).toBeVisible()
     await owner.getByRole('button',{name:'Refresh access history',exact:true}).click()
-    await expect(owner.getByText('Invitation dispatch reported as sent',{exact:true})).toBeVisible()
+    await expect(owner.getByText('Provider confirmed invitation issuance; delivery is not confirmed',{exact:true}).first()).toBeVisible()
     let link:string|null=null
     await expect.poll(async()=>{link=await invitationLink(email);return !!link}).toBe(true)
     await invited.goto(link!)
@@ -178,15 +214,31 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     await expect(invited.getByRole('heading',{name:'Clerk tenant directory'})).toBeVisible()
 
     // A second enrolled factor is the supported self-service MFA recovery path.
+    const beforeBackupFactors=(await admin.auth.admin.mfa.listFactors({userId:f.users.owner.id})).data?.factors??[]
     await owner.getByRole('button',{name:'Add backup authenticator',exact:true}).click()
     const backupSecret=await enroll(owner)
+    const backupFactors=(await admin.auth.admin.mfa.listFactors({userId:f.users.owner.id})).data?.factors??[]
+    const backupFactor=backupFactors.find(factor=>!beforeBackupFactors.some(existing=>existing.id===factor.id))
+    if(!backupFactor) throw new Error('Backup authenticator factor was not created')
     await expect(owner.getByRole('heading',{name:'Add a backup authenticator'})).toHaveCount(0)
     await owner.getByRole('button',{name:'Sign out',exact:true}).click()
     await signIn(owner,f.users.owner)
     await expect(owner.getByRole('heading',{name:'Staff security check'})).toBeVisible()
-    await owner.getByLabel('Authenticator',{exact:true}).selectOption({index:1})
-    await owner.getByLabel('Six-digit authenticator code').fill(totp(backupSecret))
-    await owner.getByRole('button',{name:'Verify code',exact:true}).click()
+    await owner.getByLabel('Authenticator',{exact:true}).selectOption({value:backupFactor.id})
+    let recovered=false
+    for(let attempt=0;attempt<2;attempt++) {
+      await owner.getByLabel('Six-digit authenticator code').fill(totp(backupSecret))
+      await owner.getByRole('button',{name:'Verify code',exact:true}).click()
+      try {
+        await owner.getByRole('heading',{name:'Owner tenant directory'}).waitFor({state:'visible',timeout:5000})
+        recovered=true
+        break
+      } catch {
+        if(!(await owner.getByRole('alert').textContent())?.includes('code could not be verified')) throw new Error('Backup MFA recovery failed for a non-code reason')
+        await owner.waitForTimeout(30000-Date.now()%30000+250)
+      }
+    }
+    expect(recovered).toBe(true)
     await expect(owner.getByRole('heading',{name:'Owner tenant directory'})).toBeVisible()
     // Clerk cannot use Admin Auth to reset an owner's factors.
     const clerkSession=(await clerkApi.auth.getSession()).data.session!

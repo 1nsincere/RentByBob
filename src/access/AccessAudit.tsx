@@ -23,6 +23,12 @@ const actionLabels: Record<string, string> = {
   account_invitation_requested: 'Account invitation requested',
   account_invitation_sent: 'Invitation dispatch reported as sent',
   account_invitation_failed: 'Invitation dispatch reported as failed',
+  account_invitation_dispatch_started: 'Invitation provider call may have started',
+  account_invitation_provider_issued: 'Provider confirmed invitation issuance; delivery is not confirmed',
+  account_invitation_provider_rejected: 'Provider definitively rejected the invitation request',
+  account_invitation_outcome_uncertain: 'Invitation provider outcome is unresolved',
+  account_invitation_accepted: 'Invitation-linked account confirmed its email',
+  account_invitation_reviewed: 'Owner reviewed an invitation attempt',
 }
 
 const eventTime = new Intl.DateTimeFormat('en-PH', {

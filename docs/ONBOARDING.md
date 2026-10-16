@@ -37,8 +37,21 @@ If all factors are lost, stop self-service recovery. The infrastructure owner mu
 
 Sources: [Supabase MFA](https://supabase.com/docs/guides/auth/auth-mfa), [JavaScript MFA limitations](https://supabase.com/docs/reference/javascript/auth-mfa).
 
-## Invitation failures and local verification limits
+## Invitation states and reconciliation
 
-The interface attempts a send once. A failure/uncertain outcome disables further sends in that form and asks for owner review. Refreshing or another client can still start another request: backend cross-request dispatch idempotency/reconciliation is not solved. An audit `sent` outcome records the trusted dispatch response, not delivery or acceptance. Do not automatically resend.
+Each invitation form creates one UUID for the user intent and keeps it for retries. The same UUID and exact property, account type and normalized `.invalid` address return the saved attempt; a changed payload is rejected. A repeated request never repeats the external provider call after dispatch has been claimed. Owners with MFA can open **Invitation attempts and reconciliation** to review masked recipients and statuses, refresh evidence, and append a reason/evidence-source note. A review preserves the state. It does not send, assign access or prove delivery.
 
-Browser tests cover valid setup, invalid/missing callbacks, replay and provider expiry after backdating only a disposable Auth fixture's invitation timestamps. That exercises expiry enforcement without waiting one real hour; elapsed wall-clock expiry and safe reissue remain open. No production email/origin/recovery behavior is claimed.
+| Status | Plain-language meaning and next step |
+| --- | --- |
+| Prepared | The request and audit were saved; the provider call has not started. An owner may explicitly continue this exact saved request. |
+| Dispatching | The provider may or may not have processed it. Do not retry; check local Auth/Mailpit or provider evidence and leave unresolved if inconclusive. |
+| Issued | Supabase Auth confirmed issuance, not delivery to an inbox. Await the recipient or review delivery evidence; no reissue is available. |
+| Rejected | Auth returned a definitive allowlisted rejection. Review its HTTP status; reissue remains disabled pending policy approval. |
+| Uncertain | The provider outcome could not be established. Do not resend; an owner may record what evidence was checked without changing status. |
+| Accepted | The exact Auth user ID returned for the attempt has the same invited email confirmed after the request baseline. This confirms that Auth account's email, not real-world identity or app access. |
+
+PostgreSQL and Auth cannot commit atomically. The process may die after a `dispatching` claim but before calling Auth; or Auth may succeed while outcome/audit persistence or the response fails. Such attempts remain unresolved rather than being converted to success/failure, and they are never retried automatically. A stable-ID retry reads stored state. Access revocation is checked at claim but can race before the external call; an issued invite still creates no property membership. Every tenant/staff assignment remains a separate owner/MFA action.
+
+Safe resend/reissue is deliberately unavailable for the same property/recipient after any recorded attempt, including a definitive rejection. The owner must decide what evidence, wait period, expiry proof and approval could permit a reissue and how long recipient data is retained. Addresses are held in a restricted private table for attempt matching and this no-reissue guard, masked in the owner list and excluded from general audit reasons. They are retained indefinitely until a retention policy is approved.
+
+Tests apply the actual migration and exercise SQL rollback, authorization, idempotency, concurrency and owner review. Workflow fault tests simulate provider timeout, provider success followed by audit failure and lost responses; they do not call real Auth. The local Supabase suite exercises actual local Auth/MFA, concurrent same-ID HTTP calls, Mailpit delivery, recipient acceptance, persisted audit and fixture cleanup. It does not simulate an Auth timeout or test hosted-provider behavior. Invitation lifetime is configured to one hour; elapsed-time expiry and safe reissue remain unverified. This is not a full accessibility or production audit.

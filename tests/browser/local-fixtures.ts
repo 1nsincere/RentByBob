@@ -37,6 +37,9 @@ export async function fixtures() {
     // Only this run's UUID-scoped fixtures; never reset or touch unrelated data.
     sql(`do $$ begin
       delete from public.audit_events where property_id='${property}';
+      delete from private.invitation_attempt_reviews r using private.invitation_attempts a
+        where r.attempt_id=a.attempt_id and a.property_id='${property}';
+      delete from private.invitation_attempts where property_id='${property}';
       delete from public.tenant_contacts where property_id='${property}';
       delete from public.staff_memberships where property_id='${property}';
       delete from public.tenants where property_id='${property}';

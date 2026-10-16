@@ -142,7 +142,7 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
       from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname in ('public','private') and p.prosecdef
     `)
-    assert.equal(result.rows.length, 16)
+    assert.equal(result.rows.length, 22)
     for (const fn of result.rows) {
       assert.ok(fn.proconfig.some(value => value === 'search_path=""'), fn.proname)
       assert.equal(fn.anon_execute, false, fn.proname)
@@ -312,5 +312,152 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     await denied('select * from public.read_access_audit($1)',[property])
     await as(owner,'aal1')
     await denied('select * from public.read_access_audit($1)',[property])
+  })
+  await t.test('invitation attempts serialize dispatch, preserve uncertainty and reconcile only linked acceptance', async () => {
+    const attempt = id(70)
+    const staffAttempt = id(71)
+    const providerUser = id(72)
+    const rejectedAttempt = id(73)
+    const uncertainAttempt = id(74)
+    const revokedAttempt = id(78)
+    const recipient = 'dispatch-owner@example.invalid'
+    await db.exec('reset role')
+    await db.query('insert into auth.users(id,email) values ($1,$2)', [providerUser, recipient])
+    const prepare = 'select public.prepare_account_invitation($1,$2,$3,$4) as result'
+    await as(clerk)
+    const original = [property, attempt, 'tenant', recipient]
+    assert.equal((await db.query<{ result: { status: string } }>(prepare, original)).rows[0].result.status, 'prepared')
+    assert.equal((await db.query<{ result: { status: string } }>(prepare, original)).rows[0].result.status, 'prepared')
+    await assert.rejects(db.query(prepare, [property, attempt, 'tenant', 'changed@example.invalid']))
+    await assert.rejects(db.query(prepare, [property, id(75), 'tenant', recipient]), (error: unknown) =>
+      (error as { code: string }).code === '23505')
+    await denied('select * from private.invitation_attempts')
+
+    await as(clerk, 'aal1')
+    await denied(prepare, [property, id(76), 'tenant', 'low-assurance@example.invalid'])
+    await as(alice, 'aal1')
+    await denied(prepare, [property, id(77), 'tenant', 'renter@example.invalid'])
+    await as(clerk)
+    await denied(prepare, [property, staffAttempt, 'staff', 'staff-invite@example.invalid'])
+    await as(owner)
+    await db.query(prepare, [property, staffAttempt, 'staff', 'staff-invite@example.invalid'])
+    await as(clerk)
+    await denied('select public.claim_account_invitation_dispatch($1)', [staffAttempt])
+    await as(owner)
+
+    const requestAuditFailure = id(79)
+    await db.exec('reset role')
+    await db.exec("alter table public.audit_events add constraint reject_invitation_request check(action <> 'account_invitation_requested') not valid")
+    await as(owner)
+    await assert.rejects(db.query(prepare, [property, requestAuditFailure, 'tenant', 'rollback@example.invalid']))
+    await db.exec('reset role')
+    assert.equal((await db.query('select * from private.invitation_attempts where attempt_id=$1', [requestAuditFailure])).rows.length, 0)
+    await db.exec('alter table public.audit_events drop constraint reject_invitation_request')
+    await as(owner)
+
+    const preparedPayload = await db.query<{ result: { status: string } }>(prepare, [
+      property, revokedAttempt, 'tenant', 'revoked-staff@example.invalid',
+    ])
+    assert.equal(preparedPayload.rows[0].result.status, 'prepared')
+    await db.query(staffSql.replace('$3,$3::text is not null,$4','null,false,$3'), [
+      property, clerk, 'Revoked before pending invitation dispatch',
+    ])
+    await as(clerk)
+    await denied('select public.claim_account_invitation_dispatch($1)', [revokedAttempt])
+    await as(owner)
+
+    const claims = await Promise.all([
+      db.query<{ result: { claimed: boolean; status: string } }>(
+        'select public.claim_account_invitation_dispatch($1) as result', [attempt]),
+      db.query<{ result: { claimed: boolean; status: string } }>(
+        'select public.claim_account_invitation_dispatch($1) as result', [attempt]),
+    ])
+    assert.equal(claims.filter(item => item.rows[0].result.claimed).length, 1)
+    await db.exec('reset role')
+    assert.equal((await db.query<{ status: string }>(
+      'select status from private.invitation_attempts where attempt_id=$1', [attempt],
+    )).rows[0].status, 'dispatching')
+    await as(owner)
+
+    await db.exec('reset role')
+    await db.exec("alter table public.audit_events add constraint reject_invite_completion check(action <> 'account_invitation_provider_issued')")
+    await db.exec('set role service_role')
+    await assert.rejects(db.query(
+      "select public.complete_account_invitation_dispatch($1,'issued',$2,null)", [attempt, providerUser],
+    ))
+    await db.exec('reset role')
+    assert.equal((await db.query<{ status: string }>(
+      'select status from private.invitation_attempts where attempt_id=$1', [attempt],
+    )).rows[0].status, 'dispatching')
+    await db.exec('alter table public.audit_events drop constraint reject_invite_completion; set role service_role')
+    await db.query("select public.complete_account_invitation_dispatch($1,'issued',$2,null)", [attempt, providerUser])
+    await db.query("select public.complete_account_invitation_dispatch($1,'issued',$2,null)", [attempt, providerUser])
+    await assert.rejects(db.query(
+      "select public.complete_account_invitation_dispatch($1,'rejected',null,422)", [attempt],
+    ))
+    await db.exec('reset role')
+    await db.query('update auth.users set email_confirmed_at=now() where id=$1', [providerUser])
+    await as(owner)
+    const read = await db.query<{ attempt_id: string; status: string; masked_recipient: string; auth_account_matches: boolean }>(
+      'select attempt_id,status,masked_recipient,auth_account_matches from public.read_invitation_attempts($1)', [property],
+    )
+    const accepted = read.rows.find(row => row.attempt_id === attempt)
+    assert.equal(accepted?.status, 'accepted')
+    assert.equal(accepted?.masked_recipient, 'd***@***.invalid')
+    assert.equal(accepted?.auth_account_matches, true)
+    assert.equal((await db.query('select * from public.tenant_contacts where user_id=$1', [providerUser])).rows.length, 0)
+    assert.equal((await db.query('select * from public.staff_memberships where user_id=$1', [providerUser])).rows.length, 0)
+    const outcomeActor = await db.query<{ actor_id: string }>(
+      "select actor_id from public.audit_events where target_id=$1 and action='account_invitation_provider_issued'",
+      [attempt],
+    )
+    assert.equal(outcomeActor.rows[0].actor_id, owner)
+    const acceptanceActor = await db.query<{ actor_id: string }>(
+      "select actor_id from public.audit_events where target_id=$1 and action='account_invitation_accepted'",
+      [attempt],
+    )
+    assert.equal(acceptanceActor.rows[0].actor_id, owner)
+
+    const completeAfterClaim = async (attemptId: string, result: 'rejected' | 'uncertain', status: number | null) => {
+      await db.query('select public.prepare_account_invitation($1,$2,$3,$4)', [
+        property, attemptId, 'tenant', `${attemptId.slice(-4)}@example.invalid`,
+      ])
+      await db.query('select public.claim_account_invitation_dispatch($1)', [attemptId])
+      await db.exec('reset role; set role service_role')
+      await db.query('select public.complete_account_invitation_dispatch($1,$2,null,$3)', [attemptId, result, status])
+      await db.exec('reset role; set role authenticated')
+    }
+    await completeAfterClaim(rejectedAttempt, 'rejected', 422)
+    await assert.rejects(db.query(prepare, [
+      property, id(80), 'tenant', `${rejectedAttempt.slice(-4)}@example.invalid`,
+    ]), (error: unknown) => (error as { code: string }).code === '23505')
+    await completeAfterClaim(uncertainAttempt, 'uncertain', null)
+    await as(clerk)
+    await assert.rejects(db.query('select public.record_invitation_attempt_review($1,$2,$3,$4)', [
+      property, uncertainAttempt, 'Checked evidence', 'Local Auth',
+    ]), (error: unknown) => (error as { code: string }).code === '42501')
+    await as(owner, 'aal1')
+    await denied('select public.record_invitation_attempt_review($1,$2,$3,$4)', [
+      property, uncertainAttempt, 'Checked evidence', 'Local Auth',
+    ])
+    await as(owner)
+    await assert.rejects(db.query('select public.record_invitation_attempt_review($1,$2,$3,$4)', [
+      property, uncertainAttempt, 'Recipient dispatch-owner@example.invalid', 'Local Auth',
+    ]))
+    await assert.rejects(db.query('select public.record_invitation_attempt_review($1,$2,$3,$4)', [
+      property, uncertainAttempt, 'Provider bearer token leaked', 'Local Auth',
+    ]))
+    await db.query('select public.record_invitation_attempt_review($1,$2,$3,$4)', [
+      property, uncertainAttempt, 'Local Mailpit checked; no matching message found', 'Local Mailpit',
+    ])
+    const reviewed = await db.query<{ status: string; review_count: string }>(
+      'select status,review_count::text from public.read_invitation_attempts($1) where attempt_id=$2',
+      [property, uncertainAttempt],
+    )
+    assert.deepEqual(reviewed.rows[0], { status: 'uncertain', review_count: '1' })
+    assert.equal((await db.query(
+      "select action,reason from public.audit_events where target_id=$1 and action='account_invitation_reviewed'",
+      [uncertainAttempt],
+    )).rows[0].reason, 'Owner recorded a review; attempt state was not changed')
   })
 })

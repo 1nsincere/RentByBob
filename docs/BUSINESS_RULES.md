@@ -2,6 +2,8 @@
 
 Account access and directories can progress independently. Exact-centavo parsing, Philippine dates, non-saving payment preview, tenant isolation, auth, audited access and directory creation are implemented foundations. The entire financial area is not categorically blocked: pending-claim validation/status design, duplicate/idempotency infrastructure, non-settling report UX and acknowledgment layout can be developed without deciding charge amounts, provided no settled balance or unconfirmed policy is introduced.
 
+Invitation reliability is a separate access/security slice, not a financial rule: stable request identifiers and no-duplicate dispatch are implemented, but no safe reissue policy is inferred. The unanswered owner decisions (evidence, waiting period, approvals, expiry and recipient retention) are tracked in DECISIONS.md and do not authorize any charge, settlement or balance behavior.
+
 | Outstanding decision | Feature that must wait for it |
 | --- | --- |
 | Per-person, per-bed or per-unit charging; occupancy arrangement | Agreement pricing and occupancy/capacity constraints; directory labels do not depend on it |
