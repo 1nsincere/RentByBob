@@ -94,3 +94,6 @@ Next: user reviews the current screens; verify browser interactions when availab
 
 ## Setup diagnostic follow-up
 The user reported setup exiting before the email prompt. The failure did not reproduce on inspection: local status, loopback validation and the empty-property check passed. Added `npm.cmd run setup:local -- -CheckOnly`, which passed through the same npm/Windows PowerShell entry point without writing accounts or records. Setup errors now identify the failed stage without exposing raw provider responses or credentials. The original transient cause is unconfirmed; interactive owner creation still awaits the user's private email/password entry. Do not reset or automatically retry after an uncertain Auth creation response.
+
+### Setup output-format fix
+The repeated property-check failure was traced to Supabase CLI agent detection: `db query --agent no` renders a table, while the automated environment received a JSON envelope. Setup now requests `--agent no --output-format json`, validates the returned row array and rejects missing/malformed counts. Verified the read-only prerequisite check in a terminal and the actual interactive command reaching the email prompt, then cancelled before entering identity or creating data. No migrations or reset were needed. This supersedes the earlier unconfirmed-cause note.

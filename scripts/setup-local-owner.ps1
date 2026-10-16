@@ -10,12 +10,16 @@ try {
   $text = $raw -join "`n"
   $local = $text.Substring($text.IndexOf('{'),$text.LastIndexOf('}')-$text.IndexOf('{')+1) | ConvertFrom-Json
   if ($local.API_URL -ne 'http://127.0.0.1:54321') { throw 'Non-local stack refused' }
-  $stage = 'checking the local property table; confirm local migrations are applied'
-  $rawCount = @(& npx.cmd supabase db query --local 'select count(*) as count from public.properties' 2>&1 | ForEach-Object { $_.ToString() })
+  $stage = 'checking the local property table; check local database availability and migration state'
+  # Agent detection changes the default output (table versus wrapped JSON).
+  # Request a stable JSON row array in both human and automated terminals.
+  $rawCount = @(& npx.cmd supabase db query --local 'select count(*) as property_count from public.properties' --agent no --output-format json 2>$null)
   if ($LASTEXITCODE -ne 0) { throw 'Local state check failed' }
   $countText = $rawCount -join "`n"
-  $state = $countText.Substring($countText.IndexOf('{'),$countText.LastIndexOf('}')-$countText.IndexOf('{')+1) | ConvertFrom-Json
-  if ([int]$state.rows[0].count -ne 0) {
+  $rows = @(ConvertFrom-Json -InputObject $countText -ErrorAction Stop)
+  if ($rows.Count -ne 1 -or $null -eq $rows[0].property_count -or
+      [string]$rows[0].property_count -notmatch '^\d+$') { throw 'Invalid property count response' }
+  if ([long]$rows[0].property_count -ne 0) {
     Write-Output 'A property already exists. Sign in as its existing owner. No accounts or records were changed.'
     exit 1
   }
