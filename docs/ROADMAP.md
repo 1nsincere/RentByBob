@@ -5,12 +5,13 @@ Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISION
 
 | Milestone | Current state | Remaining gate |
 | --- | --- | --- |
-| Local prototype and payment preview | Implemented with fictional data; non-saving | User readability review and browser accessibility checks |
-| Database access foundation | Four migrations implemented; local SQL/API checks | Parallel-connection tests and independent review |
-| Local invitations | Dispatch, password setup/sign-in and link replay tested through APIs | Dispatch reconciliation, failure/retry, resend and elapsed expiry tests |
+| Local prototype and payment preview | Implemented with fictional data; non-saving | User readability review and full accessibility audit (selected browser checks pass) |
+| Database access foundation | Six migrations implemented; local SQL/API/browser checks | Parallel-connection tests and independent review |
+| Local invitations | Dispatch, password setup/sign-in and link replay tested through APIs | Dispatch reconciliation, failure/retry, resend and real elapsed expiry (backdated expiry tested) |
 | First-owner bootstrap | Implemented as a local administrative script | Parallel-session verification remains; no browser endpoint |
-| Frontend authentication and onboarding | Not implemented | Sign-in, callback, password setup, access assignment, recovery and MFA UX |
-| Financial workflows | Blocked on landlord decisions | Confirm rules before schema/posting; transactional authorization, idempotency and concurrency tests |
+| Frontend authentication and onboarding | Local sign-in, callback, owner assignment, MFA and backup-factor/password recovery implemented | No-email onboarding, all-factors-lost recovery drill, independent review |
+| Basic property and tenant directories | Authorized reads, tenant search/create and owner building/unit creation | Next: rename/archive with retained history and audit review |
+| Financial workflows | Non-saving preview/exact-money foundation; policy-independent work may continue | BUSINESS_RULES.md maps policy-dependent features; no invented posting rules |
 | Reports, recovery and pilot | Not implemented | Export verification, restore rehearsal, opening balances and owner acceptance |
 
 Access work has advanced ahead of the original calendar because the latest direction prioritizes database/access dependencies while financial rules remain unresolved. This does not complete the cash-workflow milestone. Review findings in [SECURITY.md](SECURITY.md) must be addressed before invitations are relied on operationally.

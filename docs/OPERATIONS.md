@@ -1,5 +1,5 @@
 # Operations and handover plan
-Development currently local and fake-data only. No remote repository or service accounts created. Owner must control private GitHub, Cloudflare Pages, Supabase, billing, MFA recovery and any domain; developer receives limited access. Runtime must not depend on an AI subscription.
+Development currently local and fake-data only. The user-authorized repository https://github.com/1nsincere/RentByBob is private; main tracks origin/main. No hosted Supabase or deployment service has been configured. Owner must control private GitHub, Cloudflare Pages, Supabase, billing, MFA recovery and any domain; developer receives limited access. Runtime must not depend on an AI subscription.
 
 Deployment preparation (not executed): private GitHub -> Cloudflare Pages, build `npm ci && npm run build`, output `dist`, supported Node 24. Configure only public Supabase URL/publishable key in frontend. Separate development and production projects. Recheck official provider deployment/security documentation, pricing, limits, CSP/connect-src and redirect URLs before setup. Disable public signup via supported provider configuration and enforce trusted provisioning. No paid recommendation yet.
 
@@ -10,3 +10,5 @@ Recovery plan to complete before launch: agree RPO/RTO, retention, access and in
 Handover must include startup/deploy/rollback commands, migration history, owner account inventory (no secrets), recovery ownership, approved billing rules, test results and known limitations. Proposed policies here are not evidence of completed restoration or operational readiness.
 
 Local development bootstrap: see supabase/README.md. The administrative script creates only the first fictional owner/property for an existing confirmed .invalid Auth user. It never connects to a hosted database. No persistent owner account was retained from verification; test fixtures were removed. Production owner provisioning and recovery still require a separately reviewed procedure.
+
+Local startup: start Docker Desktop, local Supabase, the invite-account function and npm.cmd run dev:local as described in README.md. Use npm.cmd run setup:local only for an uninitialized fictional database; never reset existing data to make bootstrap tests pass. See ONBOARDING.md for backup-factor recovery and unresolved all-factors-lost operations.

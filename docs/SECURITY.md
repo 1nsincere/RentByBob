@@ -1,5 +1,9 @@
 # Security plan
-Current implementation updates are in the Hardening update section below; earlier verification counts and the original review findings are historical.
+Current local access UI is connected to Supabase. Six local migrations enforce identity-bound owner assignment, tenant isolation, current membership revocation and staff MFA. Browser tests exercise actual enrollment/challenge, backup factors and password recovery without an assurance bypass; a clerk cannot administer an owner's factors. The runtime never falls back to prototype records. Self-routing exposes only the caller's access status before MFA.
+
+See STATUS.md for latest test evidence and ONBOARDING.md for identity confirmation, paper-delivery limitations, 10-second UI refresh, and recovery. Remaining work includes uncertain dispatch reconciliation, safe resend, injected partial-failure tests, real elapsed expiry, parallel transactions, all-factors-lost recovery drill and independent review. No hosted/production security claim.
+
+The following foundation description and counts are historical; the current access milestone supersedes statements that the UI/bootstrap/recovery are missing.
 
 Versioned database access foundation exists and is exercised in disposable PostgreSQL tests and the local Supabase Auth/PostgREST stack. The UI is still disconnected from the database; no real data or accounts are used.
 

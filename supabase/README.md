@@ -17,7 +17,7 @@ This does **not** run Supabase Auth, PostgREST, JWT signature verification or pa
 
 The Supabase CLI is a project-local development dependency. `supabase/config.toml` was generated in the existing project and reviewed: the API exposes only `public` and `graphql_public` (not `private`), new public objects are not automatically exposed, public signup and seed loading are disabled, and auth redirects are restricted to the local Vite origin. `supabase/.temp/` and `supabase/.branches/` are ignored.
 
-The CLI configuration is not an application connection and does not create a hosted project. WSL 2 and Docker Desktop were installed and the local Docker engine verified during setup. All four migrations (`202610160001` through `202610160004`) were applied to the disposable local database. Running processes do not persist reliably across handoffs. Startup downloads the service images the first time. To start the stack:
+The CLI configuration is not an application connection and does not create a hosted project. WSL 2 and Docker Desktop were installed and the local Docker engine verified during setup. All six migrations (`202610160001` through `202610160006`) were applied to the disposable local database. Running processes do not persist reliably across handoffs. Startup downloads the service images the first time. To start the stack:
 
 ```powershell
 $env:PATH = 'C:\Program Files\Docker\Docker\resources\bin;' + $env:PATH
@@ -39,7 +39,7 @@ Run `npm.cmd run test:supabase` to verify the local migrations, anonymous denial
 
 Avoid copying `supabase status` output into chat, logs, or screenshots; the CLI includes local development keys in its output.
 
-Public signup is disabled. The trusted `invite-account` Edge Function is implemented and locally tested; actual messages are delivered only to the local Mailpit catcher using fictional `.invalid` addresses. Do not use this test to send real email. One-time use/replay is verified; actual expiry after the configured one-hour lifetime is not yet tested.
+Public signup is disabled. The trusted `invite-account` Edge Function is implemented and locally tested; actual messages are delivered only to the local Mailpit catcher using fictional `.invalid` addresses. Do not use this test to send real email. One-time use/replay and provider expiry using backdated disposable fixture timestamps are verified. A real one-hour elapsed expiry test remains open.
 
 The first property and owner membership require a one-time trusted bootstrap after an Auth user is provisioned. Supply the Auth UUID through a local administrative session; never add a browser bootstrap endpoint, password or privileged key to this repository. The local-only bootstrap below is implemented; application users cannot create their own owner membership. Later owners can use the narrow staff-access function for existing Auth users; creation of Auth accounts still requires a trusted server operation. Invitation does not grant role or tenant access; authorized owner assignment remains a separate operation.
 
@@ -48,11 +48,15 @@ The first property and owner membership require a one-time trusted bootstrap aft
 | Function | Authority | Behavior |
 | --- | --- | --- |
 | `create_tenant(property_id, tenant_id, display_name, kind)` | Active owner/clerk with MFA | UUID supplied once per create intent; same ID/payload retry returns the record, conflicting payload rejected; audit atomic |
-| `set_tenant_contact(tenant_id, user_id, enabled, reason)` | Active owner with MFA | Grants/revokes an existing Auth user's access to one active tenant; records user and tenant in audit |
-| `set_staff_access(property_id, user_id, role, reason)` | Active owner with MFA | Sets owner/clerk or revokes with null role; protects last active owner |
+| `set_tenant_contact(tenant_id, user_id, enabled, reason)` | Internal only; browser execute revoked by 005 | Grants/revokes an existing Auth user's access to one active tenant; records user and tenant in audit |
+| `set_staff_access(property_id, user_id, role, reason)` | Internal only; browser execute revoked by 005 | Sets owner/clerk or revokes with null role; protects last active owner |
+| `my_access_state()` | Authenticated caller | Self-only routing state, no other identity or property details |
+| `find_account_for_assignment(property, email)` | Owner with MFA | Exact-email account lookup for reviewed assignment |
+| `assign_account_access(property, user, expected_email, kind, tenant, role, enabled, reason)` | Owner with MFA | Verified identity binding, property scope and atomic audited mutation |
+| `create_property_location(property, id, label, building?)` | Owner with MFA | Building/unit creation with retry UUID and atomic audit |
 | `archive_tenant(tenant_id, reason)` | Active owner with MFA | Archives identity record, revokes contacts atomically and retains record/audit; repeat is a no-op |
 
-All functions run under an empty search path, qualify relations, check current membership and MFA, and serialize property access changes by locking the property row. Anonymous execution is revoked. The two private policy helpers accept resource IDs but always derive the requesting user from Auth.
+Definer functions use an empty search path and qualified relations. Staff operations check current membership and MFA; property mutations serialize through the property row. Self-routing is available before MFA and returns only minimal caller state. Anonymous execution is revoked. The two private policy helpers accept resource IDs but always derive the requesting user from Auth.
 
 Archival here is **not a completed move-out workflow**. Before agreements/payments are added, extend it to enforce the agreed move-out lifecycle and preserve occupancy/debt rules. There is no financial deletion or settlement operation in this migration. Membership history is retained through revocation timestamps and append-only application audit; only database administrators can bypass these controls.
 
@@ -77,3 +81,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-supabase-ap
 ```
 
 The suite creates its own fictional Auth user, runs the actual bootstrap twice, exercises MFA/invitations and removes its fixtures. Ordinary npm.cmd run test:supabase does not require an empty property table. Isolated bootstrap tests also cover invalid identity, caller denial, audit rollback, conflicting retry and revoked-owner rejection. Parallel-session bootstrap behavior is not yet tested.
+
+## Local UI and browser checks
+
+See ../README.md for npm.cmd run setup:local (optional fresh fictional owner) and npm.cmd run dev:local. Run npm.cmd run test:browser with the stack and invitation function available; installed Microsoft Edge is used headlessly. Fixtures are scoped and cleaned up without resetting the database. Credentials are held in process memory; traces/videos are disabled. STATUS.md records results and accessibility limits.

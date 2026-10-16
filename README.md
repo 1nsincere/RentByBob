@@ -55,4 +55,4 @@ Browser tests use installed Microsoft Edge headlessly and real local Supabase wi
 
 Read [AGENTS.md](AGENTS.md), [status](docs/STATUS.md), [roadmap](docs/ROADMAP.md), [decisions](docs/DECISIONS.md), [data model](docs/DATA_MODEL.md), [security](docs/SECURITY.md), [onboarding/recovery](docs/ONBOARDING.md), [business decisions by feature](docs/BUSINESS_RULES.md), and the [original brief](docs/USER_REQUIREMENTS.txt).
 
-No hosted project, real account, deployment, purchase or Git destination is authorized. This directory has no `.git` metadata. Production readiness, independent review, backup/restore and full accessibility verification remain separate gates.
+Git history is backed up to the user-authorized private repository [RentByBob](https://github.com/1nsincere/RentByBob), with `main` tracking `origin/main`. No hosted Supabase project, real account, deployment or purchase is authorized. Production readiness, independent review, backup/restore and full accessibility verification remain separate gates.

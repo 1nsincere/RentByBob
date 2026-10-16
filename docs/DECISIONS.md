@@ -1,5 +1,13 @@
 # Decisions and open questions
-## Confirmed 16 Oct 2026
+## Current access and repository decisions - 16 Oct 2026
+- User authorized private GitHub repository 1nsincere/RentByBob; main is connected and prior commits preserved.
+- Local access UI and basic directory creation are implemented. See STATUS.md for current evidence; earlier next-step notes below are historical.
+- Every contact or staff assignment requires owner MFA and verified email/UUID binding. James's renter invitation authority does not include assignment authority.
+- Keep email-based onboarding for this slice. Paper invitation links are a documented future delivery option, not username-only access. No fake operational emails or custom password storage.
+- Backup authenticator recovery is implemented. Email password reset does not bypass MFA; all-factors-lost operator recovery requires a separate reviewed procedure.
+- Next milestone is directory maintenance and audit review. Financial dependencies are mapped in BUSINESS_RULES.md; independent work may proceed.
+
+## Earlier confirmed decisions, still applicable unless superseded
 - Use existing `C:\Users\acegr\Desktop\Rent Tracker System`; skip creating/resolving a replacement Desktop folder.
 - User has not discussed rental rules with landlord; defer all affected financial implementation.
 - Latest user choice: use email addresses for authentication instead of the previously proposed phone/voucher direction. Use email/password with staff-issued accounts and no public signup.
@@ -32,6 +40,6 @@ The current review reconciles the progress tracker and setup instructions; it do
 - https://supabase.com/docs/guides/database/postgres/row-level-security
 - https://supabase.com/docs/guides/auth/managing-user-data
 
-## Local access hardening and bootstrap ? 16 Oct 2026
+## Local access hardening and bootstrap - 16 Oct 2026
 
 Continue under the user's development authorization. Bootstrap is local-only, accepts an existing confirmed fictional .invalid Auth UUID, and creates the first fictional property/owner atomically. Identical retries are no-ops; any different initialized state is refused. No real owner account is created. Invitation outcome audit is service-only; uncertain dispatch still requires review before retrying. Next feature slice: frontend sign-in and invitation callback/password setup, followed by recovery/MFA and owner access-assignment UX.

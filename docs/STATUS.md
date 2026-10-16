@@ -1,5 +1,26 @@
-# Status — 16 Oct 2026, Asia/Manila
-## Current milestone: invitation audit hardening and local bootstrap
+# Status - 16 Oct 2026, Asia/Manila
+## Current milestone: working local access and basic directories
+
+The runtime now connects to actual local Supabase Auth/PostgreSQL. Sign-in, invitation callback/password setup, owner identity-confirmed contact/staff assignment, staff TOTP enrollment/challenge, backup authenticator recovery, authorized landing pages, sign-out and disabled/unassigned states are implemented. Invitation acceptance grants no application permission. James can invite renters and create tenant records; every access assignment remains owner-only. Exact verified email/UUID matching and property scope are enforced in trusted SQL; legacy ID-only access RPC grants are revoked.
+
+Six migrations (202610160001 through 202610160006) are applied locally only. Staff can read authorized property/building/unit and tenant directories; owners can create buildings/units, and staff can create/search tenants. Runtime failures show errors and hide records, never substitute fictional prototype data. Access is rechecked on focus, manually and every 10 seconds; database revocation applies to each request even with an existing JWT.
+
+Verification on this date: 25 isolated tests passed; strict TypeScript and production build passed; two real local browser scenarios passed. All 19 standard local API checks passed and their fictional fixtures were removed. Browser checks cover owner/clerk authorization, renter isolation, unassigned invitations, malicious/mismatched assignment denial, existing-session revocation, MFA enforcement, backup-factor recovery, password recovery without MFA bypass, callback errors/replay/expiry, offline handling, keyboard/focus, 320px reflow, doubled text and CSS-simulated 200% zoom. Expiry is tested by backdating only disposable Auth fixture timestamps, not waiting a real hour. This is not a full native-browser zoom, screen-reader or WCAG audit.
+
+The local stack was restarted without resetting data. The standard tests clean up their own fictional fixtures; bootstrap tests were not rerun against an initialized database. Isolated bootstrap tests cover atomicity and rejection paths. The optional interactive setup helper's fresh-owner path still needs a separate disposable-environment manual rehearsal; parallel-session bootstrap remains untested.
+
+Git: user selected and authorized private https://github.com/1nsincere/RentByBob. Existing commits are retained and main tracks origin/main. No hosted Supabase, real emails, real accounts, purchases or deployment.
+
+Remaining mock screens: old financial/payment preview and design reference are retained only under src/prototype, outside runtime imports. No saved payment reports, charges, balances, occupancy/agreement assignment, acknowledgments or exports exist. Pending reports and uncleared checks never reduce settled balances.
+
+Open limitations: safe invitation resend and uncertain-delivery reconciliation, injected partial-send failure testing, real elapsed expiry, no-email onboarding, paper issuance implementation, all-factors-lost administrative recovery drill, independent security and accessibility review. See [onboarding](ONBOARDING.md) for supported recovery and paper-delivery design; no permanent password retrieval or hidden MFA bypass exists.
+
+Exact next milestone: owner directory rename/archive with retained history and account/contact audit review, including direct API/browser checks. Continue policy-independent work; [business decisions](BUSINESS_RULES.md) maps each outstanding landlord rule to its affected financial feature. Do not infer billing or approval policies.
+
+## Historical milestone records
+The records below describe earlier implementation states and test runs; use the current milestone above for today's status.
+
+## Earlier milestone: invitation audit hardening and local bootstrap
 
 Implemented migration 202610160004 locally: browser callers can record invitation requests only; service-only completion requires a request, serializes outcomes, accepts identical retries and rejects conflicts. Updated the Edge Function and pre-register invitation fixtures for cleanup before sending.
 
@@ -21,7 +42,7 @@ Source review also found invitation audit provenance, non-atomic dispatch/retry 
 
 Next: await the user's next development direction. The planned feature slice remains local-only first-owner bootstrap; resolve the invitation hardening findings before operational onboarding. Financial policy, elapsed expiry, recovery, MFA UX, browser accessibility and production readiness remain open.
 
-## Current milestone: local account invitations
+## Earlier milestone: local account invitations
 All work remains in the existing `C:\Users\acegr\Desktop\Rent Tracker System`; no replacement Desktop folder was created. The disposable local Supabase stack runs with project-local Supabase CLI 2.121.0, Docker Desktop 4.95.0 and WSL 2.7.13. Migrations `202610160001` through `202610160003` are applied locally. No hosted project was linked or modified.
 
 The authenticated `invite-account` Edge Function checks current database authorization and MFA. The owner can invite renters or staff; James can invite renters only. It delegates email invitation to local Supabase Auth, records privacy-minimized request/sent/failure events, rejects unapproved origins on actual requests, and does not assign staff roles or tenant access. Authorized owner access assignment and tenant-contact linking remain separate. The local test follows a Mailpit invitation through first verification, recipient password setup, password sign-in and replay rejection. Public signup stays disabled.
