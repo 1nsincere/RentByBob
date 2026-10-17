@@ -21,7 +21,7 @@ export function App() {
   const [propertyId, setPropertyId] = useState('')
   const [backup, setBackup] = useState(false)
   const [search, setSearch] = useState('')
-  const [activeSection, setActiveSection] = useState('')
+  const [activeSection, setActiveSection] = useState('tenant-records')
   const generation = useRef(0)
   const heading = useRef<HTMLHeadingElement>(null)
   const mobileNavigation = useRef<HTMLDetailsElement>(null)
@@ -133,37 +133,37 @@ export function App() {
   const navigationKey = navigationItems.map(item => item.id).join('|')
 
   useEffect(() => {
-    if (!navigationKey) return
-    const observer = new IntersectionObserver(entries => {
-      const visible = entries.filter(entry => entry.isIntersecting)
-        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-      if (visible[0]) setActiveSection(visible[0].target.id)
-    }, { rootMargin: '-12% 0px -72% 0px', threshold: 0 })
-    for (const item of navigationItems) {
-      const section = document.getElementById(item.id)
-      if (section) observer.observe(section)
-    }
-    return () => observer.disconnect()
-  }, [navigationKey])
+    if (navigationKey && !navigationItems.some(item => item.id === activeSection)) setActiveSection('tenant-records')
+  }, [navigationKey, activeSection])
+
+  function selectSection(id: string) {
+    setActiveSection(id)
+    if (mobileNavigation.current) mobileNavigation.current.open = false
+    requestAnimationFrame(() => {
+      const section = document.getElementById(id)
+      section?.focus({ preventScroll: true })
+      section?.scrollIntoView({ block: 'start' })
+    })
+  }
 
   function staffNavigation() {
     return <nav aria-label="Property workspace">
       <ul className="workspace-links">{navigationItems.map(item =>
         <li key={item.id}>
           <a href={`#${item.id}`} aria-current={activeSection === item.id ? 'location' : undefined}
-            onClick={() => { setActiveSection(item.id); if (mobileNavigation.current) mobileNavigation.current.open = false }}>
+            onClick={event => { event.preventDefault(); selectSection(item.id) }}>
             {item.label}
           </a>
         </li>)}</ul>
     </nav>
   }
 
-  return <div className="app-shell">
+  return <div className={`app-shell ${route === 'sign-in' ? 'sign-in-shell' : ''}`}>
     <a className="skip-link" href="#main">Skip to content</a>
     <div className="environment-note">Local development · Fictional accounts only</div>
     <header className="site-header">
       <div className="shell header-inner">
-        <a className="brand" href="/" aria-label="Rental records home"><span className="brand-mark" aria-hidden="true">R</span><span>Rental records</span></a>
+        <a className="brand" href="/" aria-label="RentByBob home"><span className="brand-mark" aria-hidden="true">R</span><span>Rent<span className="brand-accent">ByBob</span></span></a>
         {session && <div className="session-tools">
           <span className="signed-in-label">Signed in as</span>
           <span className="account-email">{session.user.email}</span>
@@ -174,17 +174,18 @@ export function App() {
     <div className="shell page-shell">
       <main id="main" tabIndex={-1} className={role && route === 'ready' ? 'staff-main' : ''}>
         <div className="page-intro">
-          <p className="eyebrow">{role ? 'PROPERTY WORKSPACE' : session ? 'YOUR ACCOUNT' : 'RENTAL RECORDS'}</p>
+          <p className="eyebrow">{role ? 'PROPERTY WORKSPACE' : session ? 'YOUR ACCOUNT' : 'YOUR RENTAL SPACE, SIMPLIFIED'}</p>
           <h1 ref={heading} tabIndex={-1} className="route-heading">
             {route === 'loading' || route === 'checking' ? 'Checking access'
               : route === 'ready' ? role ? `${role === 'owner' ? 'Owner' : 'Clerk'} workspace` : 'Your rental records'
-                : route === 'sign-in' ? 'Welcome back'
+                : route === 'sign-in' ? 'A little less hassle. A little more home.'
                   : route === 'disabled' ? 'Access disabled'
                         : route === 'pending' ? 'Invitation pending'
                           : route === 'unassigned' ? 'Waiting for access' : 'Your rental account'}
           </h1>
-          {route === 'sign-in' && <p className="page-summary">Sign in to view the rental records shared with you.</p>}
+          {route === 'sign-in' && <p className="page-summary">Your rental records, together in one simple space. Sign in to see what your property owner has shared with you.</p>}
           {route === 'ready' && !role && <p className="page-summary">View the rental records your property owner has shared with you.</p>}
+          {route === 'sign-in' && <div className="welcome-points"><div><span className="welcome-number">01</span><span><strong>Your records</strong><small>Only the information shared with you.</small></span></div><div><span className="welcome-number">02</span><span><strong>Your own account</strong><small>Invited by your property. Managed by you.</small></span></div></div>}
         </div>
 
         {!supabase ? <section className="card auth-card">
@@ -213,7 +214,7 @@ export function App() {
                       </section> : role ? <>
                         <div className="mobile-workspace-navigation">
                           <details ref={mobileNavigation}>
-                            <summary>Workspace navigation</summary>
+                            <summary><span>Workspace navigation</span><small>{navigationItems.find(item => item.id === activeSection)?.label}</small></summary>
                             {staffNavigation()}
                           </details>
                         </div>
@@ -234,12 +235,12 @@ export function App() {
                                 }}>{snapshot.properties.map(property => <option key={property.id} value={property.id}>{property.name}</option>)}</select>
                               </div>
                             </div>
-                            <section className="card directory-card" id="tenant-records" aria-labelledby="tenant-records-heading">
+                            <section hidden={activeSection !== 'tenant-records'} tabIndex={-1} className="card directory-card" id="tenant-records" aria-labelledby="tenant-records-heading">
                               <div className="section-heading">
                                 <div><p className="eyebrow">PEOPLE AND BUSINESSES</p><h2 id="tenant-records-heading">Tenant directory</h2></div>
-                                <span className="record-count">{tenantList.length} {tenantList.length === 1 ? 'record' : 'records'}</span>
+                                <Button className="primary" onClick={() => selectSection('create-tenant')}>Add tenant</Button><span className="record-count">{tenantList.length} {tenantList.length === 1 ? 'record' : 'records'}</span>
                               </div>
-                              <p>Search the authorized directory for this property. Rental charges, balances and payment posting are not available here.</p>
+                              <p>Find the people and businesses connected to this property.</p>
                               <label htmlFor="tenant-search">Search tenants by name</label>
                               <input id="tenant-search" value={search} onChange={event => setSearch(event.target.value)} type="search" autoComplete="off" aria-describedby="tenant-search-help" />
                               <p className="field-help" id="tenant-search-help">Results update as you type.</p>
@@ -256,7 +257,7 @@ export function App() {
                               </ul>}
                               {tenantList.length === 0 && <div className="empty-state">
                                 <h3>No rental records yet</h3>
-                                <p>When the property owner shares a rental record with your account, it will appear here. If you expected to see one, contact the owner.</p>
+                                <p>Start by adding a tenant record. Account invitations and access are managed separately.</p>
                               </div>}
                               {tenantList.length > 0 && !tenantList.some(tenant => tenant.display_name.toLowerCase().includes(search.trim().toLowerCase())) && <div className="empty-state">
                                 <h3>No matches found</h3>
@@ -264,15 +265,15 @@ export function App() {
                                 <Button className="secondary-button" onClick={() => setSearch('')}>Clear search</Button>
                               </div>}
                             </section>
-                            <div id="property-locations" className="workspace-section"><PropertyDirectory key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} /></div>
-                            <div id="create-tenant" className="workspace-section"><CreateTenant key={`create:${propertyId}`} propertyId={propertyId} done={() => void refresh()} /></div>
-                            <div id="invite-account" className="workspace-section"><Invitations key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} /></div>
+                            <div id="property-locations" hidden={activeSection !== 'property-locations'} tabIndex={-1} className="workspace-section"><PropertyDirectory key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} /></div>
+                            <div id="create-tenant" hidden={activeSection !== 'create-tenant'} tabIndex={-1} className="workspace-section"><CreateTenant key={`create:${propertyId}`} propertyId={propertyId} done={() => void refresh()} /></div>
+                            <div id="invite-account" hidden={activeSection !== 'invite-account'} tabIndex={-1} className="workspace-section"><Invitations key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} /></div>
                             {role === 'owner' && <>
-                              <div id="manage-access" className="workspace-section"><ManageAccess key={`access:${propertyId}`} propertyId={propertyId} tenants={tenantList} changed={() => void refresh()} /></div>
-                              <div id="invitation-review" className="workspace-section"><InvitationReconciliation key={`invitation-reconciliation:${propertyId}`} propertyId={propertyId} /></div>
-                              <div id="access-history" className="workspace-section"><AccessAudit key={`audit:${propertyId}`} propertyId={propertyId} /></div>
+                              <div id="manage-access" hidden={activeSection !== 'manage-access'} tabIndex={-1} className="workspace-section"><ManageAccess key={`access:${propertyId}`} propertyId={propertyId} tenants={tenantList} changed={() => void refresh()} /></div>
+                              <div id="invitation-review" hidden={activeSection !== 'invitation-review'} tabIndex={-1} className="workspace-section"><InvitationReconciliation key={`invitation-reconciliation:${propertyId}`} propertyId={propertyId} /></div>
+                              <div id="access-history" hidden={activeSection !== 'access-history'} tabIndex={-1} className="workspace-section"><AccessAudit key={`audit:${propertyId}`} propertyId={propertyId} /></div>
                             </>}
-                            <section className="card account-security" id="account-security">
+                            <section hidden={activeSection !== 'account-security'} tabIndex={-1} className="card account-security" id="account-security">
                               <p className="eyebrow">SIGN-IN AND RECOVERY</p>
                               <h2>Account security</h2>
                               <p>Enroll a backup authenticator on a separate device before losing access to your main one. Password recovery does not bypass staff MFA.</p>
@@ -307,7 +308,7 @@ export function App() {
                       </>}
               </>}
       </main>
-      <footer className="site-footer"><span>Rental records</span><span>Philippine property access · No online payments</span></footer>
+      <footer className="site-footer"><span>RentByBob</span><span>Philippine property access · No online payments</span></footer>
     </div>
   </div>
 }

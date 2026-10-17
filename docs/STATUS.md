@@ -1,4 +1,16 @@
-# Status - 16 Oct 2026, Asia/Manila
+# Status - 17 Oct 2026, Asia/Manila
+## Current milestone: frontend-first usability revision
+
+User prioritized visual design and phone usability, using https://u-convertit-frontend.vercel.app as a visual reference. Implemented a branded RentByBob sign-in layout with stronger typography, a stacked phone form and split desktop composition. Preserved the ivory/white/sage/teal 60-30-10 palette. Simplified sign-in and authenticator guidance; setup now explicitly explains the same-phone manual key and one-time enrollment. This does not replace staff MFA or implement email-code sign-in.
+
+Staff navigation now displays one task at a time instead of one long page of all forms. Inactive sections remain mounted but hidden, preserving drafts while switching sections; they are not an authorization boundary. Navigation closes the mobile menu and moves focus to the chosen section. Directory has a direct Add tenant action. Updated empty-state language and branding. Existing database, Auth and invitation contracts are unchanged.
+
+Verification: 33 isolated tests passed; strict TypeScript/build passed; both browser scenarios passed, including actual local access workflows and a new draft-preservation/focus check. Existing responsive checks cover 160/320/360/390/430/768/1280px and enlarged text. Inspected screenshots of phone/desktop sign-in and fictional owner mobile directory. Initial browser run failed on recovery factor verification; the test now selects the intended enrolled factor explicitly instead of relying on provider ordering, and the rerun passed. No full accessibility/native phone audit is claimed. No database reset, migration, real invitation or hosted change.
+
+Next: user visual review in the running local app, then refine the chosen design. User accepted email-code sign-in for renters as follow-up work; implement and test it separately with invited-only access and no staff MFA bypass. Invitation reissue/retention policy remains unresolved. Local loopback configuration does not support opening the app directly from another phone; use browser device emulation for this review until a separately reviewed network/hosted setup exists.
+
+## Previous milestone record
+
 ## Current milestone: mobile-first access interface
 
 The real Supabase-backed renter and staff screens now use a restrained ivory/white/sage/deep-teal system. Renters see their authorized directory records, readable pending/unassigned/disabled states, useful empty states and sign-out without staff MFA controls or invented payment destinations. Owners and clerks get labeled section navigation in a mobile drawer and desktop sidebar. Directory search/results, staff forms, invitation messages, access review, archive confirmation and history are grouped and spaced for phone use. No data, authorization, MFA, invitation, membership, or database contract was changed for the visual refresh.

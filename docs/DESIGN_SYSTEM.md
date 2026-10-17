@@ -69,3 +69,10 @@ The Playwright browser suite uses real local Supabase/Auth fixtures (fictional `
 Screenshots are captured only from the browser-test fictional renter fixture and must not include passwords, invitation links/tokens or MFA secrets. Test automation does not establish screen-reader quality, all focus order, touch usability, all browser zoom behavior, the complete control contrast matrix, or WCAG 2.2 AA conformance. Conduct manual keyboard and assistive-technology review before making a conformance claim.
 
 See [STATUS.md](STATUS.md) for the current implementation/test evidence and [ONBOARDING.md](ONBOARDING.md) for account state and access boundaries.
+
+
+## Frontend-first revision - 17 Oct 2026
+
+Reference: the user's U-ConvertIT project, inspected in a browser. Adapted strong headline hierarchy, spacious composition and a distinct action surface without copying its branding or adding a marketing landing page. RentByBob retains its existing 60-30-10 teal palette. Sign-in stacks below 54rem and splits into intro/form columns above it. Staff navigation selects one mounted section at a time; hidden sections are excluded from layout and keyboard interaction. Section focus follows explicit navigation and drafts survive switching. These are in-page views, not URL-addressable routes.
+
+Screenshots from fictional browser tests are in ignored test-results/sign-in-mobile.png, sign-in-desktop.png and owner-mobile.png. Manual real-phone, screen-reader and native zoom review remain outstanding.

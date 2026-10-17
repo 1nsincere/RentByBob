@@ -26,6 +26,11 @@ async function browserClient(page:Page) {
   if(!session) throw new Error('No browser session')
   const c=client(); const {error}=await c.auth.setSession(session);if(error)throw new Error('Cannot use browser session for API check');return c
 }
+async function navigate(page:Page, name:string) {
+  const menu=page.locator('.mobile-workspace-navigation')
+  if(await menu.isVisible()) await menu.locator('summary').click()
+  await page.getByRole('link',{name,exact:true}).filter({visible:true}).click()
+}
 async function checkReflow(page:Page) {
   for(const width of [160,320,360,390,430,768,1280]) {
     await page.setViewportSize({width,height:900})
@@ -54,6 +59,15 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     await owner.getByText('Workspace navigation',{exact:true}).click()
     await owner.getByRole('link',{name:'Tenant directory',exact:true}).click()
     await expect(owner.locator('.mobile-workspace-navigation details')).not.toHaveAttribute('open','')
+    await navigate(owner,'Add tenant record')
+    await owner.getByLabel('Tenant display name').fill('Unsaved draft')
+    await navigate(owner,'Tenant directory')
+    await expect(owner.getByLabel('Tenant display name')).toBeHidden()
+    await navigate(owner,'Add tenant record')
+    await expect(owner.getByLabel('Tenant display name')).toHaveValue('Unsaved draft')
+    await expect(owner.locator('#create-tenant')).toBeFocused()
+    await navigate(owner,'Tenant directory')
+    await owner.screenshot({path:'test-results/owner-mobile.png',fullPage:true})
     const ownerApi=await browserClient(owner)
     const initialAudit=await ownerApi.rpc('read_access_audit',{p_property_id:f.property})
     expect(initialAudit.error).toBeNull()
@@ -72,6 +86,7 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     const claim=await ownerApi.rpc('claim_account_invitation_dispatch',{p_attempt_id:uncertainAttemptId})
     expect(claim.data.claimed).toBe(true)
     expect(claim.error).toBeNull()
+    await navigate(owner,'Invitation review')
     await expect(owner.getByRole('heading',{name:'Invitation attempts and reconciliation'})).toBeVisible()
     await owner.getByRole('button',{name:'Refresh invitation attempts'}).click()
     const preparedCard=owner.locator('article').filter({hasText:'p***@***.invalid'})
@@ -92,6 +107,7 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     expect(ownerAttempts.data.find((row:{attempt_id:string})=>row.attempt_id===uncertainAttemptId)?.review_count).toBe(1)
     expect(ownerAttempts.data.find((row:{attempt_id:string})=>row.attempt_id===uncertainAttemptId)?.status).toBe('dispatching')
     await checkReflow(owner)
+    await navigate(owner,'Buildings and units')
     await owner.getByLabel('Location label').fill('Fictional section')
     await owner.getByRole('button',{name:'Create location',exact:true}).click()
     await expect(owner.getByText('Location saved without occupancy or billing rules.',{exact:true})).toBeVisible()
@@ -151,10 +167,13 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     expect((await ownerApi.rpc('set_staff_access',{p_property_id:f.property,p_user_id:f.users.unassigned.id,p_role:'owner',p_reason:'Bypass attempt'})).error).toBeTruthy()
 
     const email=`invited-${f.tag}@example.invalid`;f.invitedEmails.push(email)
+    await navigate(clerk,'Invite account')
     await clerk.getByLabel('Invitation email').fill(email);await clerk.getByRole('button',{name:'Start invitation attempt',exact:true}).click()
     await expect(clerk.getByRole('status')).toContainText('Supabase Auth confirmed issuance')
+    await navigate(owner,'Assign or disable access')
     await owner.getByLabel('Exact account email').fill(email);await owner.getByRole('button',{name:'Find account',exact:true}).click()
     await expect(owner.getByText('Invitation pending',{exact:true})).toBeVisible()
+    await navigate(owner,'Access history')
     await owner.getByRole('button',{name:'Refresh access history',exact:true}).click()
     await expect(owner.getByText('Provider confirmed invitation issuance; delivery is not confirmed',{exact:true}).first()).toBeVisible()
     let link:string|null=null
@@ -168,9 +187,12 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     await expect(invited.getByRole('heading',{name:'Your account is waiting for access'})).toBeVisible()
     const invitedApi=await browserClient(invited)
     expect((await invitedApi.from('tenants').select('id')).data).toEqual([])
+    await navigate(owner,'Assign or disable access')
     await owner.getByRole('button',{name:'Find account',exact:true}).click()
     await expect(owner.getByText('Invitation accepted but access not assigned',{exact:true})).toBeVisible()
+    await navigate(owner,'Access history')
     await expect(owner.getByRole('heading',{name:'Recent account and contact access history',exact:true})).toBeVisible()
+    await navigate(owner,'Assign or disable access')
     await owner.getByLabel('Tenant record',{exact:true}).selectOption(f.tenantB)
     await owner.getByLabel('Reason for this change').fill('Verified fictional contact')
     await owner.getByRole('button',{name:'Review assignment',exact:true}).click()
@@ -230,6 +252,7 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
 
     // A second enrolled factor is the supported self-service MFA recovery path.
     const beforeBackupFactors=(await admin.auth.admin.mfa.listFactors({userId:f.users.owner.id})).data?.factors??[]
+    await navigate(owner,'Account security')
     await owner.getByRole('button',{name:'Add a backup authenticator',exact:true}).click()
     const backupSecret=await enroll(owner)
     const backupFactors=(await admin.auth.admin.mfa.listFactors({userId:f.users.owner.id})).data?.factors??[]
@@ -265,6 +288,7 @@ test('real local account flow, identity binding, MFA, isolation, revocation and 
     if(recovery.error)throw new Error('Recovery test setup failed')
     const recoveryPage=await open();await recoveryPage.goto(recovery.data.properties.action_link)
     await expect(recoveryPage.getByRole('heading',{name:'Staff security check'})).toBeVisible()
+    await recoveryPage.getByLabel('Authenticator',{exact:true}).selectOption(beforeBackupFactors[0].id)
     await recoveryPage.getByLabel('Six-digit authenticator code').fill(totp(ownerSecret))
     await recoveryPage.getByRole('button',{name:'Verify code',exact:true}).click()
     await expect(recoveryPage.getByRole('heading',{name:'Set your password'})).toBeVisible()
@@ -303,6 +327,10 @@ test('callback errors, keyboard focus, 200% text zoom and narrow reflow',async({
   await expect(page.getByRole('link',{name:'Skip to content'})).toBeFocused()
   await page.keyboard.press('Enter');await expect(page.locator('#main')).toBeFocused()
   await page.getByLabel('Email address').focus();await page.keyboard.press('Tab');await expect(page.getByLabel('Password',{exact:true})).toBeFocused()
+  await page.setViewportSize({width:390,height:844})
+  await page.screenshot({path:'test-results/sign-in-mobile.png',fullPage:true})
+  await page.setViewportSize({width:1440,height:1000})
+  await page.screenshot({path:'test-results/sign-in-desktop.png',fullPage:true})
   await page.getByLabel('Email address').fill('nobody@example.invalid');await page.getByLabel('Password',{exact:true}).fill('NotARealPassword12!')
   await page.getByRole('button',{name:'Sign in',exact:true}).click()
   await expect(page.getByRole('alert')).toBeFocused()

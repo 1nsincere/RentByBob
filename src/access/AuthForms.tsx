@@ -14,8 +14,8 @@ export function SignIn() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  return <section className="card auth-card"><p className="eyebrow">SECURE ACCOUNT ACCESS</p><h2>{recovery ? 'Reset your password' : 'Sign in'}</h2>
-    <p>Use the email address associated with your account. New accounts are invited by the property owner or clerk.</p>
+  return <section className="card auth-card"><p className="eyebrow">WELCOME TO RENTBYBOB</p><h2>{recovery ? 'Reset your password' : 'Sign in'}</h2>
+    <p>Enter your account details to continue.</p>
     <Feedback message={message} error={error} />
     <form onSubmit={async e => {
       e.preventDefault(); if (busy) return
@@ -34,15 +34,15 @@ export function SignIn() {
       finally { setBusy(false) }
     }}>
       <label htmlFor="email">Email address</label><input id="email" name="email" type="email" autoComplete="username" required maxLength={320} aria-describedby="email-help" />
-      <p className="field-help" id="email-help">Enter the email address where you received your account invitation.</p>
+      <p className="field-help" id="email-help">Use the email from your invitation.</p>
       {!recovery && <><label htmlFor="password">Password</label><div className="password-input-row">
         <input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required />
         <Button type="button" className="secondary-button password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Hide' : 'Show'}</Button>
       </div></>}
       <Button className="primary" disabled={busy}>{busy ? 'Please wait…' : recovery ? 'Send reset link' : 'Sign in'}</Button>
     </form>
-    <Button className="secondary-button" onClick={() => { setRecovery(!recovery); setMessage(''); setError(false) }}>{recovery ? 'Back to sign-in' : 'Forgot password?'}</Button>
-    <p className="small">Password reset does not remove staff MFA. If you cannot use your email or authenticator, contact the property owner.</p>
+    <Button className="quiet-button recovery-link" onClick={() => { setRecovery(!recovery); setMessage(''); setError(false) }}>{recovery ? 'Back to sign-in' : 'Forgot password?'}</Button>
+    <div className="auth-help"><strong>New here?</strong><p>Ask your property owner or clerk for an invitation.</p></div>
   </section>
 }
 
@@ -84,7 +84,7 @@ export function Mfa({ done, backup = false }: { done: () => void; backup?: boole
     }); return () => { live = false }
   }, [backup])
   return <section className="card auth-card"><h2>{backup ? 'Add a backup authenticator' : 'Staff security check'}</h2>
-    <p>{backup ? 'Use a separate device you control. Keep it available if your main authenticator is lost.' : 'Staff must verify an authenticator code before opening property records or managing access.'}</p>
+    <p>{backup ? 'Use a separate device you control. Keep it available if your main authenticator is lost.' : 'One extra step to protect your property records. Open your authenticator app and enter its code.'}</p>
     <Feedback message={message} error />
     {loaded && (backup || factors.length === 0) && !secret && <Button disabled={busy} onClick={async () => {
       setBusy(true); setMessage('')
@@ -95,7 +95,7 @@ export function Mfa({ done, backup = false }: { done: () => void; backup?: boole
       } catch { setMessage('Could not start authenticator setup. Keep your existing factor; contact the owner if setup cannot continue.') }
       finally { setBusy(false) }
     }}>Set up authenticator</Button>}
-    {secret && <div><p>Scan this QR code in your authenticator, or enter the setup key manually. Do not share it.</p><img className="mfa-qr" src={qr.startsWith('data:') ? qr : `data:image/svg+xml;charset=utf-8,${encodeURIComponent(qr)}`} alt="Authenticator enrollment QR code" /><label htmlFor="setup-key">Manual setup key</label><input id="setup-key" value={secret} readOnly autoComplete="off" /></div>}
+    {secret && <div><p><strong>One-time setup</strong></p><p>On the same phone? Copy the manual setup key into your authenticator app. On another device? Scan the QR code. After setup, you only need the app’s six-digit code. Keep the key private.</p><img className="mfa-qr" src={qr.startsWith('data:') ? qr : `data:image/svg+xml;charset=utf-8,${encodeURIComponent(qr)}`} alt="Authenticator enrollment QR code" /><label htmlFor="setup-key">Manual setup key</label><input id="setup-key" value={secret} readOnly autoComplete="off" /></div>}
     {!backup && factors.length > 0 && <><label htmlFor="factor">Authenticator</label><select id="factor" value={factorId} onChange={e => setFactorId(e.target.value)}>{factors.map((f, i) => <option key={f.id} value={f.id}>{f.friendly_name || `Authenticator ${i + 1}`}</option>)}</select></>}
     {factorId && <form onSubmit={async e => {
       e.preventDefault(); const code = String(new FormData(e.currentTarget).get('code')); setBusy(true); setMessage('')
@@ -103,6 +103,6 @@ export function Mfa({ done, backup = false }: { done: () => void; backup?: boole
       catch { setMessage('The code could not be verified. Use the current six-digit code and try again.') }
       finally { setBusy(false) }
     }}><label htmlFor="code">Six-digit authenticator code</label><input id="code" name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required /><Button className="primary" disabled={busy}>{busy ? 'Checking…' : 'Verify code'}</Button></form>}
-    <p className="small">Lost your authenticator? Choose an enrolled backup above. If all factors are lost, contact the owner for identity-verified administrative recovery. James cannot remove owner MFA or retrieve passwords. No bypass account is provided.</p>
+    <p className="small">Lost your authenticator? Use your enrolled backup, or contact the owner for recovery help. A password reset does not remove this security check.</p>
   </section>
 }

@@ -58,3 +58,7 @@ The owner access-history view exposes at most 100 recent access assignment/revoc
 Migration 202610160009 makes a best-effort external dispatch safe by refusing to repeat a provider call once the database claim is made. It cannot determine whether a crashed `dispatching` attempt reached Auth. Definitive provider rejection, uncertain outcome, expired invitations, and issued-but-undelivered invitations all currently remain non-reissuable for the same property/recipient. No resend UI or manual status override exists.
 
 Before relaxing that guard, decide who may authorize reissue, what evidence qualifies, whether any waiting period applies, how provider expiry is proven, and whether provider API behavior supports a safe resend. Also decide recipient-data retention duration and archival/deletion effects on idempotency. Do not infer these rules from Auth account existence, delivery assumptions, or a local test.
+
+
+## User direction - 17 Oct 2026
+Prioritize frontend UX and responsiveness before further backend work. Use U-ConvertIT as a visual reference while retaining readable RentByBob styling. Renter email-code login is accepted follow-up scope, not implemented in this UI milestone; staff authenticator MFA remains required. Do not display a nonworking email-code button or weaken trusted assurance checks.
