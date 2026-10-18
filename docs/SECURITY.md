@@ -1,4 +1,29 @@
+## Saved cash implementation pending live verification - 18 Oct 2026
+
+New unapplied migration restricts confirmation to current clerk membership with MFA plus explicit cash_verifiers entry. Owner alone cannot confirm. Verifier designation checks exact confirmed email/account ID and current clerk membership. Tenant portal has no financial grants in this milestone. Reports, allocations, snapshot and audit commit together; audit failure and excess-payment rollback tested in disposable PostgreSQL. Independent-session concurrency and live API/Auth checks remain required. Receipt is private staff UI/print only; no email or public URL. No actual environment/account/migration changes made.
+
+## 18 Oct 2026 ? payment preview boundary
+
+PaymentsPreview is exported only through the development preview module. Entries are fictional in-memory state, reset on reload and make no external requests. Settled cash is a UI simulation, not authorized financial posting. No keys, accounts, RLS, MFA or migrations changed. Future financial writes must use reviewed transactional PostgreSQL functions with RLS, authorization, idempotency and concurrency tests.
+
 # Security plan
+
+## Preview creation boundary - 17 Oct 2026
+
+Add tenant in preview now mutates in-memory fixtures only; it does not use the offline Supabase transport or grant Auth access. Email is optional and restricted to fictional .invalid addresses. Named occupants are sample data and are cleared on reload. New browser tests confirm zero external requests during create/review/location flows. Actual local/hosted mutation functions, RLS and MFA remain unchanged; UI-only minimum occupancy is not a backend security or financial rule.
+
+## Interactive property preview - 17 Oct 2026
+
+Spatial edits and tenant examples are confined to the dynamically imported development preview. No Supabase writes, actual accounts or tenant assignments were changed. Browser tests intercept external traffic and confirmed zero external requests during room/building editing. Full access policies and MFA remain intact. Production build still excludes the preview implementation.
+
+## Dashboard preview boundary - 17 Oct 2026
+
+Development-only preview uses fictional session/display data and a custom offline transport that never calls network fetch. Real Supabase client/session initialization is not executed in preview. Writes, invitations and account changes return errors; MFA enrollment control is disabled. A persistent notice explains the limitation. Production removes the dynamic preview import. Actual database permissions, Auth accounts, session storage and staff MFA were not changed. Browser checks verified zero external requests during preview navigation/submission. This mode provides no assurance about backend integration.
+
+## Hosted development ? 17 Oct 2026
+
+Eleven reviewed migrations also run on authorized fictional project `vyzexanzktskvjxjpphp`. Signup/anonymous sign-in verified disabled; nine tables have RLS, no anonymous reads and no direct browser writes. Definer search paths pinned. Hosted Auth confirms verified owner TOTP and AAL2 session. Identity-bound assignment/current-membership checks remain intact. Hosted invitations fail before an attempt/provider call; UI recovery unavailable. Local Mailpit tests pass. [Evidence, advisor warnings and limits](HOSTED_DEVELOPMENT.md) supersede older no-hosted statements below. User reports exposed secret revoked; it was not reused.
+
 Current local access UI is connected to Supabase. Ten local migrations enforce identity-bound owner assignment, tenant isolation, current membership revocation, staff MFA and durable invitation attempt tracking. Browser tests exercise actual enrollment/challenge, backup factors, password recovery and invitation reconciliation without an assurance bypass; a clerk cannot administer an owner's factors or reconcile attempts. The runtime never falls back to prototype records. Self-routing exposes only the caller's access status before MFA. Directory rename/archive and bounded owner/MFA-gated access and invitation review are enforced in PostgreSQL, not only the UI.
 
 See STATUS.md for the exact current test evidence and ONBOARDING.md for identity confirmation, invitation states, resend limits, paper-delivery limitations, 10-second UI refresh, and recovery. No hosted/production security claim.

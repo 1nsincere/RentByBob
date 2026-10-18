@@ -1,3 +1,9 @@
+## Billing decisions - 18 Oct 2026
+
+User specifies per-room rent, monthly due dates based on move-in date, and oldest unpaid rent first. User prefers James only to verify cash; Bob records amount and actual payment date as pending evidence. Treat James-only cash verification as the working direction (user said "maybe"), with explicit permission review before enabling persisted settlement. Owner role must not implicitly grant cash verification. Pending Bob entries never reduce settled balances. Check clearance/reversals are separate and unconfirmed.
+
+Still unresolved: move-ins on 29-31 in shorter months, grace/late-fee policy, advance/excess credit, initial balances, receipt verification evidence, and agreement responsibility for shared rooms. Do not invent these rules. Existing manual-allocation preview has not yet been changed to this agreed workflow.
+
 # Business decisions mapped to affected features
 
 Account access and directories can progress independently. Exact-centavo parsing, Philippine dates, non-saving payment preview, tenant isolation, auth, audited access and directory creation are implemented foundations. The entire financial area is not categorically blocked: pending-claim validation/status design, duplicate/idempotency infrastructure, non-settling report UX and acknowledgment layout can be developed without deciding charge amounts, provided no settled balance or unconfirmed policy is introduced.

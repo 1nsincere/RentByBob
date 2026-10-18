@@ -1,4 +1,9 @@
 # Operations and handover plan
+
+## Current development environments ? 17 Oct 2026
+
+Fictional hosted Supabase development is authorized/configured alongside preserved local stack. See [hosted startup, verification and next steps](HOSTED_DEVELOPMENT.md). Stop hosted Vite before local browser tests. Do not run remote CLI migrations without reconciling documented MCP/source version mapping. No public frontend or production deployment. Older local-only statements below are historical.
+
 Development currently local and fake-data only. The user-authorized repository https://github.com/1nsincere/RentByBob is private; main tracks origin/main. No hosted Supabase or deployment service has been configured. Owner must control private GitHub, Cloudflare Pages, Supabase, billing, MFA recovery and any domain; developer receives limited access. Runtime must not depend on an AI subscription.
 
 Deployment preparation (not executed): private GitHub -> Cloudflare Pages, build `npm ci && npm run build`, output `dist`, supported Node 24. Configure only public Supabase URL/publishable key in frontend. Separate development and production projects. Recheck official provider deployment/security documentation, pricing, limits, CSP/connect-src and redirect URLs before setup. Disable public signup via supported provider configuration and enforce trusted provisioning. No paid recommendation yet.

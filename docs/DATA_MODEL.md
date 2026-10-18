@@ -1,4 +1,29 @@
+## Cash foundation migration prepared - 18 Oct 2026
+
+Prepared, NOT applied to local/hosted: 202610180001_cash_rent_foundation.sql. Adds cash_verifiers, rental_agreements (one per unit), rent_charges (agreement/month unique), cash_records (pending or confirmed with acknowledgment snapshot), cash_allocations. All exposed tables use staff MFA/RLS and SELECT-only client grants. Narrow functions serialize mutations using property row lock. Amounts numeric(14,2), rejects fractional centavos; read RPC converts money to text. Snapshot preserves names/locations/dates/allocations/balance at issuance. Existing records unchanged. See STATUS for test limits and activation blocker.
+
+## Guided cash preview update - 18 Oct 2026
+
+Pending Report stores tenant, cash amount, collector and actual date separately from settled per-charge Receipt allocations. Confirmation recalculates oldest-first allocation. Terms keep the original move-in date and example room rent. These are temporary objects only; transactionality, account permission and persistence are not claimed.
+
+## 18 Oct 2026 ? temporary payment model
+
+In-memory Charge stores ID, tenant ID, room ID, period description, due business date and bigint centavos; Receipt stores ID, target charge, actual date, bigint centavos, explicit status and optional reference. Remaining amount deducts only Settled cash examples. Room balances aggregate charge balances across tenant accounts. These are isolated preview objects, not PostgreSQL entities or an approved accounting schema. No persistence or automatic schedule.
+
 # Data model — access foundation implemented, financial model proposed
+
+## Connected preview records - 17 Oct 2026
+
+Temporary PreviewTenant now includes people: string[] (named occupants). Room people counts derive from active records referencing stable room IDs; business display names are not humans. New preview records use stable request IDs, are revalidated at confirmation, and update a single in-memory store used by directory/form/map. This is not an auth/contact/lease schema. No new PostgreSQL migration. Backend persistence still requires reviewed household/occupant identity, agreement relationships, capacity/overlap rules and authorization.
+
+## Preview-only spatial model - 17 Oct 2026
+
+PropertyPreview.tsx holds temporary building footprints, floor labels, nullable room counts and room IDs/labels/types, plus fictional tenant-to-room examples. This does not extend PostgreSQL buildings/units or implement agreements/occupancy. No migration. Before persistence, review floor/unit hierarchy, whole-space versus room rentals, shared gym areas, multiple occupants, occupancy conflicts, historical assignments and authorized transactional edits. Layout geometry does not establish rent or capacity.
+
+## Hosted copy ? 17 Oct 2026
+
+Same eleven reviewed migration contents now run in fictional hosted development alongside local. No new schema/financial rule. One user-created confirmed fictional Auth identity received fictional property/owner membership through atomic audited administrative bootstrap. [Hosted mapping and verification](HOSTED_DEVELOPMENT.md).
+
 Migration `202610160001_access_foundation.sql` implements properties, staff_memberships, tenants, tenant_contacts and audit_events. Each exposed table has RLS, explicit SELECT grants and no browser mutation grants. Composite property/tenant foreign keys prevent cross-property contact links. Revocation is read from current database rows; role metadata in Auth is not authoritative. Owner/clerk access requires aal2. Tenant access derives from active contact membership and an unarchived tenant.
 
 Narrow SQL functions implement tenant creation, owner-managed contact/staff access and identity archival with atomic audits. Property row locks serialize access changes; tenant creation uses a caller-generated UUID for retry protection. This is not financial idempotency infrastructure. Detailed contracts and testing limitations: `supabase/README.md`.

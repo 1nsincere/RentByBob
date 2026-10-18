@@ -35,6 +35,12 @@ function statusResponse(attemptId: string, status: AttemptStatus, origin?: strin
 }
 
 const authenticatedFetch = withSupabase({ auth: "user" }, async (request, context) => {
+  // Hosted development has no authorized email delivery. Fail before preparing
+  // or claiming an attempt so it cannot consume the permanent no-reissue guard.
+  const authHost = new URL(Deno.env.get("SUPABASE_URL") ?? "http://invalid").hostname
+  if (!["kong", "127.0.0.1", "localhost"].includes(authHost)) {
+    return jsonResponse({ error: "Email invitations are unavailable in hosted development. No invitation attempt was created." }, 403)
+  }
   if (request.method !== "POST") {
     return jsonResponse({ error: "Use POST to request an account invitation." }, 405)
   }

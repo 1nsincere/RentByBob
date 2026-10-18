@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "dev:preview": "vite --host 127.0.0.1 --port 5175 --strictPort --mode dashboard-preview",
     "dev:local": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/start-local-ui.ps1",
     "setup:local": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/setup-local-owner.ps1",
     "test:browser": "playwright test",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test tests/*.test.ts",
-    "test:supabase": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-supabase-api.ps1"
+    "test:supabase": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-supabase-api.ps1",
+    "dev:hosted": "node scripts/start-hosted-ui.mjs",
+    "check:hosted": "node scripts/check-hosted-development.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

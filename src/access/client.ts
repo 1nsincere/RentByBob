@@ -1,10 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
+import { connectionAllowed, hostedDevelopmentUrl } from './connection'
 
 const env = import.meta.env
 const url = env.VITE_SUPABASE_URL
 const key = env.VITE_SUPABASE_ANON_KEY
-// This milestone intentionally cannot connect to a hosted project.
-export const supabase = url === 'http://127.0.0.1:54321' && key
+// Temporary UI debugging switch. Production always uses the real auth flow.
+export const dashboardPreview = import.meta.env.DEV && !new URLSearchParams(location.search).has('auth') && (env.MODE === 'dashboard-preview' || new URLSearchParams(location.search).get('preview') === '1')
+export const preview = import.meta.env.DEV && dashboardPreview ? await import('./dashboard-preview') : null
+export const hostedDevelopment = url === hostedDevelopmentUrl
+// Hosted access is explicit, project-bound and unavailable in production builds.
+export const supabase = preview ? preview.previewClient : connectionAllowed(url, env.VITE_SUPABASE_TARGET, env.DEV) && key
   ? createClient(url, key, { auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storage: window.sessionStorage } })
   : null
 
@@ -19,6 +24,7 @@ export type Tenant = { id: string; property_id: string; display_name: string; ki
 export type Account = { id: string; email: string; accepted: boolean; state: string; staff_role: string | null; contacts: { tenant_id: string; name: string; enabled: boolean }[] }
 
 export async function initializeAuth() {
+  if (preview) return { session: preview.previewSession, setup: false, failure: '' }
   if (!supabase) return { session: null, setup: false, failure: '' }
   const callback = window.location.pathname === '/auth/callback'
   const params = new URLSearchParams(window.location.hash.slice(1))

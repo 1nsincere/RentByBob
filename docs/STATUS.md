@@ -1,4 +1,93 @@
+## POS-style acknowledgment - 18 Oct 2026
+
+Restyled acknowledgment as compact POS-inspired paper: RentByBob heading, receipt number, payment details, itemized rent coverage, cash total and remaining balance, dashed separators and 80mm content width in print. Preview-only Bob script placeholder explicitly says mock/design sample and not authorized; saved acknowledgments contain no fabricated signature. Tenant-account automatic access is not implemented; receipt remains staff-only. No email delivery. Build and paid-rent browser/PDF check pass. Physical thermal printer sizing is not verified; browser paper settings remain user-controlled.
+
+## Cash persistence implementation and printable acknowledgment - 18 Oct 2026
+
+User confirmed one responsible tenant per room and requested tenant payment acknowledgments issued by James. Added migration 202610180001_cash_rent_foundation.sql: agreements, monthly charges, pending cash, exact allocations, explicit identity-confirmed clerk verifier, staff MFA/RLS, property-first transaction locks, retry checks, oldest-first allocation and immutable acknowledgment JSON. No automatic monthly billing, rent amendments/move-out, reversals, advance credits, checks or email delivery. Each acknowledgment records original tenant/location, amount, actual date, issue timestamp, covered months and balance at issuance. It is not an official tax receipt.
+
+SavedPayments connects authenticated admin screens to narrow RPCs; numeric amounts cross the read boundary as decimal strings. Normal users can record pending cash; only designated clerk can confirm. Owner does not implicitly have confirmation authority. Verifier assignment requires exact confirmed clerk ID/email. Preview can demonstrate sample receipt after confirmation in Paid rent; printable dialog uses a snapshot and clear SAMPLE marking. Tenant portal remains unchanged.
+
+Actual verification: strict build; 42 isolated tests including real migration/RLS execution in disposable PGlite, role/MFA/revocation denial, retries, short months, split allocation, overpayment rollback, audit-failure rollback, immutable receipt and decimal-string reads. Paid-rent browser check covers preview receipt opening/closing, sample marking and PDF generation; sample PDF has one A4 page. Screen screenshot inspected. This is not live PostgREST/Auth or independent-session concurrency validation.
+
+BLOCKED ACTIVATION: Supabase MCP tools are not exposed in this session. Local Docker was stopped; Docker Desktop was started, but docker ps still reports the Linux engine pipe absent, even outside the sandbox. No migration applied to local or hosted database; no existing account/data changed. Saved UI therefore cannot yet save against the existing unmigrated project. Preview still resets on reload.
+
+Exact next steps: start/recover Docker engine or restore Supabase MCP; run live multi-session concurrency, direct API and authenticated browser tests against fictional development; apply migration only after those checks; designate the existing fictional James clerk by verified identity; test reload persistence and reprint snapshot. Do not claim completion of live saving or receipt delivery. Production/real data/email remain unauthorized.
+
+## Paid rent summary - 18 Oct 2026
+
+Added Paid rent view inside Payments and balances, alongside Record and confirm. Month selector uses actual cash receipt month; total includes only confirmed cash. Split allocations share a payment ID, so one payment covering several rent months appears once. Each row identifies tenant, room, date, amount and covered months; current remaining amount distinguishes partial payments from fully paid rent. Pending reports and uncleared checks excluded. View switching retains entry state.
+
+Evidence: build and 41 isolated tests passed; check-paid-rent.mjs passed month filtering, pending exclusion, one count for split payment, full/partial labels, empty month, 320/390/768px reflow and zero external requests/runtime errors. Desktop screenshot inspected. No database/Auth changes or deployment. Preview resets on reload.
+
+Next priority remains persisted agreement/charge/cash workflow described in CASH_PERSISTENCE_PLAN.md; printable tenant statement follows reliable database saving. These are not implemented by this summary milestone.
+
+## Admin worklist and payment safeguards - 18 Oct 2026
+
+Added searchable cross-tenant payment worklist (waiting for James, unpaid rent, setup needed, all accounts). Directory cards open the correct payment account and move focus. Pending records remain separately visible. Added same-amount/date duplicate review with explicit acknowledgment, immediate repeat-click guards, strict real-calendar validation, and account-switch prevention during cash entry/review. No schema/account/MFA/RLS changes; no tenant-portal features.
+
+Evidence: build and 40 isolated tests passed. check-admin-worklist.mjs passes directory link, unpaid/search/pending filters, duplicate warning, unchanged pending balance, 320/390/768px reflow and doubled base text. Existing payment and workspace browser checks passed. Zero external requests/runtime errors. Desktop worklist screenshot visually inspected; no full accessibility claim.
+
+Prepared CASH_PERSISTENCE_PLAN.md with schema invariants, explicit James capability, trusted operations, idempotency/concurrency requirements and remaining policy boundaries. This is a design contract, not implemented persistence. Next: agreement/charge database foundation and local transactional tests, then cash reporting/confirmation. Preview state still resets on reload. Room-layout questions remain deferred.
+
+## Guided cash workflow - 18 Oct 2026
+
+User accepted last-day-of-month fallback for move-in anniversaries and James-only cash verification. Implemented a simplified development preview: one balance/record action, three-field cash entry, oldest-first allocation review, pending queue, separate James confirmation, expandable monthly rent/history/setup. Bob and James records remain pending until explicit simulated James confirmation. Reallocation occurs at confirmation; excess is rejected, original due dates retained. Move-in anchor clamps short months without drift; monthly charges use room/month duplicate prevention and keep historical amounts. Cash only; checks cannot be settled here.
+
+Validation: strict build and 39 tests pass; browser check passes pending non-settlement, oldest-first multi-charge allocation, reallocation after another payment, 320/390/768px reflow and zero external requests/runtime errors. Mobile screenshot inspected. No WCAG claim. All state is temporary, production excludes preview. No database/Auth/RLS/migrations changed.
+
+Next required milestone: persisted agreement/occupancy model, explicit cash-verifier permission bound to James, transactional PostgreSQL cash/report/allocation functions with RLS/idempotency/concurrency tests. UI preview confirmation is not authorization. Automatic monthly posting, corrections/reversals, excess credits, check clearance and production saving remain unimplemented. User room-layout details remain deferred.
+
+## Next financial milestone - 18 Oct 2026
+
+Recorded user answers: move-in anniversary billing, oldest unpaid rent first, James-only cash verification as working direction; Bob records pending amount/date. Documentation only this turn; no application/database behavior changed. Next implement agreement/charge dependencies, then explicit oldest-first allocation and pending-to-confirmed workflow with trusted authorization and transactional tests. Resolve short-month anniversary dates before recurring generation; no new fees or credits inferred.
+
+## Payment preview milestone ? 18 Oct 2026
+
+User deferred room counts/capacities/entrances until later and confirmed rent is per room. Added development-only Payments and balances navigation with tenant selector, room/account balances, manual room charges and individual due dates, partial payments explicitly allocated to a charge, actual handover dates, review/edit/confirm and payment history. Sample amounts are clearly fictional. Pending reports and uncleared checks never reduce balance; settled cash is a simulation only. Exact bigint centavos; no automatic fees, billing, proration, credits or recurring rules. No database writes, migrations, emails, Auth/RLS changes or deployment.
+
+Evidence: production build passed; 37 isolated tests passed; check-payments-preview.mjs passed exact partial amount, overpayment rejection, review/edit preservation, custom charge/due date, 320/390/768px reflow, reset and zero external requests/runtime errors. Existing workspace browser check passed. Desktop screenshot visually inspected. No accessibility or persisted financial-integrity claim.
+
+Next: review preview at http://127.0.0.1:5175. Before persistence, agree charge schedules/grace, allocation and excess-payment policy, verified collectors and check-clearance authority; design transactional RLS-protected accounting with idempotency/concurrency tests. Pending-to-settled transitions, reversals, editing posted charges and split allocations are not implemented. Room totals include all recorded charges, not only current tenant records. Room configuration questions deferred until user can inspect property.
+
 # Status - 17 Oct 2026, Asia/Manila
+
+## Current milestone: connected three-section preview - 17 Oct 2026
+
+Focused preview navigation on Tenant directory, Buildings and units, Add tenant record. Added shared typed preview state in property-preview-store.ts and a separate AddTenantPreview component. Tenant creation includes optional fictional contact, building/room selection or assign-later, named occupants, live summary, preserved draft, review/edit/confirm, duplicate-request protection and explicit temporary success. Newly confirmed records update directory counts/cards and the selected room. Directory has add action, sorting, filters, named occupant details and location navigation. Room tiles/rosters use person icons and dynamic people counts; Add tenant to this space prefills the form. The user specified a minimum of two occupants per room; validation applies to Room-type assignments in preview, with no invented maximum or financial rule.
+
+Verification: strict TypeScript/production build, 34 isolated tests, existing dashboard/property browser checks, and check-workspace-preview.mjs pass. New browser checks cover three-link navigation, minimum occupancy and fictional-email errors, error-link focus, draft/review preservation, single confirmed record, directory/room synchronization, named occupants, room prefill, 320/390/768px reflow and 200% text sizing, reload reset, zero external requests/runtime errors. Screenshots visually inspected: workspace-directory.png, add-tenant-workflow.png, add-tenant-mobile.png and room-occupants.png. No WCAG audit or hosted integration claim.
+
+Next: confirm room counts/labels per floor, maximum room capacity, and actual entrances/stairs/shared areas. Clarify independent renters versus a single household/agreement before a persisted occupancy model. Review these three screens first. No database/schema/account/MFA changes, real data, emails or production deployment.
+
+## Previous milestone record
+
+## Current milestone: interactive directory and property sketch - 17 Oct 2026
+
+Implemented the user-supplied spatial sketch in development preview: Bob's house below the access road with six rental rooms; Buildings 1 and 2 have two floors with unconfirmed rental-room counts, with separate ground-floor apartment/gym; House 1 is a whole-house space; Yamaha and three stores retain sketch positions. Added clickable illustrated buildings, floor/room grids, room count/label edits, building rename, and Add building (unplaced until geometry is confirmed). Tenant cards default to active fictional tenants, with building/room details, search/status/building filters, expandable details and Locate room. Changing a room label updates its sample tenant card. Occupied sample rooms cannot be removed by reducing counts. New buildings and edits are in-memory only and reset on reload.
+
+Verification: strict TypeScript/build and 34 isolated tests pass. Existing dashboard preview browser check passes. New check-property-preview.mjs passes active/details/location flows, floor count editing, apartment/gym preservation, occupied-room removal prevention, shared rename state, building addition, mobile list and 320/390/768px reflow, with zero external requests. Screenshots visually inspected in docs/screenshots (property-map-preview, tenant-cards-preview, property-mobile-preview). Map intentionally scrolls within its own region on narrow screens; list provides a reflowing alternative. No full accessibility or real occupancy/integration claim.
+
+Next: user reviews the map and interactions; confirm room counts, actual room order/dimensions, entrances/stairs/shared areas, gym use and additional-building positions before accurate floor plans or persisted occupancy. Database model/access dependencies must be designed and tested before enabling real assignment/layout writes. No migrations, hosted edits, financial logic or real tenant data.
+
+## Previous milestone record
+
+## Current milestone: dashboard preview for UI debugging - 17 Oct 2026
+
+User requested temporary sign-in bypass to debug the dashboard. Added `dev:preview` at http://127.0.0.1:5175 and explicit development-only `?preview=1`. Reuses the current App/workspace/components with fictional directory/location fixtures and an offline transport; every write/send fails without a network call. The actual authentication code remains executable for normal development rather than being commented out. No backend permissions, accounts, sessions, MFA or RLS were changed. Preview has a persistent notice and an exit action; production excludes its module.
+
+Verification: 34 isolated tests and strict TypeScript/build pass. `node scripts/check-dashboard-preview.mjs` passed direct owner workspace entry, search/navigation, unsaved submission, reload/exit and zero external requests. Production output contains no preview module. This is UI debugging only, not authenticated integration testing. Next: debug/review the desired screens in preview; use normal hosted/local mode for actual saves and authentication tests.
+
+## Previous milestone record
+
+## Current milestone: hosted development connection
+
+17 Oct 2026: inspected authorized empty project through MCP; applied all eleven reviewed migrations unchanged; deployed guarded invitation handler; connected loopback Vite using only a public publishable key. Signup and anonymous sign-in are verified disabled. User-created fictional owner was bootstrapped atomically with audit. Hosted Auth confirms one verified TOTP factor and an AAL2 owner session: actual hosted sign-in/MFA succeeded. User confirms settings saved. Local database/accounts were preserved.
+
+Verification: 34 isolated tests, strict TypeScript/build, 22 local API checks and both local browser scenarios pass. Hosted read-only API and rolled-back SQL authorization/retry checks pass; hosted sign-in renders. Browser tests additionally refuse hosted Vite before submitting credentials. [Evidence, advisor notices, migration mapping and next steps](HOSTED_DEVELOPMENT.md). Hosted isolation/concurrency, email acceptance/redirects, backup/restore and independent review remain separate gates. No public frontend, production, real email/data or purchase.
+
+## Previous milestone record
+
 ## Current milestone: frontend-first usability revision
 
 User prioritized visual design and phone usability, using https://u-convertit-frontend.vercel.app as a visual reference. Implemented a branded RentByBob sign-in layout with stronger typography, a stacked phone form and split desktop composition. Preserved the ivory/white/sage/teal 60-30-10 palette. Simplified sign-in and authenticator guidance; setup now explicitly explains the same-phone manual key and one-time enrollment. This does not replace staff MFA or implement email-code sign-in.

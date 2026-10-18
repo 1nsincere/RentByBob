@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Button } from '../components/atoms'
 import { Feedback } from './AuthForms'
-import { supabase, stateLabels, type Account, type Tenant } from './client'
+import { hostedDevelopment, supabase, stateLabels, type Account, type Tenant } from './client'
 
 export function Invitations({ propertyId, owner }: { propertyId: string; owner: boolean }) {
   const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [error, setError] = useState(false)
@@ -33,6 +33,7 @@ export function Invitations({ propertyId, owner }: { propertyId: string; owner: 
       setMessage('The current attempt could not be confirmed. Keep its reference and ask an owner to review it. Do not start another send.')
     } finally { setBusy(false) }
   }
+  if (hostedDevelopment) return <section className="card" aria-labelledby="invite-account-heading"><h2 id="invite-account-heading">Account invitations</h2><p>Email invitations are unavailable in hosted development. Ask the development administrator to create a fictional test account. An owner must assign its access separately.</p></section>
   return <section className="card form-card" aria-labelledby="invite-account-heading"><p className="eyebrow">ACCOUNT INVITATION</p><h2 id="invite-account-heading">Invite an account</h2><p>Invitation delivery does not grant property or tenant access. An owner must approve each assignment separately.</p>
     <Feedback message={message} error={error} />
     <form onSubmit={submit}>

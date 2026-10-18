@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '../components/atoms'
-import { supabase } from './client'
+import { hostedDevelopment, supabase } from './client'
 
 export function Feedback({ message, error = false }: { message: string; error?: boolean }) {
   const ref = useRef<HTMLParagraphElement>(null)
@@ -23,6 +23,10 @@ export function SignIn() {
       try {
         const email = String(form.get('email')).trim()
         if (recovery) {
+          if (hostedDevelopment) {
+            setError(true); setMessage('Email recovery is unavailable in hosted development. Ask the development administrator for help. Staff MFA is still required.')
+            return
+          }
           const result = await supabase!.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/auth/callback` })
           if (result.error) throw result.error
           setError(false); setMessage('If this address is eligible, a reset link will arrive. In local development, check Mailpit. Password reset does not remove staff MFA.')
@@ -41,7 +45,7 @@ export function SignIn() {
       </div></>}
       <Button className="primary" disabled={busy}>{busy ? 'Please wait…' : recovery ? 'Send reset link' : 'Sign in'}</Button>
     </form>
-    <Button className="quiet-button recovery-link" onClick={() => { setRecovery(!recovery); setMessage(''); setError(false) }}>{recovery ? 'Back to sign-in' : 'Forgot password?'}</Button>
+    {hostedDevelopment ? <p className="field-help">Email recovery is unavailable in hosted development. Ask the development administrator for help.</p> : <Button className="quiet-button recovery-link" onClick={() => { setRecovery(!recovery); setMessage(''); setError(false) }}>{recovery ? 'Back to sign-in' : 'Forgot password?'}</Button>}
     <div className="auth-help"><strong>New here?</strong><p>Ask your property owner or clerk for an invitation.</p></div>
   </section>
 }

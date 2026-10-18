@@ -1,5 +1,9 @@
 # Database migrations
 
+## Hosted development exception ? 17 Oct 2026
+
+User authorized empty project `vyzexanzktskvjxjpphp` for fictional development. Eleven reviewed migrations applied via MCP. See [hosted record](../docs/HOSTED_DEVELOPMENT.md) for startup/history mapping. Local commands/guards below remain local-only; never repoint local bootstrap/test fixtures at hosted services. No remote CLI link/push used.
+
 `migrations/202610160001_access_foundation.sql` is the first ordered Supabase migration. It creates property, staff, tenant/contact and audit records with constraints, explicit grants, RLS, and transactional mutation functions. It does not create credentials or a public signup path.
 
 ## Run the isolated SQL checks

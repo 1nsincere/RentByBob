@@ -1,7 +1,9 @@
+import { SavedPayments } from './access/SavedPayments'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { Button } from './components/atoms'
-import { initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
+import { WorkspaceIcon } from './components/WorkspaceIcon'
+import { dashboardPreview, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
 import { Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
 import { Invitations, ManageAccess } from './access/ManageAccess'
 import { PropertyDirectory } from './access/PropertyDirectory'
@@ -36,7 +38,7 @@ export function App() {
         setBooting(false)
       }
     })
-    const subscription = supabase?.auth.onAuthStateChange((_event, value) => {
+    const subscription = (dashboardPreview ? null : supabase)?.auth.onAuthStateChange((_event, value) => {
       generation.current++
       setSnapshot(null)
       setSession(value)
@@ -46,6 +48,11 @@ export function App() {
   }, [])
 
   const refresh = useCallback(async () => {
+    if (preview) {
+      setSnapshot(preview.previewSnapshot)
+      setPropertyId(preview.previewSnapshot.properties[0].id)
+      return
+    }
     if (!supabase || !session || booting || callbackError) return
     const version = ++generation.current
     try {
@@ -101,6 +108,7 @@ export function App() {
   useEffect(() => { heading.current?.focus() }, [route])
 
   async function signOut() {
+    if (dashboardPreview) { location.href = '/?auth=1'; return }
     generation.current++
     setSnapshot(null)
     const { error } = await supabase!.auth.signOut({ scope: 'local' })
@@ -122,6 +130,7 @@ export function App() {
     { id: 'tenant-records', label: 'Tenant directory' },
     { id: 'property-locations', label: 'Buildings and units' },
     { id: 'create-tenant', label: 'Add tenant record' },
+    { id: 'payment-records', label: 'Payments and balances' },
     { id: 'invite-account', label: 'Invite account' },
     ...(role === 'owner' ? [
       { id: 'manage-access', label: 'Assign or disable access' },
@@ -129,7 +138,7 @@ export function App() {
       { id: 'access-history', label: 'Access history' },
     ] : []),
     { id: 'account-security', label: 'Account security' },
-  ] : []
+  ].filter(item => !dashboardPreview || ['tenant-records', 'property-locations', 'create-tenant', 'payment-records'].includes(item.id)) : []
   const navigationKey = navigationItems.map(item => item.id).join('|')
 
   useEffect(() => {
@@ -140,7 +149,7 @@ export function App() {
     setActiveSection(id)
     if (mobileNavigation.current) mobileNavigation.current.open = false
     requestAnimationFrame(() => {
-      const section = document.getElementById(id)
+      const section = document.getElementById(preview && id === 'tenant-records' ? 'preview-tenant-records' : id)
       section?.focus({ preventScroll: true })
       section?.scrollIntoView({ block: 'start' })
     })
@@ -152,27 +161,28 @@ export function App() {
         <li key={item.id}>
           <a href={`#${item.id}`} aria-current={activeSection === item.id ? 'location' : undefined}
             onClick={event => { event.preventDefault(); selectSection(item.id) }}>
-            {item.label}
+            {dashboardPreview && <WorkspaceIcon kind={item.id === 'tenant-records' ? 'people' : item.id === 'property-locations' ? 'building' : 'add'} />}{item.label}
           </a>
         </li>)}</ul>
     </nav>
   }
 
-  return <div className={`app-shell ${route === 'sign-in' ? 'sign-in-shell' : ''}`}>
+  return <div className={`app-shell ${route === 'sign-in' ? 'sign-in-shell' : ''} ${dashboardPreview ? 'focused-preview' : ''}`}>
     <a className="skip-link" href="#main">Skip to content</a>
     <div className="environment-note">Local development · Fictional accounts only</div>
     <header className="site-header">
       <div className="shell header-inner">
         <a className="brand" href="/" aria-label="RentByBob home"><span className="brand-mark" aria-hidden="true">R</span><span>Rent<span className="brand-accent">ByBob</span></span></a>
         {session && <div className="session-tools">
-          <span className="signed-in-label">Signed in as</span>
-          <span className="account-email">{session.user.email}</span>
-          <Button className="quiet-button" onClick={() => void signOut()}>Sign out</Button>
+          <span className="signed-in-label">{dashboardPreview ? 'Workspace mode' : 'Signed in as'}</span>
+          <span className="account-email">{dashboardPreview ? 'Interactive preview' : session.user.email}</span>
+          <Button className="quiet-button" onClick={() => void signOut()}>{dashboardPreview ? 'Exit preview' : 'Sign out'}</Button>
         </div>}
       </div>
     </header>
     <div className="shell page-shell">
       <main id="main" tabIndex={-1} className={role && route === 'ready' ? 'staff-main' : ''}>
+        {dashboardPreview && <p className="notice" role="status"><strong>Dashboard preview - sign-in skipped.</strong> Fictional tenants only. Changes last until reload. No database writes or emails.</p>}
         <div className="page-intro">
           <p className="eyebrow">{role ? 'PROPERTY WORKSPACE' : session ? 'YOUR ACCOUNT' : 'YOUR RENTAL SPACE, SIMPLIFIED'}</p>
           <h1 ref={heading} tabIndex={-1} className="route-heading">
@@ -189,14 +199,14 @@ export function App() {
         </div>
 
         {!supabase ? <section className="card auth-card">
-          <h2>Local connection is not configured</h2>
-          <p>Start this app with <code>npm.cmd run dev:local</code> after starting local Supabase. No prototype records are substituted.</p>
+          <h2>Development connection is not configured</h2>
+          <p>Start local development with <code>npm.cmd run dev:local</code>, or the configured hosted development environment with <code>npm.cmd run dev:hosted</code>. No prototype records are substituted.</p>
         </section> : booting ? <p role="status">Loading your session…</p>
           : callbackError ? <><Feedback message={callbackError} error /><Button className="primary" onClick={() => { setCallbackError(''); void signOut() }}>Return to sign-in</Button></>
             : !session ? <SignIn />
               : <>
                 <Feedback message={error} error />
-                {snapshot && !snapshot.mfa && !setup && <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>Refresh access</Button>}
+                {!dashboardPreview && snapshot && !snapshot.mfa && !setup && <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>Refresh access</Button>}
                 {!snapshot ? <p role="status" className="loading-state">{error ? 'Records unavailable.' : 'Checking your current permissions…'}</p>
                   : snapshot.mfa ? <Mfa done={() => void refresh()} />
                     : setup ? <PasswordSetup done={() => { sessionStorage.removeItem(`password-setup:${session.user.id}`); setSetup(false); void refresh() }} />
@@ -224,7 +234,7 @@ export function App() {
                             {staffNavigation()}
                           </aside>
                           <div className="workspace-content">
-                            <div className="workspace-toolbar">
+                            <div className="workspace-toolbar" hidden={dashboardPreview}>
                               <p className="status status--ready">Account ready</p>
                               <div className="property-picker">
                                 <label htmlFor="property">Authorized property</label>
@@ -235,7 +245,8 @@ export function App() {
                                 }}>{snapshot.properties.map(property => <option key={property.id} value={property.id}>{property.name}</option>)}</select>
                               </div>
                             </div>
-                            <section hidden={activeSection !== 'tenant-records'} tabIndex={-1} className="card directory-card" id="tenant-records" aria-labelledby="tenant-records-heading">
+                            {preview && <div hidden={activeSection !== 'tenant-records'} tabIndex={-1} id="preview-tenant-records"><preview.TenantDirectoryPreview openPayments={() => selectSection('payment-records')} openMap={() => selectSection('property-locations')} addTenant={() => selectSection('create-tenant')} /></div>}
+                            {!preview && <section hidden={activeSection !== 'tenant-records'} tabIndex={-1} className="card directory-card" id="tenant-records" aria-labelledby="tenant-records-heading">
                               <div className="section-heading">
                                 <div><p className="eyebrow">PEOPLE AND BUSINESSES</p><h2 id="tenant-records-heading">Tenant directory</h2></div>
                                 <Button className="primary" onClick={() => selectSection('create-tenant')}>Add tenant</Button><span className="record-count">{tenantList.length} {tenantList.length === 1 ? 'record' : 'records'}</span>
@@ -264,10 +275,11 @@ export function App() {
                                 <p>No tenant records match “{search.trim()}”. Clear the search to see the full directory.</p>
                                 <Button className="secondary-button" onClick={() => setSearch('')}>Clear search</Button>
                               </div>}
-                            </section>
-                            <div id="property-locations" hidden={activeSection !== 'property-locations'} tabIndex={-1} className="workspace-section"><PropertyDirectory key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} /></div>
-                            <div id="create-tenant" hidden={activeSection !== 'create-tenant'} tabIndex={-1} className="workspace-section"><CreateTenant key={`create:${propertyId}`} propertyId={propertyId} done={() => void refresh()} /></div>
-                            <div id="invite-account" hidden={activeSection !== 'invite-account'} tabIndex={-1} className="workspace-section"><Invitations key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} /></div>
+                            </section>}
+                            <div id="property-locations" hidden={activeSection !== 'property-locations'} tabIndex={-1} className="workspace-section">{preview ? <preview.PropertyMapPreview addTenant={() => selectSection('create-tenant')} /> : <PropertyDirectory key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} />}</div>
+                            <div id="create-tenant" hidden={activeSection !== 'create-tenant'} tabIndex={-1} className="workspace-section">{preview ? <preview.AddTenantPreview showDirectory={() => selectSection('tenant-records')} showBuildings={() => selectSection('property-locations')} /> : <CreateTenant key={`create:${propertyId}`} propertyId={propertyId} done={() => void refresh()} />}</div>
+                            <div id="payment-records" hidden={activeSection !== 'payment-records'} tabIndex={-1} className="workspace-section">{preview ? <preview.PaymentsPreview /> : <SavedPayments key={propertyId} propertyId={propertyId} tenants={tenantList} owner={role === 'owner'} userId={session.user.id} />}</div>
+                              <div id="invite-account" hidden={activeSection !== 'invite-account'} tabIndex={-1} className="workspace-section"><Invitations key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} /></div>
                             {role === 'owner' && <>
                               <div id="manage-access" hidden={activeSection !== 'manage-access'} tabIndex={-1} className="workspace-section"><ManageAccess key={`access:${propertyId}`} propertyId={propertyId} tenants={tenantList} changed={() => void refresh()} /></div>
                               <div id="invitation-review" hidden={activeSection !== 'invitation-review'} tabIndex={-1} className="workspace-section"><InvitationReconciliation key={`invitation-reconciliation:${propertyId}`} propertyId={propertyId} /></div>
@@ -277,7 +289,7 @@ export function App() {
                               <p className="eyebrow">SIGN-IN AND RECOVERY</p>
                               <h2>Account security</h2>
                               <p>Enroll a backup authenticator on a separate device before losing access to your main one. Password recovery does not bypass staff MFA.</p>
-                              <Button className="secondary-button" onClick={() => setBackup(!backup)}>{backup ? 'Close backup setup' : 'Add a backup authenticator'}</Button>
+                              <Button disabled={dashboardPreview} className="secondary-button" onClick={() => setBackup(!backup)}>{backup ? 'Close backup setup' : 'Add a backup authenticator'}</Button>
                               {backup && <Mfa backup done={() => { setBackup(false); void refresh() }} />}
                             </section>
                           </div>

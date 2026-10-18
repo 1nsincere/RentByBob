@@ -1,5 +1,13 @@
 # RentByBob interface design system
 
+## Three-section workflow polish - 17 Oct 2026
+
+Preview uses three labeled icon navigation links, restrained surfaces, dynamic summary counts, consistent teal actions and compact filters/sort. Tenant cards identify the rental space and named occupant count. Room rosters pair person icons with names/counts; never color alone. Add tenant uses grouped fieldsets, persistent labels, optional/required cues, a live summary, review/edit/confirm states and field-linked validation. Drafts remain mounted during section navigation. Narrow reflow and simulated 200% text sizing pass for the new form; full keyboard/screen-reader/native zoom audit remains open.
+
+## Interactive directory and site map - 17 Oct 2026
+
+Preview tenant cards show identity initials, textual active/archive status, building/room and expandable details, with Locate room navigation. SVG/CSS building illustrations and the fixed sketch use semantic buttons with selected state; no raster assets or icon-only primary controls. Room boxes grow into a responsive grid as counts change, with text labels for occupied/unassigned/shared spaces. Map is illustrative and explicitly not to scale; a keyboard-scrollable map region and compact Building list provide alternatives on phones. Actual floor geometry remains unconfirmed. Narrow-page overflow checks at 320/390/768px passed; this is not a WCAG certification.
+
 ## Direction
 
 The working access application uses a calm, readable property-records interface rather than a dashboard. The renter experience has one principal destination, so it uses a compact header and account action instead of invented bottom-navigation tabs. Owners and clerks have several real workflows: a labeled staff navigation drawer on phones and a persistent sidebar on wider screens. Navigation links jump to actual sections on the current property workspace; there are no placeholder destinations.

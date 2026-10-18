@@ -1,4 +1,51 @@
+## Responsible tenant and acknowledgments - 18 Oct 2026
+
+User confirmed one responsible tenant per room; others are occupants. A room cannot have a second agreement in this first slice; move-out/reletting must use a later reviewed lifecycle, not deletion. Confirmed cash issues a Cash Payment Acknowledgment for actual received money, including partial payments. Not restricted to fully paid months and not a tax receipt. Print/Save PDF is available to staff; no automatic email, public download or tenant portal delivery. James is a designated confirmed clerk identity, not a hard-coded name/email. Owner can designate verifier but cannot implicitly settle cash.
+
+## Paid rent reporting basis - 18 Oct 2026
+
+Paid rent means confirmed cash received in the selected receipt month, including partial payments. It does not mean every covered rent month is fully settled. Allocation rows show the current remaining charge balance across all receipt months. Payment IDs group split allocations without counting multiple receipts. No verification-date collection report or check-clearance total inferred.
+
+## Autonomous admin milestone - 18 Oct 2026
+
+User permits routine implementation decisions and will review the running app. Continue in reviewable milestones; production, real data and financial policy inference remain outside scope. Payment worklist prioritizes pending verification, then unpaid/setup filters. Similar date/amount entries require review but are not automatically rejected as duplicates. Date validation rejects impossible calendar days. See CASH_PERSISTENCE_PLAN.md before persisted financial work.
+
+## Guided cash workflow - 18 Oct 2026
+
+User accepted last-day-of-month fallback for move-in anniversaries and James-only cash verification. Implemented a simplified development preview: one balance/record action, three-field cash entry, oldest-first allocation review, pending queue, separate James confirmation, expandable monthly rent/history/setup. Bob and James records remain pending until explicit simulated James confirmation. Reallocation occurs at confirmation; excess is rejected, original due dates retained. Move-in anchor clamps short months without drift; monthly charges use room/month duplicate prevention and keep historical amounts. Cash only; checks cannot be settled here.
+
+Validation: strict build and 39 tests pass; browser check passes pending non-settlement, oldest-first multi-charge allocation, reallocation after another payment, 320/390/768px reflow and zero external requests/runtime errors. Mobile screenshot inspected. No WCAG claim. All state is temporary, production excludes preview. No database/Auth/RLS/migrations changed.
+
+Next required milestone: persisted agreement/occupancy model, explicit cash-verifier permission bound to James, transactional PostgreSQL cash/report/allocation functions with RLS/idempotency/concurrency tests. UI preview confirmation is not authorization. Automatic monthly posting, corrections/reversals, excess credits, check clearance and production saving remain unimplemented. User room-layout details remain deferred.
+
+## Billing decisions - 18 Oct 2026
+
+User specifies per-room rent, monthly due dates based on move-in date, and oldest unpaid rent first. User prefers James only to verify cash; Bob records amount and actual payment date as pending evidence. Treat James-only cash verification as the working direction (user said "maybe"), with explicit permission review before enabling persisted settlement. Owner role must not implicitly grant cash verification. Pending Bob entries never reduce settled balances. Check clearance/reversals are separate and unconfirmed.
+
+Still unresolved: move-ins on 29-31 in shorter months, grace/late-fee policy, advance/excess credit, initial balances, receipt verification evidence, and agreement responsibility for shared rooms. Do not invent these rules. Existing manual-allocation preview has not yet been changed to this agreed workflow.
+
+## 18 Oct 2026 ? per-room payment preview
+
+User confirms rent is per room, not per person; room-count/capacity/entrance details deferred. Preview permits explicit charge amounts, rent-period descriptions and agreed due dates instead of inferring a schedule from late payments. Actual receipt date remains independent. Partial receipts explicitly target one charge. No maximum capacity or financial fee inferred. Duplicate same-room period labels are blocked as a preview safeguard, not a complete occupancy/charge uniqueness model. Persisted billing needs canonical period keys and agreement ownership.
+
 # Decisions and open questions
+
+## Occupant display and focused workflow - 17 Oct 2026
+
+User requested focus on three sections and named room occupants with a person icon/count, stating each room has a minimum of two occupants. Implement minimum two only for preview Room-type assignments, counting existing active occupants plus the submitted record. No maximum assumed. Individual tenant name is counted once as primary occupant; additional names are explicit. Business name is not counted as a person. Shared gym is not selectable as a rental space. Assign-later records remain allowed without implying occupancy. Named people are separate from authenticated accounts and payment liability. Independent renters versus households/agreements remains unresolved before persistence.
+
+## Property sketch interaction - 17 Oct 2026
+
+Treat the supplied sketch as relative site placement, not surveyed dimensions. Keep existing footprints fixed while editing illustrative interiors. Bob's house starts with six rooms without inventing a floor count; Buildings 1/2 have two user-described floors and unknown rental-room counts. Preserve apartment and gym separately. House 1/Yamaha/stores are whole spaces, not invented subdivisions. New buildings remain outside the fixed sketch until placement is confirmed. Prototype limits: 1-5 floors when adding a building and 0-40 rental rooms per floor; these are UI bounds, not confirmed property rules. Only fictional tenants/assignments are shown. Changes reset on reload; no persistence or real occupancy policy implied.
+
+## Temporary UI debugging mode - 17 Oct 2026
+
+Implement the requested no-sign-in dashboard as an explicit development preview using the current workspace components. Preserve authentication code for resumption; no server-side auth/MFA/RLS weakening. Fixture data and non-network transport are isolated in a development-only module; writes/sends unavailable. Normal hosted/local launches retain authentication.
+
+## Hosted development authorization ? 17 Oct 2026
+
+User authorizes inspecting project `vyzexanzktskvjxjpphp`, applying reviewed migrations if empty, and connecting fictional hosted development. This supersedes earlier local-only restrictions for this project only. Preserve local data/accounts, staff MFA, RLS and disabled signup. No production, purchases, real emails or real data. Exact-project/development-only guard, separate public configuration and signup-disabled launcher implemented. Hosted invitations are blocked server-side; recovery/invitation UI explains unavailability. User privately created confirmed fictional owner; audited bootstrap grants membership without password handling or MFA bypass. [Operational record](HOSTED_DEVELOPMENT.md).
+
 ## Current access and repository decisions - 16 Oct 2026
 - User authorized private GitHub repository 1nsincere/RentByBob; main is connected and prior commits preserved.
 - Local access UI, directory maintenance, owner account/contact access-audit review, durable invitation tracking and owner invitation reconciliation are implemented locally. See STATUS.md for current evidence; earlier next-step notes below are historical.
