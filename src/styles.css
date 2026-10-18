@@ -551,6 +551,21 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .focused-preview .workspace-sidebar { top: 1rem; }
 .focused-preview .workspace-links a[aria-current="location"] { background: var(--brand); color: #fff; box-shadow: 0 2px 6px rgb(36 90 129 / 18%); }
 .workspace-overview { margin-top: 1rem; }
+.dashboard-home { min-width: 0; margin-bottom: 1.25rem; scroll-margin-top: 1rem; }
+.dashboard-home:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; border-radius: var(--radius); }
+.dashboard-welcome { padding: clamp(1rem, 2.5vw, 1.6rem); border: 1px solid var(--border); border-top: 3px solid var(--brand); border-radius: var(--radius); background: linear-gradient(135deg, #fff 0%, #f7f4ed 100%); box-shadow: var(--shadow-card); }
+.dashboard-welcome h2 { margin: 0; font-size: clamp(1.55rem, 3vw, 2rem); letter-spacing: -.025em; }
+.dashboard-identity { margin: .25rem 0 1.35rem; color: var(--text-secondary); overflow-wrap: anywhere; }
+.dashboard-identity strong { color: var(--text); font-weight: 600; }
+.dashboard-welcome h3 { margin: 0 0 .8rem; font-size: 1.22rem; }
+.dashboard-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .7rem; }
+.dashboard-action { display: flex; min-width: 0; min-height: 5.25rem; align-items: center; justify-content: space-between; gap: .7rem; padding: .85rem 1rem; border: 1px solid var(--border); border-radius: .65rem; background: #fff; color: var(--text); text-align: left; transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease, transform 100ms ease; }
+.dashboard-action:hover { border-color: #aabac7; background: #fbfcfd; box-shadow: 0 3px 10px rgb(37 43 49 / 7%); }
+.dashboard-action:active { transform: translateY(1px); }
+.dashboard-action > span:first-child { display: grid; gap: .18rem; }
+.dashboard-action strong { color: var(--brand-hover); font-size: 1.02rem; }
+.dashboard-action small { color: var(--text-secondary); font-size: .9rem; line-height: 1.4; }
+.dashboard-action-arrow { color: var(--brand); font-size: 1.5rem; line-height: 1; }
 .stat-card { border-radius: .85rem; }
 .stat-card:nth-child(2) { border-top: 3px solid var(--accent); }
 .stat-card strong { font-size: clamp(1.5rem, 2.4vw, 2rem); font-variant-numeric: tabular-nums; letter-spacing: -.035em; }
@@ -618,11 +633,47 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .add-missed-month-confirm p { grid-column: 1 / -1; margin: 0; }
 .add-missed-month-sheet > .field-help { margin-bottom: 0; }
 @media (max-width: 40rem) {
-  .paid-report-metrics { grid-template-columns: minmax(0,1fr); }
-  .paid-report-metrics article { min-height: 4.5rem; }
+  .focused-preview #main > .notice { margin-bottom: .75rem; padding: .55rem .7rem; line-height: 1.4; }
+  .focused-preview .mobile-workspace-navigation { margin-bottom: .7rem; }
+  .dashboard-home { margin-bottom: .75rem; }
+  .dashboard-welcome { padding: 1rem; }
+  .dashboard-identity { margin-bottom: 1rem; font-size: .92rem; }
+  .dashboard-welcome h3 { font-size: 1.12rem; }
+  .dashboard-actions { grid-template-columns: minmax(0,1fr); gap: .5rem; }
+  .dashboard-action { min-height: 4.5rem; padding: .7rem .8rem; }
+  .focused-preview .workspace-overview { grid-template-columns: repeat(2,minmax(0,1fr)); gap: .5rem; margin: 0 0 .75rem; }
+  .focused-preview .stat-card { padding: .65rem .75rem; border-radius: .65rem; }
+  .focused-preview .stat-card:first-child { grid-column: 1 / -1; }
+  .focused-preview .stat-label { font-size: .78rem; letter-spacing: .045em; }
+  .focused-preview .stat-card strong { margin-top: .15rem; font-size: 1.35rem; }
+  .focused-preview .stat-card small { margin-top: .2rem; font-size: .88rem; }
+  .focused-preview .directory-stats { margin-block: .8rem; }
+  .paid-rent-summary { gap: .65rem; }
+  .paid-report-heading { gap: .45rem; }
+  .paid-report-heading .preview-pill { padding: .25rem .55rem; }
+  .paid-report-sheet, .unpaid-report-sheet, .arrears-report-sheet, .add-missed-month-sheet { padding: 1rem; }
+  .paid-report-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); gap: .5rem; margin-block: .7rem .55rem; }
+  .paid-report-metrics article { min-height: 4rem; padding: .65rem; }
+  .paid-report-metrics article:first-child { grid-column: 1 / -1; }
+  .paid-report-metrics article span { font-size: .9rem; }
+  .paid-report-metrics article strong { font-size: 1.3rem; }
+  .paid-report-sheet > .field-help { margin-block: .35rem .65rem; }
   .paid-report-toolbar, .unpaid-report-heading { align-items: stretch; flex-direction: column; }
   .paid-report-toolbar input, .unpaid-report-heading input { width: 100%; }
+  .paid-report-toolbar { gap: .55rem; padding-bottom: .65rem; }
   .paid-report-period { order: -1; }
+  .unpaid-report-heading { gap: .6rem; }
+  .unpaid-report-heading > div:last-child { min-width: 0; }
+  .unpaid-report-heading h4 { font-size: 1.12rem; }
+  .unpaid-report-total { align-items: center; gap: .35rem; margin-block: .65rem; padding: .7rem .8rem; border: 1px solid #c8b17e; border-left: 4px solid var(--accent); background: var(--warning-surface); }
+  .unpaid-report-total span { font-weight: 600; }
+  .unpaid-report-total strong { font-size: 1.4rem; }
+  .arrears-report-sheet.has-arrears { border-top-width: 4px; }
+  .arrears-report-sheet.has-arrears .preview-pill { border-color: #c8b17e; background: var(--warning-surface); color: var(--warning); font-weight: 650; }
+  .arrears-report-sheet .paid-report-table caption { padding: .55rem .4rem; }
+  .arrears-report-table td[data-label="Rent months"] { grid-column: 1 / -1; }
+  .paid-report-table caption { padding: .55rem .4rem; }
+  .paid-report-table th, .paid-report-table td { line-height: 1.4; }
   .paid-table-scroll { overflow: visible; border: 0; }
   .paid-report-table { display: block; min-width: 0; }
   .paid-report-table caption, .paid-report-table tbody, .paid-report-table tfoot { display: block; }

@@ -8,6 +8,34 @@ Limitations: this is fictional in-memory preview state and resets on reload; it 
 
 Next: review the selected-month add and arrears behavior with the user. Any persisted rent-charge creation requires a separate financial milestone, reviewed schema/policy, and transactional PostgreSQL function with RLS, authorization, idempotency and concurrency tests. No migration was applied.
 
+## Staff dashboard landing page - 19 Oct 2026
+
+Added a staff dashboard as the default workspace section. It greets the signed-in account by authenticated email and offers four shortcuts: Log a payment, Add a tenant, View the property, and Find a tenant. Each navigates to its existing flow; no data is written merely by choosing an action. Added Dashboard navigation on desktop and mobile and kept it out of tenant portal screens. Preview continues to use its explicit fictional preview account identity.
+
+Evidence: `npm run build`, `npm test` (42 tests), the dashboard, workspace, property, payment, admin-worklist and paid-rent preview browser checks, and `git diff --check` pass. The dashboard browser check verifies displayed preview identity, all four action destinations (including keyboard activation), responsive reflow, reload behavior, and zero external requests. Captured and visually inspected [desktop staff dashboard](screenshots/dashboard-landing-desktop.png) and [mobile staff dashboard](screenshots/dashboard-landing-mobile.png).
+
+Limitations: name greeting uses the authenticated email because the app does not currently load a verified display name. This is a navigation/landing-page change only; no financial, tenant or property record is created, and tenant portal remains unchanged. This UI check is not a full accessibility audit.
+
+Next: review whether the email identifier is clear enough for staff, and whether the four action labels match daily terminology. If a verified display-name source is later adopted, review its provenance and privacy before using it in the greeting.
+
+## Mobile-first report and dashboard polish - 19 Oct 2026
+
+Kept the warm ivory/ink-blue palette and system font stack. On the Paid rent report, the confirmed-cash metric leads the compact mobile summary, while renter/payment counts share a row. The outstanding total and active 2+ month arrears state now have stronger restrained emphasis; report details remain visible with labeled table-card reflow. The dashboard preview uses a prominent active-record summary with property/access summaries alongside below it on mobile, and tighter notice/navigation spacing to bring the tenant directory forward. Desktop overview remains three cards. No new animation was added; existing reduced-motion handling remains.
+
+Evidence: `npm run build`, `node scripts/check-dashboard-preview.mjs`, `node scripts/check-paid-rent.mjs` and `git diff --check` pass. Browser checks assert the mobile summary-card hierarchy, no horizontal overflow at 320/390/768px, visible selected-month/arrears emphasis, report behavior unchanged and no external requests/runtime errors. Captured and visually inspected [desktop dashboard](screenshots/dashboard-polish-desktop.png), [mobile dashboard](screenshots/dashboard-polish-mobile.png), [desktop Paid rent report](screenshots/paid-rent.png) and [mobile Paid rent report](screenshots/paid-rent-mobile.png).
+
+Limitations: this is a presentation-only refinement to fictional preview screens. The desktop/mobile browser checks do not constitute a full accessibility or 200% zoom audit; no conformance claim is made. Financial behavior, authentication, MFA, RLS and database state were not changed.
+
+Next: review the dashboard and Paid rent layouts at actual device sizes. If the mobile table-card presentation is hard to scan, adjust its field ordering/spacing based on that feedback without dropping necessary data.
+
+## Cross-feature logic polish - 19 Oct 2026
+
+Ran the current fictional-preview browser checks across dashboard and isolation, workspace/tenant creation, property/building navigation, payment recording/allocation, admin worklist and Paid rent/arrears. All six checks pass after fixing an ambiguous dashboard-test locator to target the tenant heading rather than also matching a dropdown option; the initial failure was in the test selector, not application behavior. `npm test` passes all 42 tests, including exact-money/date/allocation behavior and isolated database access/RLS invariants. `npm run build` and `git diff --check` pass.
+
+Scope and limits: this pass did not change application financial logic, Auth/MFA, RLS, or database contents. It exercises the fictional preview surfaces plus the existing isolated unit/database-policy tests. Authenticated local-Supabase browser tests and live API checks were not run in this pass because they require the separately configured local Supabase/invitation services; no migration, hosted target, email, or production deployment was invoked. The Vite build continues to show its existing advisory that the main JavaScript chunk is just over 500 kB. No full accessibility conformance claim is made.
+
+Next: have Bob review the preview workflows and sample rent-month behavior. Before connecting any financial preview action to persistence, complete the separate schema, authorization/RLS, transactional idempotency/concurrency, recovery and local integration gates.
+
 ## Spreadsheet-style paid-rent report - 19 Oct 2026
 
 Redesigned the Paid rent preview as a spreadsheet-like monthly report. Its summary shows confirmed cash received, distinct renters who paid, and the number of confirmed payment groups. A semantic table lists renter, rental space, actual date received, amount, rent months covered and a receipt action, followed by a total row. Below it, a separate rent-month filter shows recorded charges with a remaining balance, due date, rent amount and still-due amount; partial payments reduce only the confirmed balance. The user chose outstanding balance for the selected rent month as the definition of “not paid yet.” No charge recorded for a month is explicitly not treated as unpaid. Filters distinguish actual receipt month from rent charge month. Pending reports and uncleared checks remain excluded.

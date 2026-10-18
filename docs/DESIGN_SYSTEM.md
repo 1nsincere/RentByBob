@@ -6,6 +6,16 @@ Use a spreadsheet-inspired, bordered report sheet with a clear month selector an
 
 The outstanding section may offer an explicit selected-month charge action only to renters with an assigned room and saved rent setup, after showing the exact saved amount and calculated due date for confirmation. Show a separate multiple-months section for renters with positive balances in at least two distinct recorded rent months; include month names, count, rental location and total remaining. State clearly that the list reflects recorded charges, not absent months or overdue determinations. Keep all actions visibly preview-only, announce completion/errors, and stack confirmation controls at narrow widths.
 
+## Mobile-first report and dashboard polish - 19 Oct 2026
+
+Keep the existing warm ivory, charcoal, ink-blue and restrained brass palette and the local system sans-serif stack. On narrow screens, give the confirmed-cash metric the full first row; keep renter/payment counts together beneath it. Emphasize the selected-month remaining balance and visibly flag a non-empty 2+ month arrears list using the existing warning color and clear text, not color alone. Reflow tables into compact, labeled cards, retaining renter, rental space, date, amount, rent months, receipt/status and accessible table semantics. Tighten repeated spacing and explanatory text without hiding report content or reducing form/control targets.
+
+For the dashboard preview, make the active-record count the prominent summary item and place property/access summaries together below it on phones. Compact the preview notice/navigation and whitespace so the tenant directory begins sooner. Keep the desktop three-card overview intact. Use short existing hover/pressed transitions; no additional movement or animation is needed for this refinement. Continue honoring reduced-motion settings.
+
+## Staff dashboard home - 19 Oct 2026
+
+Make the landing page the default staff workspace section. Show “Welcome back” and the authenticated email as the account identifier, followed by “What would you like to do today?” Give four clear, touch-sized actions: Log a payment, Add a tenant, View the property, and Find a tenant. Each action navigates to the corresponding existing screen without creating data. Keep the four choices in a two-column desktop layout and a single-column mobile layout; allow long email addresses to wrap. Keep a persistent Dashboard navigation item with a distinct icon and visible keyboard focus. Do not display this workspace on tenant-facing pages or assume an unverified profile name.
+
 ## Lodging-house facade illustration
 
 The focused building view uses a flat front elevation with a pitched roof, eaves, gable detail, horizontal floor divisions, a foundation and door-shaped room motifs. Render one floor band per configured floor and use a small, repeatable set of doors as a visual motif. The accessible image label and caption must state that door symbols do not indicate a room count; confirmed counts remain in the textual floor summaries and room tiles. Keep Building 1/2 at “Not set” until entered. Do not imply measured sizes, placement or a surveyed facade. This is a development illustration, not a tenant-facing plan.

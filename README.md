@@ -2,9 +2,13 @@
 
 Preview: confirm a sample cash payment, open Paid rent, then Open acknowledgment to print/save a clearly marked sample PDF. Saved admin workflow and SQL migration are implemented but NOT activated: local Docker engine is unavailable and Supabase MCP is absent in this session. Existing database has not changed. See docs/STATUS.md for the exact integration checks and activation steps remaining.
 
+## Staff dashboard
+
+Staff land on a dashboard greeting that identifies the current signed-in email and asks what they would like to do. Quick actions open the existing payment workflow, tenant form, property/building view or tenant directory. The dashboard is staff-only; tenant portal navigation and records are unchanged. In the fictional preview these actions use sample accounts and in-memory data, which resets on reload. No payment, tenant, or property is created merely by choosing an action.
+
 ## Paid rent summary
 
-In Payments and balances choose Paid rent. The spreadsheet-style summary shows confirmed cash, renters who paid, payment count, receipt dates, amounts and rent months covered. The lower outstanding-rent table has its own rent-month selector and lists recorded charges with remaining balances, including partial payments. Staff can add a selected missed month for a renter with saved rent setup and an assigned room after reviewing the amount and move-in-based due date; the preview blocks an existing room/month charge. A separate arrears list flags renters with positive balances in at least two distinct recorded rent months. It does not infer missing charges or overdue status. Pending entries and uncleared checks are excluded; a month with no rent charge is not labeled unpaid. Fictional temporary preview only; changes reset on reload, and no spreadsheet export or saved report is provided.
+In Payments and balances choose Paid rent. The spreadsheet-style summary shows confirmed cash, renters who paid, payment count, receipt dates, amounts and rent months covered. On narrow screens, the confirmed-cash total leads a compact metrics layout; the outstanding total and 2+ month arrears status receive clear visual emphasis while all report details remain visible. The lower outstanding-rent table has its own rent-month selector and lists recorded charges with remaining balances, including partial payments. Staff can add a selected missed month for a renter with saved rent setup and an assigned room after reviewing the amount and move-in-based due date; the preview blocks an existing room/month charge. A separate arrears list flags renters with positive balances in at least two distinct recorded rent months. It does not infer missing charges or overdue status. Pending entries and uncleared checks are excluded; a month with no rent charge is not labeled unpaid. Fictional temporary preview only; changes reset on reload, and no spreadsheet export or saved report is provided.
 
 ## Admin payment worklist
 

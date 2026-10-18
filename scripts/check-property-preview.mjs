@@ -9,6 +9,8 @@ try {
     return route.continue()
   })
   await page.goto('http://127.0.0.1:5175')
+  await page.getByRole('heading', { name: 'Welcome back', exact: true }).waitFor()
+  await page.getByRole('button', { name: /Find a tenant/ }).click()
   await page.getByRole('heading', { name: 'Sample Alex Santos', exact: true }).waitFor()
   assert.equal(await page.locator('.tenant-person-card').count(), 3)
   await page.locator('.tenant-person-card').first().getByRole('button', { name: 'View details' }).click()

@@ -14,6 +14,10 @@ The staff Paid rent preview uses separate month filters for cash received and re
 
 For the temporary Paid rent preview, the user chose to create a selected missed-month charge using the renter's existing rent amount and move-in-based due date, and to flag renters with two or more unpaid rent months. Require an explicit review/confirmation, block a duplicate room/month charge, and only offer renters with saved rent setup and an assigned room. Count distinct recorded charge months with a positive remaining balance; do not infer missing charges or overdue status. Pending entries and uncleared checks remain excluded from balances. This is preview behavior, not a new accounting rule or database write.
 
+## Staff dashboard landing page - 19 Oct 2026
+
+After staff access is ready, show a dashboard home by default with a greeting that identifies the signed-in account by its authenticated email (no unverified display name is assumed). Ask what the staff member wants to do and provide direct navigation to record a payment, add a tenant, view property/buildings, or find a tenant. Selecting an action only navigates to its existing workflow; it does not create data. Keep this landing page staff-only and do not change the tenant portal. Preview actions remain fictional and temporary.
+
 ## Autonomous admin milestone - 18 Oct 2026
 
 User permits routine implementation decisions and will review the running app. Continue in reviewable milestones; production, real data and financial policy inference remain outside scope. Payment worklist prioritizes pending verification, then unpaid/setup filters. Similar date/amount entries require review but are not automatically rejected as duplicates. Date validation rejects impossible calendar days. See CASH_PERSISTENCE_PLAN.md before persisted financial work.

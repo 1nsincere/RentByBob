@@ -75,6 +75,14 @@ try {
  await page.screenshot({path:'docs/screenshots/paid-rent.png',fullPage:true})
  for(const width of [320,390,768]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));if(width<=390)assert.ok(await page.locator('.paid-table-scroll').evaluateAll(regions=>regions.every(region=>region.scrollWidth<=region.clientWidth+1)))}
  await page.setViewportSize({width:390,height:844})
+ const mobileMetrics = await page.locator('.paid-report-metrics article').evaluateAll(cards => cards.map(card => {
+  const { x, y, width } = card.getBoundingClientRect()
+  return { x, y, width }
+ }))
+ assert.ok(mobileMetrics[0].width > mobileMetrics[1].width * 1.8, 'confirmed cash total should lead the compact mobile summary')
+ assert.ok(Math.abs(mobileMetrics[1].y - mobileMetrics[2].y) < 2, 'payment/renter counts should share the next row')
+ assert.equal(await page.locator('.arrears-report-sheet.has-arrears').count(),1)
+ assert.equal(await page.locator('.unpaid-report-total').evaluate(el=>getComputedStyle(el).borderLeftWidth),'4px')
  await page.evaluate(()=>scrollTo(0,0))
  await page.screenshot({path:'docs/screenshots/paid-rent-mobile.png',fullPage:true})
  assert.deepEqual(errors,[]);assert.deepEqual(external,[])

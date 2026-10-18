@@ -75,7 +75,7 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
         <article><span>Renters who paid</span><strong>{paidRenterCount}</strong></article>
         <article><span>Confirmed payments</span><strong>{payments.length}</strong></article>
       </div>
-      <p className="field-help">Payments are grouped by receipt and dated by when cash was received, not when James confirmed it. Pending records and uncleared checks are excluded.</p>
+      <p className="field-help">Receipt month means when cash was received, not when it was confirmed. Pending reports and uncleared checks are excluded.</p>
       {!paidRows.length ? <div className="paid-report-empty"><h4>No confirmed payments for this month</h4><p>Choose another month, or confirm a pending cash record after checking receipt.</p></div> :
         <div className="paid-table-scroll" role="region" aria-label="Confirmed payments table" tabIndex={0}>
           <table className="paid-report-table">
@@ -113,7 +113,7 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
         </div>}
       <p className="field-help">Partial confirmed cash reduces the remaining balance. Pending reports and uncleared checks do not.</p>
     </section>
-    <section className="card arrears-report-sheet" aria-labelledby="arrears-report-heading">
+    <section className={`card arrears-report-sheet${arrearsRows.length ? ' has-arrears' : ''}`} aria-labelledby="arrears-report-heading">
       <div className="unpaid-report-heading"><div><p className="eyebrow">MULTIPLE MONTHS OUTSTANDING</p><h4 id="arrears-report-heading">Renters with 2 or more unpaid rent months</h4><p>Counts distinct recorded rent months with a remaining balance.</p></div><span className="preview-pill">{arrearsRows.length} {arrearsRows.length === 1 ? 'renter' : 'renters'} flagged</span></div>
       {!arrearsRows.length ? <p className="paid-report-empty">No renter currently has balances in 2 or more recorded rent months.</p> :
         <div className="paid-table-scroll" role="region" aria-label="Renters with multiple unpaid rent months" tabIndex={0}>

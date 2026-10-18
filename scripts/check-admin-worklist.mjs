@@ -7,6 +7,7 @@ try {
  page.on('pageerror',e=>errors.push(e.message))
  await page.route('**/*',route=>{if(new URL(route.request().url()).origin!=='http://127.0.0.1:5175'){external.push(route.request().url());return route.abort()} return route.continue()})
  await page.goto('http://127.0.0.1:5175')
+ await page.getByRole('button',{name:/Find a tenant/}).click()
  await page.locator('.tenant-person-card').filter({hasText:'Sample Mara Reyes'}).getByRole('button',{name:'View rent and payments'}).click()
  assert.equal(await page.getByLabel('1. Choose tenant').inputValue(),'mara')
  await page.getByLabel('Show',{exact:true}).selectOption('unpaid')

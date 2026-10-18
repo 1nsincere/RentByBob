@@ -23,7 +23,7 @@ export function App() {
   const [propertyId, setPropertyId] = useState('')
   const [backup, setBackup] = useState(false)
   const [search, setSearch] = useState('')
-  const [activeSection, setActiveSection] = useState('tenant-records')
+  const [activeSection, setActiveSection] = useState('home')
   const generation = useRef(0)
   const heading = useRef<HTMLHeadingElement>(null)
   const mobileNavigation = useRef<HTMLDetailsElement>(null)
@@ -133,6 +133,7 @@ export function App() {
     { label: 'Access level', value: role === 'owner' ? 'Owner' : 'Clerk', hint: role === 'owner' ? 'Can manage access' : 'Can work with records' },
   ] : []
   const navigationItems: NavigationItem[] = role ? [
+    { id: 'home', label: 'Dashboard' },
     { id: 'tenant-records', label: 'Tenant directory' },
     { id: 'property-locations', label: 'Buildings and units' },
     { id: 'create-tenant', label: 'Add tenant record' },
@@ -144,18 +145,18 @@ export function App() {
       { id: 'access-history', label: 'Access history' },
     ] : []),
     { id: 'account-security', label: 'Account security' },
-  ].filter(item => !dashboardPreview || ['tenant-records', 'property-locations', 'create-tenant', 'payment-records'].includes(item.id)) : []
+  ].filter(item => !dashboardPreview || ['home', 'tenant-records', 'property-locations', 'create-tenant', 'payment-records'].includes(item.id)) : []
   const navigationKey = navigationItems.map(item => item.id).join('|')
 
   useEffect(() => {
-    if (navigationKey && !navigationItems.some(item => item.id === activeSection)) setActiveSection('tenant-records')
+    if (navigationKey && !navigationItems.some(item => item.id === activeSection)) setActiveSection('home')
   }, [navigationKey, activeSection])
 
   function selectSection(id: string) {
     setActiveSection(id)
     if (mobileNavigation.current) mobileNavigation.current.open = false
     requestAnimationFrame(() => {
-      const section = document.getElementById(preview && id === 'tenant-records' ? 'preview-tenant-records' : id)
+      const section = document.getElementById(preview && id === 'tenant-records' ? 'preview-tenant-records' : id === 'home' ? 'dashboard-home' : id)
       section?.focus({ preventScroll: true })
       section?.scrollIntoView({ block: 'start' })
     })
@@ -167,7 +168,7 @@ export function App() {
         <li key={item.id}>
           <a href={`#${item.id}`} aria-current={activeSection === item.id ? 'location' : undefined}
             onClick={event => { event.preventDefault(); selectSection(item.id) }}>
-            {dashboardPreview && <WorkspaceIcon kind={item.id === 'tenant-records' ? 'people' : item.id === 'property-locations' ? 'building' : 'add'} />}{item.label}
+            {dashboardPreview && <WorkspaceIcon kind={item.id === 'home' ? 'home' : item.id === 'tenant-records' ? 'people' : item.id === 'property-locations' ? 'building' : item.id === 'payment-records' ? 'payments' : 'add'} />}{item.label}
           </a>
         </li>)}</ul>
     </nav>
@@ -251,7 +252,21 @@ export function App() {
                                 }}>{snapshot.properties.map(property => <option key={property.id} value={property.id}>{property.name}</option>)}</select>
                               </div>
                             </div>
-                            <section className="workspace-overview" aria-label="Property workspace summary">
+                            <section hidden={activeSection !== 'home'} tabIndex={-1} id="dashboard-home" className="dashboard-home" aria-labelledby="dashboard-welcome-heading">
+                              <div className="dashboard-welcome">
+                                <p className="eyebrow">{role === 'owner' ? 'OWNER WORKSPACE' : 'STAFF WORKSPACE'}</p>
+                                <h2 id="dashboard-welcome-heading">Welcome back</h2>
+                                <p className="dashboard-identity">Signed in as <strong>{session.user.email}</strong></p>
+                                <h3>What would you like to do today?</h3>
+                                <div className="dashboard-actions">
+                                  <Button className="dashboard-action" onClick={() => selectSection('payment-records')}><span><strong>Log a payment</strong><small>Record cash received and review it.</small></span><span className="dashboard-action-arrow" aria-hidden="true">→</span></Button>
+                                  <Button className="dashboard-action" onClick={() => selectSection('create-tenant')}><span><strong>Add a tenant</strong><small>Create a renter or business record.</small></span><span className="dashboard-action-arrow" aria-hidden="true">→</span></Button>
+                                  <Button className="dashboard-action" onClick={() => selectSection('property-locations')}><span><strong>View the property</strong><small>Explore buildings and rental spaces.</small></span><span className="dashboard-action-arrow" aria-hidden="true">→</span></Button>
+                                  <Button className="dashboard-action" onClick={() => selectSection('tenant-records')}><span><strong>Find a tenant</strong><small>Search renter and business records.</small></span><span className="dashboard-action-arrow" aria-hidden="true">→</span></Button>
+                                </div>
+                              </div>
+                            </section>
+                            <section hidden={activeSection !== 'home'} className="workspace-overview" aria-label="Property workspace summary">
                               {workspaceStats.map(stat => (
                                 <article key={stat.label} className="stat-card">
                                   <span className="stat-label">{stat.label}</span>
