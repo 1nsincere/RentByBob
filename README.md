@@ -4,7 +4,7 @@ Preview: confirm a sample cash payment, open Paid rent, then Open acknowledgment
 
 ## Paid rent summary
 
-In Payments and balances choose Paid rent. Select a payment month to see confirmed cash received, grouped payments, covered rental months and remaining rent. Pending entries are excluded; partial payments are explicit. Temporary preview only.
+In Payments and balances choose Paid rent. The spreadsheet-style summary shows confirmed cash, renters who paid, payment count, receipt dates, amounts and rent months covered. The lower outstanding-rent table has its own rent-month selector and lists recorded charges with remaining balances, including partial payments. Staff can add a selected missed month for a renter with saved rent setup and an assigned room after reviewing the amount and move-in-based due date; the preview blocks an existing room/month charge. A separate arrears list flags renters with positive balances in at least two distinct recorded rent months. It does not infer missing charges or overdue status. Pending entries and uncleared checks are excluded; a month with no rent charge is not labeled unpaid. Fictional temporary preview only; changes reset on reload, and no spreadsheet export or saved report is provided.
 
 ## Admin payment worklist
 

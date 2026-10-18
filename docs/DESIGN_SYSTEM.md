@@ -1,5 +1,21 @@
 # RentByBob interface design system
 
+## Paid-rent report
+
+Use a spreadsheet-inspired, bordered report sheet with a clear month selector and summary metrics for confirmed cash, distinct renters and confirmed payment groups. The paid table should show renter, location, date cash was received, amount, rent months covered and acknowledgment action, then a total row. Put recorded charges with remaining balances in a separate outstanding section below. Keep receipt month and rent month independently labeled because they answer different questions. On phones, reflow rows into labeled compact cards rather than widening the page. Pending reports and uncleared checks are excluded from settled totals and balances. A missing charge is not labeled unpaid.
+
+The outstanding section may offer an explicit selected-month charge action only to renters with an assigned room and saved rent setup, after showing the exact saved amount and calculated due date for confirmation. Show a separate multiple-months section for renters with positive balances in at least two distinct recorded rent months; include month names, count, rental location and total remaining. State clearly that the list reflects recorded charges, not absent months or overdue determinations. Keep all actions visibly preview-only, announce completion/errors, and stack confirmation controls at narrow widths.
+
+## Lodging-house facade illustration
+
+The focused building view uses a flat front elevation with a pitched roof, eaves, gable detail, horizontal floor divisions, a foundation and door-shaped room motifs. Render one floor band per configured floor and use a small, repeatable set of doors as a visual motif. The accessible image label and caption must state that door symbols do not indicate a room count; confirmed counts remain in the textual floor summaries and room tiles. Keep Building 1/2 at “Not set” until entered. Do not imply measured sizes, placement or a surveyed facade. This is a development illustration, not a tenant-facing plan.
+
+## Illustrative building entry view
+
+Bob’s house, Building 1 and Building 2 open a front-facing view from either the property sketch or building list. Use a restrained 650 ms fade/short scale-and-position arrival, without camera rotation or dramatic perspective. Turn off the animation under `prefers-reduced-motion`. Keep the property map/building list controls and a visible “Back to property map” button available in the focused view.
+
+Present the building name, a floor selector, each floor’s rentable-room count and labeled room tiles. “Not set” is the required display for unconfirmed Building 1/2 counts; never derive counts from apartment/shared spaces. Bob’s six rooms are fictional preview examples. The facade and room arrangement are schematic only, not a measured or surveyed plan. Any edits remain in temporary preview state and reset on reload. Keep this visualization within the staff property workspace; do not introduce it into the tenant portal.
+
 ## Admin/staff visual refinement - 19 Oct 2026
 
 Updated the shared visual tokens toward warm ivory `#F7F4ED`, soft stone `#EEEAE4`, white surfaces and charcoal text. Replaced the primary teal with restrained ink blue `#245A81` / pressed-hover blue `#194363`; muted brass `#8D642E` is limited to small highlights. Positive, pending and error states retain separate semantic colors and visible status words. Tenant navigation/data boundaries and all financial workflow behavior are unchanged.

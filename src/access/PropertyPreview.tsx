@@ -13,6 +13,38 @@ function BuildingArt({ building }: { building: Building }) {
   </svg>
 }
 
+function BuildingFacade({ building }: { building: Building }) {
+  const storyHeight = 180
+  const wallTop = 91
+  const wallBottom = wallTop + building.floors.length * storyHeight
+  const height = wallBottom + 30
+  return <svg className="facade-art" viewBox={`0 0 720 ${height}`} role="img" aria-label={`${building.floors.length}-floor illustrative facade with decorative room doors; door symbols do not indicate room count`}>
+    <path className="facade-roof-shape" d="M34 91 360 12 686 91 678 108 360 39 42 108Z" />
+    <path className="facade-roof-edge" d="M40 91 360 16 680 91" />
+    <path className="facade-wall" d={`M68 96 360 34 652 96V${wallBottom}H68Z`} />
+    <path className="facade-gable-detail" d="M112 88 360 38 608 88" />
+    {building.floors.map((floor, floorIndex) => {
+      const rowTop = wallTop + floorIndex * storyHeight
+      const doorY = rowTop + 34
+      return <g className="facade-story" key={floor.label}>
+        {floorIndex > 0 && <path className="facade-story-line" d={`M72 ${rowTop}H648`} />}
+        <text className="facade-floor-label" x="82" y={rowTop + 17}>{floor.label}</text>
+        {Array.from({ length: 6 }, (_, doorIndex) => {
+          const x = 145 + doorIndex * 82
+          return <g className="facade-room-door" key={doorIndex} transform={`translate(${x} ${doorY})`}>
+            <rect className="facade-door-frame" width="58" height="110" rx="2" />
+            <rect className="facade-door-panel" x="6" y="6" width="46" height="98" rx="1" />
+            <path className="facade-door-panel-line" d="M8 66H50" />
+            <circle className="facade-door-knob" cx="45" cy="78" r="2.5" />
+          </g>
+        })}
+      </g>
+    })}
+    <path className="facade-foundation" d={`M58 ${wallBottom}H662V${wallBottom + 12}H58Z`} />
+    <path className="facade-ground-line" d={`M38 ${wallBottom + 16}H682`} />
+  </svg>
+}
+
 export function TenantDirectoryPreview({ openMap, addTenant, openPayments }: { openMap: () => void; addTenant: () => void; openPayments: () => void }) {
   const { buildings, tenants, notice } = useProperty()
   const [sort, setSort] = useState('name')
@@ -46,42 +78,71 @@ export function TenantDirectoryPreview({ openMap, addTenant, openPayments }: { o
 export function PropertyMapPreview({ addTenant }: { addTenant: () => void }) {
   const { buildings, selected, room } = useProperty()
   const [floorIndex, setFloorIndex] = useState(0), [view, setView] = useState('map'), [adding, setAdding] = useState(false)
+  const [enteredBuilding, setEnteredBuilding] = useState('')
   const [message, setMessage] = useState('')
   const building = buildings.find(b => b.id === selected) ?? buildings[0]
   const selectedFloor = building.floors.findIndex(f => f.rooms.some(r => r.id === room))
   const index = selectedFloor >= 0 ? selectedFloor : Math.min(floorIndex, building.floors.length - 1)
   const floor = building.floors[index]
-  function select(id: string) { change({ selected: id, room: '' }); setFloorIndex(0); setMessage('') }
+  function select(id: string) { change({ selected: id, room: '' }); setFloorIndex(0); setEnteredBuilding(''); setMessage('') }
+  function explore(id: string) {
+    select(id)
+    if (['bob', 'b1', 'b2'].includes(id)) setEnteredBuilding(id)
+  }
   function update(next: Building) { change({ buildings: buildings.map(b => b.id === next.id ? next : b) }) }
   const selectedRoom = floor.rooms.find(r => r.id === room)
+  const floorCountLabel = (count: number | null) => count === null ? 'Not set' : `${count} ${count === 1 ? 'rentable room' : 'rentable rooms'}`
+  const totalRoomCount = building.floors.some(item => item.count === null) ? null : building.floors.reduce((total, item) => total + (item.count ?? 0), 0)
+  const roomLayout = <div className="floor-layout"><div className="floor-rooms"><div className="room-legend"><span>● Occupied example</span><span>□ Unassigned</span><span>▧ Shared space</span></div>
+    {floor.count === null && <p className="notice">Rentable room count: Not set. Add a count when it is confirmed.</p>}
+    <div className="room-grid">{floor.rooms.map(r => <button type="button" key={r.id} className={`room-tile ${occupant(r.id) ? 'occupied' : ''} ${r.kind === 'Shared space' ? 'shared' : ''}`} aria-pressed={room === r.id} onClick={() => change({ room: r.id })}><span className="room-door" aria-hidden="true">{r.kind === 'Room' ? '▤' : '▧'}</span><strong>{r.label}</strong>{r.kind !== 'Shared space' && <span className="occupant-count"><WorkspaceIcon kind="people" />{roomPeople(r.id).length} people</span>}<span>{occupant(r.id)?.name ?? (r.kind === 'Shared space' ? 'Shared space' : 'Unassigned')}</span></button>)}</div>
+    {!floor.rooms.length && floor.count !== null && <p className="empty-state">No spaces on this floor yet.</p>}
+    <p className="floor-caption">{floor.label} · Diagram only; room sizes and door positions are illustrative.</p>
+  </div><form className="floor-settings" key={`${building.id}-${index}-${floor.count}`} onSubmit={e => {
+    e.preventDefault(); const values = new FormData(e.currentTarget); const count = Number(values.get('count')); const existing = floor.rooms.filter(r => r.kind === 'Room');
+    if (existing.slice(count).some(r => occupant(r.id))) { setMessage('Keep occupied example rooms. Choose a count that retains their assignments.'); return }
+    const nextRooms = Array.from({ length: count }, (_, i) => existing[i] ?? rooms(`${building.id}-floor${index}`, count)[i]);
+    const nextFloors = building.floors.map((f, i) => i === index ? { ...f, count, rooms: [...nextRooms, ...f.rooms.filter(r => r.kind !== 'Room')] } : f);
+    update({ ...building, name: String(values.get('building-name')).trim(), floors: nextFloors }); change({ room: '' }); setMessage('Preview layout updated. Reloading restores the original sketch.');
+  }}><h4>Edit this floor</h4><label htmlFor="edit-building-name">Building name</label><input id="edit-building-name" name="building-name" defaultValue={building.name} required pattern=".*\S.*" maxLength={80} /><label htmlFor="room-count">Rentable rooms on this floor</label><input id="room-count" name="count" type="number" min={0} max={40} defaultValue={floor.count ?? ''} placeholder="Not set" required /><p className="field-help">Only enter a count when confirmed. Apartments, shops and shared spaces stay separate. Maximum 40 rooms per floor in this preview.</p><Button className="primary">Update preview layout</Button></form></div>
+  const roomEditor = selectedRoom && <form className="room-editor" key={selectedRoom.id} onSubmit={e => { e.preventDefault(); const label = String(new FormData(e.currentTarget).get('room-label')).trim(); update({ ...building, floors: building.floors.map((f, i) => i === index ? { ...f, rooms: f.rooms.map(r => r.id === selectedRoom.id ? { ...r, label } : r) } : f) }); setMessage('Room label updated in this preview.') }}><div><p className="eyebrow">SELECTED SPACE</p><h4>{selectedRoom.label}</h4><p>{occupant(selectedRoom.id)?.name ?? 'No tenant assigned'} · {selectedRoom.kind}</p></div><div><label htmlFor="room-label">Room or space label</label><input id="room-label" name="room-label" defaultValue={selectedRoom.label} required pattern=".*\S.*" maxLength={60} /></div><Button className="secondary-button">Rename space</Button>{selectedRoom.kind !== 'Shared space' && <Button type="button" className="primary" onClick={() => { change({ draftLocation: { building: building.id, room: selectedRoom.id } }); addTenant() }}>Add tenant to this space</Button>}<div className="room-occupants"><h4 className="occupant-count"><WorkspaceIcon kind="people" />{roomPeople(selectedRoom.id).length} people in this space</h4>{roomPeople(selectedRoom.id).length ? <ul className="occupant-roster">{roomPeople(selectedRoom.id).map((name, i) => <li key={i}><WorkspaceIcon kind="people" /><span>{name}</span></li>)}</ul> : <p>No occupants recorded.</p>}<p className="field-help">Rental rooms: minimum 2 occupants. Maximum capacity has not been confirmed.</p></div></form>
   return <section className="property-visual" aria-labelledby="property-map-heading">
     <div className="section-heading"><div><p className="eyebrow">YOUR PROPERTY, AT A GLANCE</p><h2 id="property-map-heading">Buildings and units</h2><p>Explore the site, select a floor, and manage its rental spaces.</p></div><Button className="primary" onClick={() => setAdding(!adding)} aria-expanded={adding}>+ Add building</Button></div>
     {adding && <form className="card visual-edit-form" onSubmit={e => { e.preventDefault(); const values = new FormData(e.currentTarget); const id = crypto.randomUUID(); change({ buildings: [...buildings, { id, name: String(values.get('name')).trim(), floors: Array.from({ length: Number(values.get('floors')) }, (_, i) => ({ label: i === 0 ? 'Ground floor' : `Floor ${i + 1}`, count: null, rooms: [] })) }], selected: id, room: '' }); setFloorIndex(0); setAdding(false); setMessage('Building added to this preview. Its position on the sketch is not set.') }}><h3>Add a preview building</h3><label htmlFor="new-building">Building name</label><input id="new-building" name="name" required pattern=".*\S.*" maxLength={80} /><label htmlFor="new-floors">Number of floors</label><input id="new-floors" name="floors" type="number" min={1} max={5} defaultValue={1} required /><p className="field-help">New buildings appear below the fixed sketch until their position is confirmed.</p><Button className="primary">Add to preview</Button></form>}
-    <div className="map-toolbar"><div className="segmented-control"><Button aria-pressed={view === 'map'} onClick={() => setView('map')}>Property map</Button><Button aria-pressed={view === 'list'} onClick={() => setView('list')}>Building list</Button></div><span className="field-help">From your sketch · Not to scale</span></div>
-    {view === 'map' ? <div className="map-scroll" tabIndex={0} role="region" aria-label="Property sketch. Scroll horizontally on small screens, or use Building list."><div className="property-plan">
+    <div className="map-toolbar"><div className="segmented-control" role="group" aria-label="Property views"><Button aria-pressed={view === 'map'} onClick={() => { setView('map'); setEnteredBuilding('') }}>Property map</Button><Button aria-pressed={view === 'list'} onClick={() => { setView('list'); setEnteredBuilding('') }}>Building list</Button></div><span className="field-help">Illustrative only · Not a surveyed floor plan</span></div>
+    {!enteredBuilding && view === 'map' && <div className="map-scroll" tabIndex={0} role="region" aria-label="Property sketch. Scroll horizontally on small screens, or use Building list."><div className="property-plan">
       <svg viewBox="0 0 1000 650" preserveAspectRatio="none" className="plan-roads" aria-hidden="true"><path d="M0 400H1000M230 400V650" stroke="#343c38" strokeWidth="58" /><path d="M0 400H1000M230 440V650" stroke="#d4d9d3" strokeWidth="2" strokeDasharray="12 12" /></svg>
       <span className="road-label">ACCESS ROAD</span><span className="plan-caption">PROPERTY OVERVIEW</span>
-      {buildings.filter(b => b.x !== undefined).map(b => <button type="button" key={b.id} className={`plan-building ${b.id === selected ? 'selected' : ''} ${b.id.startsWith('store') ? 'store-building' : ''}`} style={{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.w}%`, height: `${b.h}%` }} onClick={() => select(b.id)} aria-pressed={b.id === selected} aria-label={`Explore ${b.name}`}><BuildingArt building={b} /><strong>{b.name}</strong>{!b.id.startsWith('store') && <span>{b.id === 'bob' ? `${b.floors[0].count ?? '?'} rooms for rent` : b.id === 'b1' ? '2 floors · Apartment' : b.id === 'b2' ? '2 floors · Gym' : b.id === 'house' ? 'Whole-house rental' : 'Commercial space'}</span>}</button>)}
-    </div></div> : <div className="building-list">{buildings.map(b => <button type="button" key={b.id} className={`building-list-card ${b.id === selected ? 'selected' : ''}`} aria-pressed={b.id === selected} onClick={() => select(b.id)}><BuildingArt building={b} /><strong>{b.name}</strong><span>{b.floors.length} {b.floors.length === 1 ? 'level' : 'levels'}</span></button>)}</div>}
-    {view === 'map' && buildings.some(b => b.x === undefined) && <div className="unplaced-buildings"><h3>Not placed on sketch</h3>{buildings.filter(b => b.x === undefined).map(b => <Button key={b.id} aria-pressed={selected === b.id} onClick={() => select(b.id)}>{b.name}</Button>)}</div>}
-    <section className="card building-inspector" aria-labelledby="building-detail-heading">
-      <div className="section-heading"><div><p className="eyebrow">INSIDE THE BUILDING</p><h3 id="building-detail-heading">{building.name}</h3></div><span className="preview-pill">{building.floors.reduce((n, f) => n + f.rooms.filter(r => r.kind !== 'Shared space').length, 0)} configured rental spaces</span></div>
-      <p className="field-help">{building.floors.filter(f => f.count === null).length ? 'Some room counts still need confirmation.' : 'Select a space below to view its details.'}</p>
-      <div className="floor-tabs" role="group" aria-label="Choose floor">{building.floors.map((f, i) => <Button key={i} aria-pressed={i === index} onClick={() => { setFloorIndex(i); change({ room: '' }); setMessage('') }}>{f.label}</Button>)}</div>
-      <div className="floor-layout"><div className="floor-rooms"><div className="room-legend"><span>● Occupied example</span><span>□ Unassigned</span><span>▧ Shared space</span></div>
-        {floor.count === null && <p className="notice">Room count not confirmed. Set the number of rental rooms when you know it.</p>}
-        <div className="room-grid">{floor.rooms.map(r => <button type="button" key={r.id} className={`room-tile ${occupant(r.id) ? 'occupied' : ''} ${r.kind === 'Shared space' ? 'shared' : ''}`} aria-pressed={room === r.id} onClick={() => change({ room: r.id })}><span className="room-door" aria-hidden="true">{r.kind === 'Room' ? '▤' : '▧'}</span><strong>{r.label}</strong>{r.kind !== 'Shared space' && <span className="occupant-count"><WorkspaceIcon kind="people" />{roomPeople(r.id).length} people</span>}<span>{occupant(r.id)?.name ?? (r.kind === 'Shared space' ? 'Shared space' : 'Unassigned')}</span></button>)}</div>
-        {!floor.rooms.length && floor.count !== null && <p className="empty-state">No spaces on this floor yet.</p>}
-        <p className="floor-caption">{floor.label} · Diagram only; room sizes and door positions are illustrative.</p>
-      </div><form className="floor-settings" key={`${building.id}-${index}-${floor.count}`} onSubmit={e => {
-        e.preventDefault(); const values = new FormData(e.currentTarget); const count = Number(values.get('count')); const existing = floor.rooms.filter(r => r.kind === 'Room');
-        if (existing.slice(count).some(r => occupant(r.id))) { setMessage('Keep occupied example rooms. Choose a count that retains their assignments.'); return }
-        const nextRooms = Array.from({ length: count }, (_, i) => existing[i] ?? rooms(`${building.id}-floor${index}`, count)[i]);
-        const nextFloors = building.floors.map((f, i) => i === index ? { ...f, count, rooms: [...nextRooms, ...f.rooms.filter(r => r.kind !== 'Room')] } : f);
-        update({ ...building, name: String(values.get('building-name')).trim(), floors: nextFloors }); change({ room: '' }); setMessage('Preview layout updated. Reloading restores the original sketch.');
-      }}><h4>Edit this floor</h4><label htmlFor="edit-building-name">Building name</label><input id="edit-building-name" name="building-name" defaultValue={building.name} required pattern=".*\S.*" maxLength={80} /><label htmlFor="room-count">Rental rooms</label><input id="room-count" name="count" type="number" min={0} max={40} defaultValue={floor.count ?? ''} placeholder="Not confirmed" required /><p className="field-help">Apartments, shops and shared spaces stay separate. Maximum 40 rooms per floor in this preview.</p><Button className="primary">Update preview layout</Button></form></div>
-      <p role="status" className="field-help">{message}</p>
-      {selectedRoom && <form className="room-editor" key={selectedRoom.id} onSubmit={e => { e.preventDefault(); const label = String(new FormData(e.currentTarget).get('room-label')).trim(); update({ ...building, floors: building.floors.map((f, i) => i === index ? { ...f, rooms: f.rooms.map(r => r.id === selectedRoom.id ? { ...r, label } : r) } : f) }); setMessage('Room label updated in this preview.') }}><div><p className="eyebrow">SELECTED SPACE</p><h4>{selectedRoom.label}</h4><p>{occupant(selectedRoom.id)?.name ?? 'No tenant assigned'} · {selectedRoom.kind}</p></div><div><label htmlFor="room-label">Room or space label</label><input id="room-label" name="room-label" defaultValue={selectedRoom.label} required pattern=".*\S.*" maxLength={60} /></div><Button className="secondary-button">Rename space</Button>{selectedRoom.kind !== 'Shared space' && <Button type="button" className="primary" onClick={() => { change({ draftLocation: { building: building.id, room: selectedRoom.id } }); addTenant() }}>Add tenant to this space</Button>}<div className="room-occupants"><h4 className="occupant-count"><WorkspaceIcon kind="people" />{roomPeople(selectedRoom.id).length} people in this space</h4>{roomPeople(selectedRoom.id).length ? <ul className="occupant-roster">{roomPeople(selectedRoom.id).map((name, i) => <li key={i}><WorkspaceIcon kind="people" /><span>{name}</span></li>)}</ul> : <p>No occupants recorded.</p>}<p className="field-help">Rental rooms: minimum 2 occupants. Maximum capacity has not been confirmed.</p></div></form>}
-    </section>
+      {buildings.filter(b => b.x !== undefined).map(b => <button type="button" key={b.id} className={`plan-building ${b.id === selected ? 'selected' : ''} ${b.id.startsWith('store') ? 'store-building' : ''}`} style={{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.w}%`, height: `${b.h}%` }} onClick={() => explore(b.id)} aria-pressed={b.id === selected} aria-label={`Explore ${b.name}`}><BuildingArt building={b} /><strong>{b.name}</strong>{!b.id.startsWith('store') && <span>{b.id === 'bob' ? `${b.floors[0].count ?? '?'} rooms for rent` : b.id === 'b1' ? '2 floors · Apartment' : b.id === 'b2' ? '2 floors · Gym' : b.id === 'house' ? 'Whole-house rental' : 'Commercial space'}</span>}</button>)}
+    </div></div>}
+    {!enteredBuilding && view === 'list' && <div className="building-list">{buildings.map(b => <button type="button" key={b.id} className={`building-list-card ${b.id === selected ? 'selected' : ''}`} aria-pressed={b.id === selected} onClick={() => explore(b.id)}><BuildingArt building={b} /><strong>{b.name}</strong><span>{b.floors.length} {b.floors.length === 1 ? 'level' : 'levels'}</span></button>)}</div>}
+    {!enteredBuilding && view === 'map' && buildings.some(b => b.x === undefined) && <div className="unplaced-buildings"><h3>Not placed on sketch</h3>{buildings.filter(b => b.x === undefined).map(b => <Button key={b.id} aria-pressed={selected === b.id} onClick={() => select(b.id)}>{b.name}</Button>)}</div>}
+    {enteredBuilding ? <section className="card building-entry" key={enteredBuilding} aria-labelledby="building-entry-heading">
+      <div className="building-entry-toolbar"><Button className="secondary-button" onClick={() => { setEnteredBuilding(''); setView('map'); setFloorIndex(0); change({ room: '' }) }}>Back to property map</Button><span className="preview-pill">Illustrative preview · Not surveyed</span></div>
+      <div className="building-entry-title"><div><p className="eyebrow">FRONT VIEW · ILLUSTRATIVE ONLY</p><h3 id="building-entry-heading">{building.name}</h3></div><span className="building-count">{floorCountLabel(totalRoomCount)}</span></div>
+      <div className="building-entry-scene">
+        <figure className="building-facade">
+          <BuildingFacade building={building} />
+          <figcaption>Illustrative lodging-house facade. Door symbols are decorative and do not indicate a room count or surveyed layout.</figcaption>
+        </figure>
+        <div className="floor-count-overview" aria-label="Rentable room counts by floor">{building.floors.map((item, floorNumber) => <article key={item.label} className="floor-count-card"><span>{item.label}</span><strong>{floorCountLabel(item.count)}</strong><small>Floor {floorNumber + 1}</small></article>)}</div>
+      </div>
+      <div className="building-floor-content"><div className="building-floor-heading"><div><p className="eyebrow">SELECT A FLOOR</p><h4>{floor.label}</h4></div><span className={`status ${floor.count === null ? 'status--warning' : 'status--ready'}`}>Rentable rooms: {floorCountLabel(floor.count)}</span></div>
+        <div className="floor-tabs" role="group" aria-label="Choose floor">{building.floors.map((item, i) => <Button key={item.label} aria-pressed={i === index} aria-label={`${item.label}, ${floorCountLabel(item.count)}`} onClick={() => { setFloorIndex(i); change({ room: '' }); setMessage('') }}>{item.label}<small>{floorCountLabel(item.count)}</small></Button>)}</div>
+        {roomLayout}
+        {roomEditor}
+        <p role="status" className="field-help">{message}</p>
+      </div>
+    </section> : <div className="building-selection">
+      {view === 'list' && <p className="field-help">Select a building. Bob’s house, Building 1 and Building 2 open an illustrative front view.</p>}
+      <section className="card building-inspector" aria-labelledby="building-detail-heading">
+        <div className="section-heading"><div><p className="eyebrow">BUILDING DETAILS</p><h3 id="building-detail-heading">{building.name}</h3></div><span className="preview-pill">{floorCountLabel(totalRoomCount)}</span></div>
+        <p className="field-help">{building.floors.filter(f => f.count === null).length ? 'Some room counts still need confirmation.' : 'Select a space below to view its details.'}</p>
+        <div className="floor-tabs" role="group" aria-label="Choose floor">{building.floors.map((item, i) => <Button key={item.label} aria-pressed={i === index} onClick={() => { setFloorIndex(i); change({ room: '' }); setMessage('') }}>{item.label}</Button>)}</div>
+        {roomLayout}
+        {roomEditor}
+        <p role="status" className="field-help">{message}</p>
+      </section>
+    </div>}
   </section>
 }

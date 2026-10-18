@@ -335,36 +335,38 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .segmented-control .button[aria-pressed=true], .floor-tabs .button[aria-pressed=true] { background: var(--brand); color: white; }
 .map-scroll { overflow: auto; border: 1px solid var(--control-border); border-radius: 1rem; background: var(--support); }
 .map-scroll:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
-.property-plan { position: relative; min-width: 730px; aspect-ratio: 1000 / 650; background-color: #e7eddf; background-image: radial-gradient(#b6c6ad 1px, transparent 1px); background-size: 18px 18px; }
+.property-plan { position: relative; min-width: 730px; aspect-ratio: 1000 / 650; background-color: #f0eee8; background-image: radial-gradient(#d3d0c8 1px, transparent 1px); background-size: 18px 18px; }
 .plan-roads { position: absolute; inset: 0; width: 100%; height: 100%; }
-.plan-building { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem; padding: .45rem; color: #263f32; background: #faf9ef; border: 2px solid #8da48a; border-radius: .35rem; box-shadow: 4px 5px 0 #c2cebb; cursor: pointer; font: inherit; min-height: 44px; }
-.plan-building:hover { background: #eef4ea; border-color: #335e4c; }
-.plan-building.selected { background: #dceade; border: 3px solid #1c5e50; box-shadow: 0 0 0 4px #f8faf4, 5px 8px 0 #b6c7af; }
+.plan-building { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem; padding: .45rem; color: var(--text); background: #fffdf7; border: 2px solid #858b91; border-radius: .5rem; box-shadow: 3px 4px 0 #d6d1c8; cursor: pointer; font: inherit; min-height: 44px; transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease; }
+.plan-building:hover { background: #fff; border-color: var(--brand); }
+.plan-building.selected { background: #e7edf1; border: 3px solid var(--brand); box-shadow: 0 0 0 4px #fff, 4px 6px 0 #c8d3dc; }
 .plan-building strong { font-size: .95rem; line-height: 1.2; text-align: center; }
 .plan-building > span { font-size: .8rem; line-height: 1.2; text-align: center; }
 .plan-building .building-art { width: min(50%,5.5rem); max-height: 40%; }
 .store-building strong { writing-mode: vertical-rl; font-size: 1rem; }
 .store-building .building-art { width: 80%; }
 .road-label { position: absolute; left: 67%; top: 60.4%; color: white; font-size: .8rem; letter-spacing: .13em; }
-.plan-caption { position: absolute; left: 3%; bottom: 4%; font-size: .8rem; color: #40523c; writing-mode: vertical-rl; letter-spacing: .1em; }
+.plan-caption { position: absolute; left: 3%; bottom: 4%; font-size: .8rem; color: var(--text-secondary); writing-mode: vertical-rl; letter-spacing: .1em; }
 .building-list { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,10rem),1fr)); gap: .75rem; }
-.building-list-card { display: flex; flex-direction: column; align-items: center; gap: .4rem; border: 1px solid #8da48a; border-radius: .75rem; padding: 1rem; background: white; font: inherit; cursor: pointer; color: var(--text); }
-.building-list-card.selected { outline: 3px solid var(--brand); background: #edf3e9; }
+.building-list-card { display: flex; min-height: 5.5rem; flex-direction: column; align-items: center; gap: .4rem; border: 1px solid var(--control-border); border-radius: .75rem; padding: 1rem; background: white; font: inherit; cursor: pointer; color: var(--text); transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease; }
+.building-list-card:hover { border-color: var(--brand); background: var(--page); }
+.building-list-card.selected { outline: 3px solid var(--brand); outline-offset: 1px; background: #e7edf1; }
 .building-list-card span { font-size: .9rem; }
 .building-inspector { margin-top: 1.5rem; }
 .floor-tabs { margin-bottom: 1.2rem; }
 .floor-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(12rem, .5fr); gap: 1.25rem; }
-.floor-rooms { padding: 1rem; border: 2px solid #9da99a; border-radius: .6rem; background: #f5f5ee; min-width: 0; }
+.floor-rooms { padding: 1rem; border: 2px solid var(--control-border); border-radius: .6rem; background: var(--page); min-width: 0; }
 .room-legend { display: flex; gap: .5rem 1rem; flex-wrap: wrap; margin-bottom: 1rem; font-size: .9rem; }
 .room-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,8rem),1fr)); gap: .7rem; }
-.room-tile { position: relative; min-height: 8rem; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: .35rem; padding: .8rem; border: 2px solid #9aab94; background: #fff; color: #283f32; border-radius: .25rem; font: inherit; cursor: pointer; overflow-wrap: anywhere; }
-.room-tile::after { content: ''; position: absolute; bottom: -2px; right: 12px; width: 20px; height: 12px; background: #f5f5ee; border-left: 2px solid #9aab94; border-top: 2px solid #9aab94; }
-.room-tile.occupied { background: #dfece2; border-color: #4d7963; }
-.room-tile.shared { background: #f8edc8; border-color: #9a8133; }
-.room-tile[aria-pressed=true] { outline: 3px solid #205e50; outline-offset: 3px; }
+.room-tile { position: relative; min-height: 8rem; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: .35rem; padding: .8rem; border: 2px solid var(--control-border); background: #fff; color: var(--text); border-radius: .35rem; font: inherit; cursor: pointer; overflow-wrap: anywhere; transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease; }
+.room-tile::after { content: ''; position: absolute; bottom: -2px; right: 12px; width: 20px; height: 12px; background: var(--page); border-left: 2px solid var(--control-border); border-top: 2px solid var(--control-border); }
+.room-tile:hover { border-color: var(--brand); box-shadow: 0 2px 8px rgb(37 43 49 / 8%); }
+.room-tile.occupied { background: #e8efeb; border-color: #657b70; }
+.room-tile.shared { background: #f4efe5; border-color: var(--accent); }
+.room-tile[aria-pressed=true] { outline: 3px solid var(--brand); outline-offset: 3px; }
 .room-tile span { font-size: .9rem; }
-.room-door { font-size: 1.3rem !important; color: #46664e; }
-.floor-caption { margin-bottom: 0; color: #465642; font-size: .9rem; }
+.room-door { font-size: 1.3rem !important; color: var(--brand); }
+.floor-caption { margin-bottom: 0; color: var(--text-secondary); font-size: .9rem; }
 .floor-settings { border-left: 1px solid var(--border); padding-left: 1.2rem; }
 .floor-settings h4 { margin: 0; }
 .floor-settings .button { width: 100%; }
@@ -377,6 +379,52 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 @media (max-width: 70rem) { .floor-layout { grid-template-columns: minmax(0,1fr); } .floor-settings { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); padding-top: 1rem; } .directory-filters { grid-template-columns: 1fr 1fr; } .directory-filters > :first-child { grid-column: 1 / -1; } }
 @media (max-width: 40rem) { .directory-stats { gap: .4rem; } .directory-stats > div { padding: .75rem; } .directory-stats strong { font-size: 1.4rem; } .directory-stats span { font-size: .85rem; } .directory-filters { grid-template-columns: 1fr; } .room-editor { grid-template-columns: minmax(0,1fr); } .building-inspector { padding: 1rem; } .person-actions .button { width: auto; } .map-toolbar .segmented-control { width: 100%; } .segmented-control .button { width: auto; flex: 1; } }
 @media (max-width: 22rem) { .directory-stats { grid-template-columns: 1fr; } .directory-stats > div { display: flex; align-items: center; gap: .75rem; } .tenant-place { flex-wrap: wrap; } }
+
+.building-entry { animation: building-entry-arrive 650ms cubic-bezier(.2,.72,.25,1) both; }
+@keyframes building-entry-arrive {
+  from { opacity: .78; transform: translateY(12px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.building-entry-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; }
+.building-entry-title { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; margin: 1rem 0; }
+.building-entry-title h3 { margin: 0; font-size: clamp(1.5rem, 4vw, 2rem); }
+.building-count { display: inline-flex; align-items: center; min-height: 2.75rem; padding: .45rem .8rem; border-left: 3px solid var(--accent); border-radius: .35rem; background: var(--page); font-weight: 700; }
+.building-entry-scene { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(12rem, .8fr); align-items: stretch; gap: 1rem; margin-block: 1rem 1.5rem; }
+.building-facade { display: flex; min-width: 0; flex-direction: column; justify-content: center; margin: 0; padding: .8rem .7rem .65rem; border: 1px solid #d2d0ca; border-radius: .6rem; background: #f0eee8; }
+.facade-art { display: block; width: 100%; height: auto; overflow: visible; }
+.facade-roof-shape { fill: #627887; stroke: #435968; stroke-width: 3; stroke-linejoin: round; }
+.facade-roof-edge { fill: none; stroke: #8c9ba3; stroke-width: 3; }
+.facade-wall { fill: #e8e0d2; stroke: #82796c; stroke-width: 2; stroke-linejoin: round; }
+.facade-gable-detail { fill: none; stroke: #c1b5a2; stroke-width: 2; }
+.facade-story-line { stroke: #b8ad9c; stroke-width: 2; }
+.facade-floor-label { fill: #4b535c; font-family: inherit; font-size: 13px; font-weight: 600; }
+.facade-door-frame { fill: #526b7c; stroke: #3d5362; stroke-width: 2; }
+.facade-door-panel { fill: #879aa5; stroke: #d6dce0; stroke-width: 2; }
+.facade-door-panel-line { fill: none; stroke: #d6dce0; stroke-width: 2; }
+.facade-door-knob { fill: #d4b26e; stroke: #6a5737; stroke-width: 1; }
+.facade-foundation { fill: #7f817d; stroke: #62645f; stroke-width: 2; }
+.facade-ground-line { fill: none; stroke: #a7a39a; stroke-width: 2; }
+.building-facade figcaption { padding-top: .55rem; color: var(--text-secondary); font-size: .85rem; line-height: 1.4; }
+.floor-count-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); align-content: center; gap: .65rem; }
+.floor-count-card { display: flex; min-height: 5rem; flex-direction: column; justify-content: center; gap: .2rem; padding: .7rem; border: 1px solid var(--control-border); border-radius: .5rem; background: #fff; }
+.floor-count-card strong { color: var(--brand-hover); }
+.floor-count-card small { color: var(--text-secondary); }
+.building-floor-content { border-top: 1px solid var(--border); padding-top: 1rem; }
+.building-floor-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem; }
+.building-floor-heading h4 { margin: 0; font-size: 1.25rem; }
+.building-floor-heading .eyebrow { margin-bottom: .15rem; }
+.building-floor-content .floor-tabs .button { min-height: 3rem; }
+.building-floor-content .floor-tabs small { display: block; font-size: .8rem; }
+@media (max-width: 40rem) {
+  .building-entry { padding: 1rem; }
+  .building-entry-scene { grid-template-columns: minmax(0, 1fr); }
+  .building-facade { min-height: 12rem; }
+  .building-entry-toolbar .preview-pill { max-width: 100%; }
+  .building-floor-heading { align-items: flex-start; flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .building-entry { animation: none; }
+}
 /* Compact list alternative keeps the spatial map usable on phones. */
 @media (max-width: 40rem) {
   .building-list { grid-template-columns: minmax(0,1fr); gap: .5rem; }
@@ -522,6 +570,76 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .paid-rent-summary > .card:first-of-type { border-top: 3px solid var(--brand); }
 .paid-payment-list > .card { transition: border-color 140ms ease, box-shadow 140ms ease; }
 .paid-payment-list > .card:hover { border-color: #c7c4bc; box-shadow: 0 5px 18px rgb(37 43 49 / 7%); }
+.paid-report-heading, .unpaid-report-heading, .paid-report-toolbar { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.paid-report-heading h3, .unpaid-report-heading h4 { margin: 0; }
+.paid-report-heading p:not(.eyebrow), .unpaid-report-heading p:not(.eyebrow) { margin: .35rem 0 0; color: var(--text-secondary); }
+.paid-report-heading .preview-pill { white-space: normal; }
+.paid-report-sheet { border-top: 3px solid var(--brand); }
+.paid-report-toolbar { align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+.paid-report-toolbar > div, .unpaid-report-heading > div:last-child { display: grid; gap: .35rem; }
+.paid-report-toolbar input, .unpaid-report-heading input { min-width: 12rem; min-height: 44px; }
+.paid-report-period { font-weight: 700; color: var(--text-secondary); }
+.paid-report-metrics { display: grid; grid-template-columns: minmax(0,1.35fr) repeat(2,minmax(0,1fr)); gap: .75rem; margin-block: 1rem .7rem; }
+.paid-report-metrics article { display: grid; align-content: center; gap: .3rem; min-height: 5.5rem; padding: .8rem; border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: .45rem; background: var(--page); }
+.paid-report-metrics article span { color: var(--text-secondary); }
+.paid-report-metrics article strong { color: var(--brand-hover); font-size: 1.45rem; font-variant-numeric: tabular-nums; }
+.paid-report-sheet > .field-help { margin-block: .5rem 1rem; }
+.paid-table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: .45rem; }
+.paid-table-scroll:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.paid-report-table { width: 100%; min-width: 48rem; border-collapse: collapse; font-size: .92rem; }
+.paid-report-table caption { padding: .75rem; color: var(--text-secondary); font-weight: 700; text-align: left; }
+.paid-report-table th, .paid-report-table td { padding: .7rem .75rem; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+.paid-report-table thead th { background: #e9edf0; color: var(--text); font-weight: 700; }
+.paid-report-table tbody tr:nth-child(even) { background: #faf9f6; }
+.paid-report-table tbody tr:hover { background: #f0f3f5; }
+.paid-report-table td { overflow-wrap: anywhere; }
+.paid-report-table .paid-table-amount { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 700; }
+.paid-report-table tfoot th, .paid-report-table tfoot td { background: var(--page); font-weight: 700; }
+.paid-report-table .button { min-height: 44px; white-space: nowrap; }
+.paid-report-empty { margin: 1rem 0 0; padding: 1rem; border: 1px dashed var(--control-border); border-radius: .45rem; background: var(--page); }
+.paid-report-empty h4 { margin: 0; }
+.paid-report-empty p { margin-bottom: 0; }
+.unpaid-report-sheet { border-top: 3px solid var(--accent); }
+.unpaid-report-heading { align-items: center; }
+.unpaid-report-heading h4 { font-size: 1.2rem; }
+.unpaid-report-heading > div:last-child { min-width: 12rem; }
+.unpaid-report-total { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; padding: .8rem 1rem; border-radius: .4rem; background: var(--page); }
+.unpaid-report-total strong { color: var(--brand-hover); font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+.unpaid-report-sheet > .field-help { margin-bottom: 0; }
+.arrears-report-sheet { border-top: 3px solid var(--warning); }
+.add-missed-month-sheet { border-top: 3px solid var(--brand); }
+.add-missed-month-sheet h4, .arrears-report-sheet h4 { margin: 0; }
+.add-missed-month-sheet > div:first-child > p:not(.eyebrow) { margin: .35rem 0 0; color: var(--text-secondary); }
+.add-missed-month-list { display: grid; gap: .65rem; margin-top: 1rem; }
+.add-missed-month-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; padding: .8rem; border: 1px solid var(--border); border-radius: .45rem; background: var(--page); }
+.add-missed-month-row > div:first-child { display: grid; gap: .2rem; min-width: 0; }
+.add-missed-month-row > div:first-child span { color: var(--text-secondary); overflow-wrap: anywhere; }
+.add-missed-month-confirm { display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: center; gap: .6rem; width: 100%; }
+.add-missed-month-confirm p { grid-column: 1 / -1; margin: 0; }
+.add-missed-month-sheet > .field-help { margin-bottom: 0; }
+@media (max-width: 40rem) {
+  .paid-report-metrics { grid-template-columns: minmax(0,1fr); }
+  .paid-report-metrics article { min-height: 4.5rem; }
+  .paid-report-toolbar, .unpaid-report-heading { align-items: stretch; flex-direction: column; }
+  .paid-report-toolbar input, .unpaid-report-heading input { width: 100%; }
+  .paid-report-period { order: -1; }
+  .paid-table-scroll { overflow: visible; border: 0; }
+  .paid-report-table { display: block; min-width: 0; }
+  .paid-report-table caption, .paid-report-table tbody, .paid-report-table tfoot { display: block; }
+  .paid-report-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .paid-report-table tbody tr, .paid-report-table tfoot tr { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); margin-bottom: .65rem; padding: .35rem; border: 1px solid var(--border); border-radius: .45rem; background: #fff; }
+  .paid-report-table td { display: grid; min-width: 0; gap: .15rem; padding: .4rem; border: 0; overflow-wrap: anywhere; }
+  .paid-report-table td::before { content: attr(data-label); color: var(--text-secondary); font-size: .8rem; font-weight: 650; }
+  .paid-report-table td[data-label="Renter"], .paid-report-table td[data-label="Rental space"], .paid-report-table td[data-label="Rent months covered"], .paid-report-table td[data-label="Receipt"] { grid-column: 1 / -1; }
+  .paid-report-table tfoot th { grid-column: 1 / -1; padding: .4rem; border: 0; }
+  .paid-report-table tfoot td { align-content: start; }
+  .paid-report-table .paid-table-amount { white-space: normal; }
+  .paid-report-table .button { width: 100%; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+  .add-missed-month-row { align-items: stretch; flex-direction: column; }
+  .add-missed-month-row > .button { width: 100%; }
+  .add-missed-month-confirm { grid-template-columns: minmax(0,1fr); }
+  .add-missed-month-confirm p { grid-column: auto; }
+}
 
 @media (max-width: 40rem) {
   .simple-payments > .segmented-control { width: 100%; }

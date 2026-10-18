@@ -1,3 +1,45 @@
+# Add missed rent month and track arrears - 19 Oct 2026
+
+Added a staff-only preview flow in Paid rent for adding the selected rent month as a charge. Only active renters with an assigned room, existing rent terms and no charge for that room/month are offered. The confirmation shows the saved rent amount and due date calculated from the existing move-in anniversary setup; cancel leaves records unchanged. A separate list flags renters with positive remaining balances in at least two distinct recorded rent months and shows their locations, month names and total balance. Partial confirmed cash reduces the month balance; pending reports and uncleared checks do not.
+
+Evidence: `npm run build`, `node scripts/check-paid-rent.mjs`, `npm test` (42 tests), and `git diff --check` passed. The browser check verifies the two-month threshold, only offers an eligible saved-setup renter, reviewed cancellation, charge creation from saved terms, refreshed outstanding and arrears rows/totals, duplicate prevention, partial-payment behavior, narrow reflow and zero external requests/runtime errors. Updated desktop/mobile report screenshots and the reviewed add-month confirmation at [desktop paid-rent report](screenshots/paid-rent.png), [mobile paid-rent report](screenshots/paid-rent-mobile.png), [desktop add-month confirmation](screenshots/add-rent-month-desktop.png) and [mobile add-month confirmation](screenshots/add-rent-month-mobile.png) are captured and visually inspected.
+
+Limitations: this is fictional in-memory preview state and resets on reload; it does not write to a database or create a recurring schedule. The arrears list counts only distinct recorded rent months with a positive balance; it cannot identify omitted charge months and does not determine that rent is overdue. No financial policy or persisted workflow was added, and no accessibility conformance claim is made.
+
+Next: review the selected-month add and arrears behavior with the user. Any persisted rent-charge creation requires a separate financial milestone, reviewed schema/policy, and transactional PostgreSQL function with RLS, authorization, idempotency and concurrency tests. No migration was applied.
+
+## Spreadsheet-style paid-rent report - 19 Oct 2026
+
+Redesigned the Paid rent preview as a spreadsheet-like monthly report. Its summary shows confirmed cash received, distinct renters who paid, and the number of confirmed payment groups. A semantic table lists renter, rental space, actual date received, amount, rent months covered and a receipt action, followed by a total row. Below it, a separate rent-month filter shows recorded charges with a remaining balance, due date, rent amount and still-due amount; partial payments reduce only the confirmed balance. The user chose outstanding balance for the selected rent month as the definition of “not paid yet.” No charge recorded for a month is explicitly not treated as unpaid. Filters distinguish actual receipt month from rent charge month. Pending reports and uncleared checks remain excluded.
+
+Evidence: `npm run build` and `node scripts/check-paid-rent.mjs` passed. Browser checks cover receipt-month totals/counts and actual dates, distinct renter count, split payment grouping, separate rent-month outstanding totals for September/October, pending exclusion, partial balance changes only after simulated confirmation, empty receipt month, acknowledgment, 320/390/768px reflow and zero external requests/runtime errors. Captured and visually inspected [desktop paid-rent report](screenshots/paid-rent.png) and [mobile paid-rent report](screenshots/paid-rent-mobile.png). `git diff --check` passed.
+
+Limitations: fictional preview only; data resets on reload. Report reads preview charges and receipts in memory; no export, saved report or database change. Missing charge setup is not classified as unpaid. No accessibility conformance claim.
+
+Next: review the spreadsheet-style monthly preview with the user. Before any saved reporting, separately review financial data definitions and run the required transactional, RLS, idempotency and concurrency tests; do not connect this preview report to unsaved or unauthorized data.
+
+## Lodging-house facade refinement - 19 Oct 2026
+
+Replaced the plain window-block facade with a front elevation of a small lodging house: pitched roof and eaves, gable detail, floor bands, foundation and inset room-door symbols with small brass-colored knobs. The illustration uses one facade row per configured floor (Bob’s current preview remains one floor; Buildings 1/2 show two) and six decorative doors per row. Door motifs are explicitly not room counts, room labels or surveyed geometry; Building 1/2 rentable-room counts remain “Not set” until entered. The existing per-floor room tiles/counts remain the source of preview details. No saved data or backend behavior changes.
+
+Evidence: `npm run build` passed with the existing Vite >500 kB chunk advisory. `node scripts/check-property-preview.mjs` passed; it asserts six decorative door motifs for Bob’s single-floor example and twelve across Building 1’s two illustrative floors, tests the explicit non-count accessibility label, and retains map/list/back, keyboard/touch, reduced-motion, count, mobile-reflow and zero-network checks. Captured and visually inspected [desktop two-floor facade](screenshots/property-building-desktop.png) and [mobile Bob’s house facade](screenshots/property-building-mobile.png). `git diff --check` passed.
+
+Limitations: the door pattern is an architectural illustration and must not be read as a room count or a surveyed elevation. Bob’s example count stays six in the floor summary and room tiles. Building 1/2 counts remain unknown. No accessibility conformance claim.
+
+Next: obtain measured facade/floor and confirmed room-count details from the property owner before replacing any illustration with real property geometry. Keep Building 1/2 counts “Not set” until confirmed.
+
+## Illustrative building entry view
+
+Added a closer, front-facing illustrative view for Bob’s house, Building 1 and Building 2. Selecting any of these buildings from the property map or building list opens the view; other buildings keep their prior selection behavior. A 650 ms restrained opacity/scale/short-translation arrival is disabled for reduced-motion preferences. Semantic buttons keep map/list navigation and a visible “Back to property map” action available; keyboard and touch activation are covered by the browser check.
+
+The view names each floor, shows a per-floor rentable-room count and labeled room tiles. Bob’s house continues to show six example rooms. Building 1 and Building 2 remain “Not set” until a preview count is entered; apartment and gym spaces remain separate from rentable room counts. The facade and room layout are explicit illustrations, not a surveyed floor plan. Edits remain temporary and reload resets them. Tenant features remain separate; no Auth, database, migration, financial, email or deployment behavior changed.
+
+Evidence: `npm run build` passed with the existing Vite >500 kB chunk advisory. `node scripts/check-property-preview.mjs` passed building entry/back, map/list visibility, mouse/keyboard/touch operation, 650 ms and reduced-motion behavior, unknown and edited floor counts, Bob’s six example rooms, apartment/gym preservation, mobile reflow and zero external requests. Captured and visually inspected [desktop Building 1](screenshots/property-building-desktop.png) and [mobile Bob’s house](screenshots/property-building-mobile.png). `git diff --check` passed. While extending the existing browser flow, restored rendering of the selected-room editor: its JSX was evaluated but discarded before this milestone, so the room editor and related temporary edits were not actually visible. The browser check now exercises the visible editor.
+
+Limitations: counts and geometry are still illustrative; no survey data has been supplied. Browser checks do not replace a complete keyboard, screen-reader, native 200% zoom, touch-device or rendered contrast audit, and no accessibility conformance claim is made.
+
+Next: confirm Building 1 and Building 2 room counts and surveyed floor details with the property owner before treating this as real floor data. Until then, retain “Not set” and the illustrative labels. Keep preview edits temporary; any persistence remains a separately reviewed database milestone.
+
 ## Admin/staff visual refinement - 19 Oct 2026
 
 Refreshed shared design tokens with warm ivory/stone surfaces, charcoal text, ink-blue primary actions and restrained brass highlights. Updated staff navigation, workspace summaries, payment tabs, worklist, balance panels and paid-rent/receipt surfaces; added short hover/pressed states while retaining visible focus and reduced-motion behavior. Existing 18px body/form baseline and 44px control targets remain. Tenant records/auth boundaries and all financial rules/flows remain unchanged. No database, account, email or deployment activity.

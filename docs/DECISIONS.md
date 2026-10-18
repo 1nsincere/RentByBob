@@ -6,6 +6,14 @@ User confirmed one responsible tenant per room; others are occupants. A room can
 
 Paid rent means confirmed cash received in the selected receipt month, including partial payments. It does not mean every covered rent month is fully settled. Allocation rows show the current remaining charge balance across all receipt months. Payment IDs group split allocations without counting multiple receipts. No verification-date collection report or check-clearance total inferred.
 
+## Paid-rent report layout and outstanding list - 19 Oct 2026
+
+The staff Paid rent preview uses separate month filters for cash received and rent charges. Its received-cash report lists confirmed payments with renter, rental space, actual received date, amount and rent months covered; the summary counts distinct renters and confirmed payment groups. A separate lower table lists recorded rent charges with a remaining balance for the selected rent month, including partial payments. No rent charge/setup for a month is not treated as unpaid. Pending reports and uncleared checks never reduce balances. This is a preview presentation choice only; no financial rule or saved report/API was added. The user selected “still has rent left for the selected rent month” as the meaning of the bottom outstanding section.
+
+## Preview rent-month addition and arrears threshold - 19 Oct 2026
+
+For the temporary Paid rent preview, the user chose to create a selected missed-month charge using the renter's existing rent amount and move-in-based due date, and to flag renters with two or more unpaid rent months. Require an explicit review/confirmation, block a duplicate room/month charge, and only offer renters with saved rent setup and an assigned room. Count distinct recorded charge months with a positive remaining balance; do not infer missing charges or overdue status. Pending entries and uncleared checks remain excluded from balances. This is preview behavior, not a new accounting rule or database write.
+
 ## Autonomous admin milestone - 18 Oct 2026
 
 User permits routine implementation decisions and will review the running app. Continue in reviewable milestones; production, real data and financial policy inference remain outside scope. Payment worklist prioritizes pending verification, then unpaid/setup filters. Similar date/amount entries require review but are not automatically rejected as duplicates. Date validation rejects impossible calendar days. See CASH_PERSISTENCE_PLAN.md before persisted financial work.

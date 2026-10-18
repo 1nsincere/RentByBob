@@ -33,6 +33,19 @@ export function PaymentsPreview() {
  const building = buildings.find(b => b.id === tenant.building)
  const room = building?.floors.flatMap(f => f.rooms).find(r => r.id === tenant.room)
  const today = philippineToday()
+ function addRentMonth(tenantId: string, month: string) {
+  const renter = tenants.find(item => item.id === tenantId)
+  const setup = terms[tenantId]
+  if (!renter?.active || !renter.room || !setup) return 'A current renter, room and saved rent setup are required.'
+  if (charges.some(charge => charge.room === renter.room && charge.period === month)) return 'A rent charge already exists for this room and month.'
+  try {
+   const due = anniversaryDue(setup.start, month)
+   setCharges(old => [...old, { id: crypto.randomUUID(), tenant: tenantId, room: renter.room, period: month, due, cents: setup.cents }])
+   return ''
+  } catch (cause) {
+   return cause instanceof Error ? cause.message : 'Could not add this rent month.'
+  }
+ }
  const review = verify ?? draft
  const possibleDuplicate = review && reports.some(r => r.id !== review.id && r.tenant === review.tenant && r.date === review.date && r.cents === review.cents)
  let allocations: ReturnType<typeof oldestFirst> = []
@@ -46,7 +59,7 @@ export function PaymentsPreview() {
  <div><p className="eyebrow">RENT RECORDS</p><h2 id="payments-heading">Payments and balances</h2><p>Find a tenant, record cash, then confirm it.</p></div>
  <p className="field-help">Practice only / Fictional amounts / Resets on reload. Confirmation below simulates James; it does not grant account permissions.</p>
  <div className="segmented-control" role="group" aria-label="Payment views"><Button aria-pressed={paymentView === 'records'} onClick={() => setPaymentView('records')}>Record and confirm</Button><Button aria-pressed={paymentView === 'paid'} onClick={() => setPaymentView('paid')}>Paid rent</Button></div>
- <div hidden={paymentView !== 'paid'}><PaidRentPreview acknowledgments={acknowledgments} charges={charges} receipts={receipts} /></div>
+ <div hidden={paymentView !== 'paid'}><PaidRentPreview acknowledgments={acknowledgments} charges={charges} receipts={receipts} rentTerms={terms} addRentMonth={addRentMonth} /></div>
  <div hidden={paymentView !== 'records'} className="payment-record-view">
  {!entry && !verify && <PaymentOverview charges={charges} receipts={receipts} reports={reports} open={openAccount} />}
  <div className="card" ref={accountHeading} tabIndex={-1}><label htmlFor="payment-tenant">1. Choose tenant</label><select id="payment-tenant" disabled={entry || !!verify} value={tenant.id} onChange={e => { setSelected(e.target.value); reset() }}>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}{t.active ? '' : ' (archived)'}</option>)}</select><p>{building?.name ?? 'No building'} / {room?.label ?? 'No room assigned'}</p>
@@ -87,4 +100,3 @@ export function PaymentsPreview() {
  </div>
  </section>
 }
-
