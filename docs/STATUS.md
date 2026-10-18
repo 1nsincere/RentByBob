@@ -1,3 +1,13 @@
+## Admin/staff visual refinement - 19 Oct 2026
+
+Refreshed shared design tokens with warm ivory/stone surfaces, charcoal text, ink-blue primary actions and restrained brass highlights. Updated staff navigation, workspace summaries, payment tabs, worklist, balance panels and paid-rent/receipt surfaces; added short hover/pressed states while retaining visible focus and reduced-motion behavior. Existing 18px body/form baseline and 44px control targets remain. Tenant records/auth boundaries and all financial rules/flows remain unchanged. No database, account, email or deployment activity.
+
+Evidence: `npm test` passed 42/42; `npm run build` passed (Vite emitted its existing >500 kB minified chunk advisory); `node scripts/check-admin-worklist.mjs` and `node scripts/check-paid-rent.mjs` passed. Browser checks cover admin worklist navigation/filter/search/duplicate review and unchanged pending balance, paid-rent month totals/partial states/receipt behavior, no external preview requests/runtime errors, 320/390/768px reflow and 200% enlarged root text at 320px with visible 44px button checks. Narrowed an ambiguous test selector to the selected tenant’s balance card; no app behavior changed for that test fix. Updated and visually inspected [desktop worklist](screenshots/admin-worklist.png), [mobile worklist](screenshots/admin-worklist-mobile.png), [paid-rent view](screenshots/paid-rent.png) and [sample acknowledgment dialog](screenshots/cash-acknowledgment.png).
+
+Limitations: 200% text enlargement is a root-font stress check, not native browser zoom; no complete keyboard, screen-reader, touch or rendered contrast audit was performed, so no WCAG conformance claim. Screenshots show fictional preview data. Cash migration remains unapplied and was not involved.
+
+Next: inspect the refreshed running preview and review the remaining staff sections (directory, location, invitations and owner access) for any consistency gaps. Then conduct keyboard/screen-reader/native-zoom review before any accessibility claim. Keep financial activation as a separate, gated milestone.
+
 ## POS-style acknowledgment - 18 Oct 2026
 
 Restyled acknowledgment as compact POS-inspired paper: RentByBob heading, receipt number, payment details, itemized rent coverage, cash total and remaining balance, dashed separators and 80mm content width in print. Preview-only Bob script placeholder explicitly says mock/design sample and not authorized; saved acknowledgments contain no fabricated signature. Tenant-account automatic access is not implemented; receipt remains staff-only. No email delivery. Build and paid-rent browser/PDF check pass. Physical thermal printer sizing is not verified; browser paper settings remain user-controlled.

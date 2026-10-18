@@ -1,5 +1,29 @@
 # RentByBob interface design system
 
+## Admin/staff visual refinement - 19 Oct 2026
+
+Updated the shared visual tokens toward warm ivory `#F7F4ED`, soft stone `#EEEAE4`, white surfaces and charcoal text. Replaced the primary teal with restrained ink blue `#245A81` / pressed-hover blue `#194363`; muted brass `#8D642E` is limited to small highlights. Positive, pending and error states retain separate semantic colors and visible status words. Tenant navigation/data boundaries and all financial workflow behavior are unchanged.
+
+The system font stack now prefers Inter when installed, then falls back to local UI/system sans-serif fonts; no remote font is requested. Existing 18px root/body and form scale, 24px section headings, 20px subsection headings, helper text and 44px minimum controls are preserved. Buttons, cards, selected payment tabs and workspace navigation have short hover/pressed/focus transitions without information hidden on hover. Reduced-motion styling remains enabled. Payment worklist and cash balance panels use stronger grouping and tabular numerals; pending states remain explicitly labeled and never appear as settled.
+
+Measured sRGB contrast ratios for the updated token combinations:
+
+| Foreground / indicator | Background | Ratio | Check |
+| --- | --- | ---: | --- |
+| Main text `#252B31` | Ivory `#F7F4ED` | 13.02:1 | Normal text ≥4.5:1 |
+| Main text `#252B31` | White `#FFFFFF` | 14.30:1 | Normal text ≥4.5:1 |
+| Secondary `#4B535C` | Ivory `#F7F4ED` | 7.10:1 | Normal text ≥4.5:1 |
+| Secondary `#4B535C` | Stone `#EEEAE4` | 6.55:1 | Normal text ≥4.5:1 |
+| White `#FFFFFF` | Ink blue `#245A81` | 7.36:1 | Normal text ≥4.5:1 |
+| White `#FFFFFF` | Hover blue `#194363` | 10.37:1 | Normal text ≥4.5:1 |
+| Ink blue `#245A81` | Stone `#EEEAE4` | 6.18:1 | Text and selected navigation |
+| Brass `#8D642E` | Ivory `#F7F4ED` | 4.79:1 | Text and restrained accent |
+| Control border `#747982` | White `#FFFFFF` | 4.38:1 | Adjacent control edge ≥3:1 |
+| Control border `#747982` | Ivory `#F7F4ED` | 3.98:1 | Adjacent control edge ≥3:1 |
+| Control border `#747982` | Stone `#EEEAE4` | 3.67:1 | Adjacent control edge ≥3:1 |
+
+These are token-pair checks only, not an accessibility certification or a complete rendered component contrast audit. Status pairs remain text-labeled. Browser verification covered the payment worklist at 320/390/768px, 200% root text at 320px with visible button target sizing, and paid-rent behavior at narrow widths. Full native zoom, keyboard, assistive-technology and manual touch review remain outstanding.
+
 ## Three-section workflow polish - 17 Oct 2026
 
 Preview uses three labeled icon navigation links, restrained surfaces, dynamic summary counts, consistent teal actions and compact filters/sort. Tenant cards identify the rental space and named occupant count. Room rosters pair person icons with names/counts; never color alone. Add tenant uses grouped fieldsets, persistent labels, optional/required cues, a live summary, review/edit/confirm states and field-linked validation. Drafts remain mounted during section navigation. Narrow reflow and simulated 200% text sizing pass for the new form; full keyboard/screen-reader/native zoom audit remains open.
@@ -10,7 +34,7 @@ Preview tenant cards show identity initials, textual active/archive status, buil
 
 ## Direction
 
-The working access application uses a calm, readable property-records interface rather than a dashboard. The renter experience has one principal destination, so it uses a compact header and account action instead of invented bottom-navigation tabs. Owners and clerks have several real workflows: a labeled staff navigation drawer on phones and a persistent sidebar on wider screens. Navigation links jump to actual sections on the current property workspace; there are no placeholder destinations.
+The working access application uses a calm, readable property-records workspace rather than a chart-heavy dashboard. Staff get a concise summary of active records, authorized properties and access level before task navigation; no decorative charts are used. The renter experience has one principal destination, so it uses a compact header and account action instead of invented bottom-navigation tabs. Owners and clerks have several real workflows: a labeled staff navigation drawer on phones and a persistent sidebar on wider screens. Navigation links jump to actual sections on the current property workspace; there are no placeholder destinations.
 
 Design mobile-first at 360–390 CSS pixels. The content and controls also reflow at 320px, with a narrower 160px CSS viewport used as a zoom-equivalent stress check. At larger widths the staff workspace gains a 14.5rem sidebar and a readable content column; forms remain stacked or use restrained auto-fit grids. The environment notice and header stay compact, and navigation is not fixed over content or the software keyboard.
 
@@ -20,11 +44,11 @@ The 60–30–10 distribution is an approximate visual balance—not a contrast 
 
 | Approximate share | Use | Token |
 | --- | --- | --- |
-| 60% | Warm page background and breathing room | Ivory `#F7F7F2` |
-| 30% | Cards, forms, navigation and supporting panels | White `#FFFFFF`; sage-gray `#E8EEEA` |
-| 10% | Primary actions, selected navigation, links and small emphasis | Deep teal `#1F5C55`; pressed/hover `#17463F` |
+| 60% | Warm page background and breathing room | Ivory `#F7F4ED` |
+| 30% | Cards, forms, navigation and supporting panels | White `#FFFFFF`; soft stone `#EEEAE4` |
+| 10% | Primary actions, selected navigation, links and small emphasis | Ink blue `#245A81`; pressed/hover `#194363`; muted brass `#8D642E` |
 
-Text colors are charcoal `#202824` and secondary `#47534B`. Control boundaries use `#718178`; semantic error, success and warning states use separate restrained foreground/surface pairs. The status word remains visible, so color and small shape markers are never the only status signal. Cards use light borders, modest rounding and a subtle shadow. There are no gradients, glass effects, decorative charts, icon-only primary actions or motion-heavy transitions.
+Text colors are charcoal `#252B31` and secondary `#4B535C`. Control boundaries use `#747982`; semantic error, success and warning states use separate restrained foreground/surface pairs. The status word remains visible, so color and small shape markers are never the only status signal. Cards use light borders, modest rounding and a subtle shadow. There are no gradients, glass effects, decorative charts, icon-only primary actions or motion-heavy transitions.
 
 ### Measured contrast
 
@@ -32,31 +56,32 @@ Ratios below are computed from the actual sRGB token pairs using the WCAG relati
 
 | Foreground / indicator | Background | Ratio | Check |
 | --- | --- | ---: | --- |
-| Main text `#202824` | Ivory `#F7F7F2` | 14.05:1 | Normal text ≥4.5:1 |
-| Main text `#202824` | White `#FFFFFF` | 15.10:1 | Normal text ≥4.5:1 |
-| Secondary `#47534B` | Ivory `#F7F7F2` | 7.50:1 | Normal text ≥4.5:1 |
-| Secondary `#47534B` | White `#FFFFFF` | 8.06:1 | Normal text ≥4.5:1 |
-| Secondary `#47534B` | Sage `#E8EEEA` | 6.85:1 | Normal text ≥4.5:1 |
-| White `#FFFFFF` | Teal `#1F5C55` | 7.72:1 | Normal text ≥4.5:1 |
-| White `#FFFFFF` | Pressed teal `#17463F` | 10.58:1 | Normal text ≥4.5:1 |
-| Teal `#1F5C55` | Sage `#E8EEEA` | 6.56:1 | Text and selected nav |
+| Main text `#252B31` | Ivory `#F7F4ED` | 13.02:1 | Normal text ≥4.5:1 |
+| Main text `#252B31` | White `#FFFFFF` | 14.30:1 | Normal text ≥4.5:1 |
+| Secondary `#4B535C` | Ivory `#F7F4ED` | 7.10:1 | Normal text ≥4.5:1 |
+| Secondary `#4B535C` | White `#FFFFFF` | 7.80:1 | Normal text ≥4.5:1 |
+| Secondary `#4B535C` | Stone `#EEEAE4` | 6.55:1 | Normal text ≥4.5:1 |
+| White `#FFFFFF` | Ink blue `#245A81` | 7.36:1 | Normal text ≥4.5:1 |
+| White `#FFFFFF` | Hover blue `#194363` | 10.37:1 | Normal text ≥4.5:1 |
+| Ink blue `#245A81` | Stone `#EEEAE4` | 6.18:1 | Text and selected nav |
+| Brass `#8D642E` | Ivory `#F7F4ED` | 4.79:1 | Normal text ≥4.5:1 |
 | Error `#8A2929` | Error surface `#FFF0ED` | 7.79:1 | Normal text ≥4.5:1 |
 | Success `#245C3D` | Success surface `#EDF5EF` | 7.07:1 | Normal text ≥4.5:1 |
 | Warning `#70490D` | Warning surface `#FBF3DF` | 7.17:1 | Normal text ≥4.5:1 |
-| Control border `#718178` | White `#FFFFFF` | 4.11:1 | Adjacent control edge ≥3:1 |
-| Control border `#718178` | Ivory `#F7F7F2` | 3.82:1 | Adjacent control edge ≥3:1 |
-| Control border `#718178` | Sage `#E8EEEA` | 3.49:1 | Adjacent control edge ≥3:1 |
+| Control border `#747982` | White `#FFFFFF` | 4.38:1 | Adjacent control edge ≥3:1 |
+| Control border `#747982` | Ivory `#F7F4ED` | 3.98:1 | Adjacent control edge ≥3:1 |
+| Control border `#747982` | Stone `#EEEAE4` | 3.67:1 | Adjacent control edge ≥3:1 |
 
-The teal focus ring contrasts at least as strongly as the teal/ivory and teal/sage pairs above. Hover/pressed colors, disabled controls, status labels and focus appearance are distinct states; do not infer that a palette alone makes the UI accessible. Verify rendered component pairs again if colors or opacity change.
+The ink-blue focus ring contrasts at least as strongly as the ink-blue/stone pair above. Hover/pressed colors, disabled controls, status labels and focus appearance are distinct states; do not infer that a palette alone makes the UI accessible. Verify rendered component pairs again if colors or opacity change.
 
 ## Type, spacing and controls
 
-- System sans-serif stack, no remote font dependency.
+- Inter when installed, followed by local UI/system sans-serif fallbacks; no remote font dependency.
 - Base body and form text: 18px; secondary copy generally 16px or larger.
 - Page headings: 28–32px, section headings about 24px, subsection headings about 20px.
 - Line height about 1.5; important text uses weight and grouping rather than pervasive bold.
 - Relative spacing, 12px card radius, smaller 7px control radius, and a light neutral border.
-- Primary actions are deep teal with white text. Secondary actions remain clearly labeled and outlined.
+- Primary actions use ink blue with white text. Secondary actions remain clearly labeled and outlined.
 - Inputs, buttons, menu links and selects target at least 44px height. Disabled actions stay legible and cannot be mistaken for success.
 - Focus rings are 3px and offset; a skip-to-content link is first in the document.
 - Passwords can be shown and hidden using a labeled button; standard password-manager autocomplete and pasting remain available.
