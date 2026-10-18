@@ -126,6 +126,12 @@ export function App() {
 
   const role = snapshot?.memberships.find(membership => membership.property_id === propertyId)?.role
   const tenantList = snapshot?.tenants.filter(tenant => !role || tenant.property_id === propertyId) ?? []
+  const activeTenantCount = tenantList.filter(tenant => !tenant.archived_at).length
+  const workspaceStats = role ? [
+    { label: 'Active records', value: String(activeTenantCount), hint: `${tenantList.length} total records` },
+    { label: 'Authorized properties', value: String(snapshot?.properties.length ?? 0), hint: snapshot?.properties.length === 1 ? 'Current property ready' : 'Cross-property access' },
+    { label: 'Access level', value: role === 'owner' ? 'Owner' : 'Clerk', hint: role === 'owner' ? 'Can manage access' : 'Can work with records' },
+  ] : []
   const navigationItems: NavigationItem[] = role ? [
     { id: 'tenant-records', label: 'Tenant directory' },
     { id: 'property-locations', label: 'Buildings and units' },
@@ -245,6 +251,15 @@ export function App() {
                                 }}>{snapshot.properties.map(property => <option key={property.id} value={property.id}>{property.name}</option>)}</select>
                               </div>
                             </div>
+                            <section className="workspace-overview" aria-label="Property workspace summary">
+                              {workspaceStats.map(stat => (
+                                <article key={stat.label} className="stat-card">
+                                  <span className="stat-label">{stat.label}</span>
+                                  <strong>{stat.value}</strong>
+                                  <small>{stat.hint}</small>
+                                </article>
+                              ))}
+                            </section>
                             {preview && <div hidden={activeSection !== 'tenant-records'} tabIndex={-1} id="preview-tenant-records"><preview.TenantDirectoryPreview openPayments={() => selectSection('payment-records')} openMap={() => selectSection('property-locations')} addTenant={() => selectSection('create-tenant')} /></div>}
                             {!preview && <section hidden={activeSection !== 'tenant-records'} tabIndex={-1} className="card directory-card" id="tenant-records" aria-labelledby="tenant-records-heading">
                               <div className="section-heading">

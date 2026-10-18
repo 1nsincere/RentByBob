@@ -131,6 +131,11 @@ code { max-width: 100%; overflow-wrap: anywhere; }
 .workspace-section > .card, .workspace-content > .card { margin-block: 0 1rem; }
 .workspace-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.65rem 1rem; margin: 0 0 1rem; padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
 .workspace-toolbar .status { flex: 0 0 auto; }
+.workspace-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: 0.85rem; margin: 0 0 1rem; }
+.stat-card { min-width: 0; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: linear-gradient(180deg, var(--surface) 0%, #f7fbf8 100%); box-shadow: var(--shadow-card); }
+.stat-card strong { display: block; margin-top: 0.3rem; color: var(--text); font-size: clamp(1.45rem, 2vw, 2rem); line-height: 1.1; letter-spacing: -0.04em; }
+.stat-card small { display: block; margin-top: 0.35rem; color: var(--text-secondary); }
+.stat-label { color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
 .property-picker { width: min(100%, 23rem); min-width: min(13rem, 100%); }
 .property-picker label { margin-top: 0; font-size: 0.9rem; }
 .property-picker select { margin-bottom: 0; }
