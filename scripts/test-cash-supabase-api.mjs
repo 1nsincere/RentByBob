@@ -167,6 +167,10 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
 
     await page.getByRole('link', { name: 'Payments and balances', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Saved rent and cash' })).toBeVisible()
+    const ownerQueue = page.locator('.cash-verification-queue')
+    await expect(ownerQueue.getByRole('heading', { name: 'Cash awaiting confirmation' })).toBeVisible()
+    await expect(ownerQueue.locator('.cash-queue-row')).toHaveCount(2)
+    await expect(ownerQueue.getByRole('button', { name: 'Review confirmation', exact: true })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Saved workflow readiness' })).toBeVisible()
     await expect(page.getByText('An owner-designated verifier is assigned.', { exact: true })).toBeVisible()
     await page.getByLabel('Tenant / room agreement').selectOption(agreementId)
@@ -188,8 +192,17 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(page.getByRole('status').filter({ hasText: 'Saved to the database.' })).toBeVisible()
     assert.equal(cashRecordRequests.length, 1, 'Valid pending cash should call the RPC exactly once')
     await expect(balance).toHaveText('₱6,000.25')
-    const newPendingRow = page.locator('.cash-row').filter({ hasText: '₱100.00' })
-    await expect(newPendingRow.getByText('Waiting for designated verifier', { exact: true })).toBeVisible()
+    const queueRow = page.locator('.cash-verification-queue .cash-queue-row').filter({ hasText: '₱100.00' })
+    await expect(queueRow).toContainText('Sample API test renter')
+    await expect(queueRow).toContainText('Test building / Test room')
+    await expect(queueRow).toContainText('Pending verification')
+    const statement = page.locator('.account-statement')
+    await expect(statement.getByRole('heading', { name: 'Account statement' })).toBeVisible()
+    await expect(statement.locator('.statement-pending')).toContainText('₱100.00')
+    await expect(statement.locator('.statement-pending')).toContainText('not included in the rent balance')
+    await expect(statement.locator('.statement-event').filter({ hasText: '₱100.00' })).toHaveCount(0)
+    const pendingStatementRow = page.locator('.statement-pending').getByText('₱100.00', { exact: false })
+    await expect(pendingStatementRow).toBeVisible()
     pass('Authenticated owner UI saves cash as pending without lowering the balance')
 
     await page.getByRole('button', { name: 'Sign out', exact: true }).click()
@@ -204,8 +217,8 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
 
     await page.getByRole('link', { name: 'Payments and balances', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Saved rent and cash' })).toBeVisible()
-    await page.getByLabel('Tenant / room agreement').selectOption(agreementId)
-    const pendingRow = page.locator('.cash-row').filter({ hasText: '₱100.00' })
+    const pendingRow = page.locator('.cash-verification-queue .cash-queue-row').filter({ hasText: '₱100.00' })
+    await expect(pendingRow).toContainText('Sample API test renter')
     await pendingRow.getByRole('button', { name: 'Review confirmation', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Confirm cash received?' })).toBeVisible()
     await page.getByRole('button', { name: 'Confirm and issue acknowledgment', exact: true }).click()
@@ -213,7 +226,13 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(acknowledgment.getByRole('heading', { name: 'Cash Payment Acknowledgment' })).toBeVisible()
     await expect(acknowledgment.locator('.pos-total strong')).toHaveText('₱100.00')
     await page.getByRole('button', { name: 'Close receipt', exact: true }).click()
+    await expect(page.locator('.cash-verification-queue .cash-queue-row')).toHaveCount(2)
+    await page.getByLabel('Tenant / room agreement').selectOption(agreementId)
     await expect(page.locator('.simple-balance strong')).toHaveText('₱5,900.25')
+    const confirmedStatement = page.locator('.account-statement')
+    const confirmedStatementRow = confirmedStatement.locator('.statement-event').filter({ hasText: 'Confirmed cash' }).filter({ hasText: '₱100.00' })
+    await expect(confirmedStatementRow).toContainText('March 2024')
+    await expect(confirmedStatementRow).toContainText('Received')
     pass('Designated clerk UI confirms the pending report and shows its acknowledgment')
 
     await page.reload()
@@ -222,11 +241,45 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(page.getByRole('heading', { name: 'Saved rent and cash' })).toBeVisible()
     await page.getByLabel('Tenant / room agreement').selectOption(agreementId)
     await expect(page.locator('.simple-balance strong')).toHaveText('₱5,900.25')
-    const confirmedRow = page.locator('.cash-row').filter({ hasText: '₱100.00' })
+    const confirmedRow = page.locator('.account-statement .statement-event').filter({ hasText: 'Confirmed cash' }).filter({ hasText: '₱100.00' })
     await expect(confirmedRow.getByText('Confirmed cash', { exact: true })).toBeVisible()
     await confirmedRow.getByRole('button', { name: 'Open acknowledgment', exact: true }).click()
     await expect(page.getByRole('dialog').getByRole('heading', { name: 'Cash Payment Acknowledgment' })).toBeVisible()
     await expect(page.getByRole('dialog').locator('.pos-total strong')).toHaveText('₱100.00')
+    await page.getByRole('button', { name: 'Close receipt', exact: true }).click()
+    const acknowledgmentButton = confirmedRow.getByRole('button', { name: 'Open acknowledgment', exact: true })
+    await acknowledgmentButton.focus()
+    await page.keyboard.press('Shift+Tab')
+    await page.keyboard.press('Tab')
+    assert.equal(await acknowledgmentButton.evaluate(element => element.matches(':focus-visible')), true, 'Acknowledgment action must have visible keyboard focus')
+    pass('Statement acknowledgment action is keyboard reachable with visible focus')
+
+    for (const width of [390, 320, 160, 768]) {
+      await page.setViewportSize({ width, height: 900 })
+      const overflow = await page.evaluate(() => ({
+        page: document.documentElement.scrollWidth,
+        viewport: window.innerWidth,
+        roots: [...document.querySelectorAll('html, body, #root, .shell, .page-shell, .workspace-layout, .workspace-content, .workspace-section, .simple-payments, form.card.rent-setup')].map(element => {
+          const rect = element.getBoundingClientRect()
+          return `${element.tagName.toLowerCase()}.${typeof element.className === 'string' ? element.className : ''}:x${Math.floor(rect.x)} w${Math.ceil(rect.width)} sw${element.scrollWidth}`
+        }),
+        scrollables: [...document.querySelectorAll('body *')].filter(element => element.scrollWidth > element.clientWidth + 1).map(element => `${element.tagName.toLowerCase()}.${typeof element.className === 'string' ? element.className : ''}:c${element.clientWidth} s${element.scrollWidth}`),
+        elements: [...document.querySelectorAll('body *')]
+          .map(element => {
+            const rect = element.getBoundingClientRect()
+            return { element: element.tagName.toLowerCase(), className: typeof element.className === 'string' ? element.className : '', x: Math.floor(rect.x), width: Math.ceil(rect.width), right: Math.ceil(rect.right) }
+          })
+          .filter(element => element.right > window.innerWidth + 1 || element.x < -1)
+          .slice(0, 8),
+      }))
+      assert.ok(overflow.page <= width, `Statement page has horizontal overflow at ${width}px: ${JSON.stringify(overflow)}`)
+      assert.ok(await page.locator('button:visible').evaluateAll(buttons => buttons.every(button => button.getBoundingClientRect().height >= 44)), `Visible button is smaller than 44px at ${width}px`)
+    }
+    await page.setViewportSize({ width: 320, height: 900 })
+    await page.evaluate(() => { document.documentElement.style.fontSize = '200%' })
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'Statement page has horizontal overflow at 200% text size')
+    assert.ok(await page.locator('button:visible').evaluateAll(buttons => buttons.every(button => button.getBoundingClientRect().height >= 44)), 'Visible button is smaller than 44px at 200% text size')
+    pass('Statement and cash queue reflow at narrow widths and 200% text size with 44px buttons')
     pass('Confirmed balance and immutable acknowledgment persist and reopen after reload')
   } finally {
     await browser.close()
@@ -328,6 +381,14 @@ if (process.argv[2] === 'create-users') {
   const pending = await rpc('read_rent_workspace', { p_property_id: property }, owner)
   assert.equal(pending.data.agreements.find(row => row.id === agreementId).balance, '10000.50')
   assert.equal(pending.data.cash.find(row => row.id === primaryCashId).confirmed_at, null)
+  const anonymousAfterRecords = await request('/rest/v1/rpc/read_rent_workspace', {
+    method: 'POST',
+    body: { p_property_id: property },
+  })
+  expectDenied(anonymousAfterRecords, 'Anonymous statement read after financial records exist')
+  const unassignedAfterRecords = await rpc('read_rent_workspace', { p_property_id: property }, otherSession.access_token)
+  expectDenied(unassignedAfterRecords, 'Unassigned account statement read after financial records exist')
+  pass('Statement remains unavailable to anonymous and unassigned accounts after records exist')
   const ownerCannotConfirm = await rpc('confirm_rent_cash', {
     p_property_id: property, p_cash_id: primaryCashId,
   }, owner)

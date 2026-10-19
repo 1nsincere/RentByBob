@@ -10,8 +10,9 @@ Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISION
 | Local cash schema and saved workflow | `202610180001_cash_rent_foundation.sql` applied locally; five financial tables with RLS; no financial records/verifier seeded | Owner must identity-confirm the designated clerk; create only reviewed local room agreements/charges; hosted and production untouched |
 | Rental agreements and charges | Live Postgres RPC creates one responsible tenant/room agreement and manually adds an idempotent monthly charge with anniversary clamping | Review existing tenant/room terms before first write; no automatic billing or move-out workflow |
 | Cash report, confirmation and acknowledgment | Live Postgres RPC records pending cash; only explicit MFA clerk verifier confirms; allocation is oldest-first; immutable acknowledgment can be reopened | Verified in isolated local API/Auth/browser tests; run first owner-approved local transaction after identity and terms review |
+| Saved staff account statement | Read-only agreement timeline shows charges, confirmed cash, allocations and current charge remaining; pending reports are separate | Focused unit and isolated cash browser checks passed; tenant access and exports remain separate |
 | Checks and reconciliation | Design constraints are documented | Separate decisions required for check clearance, returns/reversals, collection handovers and reconciliation evidence |
-| Renter portal and reports | Tenant access foundation exists; spreadsheet-like report is preview-only | Connected statements, renter payment claims, check status, verified reports and Excel export not delivered |
+| Renter portal and reports | Tenant access foundation exists; spreadsheet-like report is preview-only | Tenant-facing statements, renter payment claims, check status, verified reports and Excel export not delivered |
 | Release readiness | No production deployment | Accessibility audit, independent security review, opening-balance plan, backup/restore rehearsal, owner acceptance and a parallel paper-record payment cycle |
 
 ## Current next step: owner identity and first approved local records
@@ -26,6 +27,8 @@ Keep this narrow: verify the designated account, review the real local tenant/ro
 Verification completed: cash-specific live API/Auth/concurrency and browser tests passed on a separate disposable Supabase stack. The reviewed cash migration is applied to the preserved local database, and RLS was verified on all five financial tables. No local verifier, agreements, charges or cash reports have been populated yet. Do not use actual collections until account identity and rent terms have been reviewed.
 
 Small operational fix completed before that owner-dependent step: the saved Payments screen now summarizes live setup status and blocks a pending cash report if its exact amount exceeds the current balance or there is no positive balance. This prevents a report that the confirmation transaction would later reject because advance credit is not configured. It does not authorize or create terms, verifier assignments, agreements, charges or receipts.
+
+Operational workflow improvement: pending cash is now in a property-wide verifier queue, with tenant/room/date/collector context. The assigned verifier can begin review directly from the queue; owner and other staff can see pending state but do not receive a confirmation action. This uses the existing authorized read RPC and confirmation RPC only.
 
 ## Schedule and scope
 

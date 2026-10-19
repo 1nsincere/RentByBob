@@ -38,6 +38,10 @@ Eleven reviewed migrations also run on authorized fictional project `vyzexanzkts
 
 Current local access UI is connected to Supabase. Ten local migrations enforce identity-bound owner assignment, tenant isolation, current membership revocation, staff MFA and durable invitation attempt tracking. Browser tests exercise actual enrollment/challenge, backup factors, password recovery and invitation reconciliation without an assurance bypass; a clerk cannot administer an owner's factors or reconcile attempts. The runtime never falls back to prototype records. Self-routing exposes only the caller's access status before MFA. Directory rename/archive and bounded owner/MFA-gated access and invitation review are enforced in PostgreSQL, not only the UI.
 
+The account statement is rendered only inside the existing staff Payments and balances screen, using the MFA-gated `read_rent_workspace` snapshot. It adds no tenant financial view, client-side grant, export or financial mutation. Pending reports remain explicitly outside confirmed history and balances.
+
+Cash-statement security regression coverage also retries `read_rent_workspace` as anonymous and unassigned identities after disposable agreement/charge/cash records exist and requires denial. Browser checks verify pending cash is absent from confirmed statement events. Existing isolated tests continue to require MFA and designated clerk identity for settlement, reject owner confirmation and direct table writes, and cover audit rollback/concurrency. These checks run only against the unique disposable local Supabase stack; they are not an independent security audit or proof of hosted/production configuration.
+
 See STATUS.md for the exact current test evidence and ONBOARDING.md for identity confirmation, invitation states, resend limits, paper-delivery limitations, 10-second UI refresh, and recovery. No hosted/production security claim.
 
 ## Invitation dispatch reliability — migrations 202610160009 through 202610160011

@@ -2,6 +2,8 @@
 
 Applied only to the preserved local Supabase database after live verification in a separate disposable Supabase stack; not applied to hosted or production. Adds `cash_verifiers`, `rental_agreements` (one per unit), `rent_charges` (agreement/month unique), `cash_records` (pending or confirmed with acknowledgment snapshot), and `cash_allocations`. All exposed tables use staff MFA/RLS and SELECT-only client grants. Narrow functions serialize mutations using a property row lock. Amounts are `numeric(14,2)` and fractional centavos are rejected; read RPC converts money to text. Snapshot preserves names/locations/dates/allocations/balance at issuance. Local tables currently contain no verifier, agreement, charge or cash record; see [STATUS](STATUS.md) for verification and next steps.
 
+The staff account statement is a read-only projection of the authorized workspace snapshot: rent charges, confirmed cash with its acknowledgment allocation snapshot, and current remaining amounts per charge. Pending cash stays separate and is not a settled payment. This adds no table, RPC, grant or mutation.
+
 ## Guided cash preview update - 18 Oct 2026
 
 Pending Report stores tenant, cash amount, collector and actual date separately from settled per-charge Receipt allocations. Confirmation recalculates oldest-first allocation. Terms keep the original move-in date and example room rent. These are temporary objects only; transactionality, account permission and persistence are not claimed.

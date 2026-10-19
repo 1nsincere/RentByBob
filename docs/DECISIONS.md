@@ -6,6 +6,10 @@ User confirmed one responsible tenant per room; others are occupants. A room can
 
 Paid rent means confirmed cash received in the selected receipt month, including partial payments. It does not mean every covered rent month is fully settled. Allocation rows show the current remaining charge balance across all receipt months. Payment IDs group split allocations without counting multiple receipts. No verification-date collection report or check-clearance total inferred.
 
+## Saved staff account statement - 19 Oct 2026
+
+The first saved statement is staff-only and read-only within the existing authorized Payments and balances workflow. It lists saved rent charges by due date and confirmed cash by actual receipt date, with rent-month allocation details and each charge's current remaining amount. The current agreement balance remains the authoritative total. Pending cash is shown separately and explicitly excluded from settled payments and balances. No tenant financial access, export, new accounting rule, check handling, or write action is part of this slice.
+
 ## Paid-rent report layout and outstanding list - 19 Oct 2026
 
 The staff Paid rent preview uses separate month filters for cash received and rent charges. Its received-cash report lists confirmed payments with renter, rental space, actual received date, amount and rent months covered; the summary counts distinct renters and confirmed payment groups. A separate lower table lists recorded rent charges with a remaining balance for the selected rent month, including partial payments. No rent charge/setup for a month is not treated as unpaid. Pending reports and uncleared checks never reduce balances. This is a preview presentation choice only; no financial rule or saved report/API was added. The user selected “still has rent left for the selected rent month” as the meaning of the bottom outstanding section.

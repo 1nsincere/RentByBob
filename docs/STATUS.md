@@ -332,3 +332,31 @@ Verification: added focused exact-centavo unit tests, including one-cent boundar
 Limitation: the readiness panel reports database setup state; it cannot prove that the entered agreement or verifier details were independently reviewed. Owner identity verification and rent-term approval remain required before the first real local transaction.
 
 Next: only after owner verification of the exact clerk account and review of actual room/rent terms, exercise one approved local workflow. Do not seed or infer data to make the checklist look complete.
+
+## Property-wide cash confirmation queue - 19 Oct 2026
+
+Added a pending-cash queue to the saved Payments and balances screen. Staff can see pending report count and each report's responsible tenant, building/unit, amount, actual receipt date, collector and text status without selecting every agreement. The designated verifier can launch the existing confirmation review directly from the queue. Owners and other staff see the queue but not a confirmation action. Agreement-level cash history and acknowledgment reopening remain available. No schema or authorization changes; the queue reads the same MFA/RLS-protected workspace RPC and confirmation still uses the existing transactional RPC.
+
+Verification: the isolated cash browser flow asserts existing pending reports are visible to the owner without confirmation controls, identifies a newly saved pending item by tenant/location, signs in as the designated MFA clerk, confirms it from the queue without first selecting the agreement, sees the acknowledgment, and verifies the item leaves the pending queue only after confirmed settlement. Full isolated cash tests, all 44 unit tests, strict build, and `git diff --check` pass. No preserved local financial records, hosted development, or production data were touched.
+
+Next: the owner identity and actual rental terms still gate a first approved transaction in the preserved local database; the queue does not remove that review requirement.
+
+## Saved staff account statement - 19 Oct 2026
+
+Added a read-only statement for the selected tenant/room agreement in saved Payments and balances. It identifies the responsible tenant and rental space; lists saved rent charges by due date with the current remaining amount per charge; and lists confirmed cash by actual receipt date with the allocation months from the immutable acknowledgment. The agreement's existing saved balance remains the authoritative total. Pending cash reports appear in a separate section and are explicitly excluded from confirmed payments and balances. Staff can reopen the acknowledgment from a confirmed statement row. No migration, RPC, grant, financial write, tenant-facing view or export was added.
+
+Verification: focused statement-model tests prove pending cash is excluded, confirmed allocation months are retained, stable date order and charge-before-payment order on the same date. The isolated Auth/MFA/RLS/concurrency cash integration browser flow verifies a pending report appears only in the pending section, then appears in confirmed history with allocation details after the designated clerk confirms it; acknowledgment and balance persistence still pass after reload. All 46 unit tests, strict TypeScript/Vite build, isolated cash integration flow and `git diff --check` pass. Build retains its existing >500 kB chunk advisory. No preserved local financial records, hosted development or production data were touched.
+
+Limitations: this is an internal staff statement for one selected agreement, not a combined tenant-wide statement, tenant portal feature or downloadable report. The local database still requires owner verification of the clerk identity and actual tenant/room/rent terms before its first approved real workflow.
+
+Next: complete that identity and terms review before exercising the saved workflow against preserved local records. Decide separately whether to add tenant-facing access or statement export after staff review.
+
+## Cash statement accessibility and access-boundary checks - 19 Oct 2026
+
+Hardened the small-screen cash workflow layout after a new reflow check found two overflow sources: intrinsic grid sizing in rent forms and non-wrapping pending-status chips. Rent forms now use a zero-minimum single column, pending labels wrap, and headings wrap at the narrowest effective viewport. The isolated authenticated browser flow now checks 390px, 320px, a 160-CSS-pixel effective viewport (narrow viewport approximation for 200% browser zoom), 768px, and 200% root text size at 320px. It asserts no page-level horizontal overflow and visible buttons remain at least 44px tall. It also keyboard-tabs to the acknowledgment action and asserts visible `:focus-visible`.
+
+Security checks are repeated after disposable statement records exist: anonymous and unassigned accounts cannot call the MFA-protected workspace snapshot; pending cash appears only in the pending section, not as a confirmed statement event; and existing owner/clerk restrictions remain covered (owner cannot confirm, designated clerk requires MFA, browser direct writes denied, confirmation is transactional). No authorization, schema or data changes.
+
+Evidence: `npm.cmd run test:cash:supabase` passed all isolated Auth/MFA/RLS/financial and browser assertions, including the new responsive, keyboard, pending-separation and access-denial checks. No preserved local financial records, hosted development or production data were accessed. This automated browser coverage is a useful regression gate, not a complete native browser zoom, assistive-technology, contrast, or WCAG 2.2 AA audit.
+
+Next: owner identity and rent-terms review still gates the first approved saved transaction. Perform a manual screen-reader/keyboard and actual browser zoom review before claiming accessibility conformance; do not widen financial access or add tenant statements/exports without a separate authorization review.
