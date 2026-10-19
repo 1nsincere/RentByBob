@@ -8,6 +8,14 @@ Evidence: `npm.cmd run build` and `git diff --check` passed. No database, access
 
 Limitations: several less common administrative screens and detailed financial instructions remain in English. Bisaya wording should be reviewed by James or a fluent speaker before treating it as authoritative. Dark colors were checked through the production build only; rendered contrast and full accessibility verification remain outstanding.
 
+## Payment preview bilingual flow - 19 Oct 2026
+
+Connected the header English/Bisaya choice to the fictional `RENT RECORDS → Payments and balances` flow. The **Record and confirm** tab now translates the practice-only and James simulation notice, attention list, filters and account count, tenant selector, balance explanation, cash entry and review, pending confirmation queue, rent-by-month notes, payment history, and room-rent setup labels/instructions. The **Paid rent** tab translates the report heading, receipt-period selector, top metrics and selected explanations. Preview names, dates, amounts and financial state are unchanged. This remains a development-only simulation and does not settle live cash.
+
+Evidence: `npm.cmd run build` and `git diff --check` passed with the existing large-chunk advisory.
+
+Limitations: the Paid rent report tables, some reports/actions, error states and separate live owner/admin controls are still partly English. User-entered names and dates intentionally remain unchanged. Have a fluent Cebuano/Bisaya speaker review wording before anyone relies on it.
+
 ## Whole-app language switch expansion - 19 Oct 2026
 
 Expanded the header's English/Bisaya setting to persist and update shared app copy across sign-in, main route headings, navigation, dashboard shortcuts, tenant directory, tenant creation, property directory heading/explanation, invitation screen, and footer. In the fictional **RENT RECORDS → Payments and balances → Record and confirm** view, the heading, practice-only note, attention list, tenant/account controls, balance explanation, cash-entry form, pending James review, rent-by-month, payment history, and room-rent setup notes now switch to basic Bisaya. The Paid rent view has translations for its heading, receipt-period selector, summary metrics, selected report explanations and outstanding-rent headings. User-entered names, dates, amounts and server-returned data remain unchanged. Detailed owner access controls, MFA, invitation reconciliation, property maintenance, some payment errors, check controls and many Paid rent table labels still contain English. This is not yet complete site-wide translation.

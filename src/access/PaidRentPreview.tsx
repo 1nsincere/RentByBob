@@ -80,20 +80,20 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
         <article><span>{tr('Confirmed payments','Mga kumpirmadong bayad')}</span><strong>{payments.length}</strong></article>
       </div>
       <p className="field-help">{tr('Receipt month means when cash was received, not when it was confirmed. Pending reports and uncleared checks are excluded.','Ang bulan sa resibo mao ang bulan nga nadawat ang kwarta, dili ang bulan nga gikumpirma. Wala giapil ang wala pa kumpirmaha ug tseke nga wala pa bayri sa bangko.')}</p>
-      {!paidRows.length ? <div className="paid-report-empty"><h4>No confirmed payments for this month</h4><p>Choose another month, or confirm a pending cash record after checking receipt.</p></div> :
+      {!paidRows.length ? <div className="paid-report-empty"><h4>{tr('No confirmed payments for this month','Walay kumpirmadong bayad niining bulana')}</h4><p>{tr('Choose another month, or confirm a pending cash record after checking receipt.','Pilia ang laing bulan o kumpirmaha ang rekord sa kwarta human kini susihon.')}</p></div> :
         <div className="paid-table-scroll" role="region" aria-label="Confirmed payments table" tabIndex={0}>
           <table className="paid-report-table">
-            <caption>Confirmed rent payments received in {validBusinessDate(month + '-01') ? formatMonth(month) : 'the selected month'}</caption>
-            <thead><tr><th scope="col">Renter</th><th scope="col">Rental space</th><th scope="col">Date received</th><th scope="col">Amount</th><th scope="col">Rent months covered</th><th scope="col">Receipt</th></tr></thead>
+            <caption>{tr('Confirmed rent payments received in','Kumpirmadong bayad sa abang nga nadawat sa')} {validBusinessDate(month + '-01') ? formatMonth(month) : tr('the selected month','napiling bulan')}</caption>
+            <thead><tr><th scope="col">{tr('Renter','Nag-abang')}</th><th scope="col">{tr('Rental space','Lugar nga giabangan')}</th><th scope="col">{tr('Date received','Petsa nga nadawat')}</th><th scope="col">{tr('Amount','Kantidad')}</th><th scope="col">{tr('Rent months covered','Mga bulan sa abang nga gibayran')}</th><th scope="col">{tr('Receipt','Resibo')}</th></tr></thead>
             <tbody>{paidRows.map(({ payment, tenant, building, room, rentMonths }) => <tr key={payment.id}>
-              <td data-label="Renter">{tenant?.name ?? 'Tenant unavailable'}</td>
-              <td data-label="Rental space">{building?.name ?? 'Building unavailable'} / {room?.label ?? 'Room unavailable'}</td>
+              <td data-label={tr('Renter','Nag-abang')}>{tenant?.name ?? tr('Tenant unavailable','Walay rekord sa nag-abang')}</td>
+              <td data-label={tr('Rental space','Lugar nga giabangan')}>{building?.name ?? tr('Building unavailable','Walay rekord sa bilding')} / {room?.label ?? tr('Room unavailable','Walay rekord sa kwarto')}</td>
               <td data-label="Date received">{formatDate(payment.date)}</td>
               <td data-label="Amount" className="paid-table-amount">{pesos(payment.cents)}</td>
-              <td data-label="Rent months covered">{rentMonths.length ? rentMonths.map(formatMonth).join(', ') : 'Unavailable'}</td>
-              <td data-label="Receipt">{acknowledgments[payment.id] ? <Button className="quiet-button" onClick={() => setReceipt(acknowledgments[payment.id])}>Open acknowledgment</Button> : '—'}</td>
+              <td data-label={tr('Rent months covered','Mga bulan sa abang nga gibayran')}>{rentMonths.length ? rentMonths.map(formatMonth).join(', ') : tr('Unavailable','Wala')}</td>
+              <td data-label={tr('Receipt','Resibo')}>{acknowledgments[payment.id] ? <Button className="quiet-button" onClick={() => setReceipt(acknowledgments[payment.id])}>{tr('Open acknowledgment','Ablihi ang resibo')}</Button> : '—'}</td>
             </tr>)}</tbody>
-            <tfoot><tr><th scope="row" colSpan={3}>Total confirmed cash received</th><td className="paid-table-amount">{pesos(total)}</td><td colSpan={2}>{payments.length} {payments.length === 1 ? 'payment' : 'payments'} · {paidRenterCount} {paidRenterCount === 1 ? 'renter' : 'renters'}</td></tr></tfoot>
+            <tfoot><tr><th scope="row" colSpan={3}>{tr('Total confirmed cash received','Kinatibuk-ang kumpirmadong nadawat nga kwarta')}</th><td className="paid-table-amount">{pesos(total)}</td><td colSpan={2}>{payments.length} {payments.length === 1 ? 'payment' : 'payments'} · {paidRenterCount} {paidRenterCount === 1 ? 'renter' : 'renters'}</td></tr></tfoot>
           </table>
         </div>}
     </section>
@@ -103,16 +103,16 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
       {!unpaidRows.length ? <p className="paid-report-empty">{charges.some(charge => charge.period === rentMonth) ? 'No remaining rent for this month.' : 'No rent charges are recorded for this month. Missing setup does not mean rent is unpaid.'}</p> :
         <div className="paid-table-scroll" role="region" aria-label="Outstanding rent table" tabIndex={0}>
           <table className="paid-report-table unpaid-report-table">
-            <caption>Rent charges with a remaining balance for {validBusinessDate(rentMonth + '-01') ? formatMonth(rentMonth) : 'the selected month'}</caption>
-            <thead><tr><th scope="col">Renter</th><th scope="col">Rental space</th><th scope="col">Due date</th><th scope="col">Rent charged</th><th scope="col">Still due</th></tr></thead>
+            <caption>{tr('Rent charges with a remaining balance for','Mga bayranan sa abang nga naa pay balanse sa')} {validBusinessDate(rentMonth + '-01') ? formatMonth(rentMonth) : tr('the selected month','napiling bulan')}</caption>
+            <thead><tr><th scope="col">{tr('Renter','Nag-abang')}</th><th scope="col">{tr('Rental space','Lugar nga giabangan')}</th><th scope="col">{tr('Due date','Petsa sa bayad')}</th><th scope="col">{tr('Rent charged','Bayranan sa abang')}</th><th scope="col">{tr('Still due','Bayran pa')}</th></tr></thead>
             <tbody>{unpaidRows.map(({ charge, tenant, building, room, due }) => <tr key={charge.id}>
-              <td data-label="Renter">{tenant?.name ?? 'Tenant unavailable'}</td>
-              <td data-label="Rental space">{building?.name ?? 'Building unavailable'} / {room?.label ?? 'Room unavailable'}</td>
+              <td data-label={tr('Renter','Nag-abang')}>{tenant?.name ?? tr('Tenant unavailable','Walay rekord sa nag-abang')}</td>
+              <td data-label={tr('Rental space','Lugar nga giabangan')}>{building?.name ?? tr('Building unavailable','Walay rekord sa bilding')} / {room?.label ?? tr('Room unavailable','Walay rekord sa kwarto')}</td>
               <td data-label="Due date">{formatDate(charge.due)}</td>
               <td data-label="Rent charged">{pesos(charge.cents)}</td>
               <td data-label="Still due" className="paid-table-amount">{pesos(due)}</td>
             </tr>)}</tbody>
-            <tfoot><tr><th scope="row" colSpan={4}>Total still due</th><td className="paid-table-amount">{pesos(unpaidTotal)}</td></tr></tfoot>
+            <tfoot><tr><th scope="row" colSpan={4}>{tr('Total still due','Kinatibuk-ang bayran pa')}</th><td className="paid-table-amount">{pesos(unpaidTotal)}</td></tr></tfoot>
           </table>
         </div>}
       <p className="field-help">{tr('Partial confirmed cash reduces the remaining balance. Pending reports and uncleared checks do not.','Ang bahin nga bayad nga gikumpirma mopaubos sa balanse. Dili mopaubos ang wala pa kumpirmaha o tseke nga wala pa bayri sa bangko.')}</p>
@@ -133,10 +133,10 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
             </tr>)}</tbody>
           </table>
         </div>}
-      <p className="field-help">This is based on rent charges recorded in the preview; it does not identify months without a recorded charge.</p>
+      <p className="field-help">{tr('This is based on rent charges recorded in the preview; it does not identify months without a recorded charge.','Base kini sa mga bayranan sa sample. Dili niini makita ang mga bulan nga walay narekord nga bayranan.')}</p>
     </section>
     <section className="card add-missed-month-sheet" aria-labelledby="add-missed-month-heading">
-      <div><p className="eyebrow">PREVIEW RENT SETUP</p><h4 id="add-missed-month-heading">Add a missed rent month</h4><p>Choose the rent month above. Add one charge using that renter’s saved rent amount and move-in-based due date.</p></div>
+      <div><p className="eyebrow">{tr('PREVIEW RENT SETUP','SAMPLE NGA PAGBUTANG SA ABANG')}</p><h4 id="add-missed-month-heading">{tr('Add a missed rent month','Idugang ang bulan sa abang nga wala pa')}</h4><p>Choose the rent month above. Add one charge using that renter’s saved rent amount and move-in-based due date.</p></div>
       {!addableTenants.length ? <p className="paid-report-empty">No renter with saved rent setup is missing a charge for {validBusinessDate(rentMonth + '-01') ? formatMonth(rentMonth) : 'the selected month'}. Set up rent first in Record and confirm, or choose a month without a recorded charge.</p> :
         <div className="add-missed-month-list">{addableTenants.map(renter => {
           const setup = rentTerms[renter.id]

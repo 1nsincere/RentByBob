@@ -14,12 +14,13 @@ Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISION
 | Basic check register and handover log | New migration and staff UI drafted; sequential references, owner-controlled transitions, cleared-only rent allocation, and owner-entered expected/actual handover totals | PGlite tests pass; isolated Supabase API/browser verification and local migration application remain |
 | Renter portal and reports | Tenant records view exists; saved read-only Paid rent report is wired into authenticated staff payments | Tenant-facing financial statements are explicitly deferred; saved report still needs local API/browser verification; exports remain out of scope |
 | Release readiness | No production deployment | Accessibility audit, independent security review, opening-balance plan, backup/restore rehearsal, owner acceptance and a parallel paper-record payment cycle |
+| Day/night and language preference | Browser-persisted header preferences; main staff navigation and the fictional cash/payments flow support basic English/Bisaya | Finish remaining screens, especially full Paid rent report and admin/security surfaces; review all Bisaya copy with a fluent speaker; visual and accessibility review |
 
 ## Current next step: owner identity and first approved local records
 
 The staff/admin feature inventory is maintained in [ADMIN_CAPABILITIES.md](ADMIN_CAPABILITIES.md), including the current gaps and operational gates.
 
-The saved Paid rent report UI now reuses the existing authorized staff snapshot and is read-only. Verify it against local Supabase when Docker is available. User explicitly deferred renter-facing financial statements. The basic check and handover migration is drafted; run it against an isolated Supabase stack and verify the UI before applying it locally. The first saved cash workflow remains gated on owner identity and rent-term review.
+The saved Paid rent report UI now reuses the existing authorized staff snapshot and is read-only. Verify it against local Supabase when Docker is available. User explicitly deferred renter-facing financial statements. The basic check and handover migration is drafted; run it against an isolated Supabase stack and verify the UI before applying it locally. The first saved cash workflow remains gated on owner identity and rent-term review. The English/Bisaya header setting is persisted locally in the browser, but translation coverage is partial; review the complete application language catalog with a fluent speaker before calling it finished.
 
 Keep this narrow: verify the designated account, review the real local tenant/room/rent terms, then exercise one saved agreement, monthly charge, pending-cash report, verifier confirmation, and acknowledgment reprint. Do not include checks, automatic monthly billing, excess credits, adjustments, reversals, move-out, Excel exports or production deployment.
 
