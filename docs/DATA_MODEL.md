@@ -6,6 +6,8 @@ The staff account statement is a read-only projection of the authorized workspac
 
 The browser validates the returned snapshot's structure and exact decimal strings before use, including agreement totals against charge remaining values and confirmed cash against acknowledgment details. Archived unit IDs may be absent from the active-location list while their historical agreements remain visible; the client must not treat that expected archival case as corrupt financial data.
 
+The saved Paid rent report is derived read-only from the same staff-authorized snapshot. Receipt-month totals use only cash records with `confirmed_at` and their actual `received_on` date; outstanding totals use recorded rent charges' current `remaining` values for the selected `rental_month`. All currency aggregation uses integer minor units in the browser. No report table, RPC, grant or write path was added.
+
 ## Guided cash preview update - 18 Oct 2026
 
 Pending Report stores tenant, cash amount, collector and actual date separately from settled per-charge Receipt allocations. Confirmation recalculates oldest-first allocation. Terms keep the original move-in date and example room rent. These are temporary objects only; transactionality, account permission and persistence are not claimed.
@@ -15,6 +17,14 @@ Pending Report stores tenant, cash amount, collector and actual date separately 
 In-memory Charge stores ID, tenant ID, room ID, period description, due business date and bigint centavos; Receipt stores ID, target charge, actual date, bigint centavos, explicit status and optional reference. Remaining amount deducts only Settled cash examples. Room balances aggregate charge balances across tenant accounts. These are isolated preview objects, not PostgreSQL entities or an approved accounting schema. No persistence or automatic schedule.
 
 # Data model — access foundation and first cash slice implemented
+
+## Basic checks and handover evidence - 19 Oct 2026
+
+Migration `202610190001_check_handover.sql` adds a property-scoped sequential check reference (`CHK-0001`) alongside an internal UUID. The staff check list stores agreement, exact amount, actual receipt date, check date, collector, state, and append-only transition history. It deliberately does not store bank/check number, bank account details, or images. Clerk receipt is not settlement. Owner-only deposit, bank-confirmed clearance, return, and reasoned reversal are transactional PostgreSQL operations; only cleared check allocations reduce rent. Clearance allocates oldest due first and rejects excess because credits are not configured. Return/reversal keeps history and restores the prior charge balance.
+
+The same migration adds handover records. The owner records the clerk, date, expected cash/check amounts as stated for that handover, actual amounts received, and a reason when they differ. This is an evidence log, not automatic reconciliation; it does not update tenant balances. Both features are visible only through the staff workspace snapshot and exposed tables have RLS/select-only grants; mutations use narrow MFA-authorized RPCs with audit and retry identifiers.
+
+Current evidence: PGlite executes the migration and exercises role boundaries, pending-vs-cleared balances, oldest-first check allocation, duplicate transition handling, return and reversal, append-only status history, idempotent handovers, and required discrepancy notes. The separate-session Supabase API runner has been extended for concurrent clearance and audit rollback, and its browser flow now exercises check receipt/clearance and handovers; neither has been run yet because Docker is stopped. The migration has not been applied to the preserved local database. Collection handovers are owner-entered in this initial slice; there is no separate clerk submission/owner acceptance stage.
 
 ## Connected preview records - 17 Oct 2026
 

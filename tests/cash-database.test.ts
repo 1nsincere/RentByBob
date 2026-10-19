@@ -67,6 +67,48 @@ test('saved rent and cash acknowledgment boundaries', async t => {
  assert.equal(view.agreements[0].balance,'4000.00')
  assert.equal(view.cash.find((row:any)=>row.id===cash).confirmed_at!==null,true)
  assert.equal(typeof view.cash[0].amount,'string')
+
+ await as(james)
+ const checkId=id(30), receivedArgs=[prop,checkId,agreement,'4000.00','2024-04-04','2024-04-03','James']
+ const checkRef=(await db.query<{record_rent_check:string}>('select public.record_rent_check($1,$2,$3,$4,$5,$6,$7)',receivedArgs)).rows[0].record_rent_check
+ assert.equal(checkRef,'CHK-0001')
+ assert.equal((await db.query<{record_rent_check:string}>('select public.record_rent_check($1,$2,$3,$4,$5,$6,$7)',receivedArgs)).rows[0].record_rent_check,checkRef)
+ let checkView=(await db.query<{read_rent_workspace:any}>('select public.read_rent_workspace($1)',[prop])).rows[0].read_rent_workspace
+ assert.equal(checkView.agreements[0].balance,'4000.00')
+ assert.equal(checkView.checks[0].status,'received')
+ await assert.rejects(db.query('insert into public.check_records(id,property_id,agreement_id,reference,amount,received_on,collector,received_by) values ($1,$2,$3,$4,1,current_date,$5,$6)',[id(31),prop,agreement,'CHK-9999','James',james]))
+ await assert.rejects(db.query('select public.transition_rent_check($1,$2,$3,$4,$5)',[prop,id(32),checkId,'deposited','Not authorized']))
+ await as(owner)
+ const depositRequest=id(33), clearRequest=id(34), reverseRequest=id(35)
+ await db.query('select public.transition_rent_check($1,$2,$3,$4,$5)',[prop,depositRequest,checkId,'deposited','Taken to bank'])
+ await Promise.all([clearRequest,id(39)].map(requestId=>db.query('select public.transition_rent_check($1,$2,$3,$4,$5)',[prop,requestId,checkId,'cleared','Bank confirmed funds'])))
+ const committedClear=(await db.query<{request_id:string}>('select request_id from public.check_events where check_id=$1 and action=$2',[checkId,'cleared'])).rows[0].request_id
+ await assert.rejects(db.query('select public.transition_rent_check($1,$2,$3,$4,$5)',[prop,committedClear,checkId,'cleared','Changed reason']))
+ checkView=(await db.query<{read_rent_workspace:any}>('select public.read_rent_workspace($1)',[prop])).rows[0].read_rent_workspace
+ assert.equal(checkView.agreements[0].balance,'0.00')
+ assert.equal(checkView.checks[0].reference,'CHK-0001')
+ assert.deepEqual(checkView.checks[0].events.map((event:any)=>event.action),['received','deposited','cleared'])
+ assert.equal((await db.query('select * from public.check_allocations where check_id=$1',[checkId])).rows.length,1)
+ await db.query('select public.transition_rent_check($1,$2,$3,$4,$5)',[prop,reverseRequest,checkId,'reversed','Bank later reversed payment'])
+ checkView=(await db.query<{read_rent_workspace:any}>('select public.read_rent_workspace($1)',[prop])).rows[0].read_rent_workspace
+ assert.equal(checkView.agreements[0].balance,'4000.00')
+ await as(james)
+ await db.query('select public.record_rent_check($1,$2,$3,$4,$5,$6,$7)',[prop,id(36),agreement,'500.00','2024-04-05','2024-04-04','James'])
+ await as(owner)
+ await db.query('select public.transition_rent_check($1,$2,$3,$4,$5)',[prop,id(37),id(36),'deposited','Taken to bank'])
+ await db.query('select public.transition_rent_check($1,$2,$3,$4,$5)',[prop,id(38),id(36),'cleared','Bank confirmed funds'])
+ await db.query('select public.transition_rent_check($1,$2,$3,$4,$5)',[prop,id(39),id(36),'returned','Bank later returned check'])
+ checkView=(await db.query<{read_rent_workspace:any}>('select public.read_rent_workspace($1)',[prop])).rows[0].read_rent_workspace
+ assert.equal(checkView.agreements[0].balance,'4000.00')
+ assert.equal(checkView.checks.find((item:any)=>item.id===id(36)).status,'returned')
+ await assert.rejects(db.query('select public.record_collection_handover($1,$2,$3,$4,$5,$6,$7,$8,$9)',[prop,id(40),james,'2024-04-05','5000.00','500.00','5000.00','400.00','']))
+ const handoverArgs=[prop,id(40),james,'2024-04-05','5000.00','500.00','5000.00','400.00','One returned item excluded']
+ await db.query('select public.record_collection_handover($1,$2,$3,$4,$5,$6,$7,$8,$9)',handoverArgs)
+ await db.query('select public.record_collection_handover($1,$2,$3,$4,$5,$6,$7,$8,$9)',handoverArgs)
+ await assert.rejects(db.query('select public.record_collection_handover($1,$2,$3,$4,$5,$6,$7,$8,$9)',[...handoverArgs.slice(0,6),'5000.01',...handoverArgs.slice(7)]))
+ assert.equal((await db.query('select * from public.handover_events')).rows.length,1)
+ assert.equal((await db.query("select * from public.audit_events where action like 'rent_check_%'")).rows.length,8)
+
  await db.exec('reset role')
  await db.exec(`create function public.fail_cash_audit() returns trigger language plpgsql as $$ begin if new.action='rent_cash_confirmed' then raise exception 'Simulated audit failure'; end if; return new; end $$; create trigger test_cash_audit before insert on public.audit_events for each row execute function public.fail_cash_audit();`)
  await as(james)

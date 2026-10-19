@@ -1,5 +1,9 @@
 ## Saved cash local verification - 19 Oct 2026
 
+## Check register and handover migration - 19 Oct 2026
+
+`202610190001_check_handover.sql` is a new draft migration and has not been applied to local, hosted, or production databases. It gives every exposed table RLS and authenticated staff-only reads, denies direct browser writes, and exposes only narrow SECURITY DEFINER RPCs with empty search paths, current staff/MFA checks, property locking, exact `numeric(14,2)` validation, idempotency identifiers, and atomic audit events. Clerk role is required to record check receipt; owner role is required for deposit, clearance, return, reversal, and handover entry. Cleared check allocations are included in both rent-balance calculations and cash confirmation revalidation; all other check states are excluded. Status history is append-only through the exposed API. PGlite coverage passes, but live Supabase API, separate-session concurrency, and browser checks are outstanding. Do not apply this migration until those checks pass.
+
 Migration `202610180001_cash_rent_foundation.sql` is applied only to the preserved local Supabase database after a separate disposable stack passed live Auth/TOTP, PostgREST/RLS, retry, rollback, independent-session concurrency and owner/clerk browser workflow checks. The disposable runner uses a random project ID, unused loopback ports, `.invalid` accounts and temporary migration files; it stops only its project and removes its generated workspace. No cash test records or verifier were added to the preserved local database.
 
 `isolated-cash-test` is an explicit development-only connection target for the authenticated browser integration test. It accepts only an HTTP `127.0.0.1` URL with a valid port and is rejected in production. Vite receives only the disposable stack's public anon key; the service-role key and throwaway password are removed from the Vite process environment. Test sessions, TOTP secrets and keys are not logged. Hosted and production systems are not part of the runner.
@@ -44,6 +48,8 @@ Cash-statement security regression coverage also retries `read_rent_workspace` a
 
 The saved cash UI parses the `read_rent_workspace` response as untrusted input before rendering. It requires exact decimal strings, valid calendar dates/IDs, known cash collectors, consistent confirmed/acknowledgment state, matching acknowledgment receipt details and allocation totals, valid record relationships, and agreement balances equal to summed charge remaining amounts. Invalid or inconsistent snapshots are withheld with an explicit error; the client does not coerce numbers or manufacture defaults. PostgreSQL authorization and constraints remain authoritative; this validation detects bad/mismatched responses and is not a replacement for them.
 
+The saved Paid rent report reuses that same staff/MFA-authorized workspace RPC and adds no new database grants or access path. It aggregates exact decimal strings using integer minor units and filters settled receipts by actual receipt date with `confirmed_at` present. Local API/browser review of this view remains outstanding because the Docker engine is currently stopped.
+
 See STATUS.md for the exact current test evidence and ONBOARDING.md for identity confirmation, invitation states, resend limits, paper-delivery limitations, 10-second UI refresh, and recovery. No hosted/production security claim.
 
 ## Invitation dispatch reliability — migrations 202610160009 through 202610160011
@@ -79,21 +85,23 @@ Selected authentication: Supabase email/password, staff-issued invitations and r
 
 Implemented SQL enforces current owner/clerk memberships with aal2, contact isolation, no direct browser writes, owner-only audited access administration, last-owner protection, restricted function execution and archival revocation. Security-definer functions have empty search paths and explicit authorization. Local Auth/PostgREST/Edge checks cover disabled public signup, anonymous denial, tenant isolation, revocation with an existing JWT, forged-metadata escalation denial, invitation authority, audit privacy, no access before or after invitation acceptance, local email delivery, recipient password setup/sign-in, replay rejection and disallowed function origins. The integration suite passed 18 checks using fictional fixtures removed after the run. Invitation expiry is configured to one hour, but elapsed-time expiry is not tested. Hosted JWTs/email, a full first-owner bootstrap, frontend auth, recovery, real-user MFA enrollment/recovery, parallel transactions and production operations remain unverified. PGlite is a development-only PostgreSQL test engine, not the production database.
 
-The matrix combines implemented access controls with intended product permissions. Financial actions, reporting and reconciliation are planned only; their rows do not indicate implemented workflows or settled landlord rules.
+The matrix combines implemented access controls with intended product permissions. Financial actions outside the specifically documented cash and drafted check/handover flows remain planned; rows do not indicate operational readiness or settled landlord rules.
 
 | Action | Renter/contact | James | Owner |
 | --- | --- | --- | --- |
 | Read records | Authorized tenant only | Assigned property | Owned property |
 | Report/withdraw pending claims | Own authorized tenant | Record/review | Review |
-| Verify cash/check receipt, allocate | No | Yes under agreed rules | Yes |
-| Clear checks / reverse settled payments | No | Sir Bob approval; mechanism pending | Authorize |
+| Verify cash receipt | No | Designated verifier only | No |
+| Record check receipt | No | Yes, under drafted migration | No |
+| Deposit, clear, return or reverse checks | No | No | Yes, under drafted migration |
+| Record collection handover | No | No | Yes, under drafted migration |
 | Manage staff roles / restricted terms | No | No | Yes |
 | Issue invitations | No | Renter invitations only, trusted Edge Function | Renter or staff invitations, trusted Edge Function |
 | Reconcile/export | Own statements only | Operational scope | Property scope |
 
 Every exposed table needs RLS and explicit grants. Default deny anonymous access. Membership and roles outside user-editable metadata; policies consult current membership so revocation takes effect even with an old JWT. Narrow function grants; SECURITY DEFINER only with fixed safe search_path, qualified relations and explicit authorization. Sensitive staff operations require enforced MFA assurance. Privileged keys stay server-side; VITE values are public. Generic login errors, abuse controls and verified recovery required.
 
-Required additional tests: actual elapsed-time invitation expiry, first-owner bootstrap, resend/failure paths, recovery authority, archived access with old tokens, real-user MFA enrollment/recovery and business-contact variants. Test concurrent approvals, duplicate settlement and retries, matching, transitions, exact amounts, historical changes and date boundaries before implementing financial writes.
+Required additional tests: actual elapsed-time invitation expiry, first-owner bootstrap, resend/failure paths, recovery authority, archived access with old tokens, real-user MFA enrollment/recovery and business-contact variants. Before applying the check migration, test its transitions and idempotency through actual Supabase API calls, independent concurrent sessions, audit rollback, and authenticated browser behavior. Matching, general reconciliation, exact amounts, historical changes and date boundaries remain follow-up checks.
 
 No attachments initially. Minimize PII, redact logs, private acknowledgments/storage, HTTPS and reviewed CSP/headers before deployment. No production credentials in repository or AI prompts. Independent security/accounting review required before launch; no claim of full security.
 

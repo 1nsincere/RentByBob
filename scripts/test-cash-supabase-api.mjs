@@ -10,6 +10,7 @@ const propertyId = process.env.CASH_TEST_PROPERTY_ID
 const tenantId = process.env.CASH_TEST_TENANT_ID
 const unitId = process.env.CASH_TEST_UNIT_ID
 const auditCashId = process.env.CASH_TEST_AUDIT_CASH_ID
+const auditCheckId = process.env.CASH_TEST_AUDIT_CHECK_ID
 const ownerEmail = process.env.CASH_TEST_OWNER_EMAIL
 const clerkEmail = process.env.CASH_TEST_CLERK_EMAIL
 const otherEmail = process.env.CASH_TEST_OTHER_EMAIL
@@ -25,7 +26,7 @@ process.on('unhandledRejection', error => {
 })
 
 function requireConfig() {
-  for (const [name, value] of Object.entries({ apiUrl, anonKey, serviceKey, password, propertyId, tenantId, unitId, auditCashId, ownerEmail, clerkEmail, otherEmail })) {
+  for (const [name, value] of Object.entries({ apiUrl, anonKey, serviceKey, password, propertyId, tenantId, unitId, auditCashId, auditCheckId, ownerEmail, clerkEmail, otherEmail })) {
     assert.ok(value, `Missing isolated cash test setting: ${name}`)
   }
   assert.match(apiUrl, /^http:\/\/127\.0\.0\.1:\d+$/, 'Cash API tests must use loopback only')
@@ -254,6 +255,52 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     assert.equal(await acknowledgmentButton.evaluate(element => element.matches(':focus-visible')), true, 'Acknowledgment action must have visible keyboard focus')
     pass('Statement acknowledgment action is keyboard reachable with visible focus')
 
+    const checkSection = page.locator('section.card:has(#checks-heading)')
+    await checkSection.getByLabel('Tenant / room', { exact: true }).selectOption(agreementId)
+    await checkSection.getByLabel('Amount (PHP)', { exact: true }).fill('200.00')
+    await checkSection.getByLabel('Date received', { exact: true }).fill('2024-04-02')
+    await checkSection.getByLabel('Date written on check', { exact: true }).fill('2024-04-01')
+    await checkSection.getByLabel('Received by', { exact: true }).selectOption('James')
+    await checkSection.getByRole('button', { name: 'Save check received', exact: true }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Saved to the database.' })).toBeVisible()
+    const uiCheck = checkSection.locator('.cash-queue-row').filter({ hasText: 'CHK-0004' })
+    await expect(uiCheck).toContainText('Received — not settled')
+    await expect(page.locator('.simple-balance strong')).toHaveText('â‚±5,900.25')
+    pass('Clerk UI records a short-reference check without changing rent balance')
+
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
+    await page.getByLabel('Email address', { exact: true }).fill(ownerEmail)
+    await page.getByLabel('Password', { exact: true }).fill(password)
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Staff security check' })).toBeVisible()
+    await page.getByLabel('Six-digit authenticator code').fill(totp(ownerSecret))
+    await page.getByRole('button', { name: 'Verify code', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Owner workspace' })).toBeVisible()
+    await page.getByRole('link', { name: 'Payments and balances', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Saved rent and cash' })).toBeVisible()
+    const ownerCheckSection = page.locator('section.card:has(#checks-heading)')
+    const ownerUiCheck = ownerCheckSection.locator('.cash-queue-row').filter({ hasText: 'CHK-0004' })
+    await ownerUiCheck.getByLabel('Owner note (reason required for reversal)').fill('')
+    await ownerUiCheck.getByRole('button', { name: 'Record deposit', exact: true }).click()
+    await expect(ownerUiCheck).toContainText('Deposited — awaiting clearance')
+    await ownerUiCheck.getByRole('button', { name: 'Confirm bank clearance', exact: true }).click()
+    await expect(ownerUiCheck).toContainText('Cleared')
+    await expect(page.locator('.simple-balance strong')).toHaveText('â‚±5,700.25')
+    pass('Owner UI records deposit and bank clearance; only clearance reduces rent')
+
+    const handoverSection = page.locator('section.card:has(#handover-heading)')
+    await handoverSection.getByLabel('Clerk handing over').selectOption(process.env.CASH_TEST_CLERK_ID)
+    await handoverSection.getByLabel('Handover date').fill('2024-04-02')
+    await handoverSection.getByLabel('Cash the clerk says was handed over (PHP)').fill('0.00')
+    await handoverSection.getByLabel('Checks the clerk says were handed over (PHP)').fill('200.00')
+    await handoverSection.getByLabel('Cash actually received by owner (PHP)').fill('0.00')
+    await handoverSection.getByLabel('Checks actually received by owner (PHP)').fill('200.00')
+    await handoverSection.getByRole('button', { name: 'Save handover', exact: true }).click()
+    await expect(handoverSection.getByRole('status').filter({ hasText: 'Handover recorded.' })).toBeVisible()
+    await expect(page.locator('.simple-balance strong')).toHaveText('â‚±5,700.25')
+    pass('Owner UI logs a matching collection handover without changing renter balances')
+
     for (const width of [390, 320, 160, 768]) {
       await page.setViewportSize({ width, height: 900 })
       const overflow = await page.evaluate(() => ({
@@ -464,6 +511,90 @@ if (process.argv[2] === 'create-users') {
   const afterCharges = await rpc('read_rent_workspace', { p_property_id: property }, owner)
   assert.equal(afterCharges.data.charges.filter(row => row.rental_month === '2024-04-01').length, 1)
   pass('Concurrent monthly charge creation retains one agreement/month charge')
+
+  const checkId = randomUUID()
+  const checkRequest = {
+    p_property_id: property, p_id: checkId, p_agreement_id: agreementId,
+    p_amount: '500.00', p_received_on: requestDate, p_check_date: '2024-04-01', p_collector: 'James',
+  }
+  const checkReceipt = await rpc('record_rent_check', checkRequest, clerk)
+  assert.ok(checkReceipt.response.ok, 'Clerk could not record a received check')
+  assert.equal(checkReceipt.data, 'CHK-0001')
+  assert.equal((await rpc('record_rent_check', checkRequest, clerk)).data, 'CHK-0001')
+  const checkPending = await rpc('read_rent_workspace', { p_property_id: property }, owner)
+  assert.equal(checkPending.data.agreements.find(row => row.id === agreementId).balance, '1000.00')
+  assert.equal(checkPending.data.checks.find(row => row.id === checkId).status, 'received')
+  expectDenied(await rpc('record_rent_check', { ...checkRequest, p_id: randomUUID() }, owner), 'Owner attempting clerk check receipt')
+  expectDenied(await rpc('transition_rent_check', {
+    p_property_id: property, p_id: randomUUID(), p_check_id: checkId, p_action: 'deposited', p_reason: 'Unauthorized test',
+  }, clerk), 'Clerk attempting owner check transition')
+  const directCheckWrite = await request('/rest/v1/check_records', {
+    method: 'POST', token: clerk, body: { id: randomUUID(), property_id: property }, headers: { prefer: 'return=minimal' },
+  })
+  expectDenied(directCheckWrite, 'Direct check record write')
+  const depositRequest = randomUUID(), clearanceRequest1 = randomUUID(), clearanceRequest2 = randomUUID()
+  assert.ok((await rpc('transition_rent_check', {
+    p_property_id: property, p_id: depositRequest, p_check_id: checkId, p_action: 'deposited', p_reason: 'Taken to bank',
+  }, owner)).response.ok)
+  const simultaneousClearances = await Promise.all([clearanceRequest1, clearanceRequest2].map(id => rpc('transition_rent_check', {
+    p_property_id: property, p_id: id, p_check_id: checkId, p_action: 'cleared', p_reason: 'Bank confirmed funds',
+  }, owner)))
+  assert.equal(simultaneousClearances.filter(result => result.response.ok).length, 2)
+  const clearedCheck = await rpc('read_rent_workspace', { p_property_id: property }, owner)
+  assert.equal(clearedCheck.data.agreements.find(row => row.id === agreementId).balance, '500.00')
+  assert.equal(clearedCheck.data.checks.find(row => row.id === checkId).events.filter(event => event.action === 'cleared').length, 1)
+  pass('Check reference is stable; receipt stays pending; owner-only concurrent clearance settles exactly once')
+
+  const auditCheck = await rpc('record_rent_check', {
+    ...checkRequest, p_id: auditCheckId, p_amount: '250.00',
+  }, clerk)
+  assert.ok(auditCheck.response.ok, 'Could not record audit-failure fixture check')
+  const auditDeposit = await rpc('transition_rent_check', {
+    p_property_id: property, p_id: randomUUID(), p_check_id: auditCheckId, p_action: 'deposited', p_reason: 'Taken to bank',
+  }, owner)
+  assert.ok(auditDeposit.response.ok)
+  const failedClearance = await rpc('transition_rent_check', {
+    p_property_id: property, p_id: randomUUID(), p_check_id: auditCheckId, p_action: 'cleared', p_reason: 'Simulated audit rollback',
+  }, owner)
+  expectDenied(failedClearance, 'Check clearance with injected audit failure')
+  const afterCheckAuditFailure = await rpc('read_rent_workspace', { p_property_id: property }, owner)
+  assert.equal(afterCheckAuditFailure.data.checks.find(row => row.id === auditCheckId).status, 'deposited')
+  assert.equal(afterCheckAuditFailure.data.agreements.find(row => row.id === agreementId).balance, '500.00')
+  pass('Injected check audit failure rolls back clearance and allocation')
+
+  assert.ok((await rpc('transition_rent_check', {
+    p_property_id: property, p_id: randomUUID(), p_check_id: checkId, p_action: 'reversed', p_reason: 'Bank reversal',
+  }, owner)).response.ok)
+  const afterReversal = await rpc('read_rent_workspace', { p_property_id: property }, owner)
+  assert.equal(afterReversal.data.agreements.find(row => row.id === agreementId).balance, '1000.00')
+  const returnedCheckId = randomUUID()
+  assert.ok((await rpc('record_rent_check', { ...checkRequest, p_id: returnedCheckId, p_amount: '100.00' }, clerk)).response.ok)
+  assert.ok((await rpc('transition_rent_check', {
+    p_property_id: property, p_id: randomUUID(), p_check_id: returnedCheckId, p_action: 'deposited', p_reason: 'Taken to bank',
+  }, owner)).response.ok)
+  assert.ok((await rpc('transition_rent_check', {
+    p_property_id: property, p_id: randomUUID(), p_check_id: returnedCheckId, p_action: 'cleared', p_reason: 'Bank confirmed funds',
+  }, owner)).response.ok)
+  assert.ok((await rpc('transition_rent_check', {
+    p_property_id: property, p_id: randomUUID(), p_check_id: returnedCheckId, p_action: 'returned', p_reason: 'Bank returned check',
+  }, owner)).response.ok)
+  const afterReturn = await rpc('read_rent_workspace', { p_property_id: property }, owner)
+  assert.equal(afterReturn.data.agreements.find(row => row.id === agreementId).balance, '1000.00')
+  const handover = {
+    p_property_id: property, p_id: randomUUID(), p_clerk_id: process.env.CASH_TEST_CLERK_ID,
+    p_handover_on: requestDate, p_expected_cash: '100.00', p_expected_checks: '600.00',
+    p_actual_cash: '100.00', p_actual_checks: '500.00', p_difference_reason: 'One item remained uncleared',
+  }
+  assert.ok((await rpc('record_collection_handover', { ...handover, p_id: randomUUID(), p_difference_reason: '' }, owner)).response.ok === false,
+    'Mismatched handover totals must require a reason')
+  assert.ok((await rpc('record_collection_handover', handover, owner)).response.ok)
+  assert.ok((await rpc('record_collection_handover', handover, owner)).response.ok)
+  const handoverSnapshot = await rpc('read_rent_workspace', { p_property_id: property }, owner)
+  assert.equal(handoverSnapshot.data.handovers.length, 1)
+  assert.equal(handoverSnapshot.data.agreements.find(row => row.id === agreementId).balance, '1000.00')
+  const anonymousChecks = await request('/rest/v1/check_records?select=id')
+  expectDenied(anonymousChecks, 'Anonymous check register read')
+  pass('Returned and reversed checks stay unsettled; handover mismatch is audited without changing rent balance')
 
   const anonymousTable = await request('/rest/v1/cash_records?select=id')
   expectDenied(anonymousTable, 'Anonymous cash table read')

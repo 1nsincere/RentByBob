@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '../components/atoms'
 import { hostedDevelopment, supabase } from './client'
+import { copy, type Language } from '../i18n'
 
 export function Feedback({ message, error = false }: { message: string; error?: boolean }) {
   const ref = useRef<HTMLParagraphElement>(null)
@@ -8,14 +9,15 @@ export function Feedback({ message, error = false }: { message: string; error?: 
   return message ? <p ref={ref} tabIndex={-1} role={error ? 'alert' : 'status'} className={`notice ${error ? 'notice--error' : ''}`}>{message}</p> : null
 }
 
-export function SignIn() {
+export function SignIn({ language = 'en' }: { language?: Language }) {
+  const t = copy[language]
   const [recovery, setRecovery] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  return <section className="card auth-card"><p className="eyebrow">WELCOME TO RENTBYBOB</p><h2>{recovery ? 'Reset your password' : 'Sign in'}</h2>
-    <p>Enter your account details to continue.</p>
+  return <section className="card auth-card"><p className="eyebrow">WELCOME TO RENTBYBOB</p><h2>{recovery ? t.resetPassword : t.signIn}</h2>
+    <p>{t.continue}</p>
     <Feedback message={message} error={error} />
     <form onSubmit={async e => {
       e.preventDefault(); if (busy) return
@@ -37,8 +39,8 @@ export function SignIn() {
       } catch { setError(true); setMessage(recovery ? 'The request could not be completed. Wait and try again, or contact the owner.' : 'Sign-in failed. Check your email and password, or try again when connected.') }
       finally { setBusy(false) }
     }}>
-      <label htmlFor="email">Email address</label><input id="email" name="email" type="email" autoComplete="username" required maxLength={320} aria-describedby="email-help" />
-      <p className="field-help" id="email-help">Use the email from your invitation.</p>
+      <label htmlFor="email">{t.email}</label><input id="email" name="email" type="email" autoComplete="username" required maxLength={320} aria-describedby="email-help" />
+      <p className="field-help" id="email-help">{t.invitationEmail}</p>
       {!recovery && <><label htmlFor="password">Password</label><div className="password-input-row">
         <input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required />
         <Button type="button" className="secondary-button password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Hide' : 'Show'}</Button>
@@ -46,7 +48,7 @@ export function SignIn() {
       <Button className="primary" disabled={busy}>{busy ? 'Please wait…' : recovery ? 'Send reset link' : 'Sign in'}</Button>
     </form>
     {hostedDevelopment ? <p className="field-help">Email recovery is unavailable in hosted development. Ask the development administrator for help.</p> : <Button className="quiet-button recovery-link" onClick={() => { setRecovery(!recovery); setMessage(''); setError(false) }}>{recovery ? 'Back to sign-in' : 'Forgot password?'}</Button>}
-    <div className="auth-help"><strong>New here?</strong><p>Ask your property owner or clerk for an invitation.</p></div>
+    <div className="auth-help"><strong>{t.newHere}</strong><p>{t.askInvite}</p></div>
   </section>
 }
 

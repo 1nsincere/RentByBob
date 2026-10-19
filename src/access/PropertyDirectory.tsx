@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '../components/atoms'
 import { Feedback } from './AuthForms'
 import { supabase } from './client'
+import { copy, type Language } from '../i18n'
 
 type Building = { id: string; label: string; archived_at: string | null }
 type Unit = Building & { building_id: string }
@@ -88,7 +89,8 @@ function LocationMaintenance({
   </div>
 }
 
-export function PropertyDirectory({ propertyId, owner }: { propertyId: string; owner: boolean }) {
+export function PropertyDirectory({ propertyId, owner, language = 'en' }: { propertyId: string; owner: boolean; language?: Language }) {
+  const t = copy[language]
   const [buildings, setBuildings] = useState<Building[]>([])
   const [units, setUnits] = useState<Unit[]>([])
   const [error, setError] = useState('')
@@ -122,9 +124,9 @@ export function PropertyDirectory({ propertyId, owner }: { propertyId: string; o
   useEffect(() => { void load() }, [load])
 
   return <section className="card form-card" aria-labelledby="property-locations-heading">
-    <p className="eyebrow">PROPERTY DIRECTORY</p>
-    <h2 id="property-locations-heading">Buildings, sections and units</h2>
-    <p>Directory labels only. These records do not assign occupants, set capacity or create rent charges.</p>
+    <p className="eyebrow">{language === 'ceb' ? 'LISTA SA PROPIEDAD' : 'PROPERTY DIRECTORY'}</p>
+    <h2 id="property-locations-heading">{t.buildings}</h2>
+    <p>{t.propertyDirectory}</p>
     <Feedback message={error} error />
     <Feedback message={message} />
     {loading && !loaded && !error && <p role="status" className="loading-state">Loading property locations…</p>}

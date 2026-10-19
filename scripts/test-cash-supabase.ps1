@@ -61,6 +61,7 @@ try {
   $env:CASH_TEST_UNIT_ID = [guid]::NewGuid().ToString()
   $env:CASH_TEST_AUDIT_CASH_ID = [guid]::NewGuid().ToString()
   $env:CASH_TEST_AUDIT_TRIGGER = "fail_cash_audit_$projectId"
+  $env:CASH_TEST_AUDIT_CHECK_ID = [guid]::NewGuid().ToString()
 
   Write-Output 'Starting isolated local Supabase stack...'
   $stackMayExist = $true
@@ -97,7 +98,8 @@ try {
     "insert into public.staff_memberships(property_id,user_id,role) values ('$($env:CASH_TEST_PROPERTY_ID)','$($users.owner)','owner'),('$($env:CASH_TEST_PROPERTY_ID)','$($users.clerk)','clerk')",
     @"
 create function public.$($env:CASH_TEST_AUDIT_TRIGGER)() returns trigger language plpgsql as `$`$ begin
- if new.action='rent_cash_confirmed' and new.target_id='$($env:CASH_TEST_AUDIT_CASH_ID)'::uuid then
+ if (new.action='rent_cash_confirmed' and new.target_id='$($env:CASH_TEST_AUDIT_CASH_ID)'::uuid)
+    or (new.action='rent_check_cleared' and new.target_id='$($env:CASH_TEST_AUDIT_CHECK_ID)'::uuid) then
   raise exception 'Simulated disposable cash audit failure';
  end if;
  return new;
@@ -150,7 +152,7 @@ finally {
   if ($viteProcess -and -not $viteProcess.HasExited) {
     Stop-Process -Id $viteProcess.Id -Force -ErrorAction SilentlyContinue
   }
-  Remove-Item Env:CASH_TEST_API_URL, Env:CASH_TEST_ANON_KEY, Env:CASH_TEST_SERVICE_KEY, Env:CASH_TEST_PASSWORD, Env:CASH_TEST_CLERK_ID, Env:CASH_TEST_UI_URL -ErrorAction SilentlyContinue
+  Remove-Item Env:CASH_TEST_API_URL, Env:CASH_TEST_ANON_KEY, Env:CASH_TEST_SERVICE_KEY, Env:CASH_TEST_PASSWORD, Env:CASH_TEST_CLERK_ID, Env:CASH_TEST_AUDIT_CHECK_ID, Env:CASH_TEST_UI_URL -ErrorAction SilentlyContinue
   Remove-Item Env:VITE_SUPABASE_URL, Env:VITE_SUPABASE_ANON_KEY, Env:VITE_SUPABASE_TARGET -ErrorAction SilentlyContinue
   if ($stackMayExist -and (Test-Path -LiteralPath (Join-Path $supabaseDir 'config.toml'))) {
     $null = & npx.cmd supabase --workdir $testRoot stop --project-id $projectId --no-backup 2>&1 | ForEach-Object { $_.ToString() }

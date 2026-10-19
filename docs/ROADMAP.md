@@ -11,13 +11,15 @@ Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISION
 | Rental agreements and charges | Live Postgres RPC creates one responsible tenant/room agreement and manually adds an idempotent monthly charge with anniversary clamping | Review existing tenant/room terms before first write; no automatic billing or move-out workflow |
 | Cash report, confirmation and acknowledgment | Live Postgres RPC records pending cash; only explicit MFA clerk verifier confirms; allocation is oldest-first; immutable acknowledgment can be reopened | Verified in isolated local API/Auth/browser tests; run first owner-approved local transaction after identity and terms review |
 | Saved staff account statement | Read-only agreement timeline shows charges, confirmed cash, allocations and current charge remaining; pending reports are separate | Focused unit and isolated cash browser checks passed; tenant access and exports remain separate |
-| Checks and reconciliation | Design constraints are documented | Separate decisions required for check clearance, returns/reversals, collection handovers and reconciliation evidence |
-| Renter portal and reports | Tenant access foundation exists; spreadsheet-like report is preview-only | Tenant-facing statements, renter payment claims, check status, verified reports and Excel export not delivered |
+| Basic check register and handover log | New migration and staff UI drafted; sequential references, owner-controlled transitions, cleared-only rent allocation, and owner-entered expected/actual handover totals | PGlite tests pass; isolated Supabase API/browser verification and local migration application remain |
+| Renter portal and reports | Tenant records view exists; saved read-only Paid rent report is wired into authenticated staff payments | Tenant-facing financial statements are explicitly deferred; saved report still needs local API/browser verification; exports remain out of scope |
 | Release readiness | No production deployment | Accessibility audit, independent security review, opening-balance plan, backup/restore rehearsal, owner acceptance and a parallel paper-record payment cycle |
 
 ## Current next step: owner identity and first approved local records
 
 The staff/admin feature inventory is maintained in [ADMIN_CAPABILITIES.md](ADMIN_CAPABILITIES.md), including the current gaps and operational gates.
+
+The saved Paid rent report UI now reuses the existing authorized staff snapshot and is read-only. Verify it against local Supabase when Docker is available. User explicitly deferred renter-facing financial statements. The basic check and handover migration is drafted; run it against an isolated Supabase stack and verify the UI before applying it locally. The first saved cash workflow remains gated on owner identity and rent-term review.
 
 Keep this narrow: verify the designated account, review the real local tenant/room/rent terms, then exercise one saved agreement, monthly charge, pending-cash report, verifier confirmation, and acknowledgment reprint. Do not include checks, automatic monthly billing, excess credits, adjustments, reversals, move-out, Excel exports or production deployment.
 

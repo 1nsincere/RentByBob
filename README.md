@@ -10,7 +10,7 @@ Staff land on a dashboard greeting that identifies the current signed-in email a
 
 ## Paid rent summary
 
-In Payments and balances choose Paid rent. The spreadsheet-style summary shows confirmed cash, renters who paid, payment count, receipt dates, amounts and rent months covered. On narrow screens, the confirmed-cash total leads a compact metrics layout; the outstanding total and 2+ month arrears status receive clear visual emphasis while all report details remain visible. The lower outstanding-rent table has its own rent-month selector and lists recorded charges with remaining balances, including partial payments. Staff can add a selected missed month for a renter with saved rent setup and an assigned room after reviewing the amount and move-in-based due date; the preview blocks an existing room/month charge. A separate arrears list flags renters with positive balances in at least two distinct recorded rent months. It does not infer missing charges or overdue status. Pending entries and uncleared checks are excluded; a month with no rent charge is not labeled unpaid. Fictional temporary preview only; changes reset on reload, and no spreadsheet export or saved report is provided.
+In authenticated Payments and balances choose Paid rent report. The on-screen saved report reads the existing authorized rent-workspace snapshot and shows confirmed cash by actual receipt month, renters who paid, payment count, receipt dates, amounts, rent months covered and acknowledgment access. Its separate rent-month view lists recorded charges with remaining balances, including partial payments, and the arrears list flags renters with positive balances in at least two distinct recorded rent months. It does not infer missing charges or overdue status. Pending entries and uncleared checks are excluded; a month with no rent charge is not labeled unpaid. The local authenticated view is read-only; integration verification awaits the local Supabase service. The fictional preview report remains temporary, and no spreadsheet export or saved downloadable report is provided.
 
 The saved staff workflow also shows a read-only account statement when an agreement is selected: rent charges, confirmed cash by actual receipt date, rent months covered, and remaining amount per charge. Pending reports remain separate and do not reduce the balance. This is staff-only; it is not a tenant portal statement or export.
 
@@ -76,6 +76,8 @@ Local invitations/reset messages appear in Mailpit at **http://127.0.0.1:54324**
 
 ## Working features and boundaries
 
+- The header offers a saved day/night display preference. In Payments and balances, “Ibutang sa Bisaya” switches a curated glossary of common payment words from basic English to basic Bisaya. This translates explanations only; tenant names, saved descriptions and financial records are not changed or sent to a translation service.
+
 - Sign-in, callback/password setup, password recovery, MFA enrollment/challenge/backup factor, sign-out.
 - Unassigned/disabled screens, tenant isolation, server-enforced role/MFA checks and revocation.
 - Owner identity-confirmed access assignment and disabling; no browser ID-only access mutations.
@@ -85,7 +87,7 @@ Local invitations/reset messages appear in Mailpit at **http://127.0.0.1:54324**
 - Local-only saved rent agreements, manual monthly charges, pending cash reports, designated-verifier confirmation, oldest-first cash allocation, printable/reopenable acknowledgment, and a read-only staff account statement. The local financial tables are currently empty and no verifier is assigned; first use is gated on owner identity and real-term review.
 - Fictional preview-only paid-rent, outstanding-rent and arrears reports. No saved report or spreadsheet export. Pending cash and uncleared checks do not reduce settled balances.
 
-The current admin feature inventory, working limits and exact operational gaps are in [admin capabilities](docs/ADMIN_CAPABILITIES.md). Checks, reconciliation, reversals, corrections, excess credit, tenant-facing financial statements and exports are not implemented. No production deployment is authorized.
+The current admin feature inventory, working limits and exact operational gaps are in [admin capabilities](docs/ADMIN_CAPABILITIES.md). The basic check register and owner-entered handover log have UI and a new locally un-applied migration; integration verification is still required. General reconciliation, tenant-facing financial statements, excess credit and exports remain unavailable. No production deployment is authorized.
 
 Renters have a single records destination and account sign-out; the app does not invent payment or dashboard tabs. Staff use workspace navigation to reach implemented directory, location, invitation, owner-access and security sections. Layouts stack on phones and add a staff sidebar on wide screens. See the [design system](docs/DESIGN_SYSTEM.md) for responsive behavior, contrast measurements and accessibility limitations.
 

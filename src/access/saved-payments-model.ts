@@ -6,18 +6,23 @@ function toMinorUnits(value: string): bigint | null {
   return BigInt(match[1]) * 100n + BigInt((match[2] ?? '').padEnd(2, '0'))
 }
 
-type Agreement = { id:string; tenant_id:string; unit_id:string; move_in:string; rent:string; balance:string }
-type Unit = { id:string; label:string; building_id:string }
-type Charge = StatementCharge & { agreement_id:string }
+export type SavedAgreement = { id:string; tenant_id:string; unit_id:string; move_in:string; rent:string; balance:string }
+export type SavedUnit = { id:string; label:string; building_id:string }
+export type SavedCharge = StatementCharge & { agreement_id:string }
 type Cash = StatementCash & { agreement_id:string }
 export type SavedCashRecord = Cash
+export type SavedCheck = { id:string; agreement_id:string; reference:string; amount:string; received_on:string; check_date:string; collector:'Bob'|'James'; status:'received'|'deposited'|'cleared'|'returned'|'reversed'; received_by:string; received_at:string; events:{action:string;reason:string;actor_id:string;occurred_at:string}[] }
+export type SavedHandover = { id:string; clerk_id:string; handover_on:string; expected_cash:string; expected_checks:string; actual_cash:string; actual_checks:string; difference_reason:string|null; recorded_by:string; recorded_at:string }
 export type RentWorkspaceSnapshot = {
-  agreements:Agreement[]
-  units:Unit[]
-  charges:Charge[]
+  agreements:SavedAgreement[]
+  units:SavedUnit[]
+  charges:SavedCharge[]
   cash:Cash[]
   verifiers:{user_id:string}[]
   buildings:{id:string;label:string}[]
+  checks:SavedCheck[]
+  handovers:SavedHandover[]
+  clerks:{user_id:string}[]
 }
 
 export type RentWorkspaceTenant = { id: string }
@@ -84,9 +89,34 @@ export function parseRentWorkspaceSnapshot(value: unknown, tenants?: readonly Re
     !Array.isArray(value.charges) ||
     !Array.isArray(value.cash) ||
     !Array.isArray(value.verifiers) ||
-    !Array.isArray(value.buildings)) {
+    !Array.isArray(value.buildings) || !Array.isArray(value.checks) ||
+    !Array.isArray(value.handovers) || !Array.isArray(value.clerks)) {
     throw new Error('Invalid rent workspace response')
   }
+
+  const checks = value.checks.map(item => {
+    if (!record(item) || !validUuid(item.id) || !validUuid(item.agreement_id) ||
+      typeof item.reference !== 'string' || !/^CHK-[0-9]{4,}$/.test(item.reference) || !minorUnits(item.amount,false) || !validDate(item.received_on) || !validDate(item.check_date) ||
+      (item.collector !== 'Bob' && item.collector !== 'James') ||
+      !['received','deposited','cleared','returned','reversed'].includes(String(item.status)) ||
+      !validUuid(item.received_by) || !validTimestamp(item.received_at) || !Array.isArray(item.events) ||
+      !item.events.every(e => record(e) && ['received','deposited','cleared','returned','reversed'].includes(String(e.action)) && requiredString(e.reason) && validUuid(e.actor_id) && validTimestamp(e.occurred_at))) {
+      throw new Error('Invalid rent workspace response')
+    }
+    return item as unknown as SavedCheck
+  })
+  const handovers = value.handovers.map(item => {
+    if (!record(item) || !validUuid(item.id) || !validUuid(item.clerk_id) || !validDate(item.handover_on) ||
+      !minorUnits(item.expected_cash,true) || !minorUnits(item.expected_checks,true) || !minorUnits(item.actual_cash,true) ||
+      !minorUnits(item.actual_checks,true) || !(item.difference_reason === null || (typeof item.difference_reason === 'string' && item.difference_reason.length<=500)) || !validUuid(item.recorded_by) || !validTimestamp(item.recorded_at)) {
+      throw new Error('Invalid rent workspace response')
+    }
+    return item as unknown as SavedHandover
+  })
+  const clerks = value.clerks.map(item => {
+    if (!record(item) || !validUuid(item.user_id)) throw new Error('Invalid rent workspace response')
+    return {user_id:item.user_id}
+  })
 
   const agreements = value.agreements.map(item => {
     if (!record(item) || !validUuid(item.id) || !validUuid(item.tenant_id) || !validUuid(item.unit_id) ||
@@ -171,7 +201,8 @@ export function parseRentWorkspaceSnapshot(value: unknown, tenants?: readonly Re
     (tenantIds !== null && agreements.some(agreement => !tenantIds.has(agreement.tenant_id))) ||
     units.some(unit => !buildingIds.has(unit.building_id)) ||
     charges.some(charge => !agreementIds.has(charge.agreement_id)) ||
-    cash.some(payment => !agreementIds.has(payment.agreement_id))) {
+    cash.some(payment => !agreementIds.has(payment.agreement_id)) || checks.some(check => !agreementIds.has(check.agreement_id)) ||
+    !unique(checks.map(check=>check.id)) || !unique(checks.map(check=>check.reference)) || !unique(handovers.map(item=>item.id)) || !unique(clerks.map(item=>item.user_id))) {
     throw new Error('Invalid rent workspace response')
   }
   for (const agreement of agreements) {
@@ -181,7 +212,7 @@ export function parseRentWorkspaceSnapshot(value: unknown, tenants?: readonly Re
     if (outstanding !== checkedMinorUnits(agreement.balance)) throw new Error('Invalid rent workspace response')
   }
 
-  return { agreements, units, charges, cash, verifiers, buildings }
+  return { agreements, units, charges, cash, verifiers, buildings, checks, handovers, clerks }
 }
 
 export type StatementCharge = {

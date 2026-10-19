@@ -52,7 +52,7 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
 
   await t.test('every application table has RLS and anonymous access is denied', async () => {
     const rows = (await db.query<{ relrowsecurity: boolean }>("select relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'")).rows
-    assert.equal(rows.length, 12)
+    assert.equal(rows.length, 18)
     assert.ok(rows.every(r => r.relrowsecurity))
     await db.exec('set role anon')
     await denied('select * from public.tenants')
@@ -142,7 +142,7 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
       from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname in ('public','private') and p.prosecdef
     `)
-    assert.equal(result.rows.length, 29)
+    assert.equal(result.rows.length, 32)
     for (const fn of result.rows) {
       assert.ok(fn.proconfig.some(value => value === 'search_path=""'), fn.proname)
       assert.equal(fn.anon_execute, false, fn.proname)

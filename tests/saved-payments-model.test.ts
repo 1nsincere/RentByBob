@@ -112,6 +112,9 @@ const statementFixture = () => ({
   }],
   verifiers: [{ user_id: '77777777-7777-4777-8777-777777777777' }],
   buildings: [{ id: '44444444-4444-4444-8444-444444444444', label: 'Example Building' }],
+  checks: [],
+  handovers: [],
+  clerks: [],
 })
 
 test('saved rent workspace accepts exact, internally consistent financial records', () => {
@@ -167,4 +170,13 @@ test('saved rent workspace rejects duplicate record IDs and agreements for tenan
     () => parseRentWorkspaceSnapshot(statementFixture(), [{ id: '99999999-9999-4999-8999-999999999999' }]),
     /Invalid rent workspace response/,
   )
+})
+
+test('saved rent workspace validates check and handover snapshot arrays', () => {
+  const missingChecks = statementFixture() as Record<string, unknown>
+  delete missingChecks.checks
+  assert.throws(() => parseRentWorkspaceSnapshot(missingChecks), /Invalid rent workspace response/)
+  const malformedHandover = statementFixture()
+  malformedHandover.handovers = [{ ...malformedHandover.handovers[0], expected_cash: 'not-money' }]
+  assert.throws(() => parseRentWorkspaceSnapshot(malformedHandover), /Invalid rent workspace response/)
 })

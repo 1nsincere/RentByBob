@@ -1,0 +1,38 @@
+export type Language = 'en' | 'ceb'
+
+export const copy = {
+  en: {
+    appName: 'RentByBob',
+    appSummary: 'Your rental records, together in one simple space. Sign in to see what your property owner has shared with you.',
+    signIn: 'Sign in', email: 'Email address', password: 'Password', continue: 'Enter your account details to continue.',
+    invitationEmail: 'Use the email from your invitation.', forgot: 'Forgot password?', resetPassword: 'Reset your password',
+    sendReset: 'Send reset link', newHere: 'New here?', askInvite: 'Ask your property owner or clerk for an invitation.',
+    tenantDirectory: 'Tenant directory', addTenant: 'Add a tenant record', buildings: 'Buildings, sections and units',
+    propertyDirectory: 'Directory labels only. These records do not assign occupants, set capacity or create rent charges.',
+    paymentRecords: 'Payments and balances', dashboard: 'Dashboard', accountSecurity: 'Account security',
+    footer: 'Philippine property access · No online payments', welcome: 'Welcome back',
+    today: 'What would you like to do today?', logPayment: 'Log a payment', recordCash: 'Record cash received and review it.',
+    addTenantAction: 'Add a tenant', createTenantHint: 'Create a renter or business record.', viewProperty: 'View the property',
+    exploreProperty: 'Explore buildings and rental spaces.', findTenant: 'Find a tenant', searchRecords: 'Search renter and business records.',
+    savedRent: 'Saved rent and cash', pending: 'Pending cash does not reduce rent. Only the owner-designated cash verifier can confirm it and issue an acknowledgment.',
+    savedView: 'Rent and cash records', paidReport: 'Paid rent report', simpleWords: 'Understand payment words',
+    simpleWordsHelp: 'Short, easy explanations for words used on this page.', showBisaya: 'Show basic Bisaya', showEnglish: 'Show simple English',
+  },
+  ceb: {
+    appName: 'RentByBob',
+    appSummary: 'Ang imong mga rekord sa abang ania sa usa ka lugar. Sulod aron makita ang gipaambit sa tag-iya sa propiedad.',
+    signIn: 'Sulod', email: 'Email address', password: 'Password', continue: 'Isulat ang detalye sa imong account aron mopadayon.',
+    invitationEmail: 'Gamita ang email gikan sa imong imbitasyon.', forgot: 'Nakalimot sa password?', resetPassword: 'Usba ang password',
+    sendReset: 'Ipadala ang link sa pag-usab', newHere: 'Bag-o pa diri?', askInvite: 'Pangayo og imbitasyon sa tag-iya o clerk.',
+    tenantDirectory: 'Lista sa mga nag-abang', addTenant: 'Idugang ang nag-abang', buildings: 'Mga bilding ug kwarto',
+    propertyDirectory: 'Mga ngalan lang kini sa lugar. Dili kini magbutang og nagpuyo, sukod sa kapasidad, o bayad sa abang.',
+    paymentRecords: 'Mga bayad ug balanse', dashboard: 'Kinatibuk-ang panid', accountSecurity: 'Kaluwasan sa account',
+    footer: 'Access sa propiedad sa Pilipinas · Walay online nga bayad', welcome: 'Maayong pagbalik',
+    today: 'Unsa imong gustong buhaton karon?', logPayment: 'Irekord ang bayad', recordCash: 'Irekord ug susihon ang nadawat nga kwarta.',
+    addTenantAction: 'Idugang ang nag-abang', createTenantHint: 'Paghimo og rekord sa tawo o negosyo nga nag-abang.', viewProperty: 'Tan-awa ang propiedad',
+    exploreProperty: 'Tan-awa ang mga bilding ug kwarto nga paabangan.', findTenant: 'Pangitaa ang nag-abang', searchRecords: 'Pangitaa ang rekord sa tawo ug negosyo nga nag-abang.',
+    savedRent: 'Narekord nga abang ug kwarta', pending: 'Ang kwarta nga wala pa makumpirma dili pa moubos sa abang. Ang gitudlo sa tag-iya maoy mokumpirma ug mohatag og resibo.',
+    savedView: 'Mga rekord sa abang ug kwarta', paidReport: 'Report sa bayad sa abang', simpleWords: 'Sabta ang mga pulong sa bayad',
+    simpleWordsHelp: 'Mubo ug sayon nga mga pasabot sa mga pulong dinhi.', showBisaya: 'Ipakita ang Bisaya', showEnglish: 'Ipakita ang Iningles',
+  },
+} satisfies Record<Language, Record<string, string>>

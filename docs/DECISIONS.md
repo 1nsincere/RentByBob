@@ -46,6 +46,25 @@ User confirms rent is per room, not per person; room-count/capacity/entrance det
 
 # Decisions and open questions
 
+## Renter statements and check authority - 19 Oct 2026
+
+- Renter-facing financial statements are deferred; keep them out of the renter portal for now.
+- For a future check workflow, a clerk may record physical receipt; only an owner may mark a check cleared. Returned checks and an audit trail are required. Pending and returned checks must not reduce settled balances.
+- Superseded by the detailed check-recording decisions below; retain as historical context only.
+
+## Basic check tracking - 19 Oct 2026
+
+- Keep renter-facing financial statements out of the portal for now.
+- Clerk records check receipt. Owner records deposit, clearance, or return. Only a bank-confirmed check may be cleared; a postdated check may be recorded when received but remains unsettled until bank confirmation. Returned checks do not reduce balances.
+- A cleared check allocates to oldest due rent first. The owner may reverse a cleared check only with a reason and audit trail.
+- Keep the record form minimal: generate a short sequential display reference such as `CHK-0001`, unique per property, while retaining an internal UUID. Capture renter/agreement, amount, actual receipt date, check date, collector and status. Do not require bank name or bank check number for this basic list. Do not collect bank account numbers or check images.
+- Reversal after clearance reopens the allocated rent balance. Returned/reversed checks are retained in history and excluded from settled balances. Every transition is transactional and audited.
+
+## Collection handover log - 19 Oct 2026
+
+- Record clerk-to-owner handovers as operational evidence, separate from tenant payments and balances.
+- At handover creation, capture the recorded cash and check totals as a snapshot, plus the responsible clerk and handover date. The owner records the actual amounts received and a reason for any difference. Keep every handover and its audit history; do not silently reconcile or change tenant balances from a difference.
+
 ## Occupant display and focused workflow - 17 Oct 2026
 
 User requested focus on three sections and named room occupants with a person icon/count, stating each room has a minimum of two occupants. Implement minimum two only for preview Room-type assignments, counting existing active occupants plus the submitted record. No maximum assumed. Individual tenant name is counted once as primary occupant; additional names are explicit. Business name is not counted as a person. Shared gym is not selectable as a rental space. Assign-later records remain allowed without implying occupancy. Named people are separate from authenticated accounts and payment liability. Independent renters versus households/agreements remains unresolved before persistence.
