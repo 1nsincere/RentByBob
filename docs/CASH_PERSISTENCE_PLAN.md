@@ -1,6 +1,6 @@
 # Saved cash workflow: implementation contract
 
-18 Oct 2026. Design only; no migration applied. The current admin screen is a temporary preview.
+18 Oct 2026. Rules and schema contract for the first saved cash slice. The fictional preview remains separate from `SavedPayments`, which now uses the local migration described in [STATUS](STATUS.md). Migration `202610180001_cash_rent_foundation.sql` is applied only to preserved local Supabase after isolated Auth/API/RLS, concurrency and browser checks. No hosted or production migration has been applied. The local verifier and financial records remain unconfigured.
 
 ## Confirmed rules
 

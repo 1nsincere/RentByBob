@@ -6,14 +6,16 @@ try {
   const page = await browser.newPage()
   const externalRequests = []
   await page.route('**/*', route => {
-    if (new URL(route.request().url()).origin !== 'http://127.0.0.1:5175') {
+    if (new URL(route.request().url()).origin !== 'http://127.0.0.1:5173') {
       externalRequests.push(route.request().url()); return route.abort()
     }
     return route.continue()
   })
-  await page.goto('http://127.0.0.1:5175')
+  await page.goto('http://127.0.0.1:5173/?preview=1')
   await page.getByRole('heading', { name: 'Owner workspace', exact: true }).waitFor()
-  await page.getByText('Dashboard preview - sign-in skipped.').waitFor()
+  await page.getByText('Fictional dashboard preview - sign-in skipped.').waitFor()
+  await page.getByText('Fictional preview · Offline sample data', { exact: true }).waitFor()
+  await page.getByRole('button', { name: 'Return to account app', exact: true }).waitFor()
   await page.getByRole('heading', { name: 'Welcome back', exact: true }).waitFor()
   await page.getByText('Signed in as preview@example.invalid', { exact: true }).waitFor()
   for (const label of ['Log a payment', 'Add a tenant', 'View the property', 'Find a tenant']) {
@@ -61,7 +63,9 @@ try {
   assert.ok(Math.abs(stats[1].y - stats[2].y) < 2, 'secondary summary cards should share a row')
   await page.screenshot({ path: 'docs/screenshots/dashboard-landing-mobile.png', fullPage: true })
   assert.deepEqual(externalRequests, [])
-  await page.getByRole('button', { name: 'Exit preview', exact: true }).click()
-  await page.getByRole('heading', { name: 'Development connection is not configured', exact: true }).waitFor()
-  console.log('PASS: direct dashboard, fixture search/navigation, unsaved form, reload, exit and zero external network requests.')
+  await page.getByRole('button', { name: 'Return to account app', exact: true }).click()
+  await page.waitForURL(url => url.searchParams.get('auth') === '1')
+  assert.equal(await page.getByText('Fictional dashboard preview - sign-in skipped.').count(), 0)
+  await page.getByRole('button', { name: 'Open fictional preview', exact: true }).waitFor()
+  console.log('PASS: same-origin preview, fixture navigation, unsaved form, reload, return to account app and zero external requests in preview.')
 } finally { await browser.close() }

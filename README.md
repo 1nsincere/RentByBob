@@ -1,6 +1,8 @@
 ## Cash acknowledgments and saved-flow status
 
-Preview: confirm a sample cash payment, open Paid rent, then Open acknowledgment to print/save a clearly marked sample PDF. Saved admin workflow and SQL migration are implemented but NOT activated: local Docker engine is unavailable and Supabase MCP is absent in this session. Existing database has not changed. See docs/STATUS.md for the exact integration checks and activation steps remaining.
+Preview: confirm a sample cash payment, open Paid rent, then Open acknowledgment to print/save a clearly marked sample PDF. The saved staff cash workflow is active against the local database: the reviewed cash migration has been applied locally after disposable Auth/API, MFA/RLS, concurrency, audit-rollback and authenticated browser checks. The local financial tables are empty and no verifier is assigned. Before confirming cash, the owner must verify James's exact existing confirmed clerk identity and assign it in Payments and balances; review real room/rent terms before creating agreements or charges. Hosted development and production remain unchanged. Run `npm.cmd run test:cash:supabase` to repeat the full cash integration checks on a separate disposable local stack. See [docs/STATUS.md](docs/STATUS.md) and [docs/ROADMAP.md](docs/ROADMAP.md) for current evidence and next steps.
+
+In the saved Payments and balances screen, the workflow-readiness panel shows the current property's verifier, agreement, monthly-charge and cash-record state. Save pending cash only for money already handed to a collector and up to the displayed outstanding balance. The form rejects excess amounts before sending a request; advance payments are not configured. A positive approved rent charge must exist first. No verifier or rent data is invented by the app.
 
 ## Staff dashboard
 
@@ -20,21 +22,21 @@ Payments and balances now guides tenant selection, cash entry, review, pending r
 
 ## Payment records preview
 
-At http://127.0.0.1:5175 choose Payments and balances. Enter fictional per-room charges with individual due dates, review partial cash/report/check entries, and see tenant/room balances and payment history. Only simulated settled cash reduces balances. All entries reset on reload; database payment saving and verification/clearance transitions are not implemented.
+At http://127.0.0.1:5173/?preview=1 choose Payments and balances. Enter fictional per-room charges with individual due dates, review partial cash/report/check entries, and see tenant/room balances and payment history. Only simulated settled cash reduces balances. All entries reset on reload; database payment saving and verification/clearance transitions are not implemented.
 
 # Rental records
 
 ## Focused tenant workspace
 
-Preview navigation now focuses on Tenant directory, Buildings and units, and Add tenant record. Add a fictional tenant with named occupants, select a room (or assign later), review and confirm. The directory and room people counts update together. Person icons show counts; selecting a room reveals names. User-specified minimum: two occupants per rental room; maximum remains unconfirmed. This workflow is in memory only and resets on reload at http://127.0.0.1:5175.
+Preview navigation now focuses on Tenant directory, Buildings and units, and Add tenant record. Add a fictional tenant with named occupants, select a room (or assign later), review and confirm. The directory and room people counts update together. Person icons show counts; selecting a room reveals names. User-specified minimum: two occupants per rental room; maximum remains unconfirmed. This workflow is in memory only and resets on reload at http://127.0.0.1:5173/?preview=1.
 
 ## Interactive property preview
 
-Open http://127.0.0.1:5175 (`npm.cmd run dev:preview`). Tenant directory now has active sample tenant cards, building/room filters, expandable details and Locate room. Buildings and units has the clickable user-supplied site sketch, a mobile building list, floor selection, editable room counts/labels and Add building. Preview edits last until reload; nothing is sent to Supabase. The site footprint is fixed and not to scale. Unknown room counts stay unset.
+Open http://127.0.0.1:5173/?preview=1 (`npm.cmd run dev:preview`). Tenant directory now has active sample tenant cards, building/room filters, expandable details and Locate room. Buildings and units has the clickable user-supplied site sketch, a mobile building list, floor selection, editable room counts/labels and Add building. Preview edits last until reload; nothing is sent to Supabase. The site footprint is fixed and not to scale. Unknown room counts stay unset.
 
 ## No-sign-in dashboard preview
 
-Run `npm.cmd run dev:preview` and open http://127.0.0.1:5175. This temporarily skips sign-in for the current owner workspace with fictional in-memory directory/location records. Tenant additions and layout edits update temporary preview state; nothing is saved to the database or sent. Authentication code remains intact. Normal `dev:hosted` and `dev:local` still require sign-in/MFA. On either development server, `?preview=1` also selects preview; `?auth=1` exits it. Production builds exclude the preview module.
+Run `npm.cmd run dev:preview` and open http://127.0.0.1:5173/?preview=1. The preview now uses the same development origin as the account app. If RentByBob is already running on port 5173, the command reuses it without changing its local-versus-hosted backend configuration. Otherwise, it starts the authenticated local app, which requires local Supabase. The header button switches between fictional preview and the account app; `?auth=1` always selects the account app. Preview records are in-memory and fictional, do not load or modify an account session, and make no Supabase requests. The account app still requires its configured sign-in/MFA flow. Production builds exclude the preview module.
 
 ## Hosted development ? current
 

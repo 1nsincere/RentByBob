@@ -1,6 +1,6 @@
-## Cash foundation migration prepared - 18 Oct 2026
+## Cash foundation migration applied locally - 19 Oct 2026
 
-Prepared, NOT applied to local/hosted: 202610180001_cash_rent_foundation.sql. Adds cash_verifiers, rental_agreements (one per unit), rent_charges (agreement/month unique), cash_records (pending or confirmed with acknowledgment snapshot), cash_allocations. All exposed tables use staff MFA/RLS and SELECT-only client grants. Narrow functions serialize mutations using property row lock. Amounts numeric(14,2), rejects fractional centavos; read RPC converts money to text. Snapshot preserves names/locations/dates/allocations/balance at issuance. Existing records unchanged. See STATUS for test limits and activation blocker.
+Applied only to the preserved local Supabase database after live verification in a separate disposable Supabase stack; not applied to hosted or production. Adds `cash_verifiers`, `rental_agreements` (one per unit), `rent_charges` (agreement/month unique), `cash_records` (pending or confirmed with acknowledgment snapshot), and `cash_allocations`. All exposed tables use staff MFA/RLS and SELECT-only client grants. Narrow functions serialize mutations using a property row lock. Amounts are `numeric(14,2)` and fractional centavos are rejected; read RPC converts money to text. Snapshot preserves names/locations/dates/allocations/balance at issuance. Local tables currently contain no verifier, agreement, charge or cash record; see [STATUS](STATUS.md) for verification and next steps.
 
 ## Guided cash preview update - 18 Oct 2026
 
@@ -10,7 +10,7 @@ Pending Report stores tenant, cash amount, collector and actual date separately 
 
 In-memory Charge stores ID, tenant ID, room ID, period description, due business date and bigint centavos; Receipt stores ID, target charge, actual date, bigint centavos, explicit status and optional reference. Remaining amount deducts only Settled cash examples. Room balances aggregate charge balances across tenant accounts. These are isolated preview objects, not PostgreSQL entities or an approved accounting schema. No persistence or automatic schedule.
 
-# Data model — access foundation implemented, financial model proposed
+# Data model — access foundation and first cash slice implemented
 
 ## Connected preview records - 17 Oct 2026
 

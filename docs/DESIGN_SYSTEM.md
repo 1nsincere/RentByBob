@@ -26,6 +26,18 @@ Bob’s house, Building 1 and Building 2 open a front-facing view from either th
 
 Present the building name, a floor selector, each floor’s rentable-room count and labeled room tiles. “Not set” is the required display for unconfirmed Building 1/2 counts; never derive counts from apartment/shared spaces. Bob’s six rooms are fictional preview examples. The facade and room arrangement are schematic only, not a measured or surveyed plan. Any edits remain in temporary preview state and reset on reload. Keep this visualization within the staff property workspace; do not introduce it into the tenant portal.
 
+## Preserve the supplied site-map layout
+
+Keep the property-map view as the first/default view under Buildings and units, with Building list as an alternate navigation option. Preserve the existing relative layout and labeled placements for Bob's house, Building 1, Building 2, House 1, Yamaha property and Stores 1-3, including the road and orientation. Keep the map keyboard-focusable and horizontally scrollable on narrow screens, with the building list available as an alternative. Do not reflow the plotted landmarks into a generic card grid or infer measured positions. The sketch remains illustrative and temporary; the current saved building/unit schema has no surveyed coordinates, so database locations must not be silently overlaid or presented as measured map placements.
+
+## Single-origin development mode switch
+
+Keep fictional preview and authenticated account workflows on one development origin, with a visible environment label showing whether the user is in offline preview, local development, hosted development or an unconfigured environment. The preview notice must state that records are fictional, temporary and isolated; provide an explicit “Return to account app” action. The account app offers “Open fictional preview” in development before sign-in and to staff, but not in the renter portal. Do not make either mode look like the other, mix their records, or hide the active local-versus-hosted authentication configuration. Keep header actions labeled and touch-sized, allow them to wrap on narrow screens, and retain keyboard focus styling. The switch is a development convenience, not a change to account access or backend selection.
+
+## Saved cash readiness and amount guard
+
+At the top of saved Payments and balances, show a compact, text-labeled readiness checklist from the current authorized database snapshot: verifier assignment, saved room agreements, saved monthly charges, and pending/confirmed cash counts. State that only real, owner-reviewed terms should be saved; never suggest that missing records or a verifier may be guessed. Give the owner a direct action to open the existing verifier-setup form when none is assigned. Before submitting pending cash, parse amount and balance as exact centavos and reject zero, malformed, out-of-range or over-balance amounts before the RPC. If no positive recorded balance exists, explain that an approved charge must be recorded first; do not allow an unallocatable report or imply advance credit. Keep pending-versus-confirmed labels explicit.
+
 ## Admin/staff visual refinement - 19 Oct 2026
 
 Updated the shared visual tokens toward warm ivory `#F7F4ED`, soft stone `#EEEAE4`, white surfaces and charcoal text. Replaced the primary teal with restrained ink blue `#245A81` / pressed-hover blue `#194363`; muted brass `#8D642E` is limited to small highlights. Positive, pending and error states retain separate semantic colors and visible status words. Tenant navigation/data boundaries and all financial workflow behavior are unchanged.

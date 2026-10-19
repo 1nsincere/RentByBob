@@ -5,8 +5,8 @@ try {
  const page = await browser.newPage({viewport:{width:1440,height:1000}})
  const errors=[], external=[]
  page.on('pageerror', e=>errors.push(e.message))
- await page.route('**/*', route=>{ if(new URL(route.request().url()).origin !== 'http://127.0.0.1:5175'){external.push(route.request().url());return route.abort()}return route.continue() })
- await page.goto('http://127.0.0.1:5175')
+ await page.route('**/*', route=>{ if(new URL(route.request().url()).origin !== 'http://127.0.0.1:5173'){external.push(route.request().url());return route.abort()}return route.continue() })
+ await page.goto('http://127.0.0.1:5173/?preview=1')
  await page.locator('.workspace-sidebar').getByRole('link',{name:'Payments and balances'}).click()
  const balance=page.locator('.simple-balance strong')
  assert.match(await balance.innerText(),/7,000.00/)

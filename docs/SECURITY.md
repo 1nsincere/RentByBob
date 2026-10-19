@@ -1,6 +1,14 @@
-## Saved cash implementation pending live verification - 18 Oct 2026
+## Saved cash local verification - 19 Oct 2026
 
-New unapplied migration restricts confirmation to current clerk membership with MFA plus explicit cash_verifiers entry. Owner alone cannot confirm. Verifier designation checks exact confirmed email/account ID and current clerk membership. Tenant portal has no financial grants in this milestone. Reports, allocations, snapshot and audit commit together; audit failure and excess-payment rollback tested in disposable PostgreSQL. Independent-session concurrency and live API/Auth checks remain required. Receipt is private staff UI/print only; no email or public URL. No actual environment/account/migration changes made.
+Migration `202610180001_cash_rent_foundation.sql` is applied only to the preserved local Supabase database after a separate disposable stack passed live Auth/TOTP, PostgREST/RLS, retry, rollback, independent-session concurrency and owner/clerk browser workflow checks. The disposable runner uses a random project ID, unused loopback ports, `.invalid` accounts and temporary migration files; it stops only its project and removes its generated workspace. No cash test records or verifier were added to the preserved local database.
+
+`isolated-cash-test` is an explicit development-only connection target for the authenticated browser integration test. It accepts only an HTTP `127.0.0.1` URL with a valid port and is rejected in production. Vite receives only the disposable stack's public anon key; the service-role key and throwaway password are removed from the Vite process environment. Test sessions, TOTP secrets and keys are not logged. Hosted and production systems are not part of the runner.
+
+The existing James account has not been identity-confirmed for verifier assignment. Until an owner verifies the account ID and confirmed email through trusted account management, no cash verifier is assigned and the local app cannot confirm cash. No live financial records, opening balances, checks or reversals were created.
+
+## Saved cash design before activation - 18 Oct 2026 (historical)
+
+At the time of this design note the migration was unapplied. It restricts confirmation to current clerk membership with MFA plus explicit `cash_verifiers` entry. Owner alone cannot confirm. Verifier designation checks exact confirmed email/account ID and current clerk membership. Tenant portal has no financial grants in this milestone. Reports, allocations, snapshot and audit commit together; receipt is private staff UI/print only, with no email or public URL. The later local activation and live tests are documented above; hosted and production remain unchanged.
 
 ## 18 Oct 2026 ? payment preview boundary
 
@@ -19,6 +27,10 @@ Spatial edits and tenant examples are confined to the dynamically imported devel
 ## Dashboard preview boundary - 17 Oct 2026
 
 Development-only preview uses fictional session/display data and a custom offline transport that never calls network fetch. Real Supabase client/session initialization is not executed in preview. Writes, invitations and account changes return errors; MFA enrollment control is disabled. A persistent notice explains the limitation. Production removes the dynamic preview import. Actual database permissions, Auth accounts, session storage and staff MFA were not changed. Browser checks verified zero external requests during preview navigation/submission. This mode provides no assurance about backend integration.
+
+## Single-origin development switch - 19 Oct 2026
+
+The fictional preview and authenticated app share the development origin on port 5173 but are isolated by explicit `?preview=1` versus `?auth=1` mode selection. Preview remains development-only, uses the offline fake client, and does not initialize or read the configured Supabase Auth session. Its header clearly identifies sample data and offers a return to the account app. That return does not alter the active backend target; local/hosted authentication and staff MFA remain in force. `dev:preview` reuses an existing RentByBob server on port 5173, or starts the authenticated local launcher if none is present; it never silently replaces a hosted-development server. Browser checks intercept non-app traffic and verify no request during preview use. No migrations, Auth settings, permissions, account records or financial data changed.
 
 ## Hosted development ? 17 Oct 2026
 

@@ -5,8 +5,8 @@ try {
  const page=await browser.newPage({viewport:{width:1440,height:1000}})
  const errors=[], external=[]
  page.on('pageerror',e=>errors.push(e.message))
- await page.route('**/*',route=>{if(new URL(route.request().url()).origin!=='http://127.0.0.1:5175'){external.push(route.request().url());return route.abort()} return route.continue()})
- await page.goto('http://127.0.0.1:5175')
+ await page.route('**/*',route=>{if(new URL(route.request().url()).origin!=='http://127.0.0.1:5173'){external.push(route.request().url());return route.abort()} return route.continue()})
+ await page.goto('http://127.0.0.1:5173/?preview=1')
  await page.getByRole('button',{name:/Find a tenant/}).click()
  await page.locator('.tenant-person-card').filter({hasText:'Sample Mara Reyes'}).getByRole('button',{name:'View rent and payments'}).click()
  assert.equal(await page.getByLabel('1. Choose tenant').inputValue(),'mara')

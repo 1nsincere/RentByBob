@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { Button } from './components/atoms'
 import { WorkspaceIcon } from './components/WorkspaceIcon'
-import { dashboardPreview, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
+import { dashboardPreview, hostedDevelopment, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
 import { Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
 import { Invitations, ManageAccess } from './access/ManageAccess'
 import { PropertyDirectory } from './access/PropertyDirectory'
@@ -176,20 +176,27 @@ export function App() {
 
   return <div className={`app-shell ${route === 'sign-in' ? 'sign-in-shell' : ''} ${dashboardPreview ? 'focused-preview' : ''}`}>
     <a className="skip-link" href="#main">Skip to content</a>
-    <div className="environment-note">Local development · Fictional accounts only</div>
+    <div className="environment-note">{dashboardPreview ? 'Fictional preview · Offline sample data' : hostedDevelopment ? 'Hosted development · Sign-in + MFA' : supabase ? 'Local development · Sign-in + MFA' : 'Development · Connection not configured'}</div>
     <header className="site-header">
       <div className="shell header-inner">
         <a className="brand" href="/" aria-label="RentByBob home"><span className="brand-mark" aria-hidden="true">R</span><span>Rent<span className="brand-accent">ByBob</span></span></a>
-        {session && <div className="session-tools">
-          <span className="signed-in-label">{dashboardPreview ? 'Workspace mode' : 'Signed in as'}</span>
-          <span className="account-email">{dashboardPreview ? 'Interactive preview' : session.user.email}</span>
-          <Button className="quiet-button" onClick={() => void signOut()}>{dashboardPreview ? 'Exit preview' : 'Sign out'}</Button>
+        {(session || import.meta.env.DEV) && <div className="session-tools">
+          {session && <div className="session-identity">
+            <span className="signed-in-label">{dashboardPreview ? 'Workspace mode' : 'Signed in as'}</span>
+            <span className="account-email">{dashboardPreview ? 'Fictional sample account' : session.user.email}</span>
+          </div>}
+          <div className="session-actions">
+            {session && !dashboardPreview && <Button className="quiet-button" onClick={() => void signOut()}>Sign out</Button>}
+            {import.meta.env.DEV && (!session || role) && <Button className="quiet-button" onClick={() => { location.href = dashboardPreview ? '/?auth=1' : '/?preview=1' }}>
+              {dashboardPreview ? 'Return to account app' : 'Open fictional preview'}
+            </Button>}
+          </div>
         </div>}
       </div>
     </header>
     <div className="shell page-shell">
       <main id="main" tabIndex={-1} className={role && route === 'ready' ? 'staff-main' : ''}>
-        {dashboardPreview && <p className="notice" role="status"><strong>Dashboard preview - sign-in skipped.</strong> Fictional tenants only. Changes last until reload. No database writes or emails.</p>}
+        {dashboardPreview && <p className="notice" role="status"><strong>Fictional dashboard preview - sign-in skipped.</strong> Sample records are isolated from your account. Changes reset on reload. This mode makes no Supabase requests, database writes or emails.</p>}
         <div className="page-intro">
           <p className="eyebrow">{role ? 'PROPERTY WORKSPACE' : session ? 'YOUR ACCOUNT' : 'YOUR RENTAL SPACE, SIMPLIFIED'}</p>
           <h1 ref={heading} tabIndex={-1} className="route-heading">

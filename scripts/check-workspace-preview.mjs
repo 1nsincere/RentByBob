@@ -6,10 +6,10 @@ try {
   const external = [], errors = []
   page.on('pageerror', error => errors.push(error.message))
   await page.route('**/*', route => {
-    if (new URL(route.request().url()).origin !== 'http://127.0.0.1:5175') { external.push(route.request().url()); return route.abort() }
+    if (new URL(route.request().url()).origin !== 'http://127.0.0.1:5173') { external.push(route.request().url()); return route.abort() }
     return route.continue()
   })
-  await page.goto('http://127.0.0.1:5175')
+  await page.goto('http://127.0.0.1:5173/?preview=1')
   await page.getByRole('heading', { name: 'Welcome back', exact: true }).waitFor()
   assert.equal(await page.locator('.workspace-sidebar .workspace-links a').count(), 5)
   await page.locator('.workspace-sidebar').getByRole('link', { name: 'Tenant directory', exact: true }).click()

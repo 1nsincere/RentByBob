@@ -48,6 +48,9 @@ test('saved rent and cash acknowledgment boundaries', async t => {
  await db.query('select public.record_rent_cash($1,$2,$3,$4,$5,$6)',record)
  await db.query('select public.record_rent_cash($1,$2,$3,$4,$5,$6)',record)
  assert.equal((await db.query('select * from public.cash_allocations')).rows.length,0)
+ const pendingView=(await db.query<{read_rent_workspace:any}>('select public.read_rent_workspace($1)',[prop])).rows[0].read_rent_workspace
+ assert.equal(pendingView.agreements[0].balance,'10000.50')
+ assert.equal(pendingView.cash.find((row:any)=>row.id===cash).confirmed_at,null)
  await assert.rejects(confirm(),/Designated cash verifier/)
  await as(james,'aal1'); await assert.rejects(confirm(),/Staff MFA/)
  await as(other); assert.equal((await db.query('select * from public.cash_records')).rows.length,0); await assert.rejects(confirm())
@@ -62,6 +65,7 @@ test('saved rent and cash acknowledgment boundaries', async t => {
  assert.equal((await db.query('select * from public.cash_allocations')).rows.length,2)
  const view=(await db.query<{read_rent_workspace:any}>('select public.read_rent_workspace($1)',[prop])).rows[0].read_rent_workspace
  assert.equal(view.agreements[0].balance,'4000.00')
+ assert.equal(view.cash.find((row:any)=>row.id===cash).confirmed_at!==null,true)
  assert.equal(typeof view.cash[0].amount,'string')
  await db.exec('reset role')
  await db.exec(`create function public.fail_cash_audit() returns trigger language plpgsql as $$ begin if new.action='rent_cash_confirmed' then raise exception 'Simulated audit failure'; end if; return new; end $$; create trigger test_cash_audit before insert on public.audit_events for each row execute function public.fail_cash_audit();`)

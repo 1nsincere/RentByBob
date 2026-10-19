@@ -5,8 +5,8 @@ try {
  const page=await browser.newPage({viewport:{width:1440,height:1000}})
  const errors=[], external=[]
  page.on('pageerror',e=>errors.push(e.message))
- await page.route('**/*',r=>{if(new URL(r.request().url()).origin!=='http://127.0.0.1:5175'){external.push(r.request().url());return r.abort()}return r.continue()})
- await page.goto('http://127.0.0.1:5175')
+ await page.route('**/*',r=>{if(new URL(r.request().url()).origin!=='http://127.0.0.1:5173'){external.push(r.request().url());return r.abort()}return r.continue()})
+ await page.goto('http://127.0.0.1:5173/?preview=1')
  await page.locator('.workspace-sidebar').getByRole('link',{name:'Payments and balances'}).click()
  await page.getByRole('button',{name:'Paid rent',exact:true}).click()
  await page.getByLabel('Cash received during',{exact:true}).fill('2026-10')

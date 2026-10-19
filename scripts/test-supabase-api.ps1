@@ -155,7 +155,12 @@ $stage = 'read local migration history'
 $failed = $false
 
 try {
-  $requiredMigrations = @(Get-ChildItem -LiteralPath "$PSScriptRoot/../supabase/migrations" -Filter '*.sql' | ForEach-Object { $_.Name.Split('_')[0] })
+  # This suite verifies the local access/Auth foundation; later prepared migrations can remain unapplied.
+  $requiredMigrations = @(
+    '202610160001', '202610160002', '202610160003', '202610160004',
+    '202610160005', '202610160006', '202610160007', '202610160008',
+    '202610160009', '202610160010', '202610160011'
+  )
   $migrationOutput = Invoke-LocalSql "SELECT version FROM supabase_migrations.schema_migrations ORDER BY version"
   $migrationText = $migrationOutput -join "`n"
   $migrationStart = $migrationText.IndexOf('{')

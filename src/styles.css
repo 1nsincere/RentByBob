@@ -48,16 +48,17 @@ main:focus { outline: none; }
 strong, li, time { overflow-wrap: anywhere; }
 
 .shell { width: min(100% - 2.5rem, 78rem); margin-inline: auto; }
-.environment-note { min-height: 2rem; padding: 0.25rem 1rem; background: var(--support); color: var(--text-secondary); text-align: center; font-size: 0.85rem; line-height: 1.45; }
+.environment-note { min-height: 2rem; padding: 0.25rem 1rem; background: var(--support); color: var(--text-secondary); text-align: center; font-size: 0.9rem; line-height: 1.45; }
 .site-header { background: var(--surface); border-bottom: 1px solid var(--border); }
 .header-inner { min-height: 4.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 0.55rem; }
 .brand { display: inline-flex; min-width: 0; align-items: center; gap: 0.65rem; color: var(--text); font-size: 1.1rem; font-weight: 700; text-decoration: none; }
 .brand:hover { color: var(--brand); }
 .brand-mark { display: grid; width: 2rem; height: 2rem; flex: 0 0 2rem; place-items: center; border-radius: 0.55rem; background: var(--brand); color: #fff; font-size: 1rem; }
-.session-tools { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 0.8rem; }
-.signed-in-label { grid-column: 1; color: var(--text-secondary); font-size: 0.82rem; line-height: 1.25; }
-.account-email { grid-column: 1; max-width: min(48vw, 24rem); overflow-wrap: anywhere; color: var(--text); font-size: 0.9rem; }
-.session-tools > .button { grid-column: 2; grid-row: 1 / span 2; }
+.session-tools { display: flex; min-width: 0; align-items: center; gap: 0.8rem; }
+.session-identity { display: flex; min-width: 0; flex-direction: column; gap: 0.1rem; }
+.signed-in-label { color: var(--text-secondary); font-size: 0.82rem; line-height: 1.25; }
+.account-email { max-width: min(48vw, 24rem); overflow-wrap: anywhere; color: var(--text); font-size: 0.9rem; }
+.session-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.25rem; }
 .page-shell { padding-top: clamp(1rem, 3vw, 1.75rem); }
 .page-intro { margin-bottom: 1.25rem; }
 .page-summary { max-width: 42rem; margin: 0.5rem 0 0; color: var(--text-secondary); font-size: 1rem; }
@@ -194,10 +195,10 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
   .header-inner { flex-wrap: wrap; gap: 0.4rem; }
   .brand { gap: 0.4rem; font-size: 0.98rem; }
   .brand-mark { width: 1.75rem; height: 1.75rem; flex-basis: 1.75rem; }
-  .session-tools { column-gap: 0.2rem; }
+  .session-tools { gap: 0.2rem; }
   .signed-in-label { font-size: 0.75rem; }
   .account-email { max-width: 42vw; font-size: 0.78rem; }
-  .session-tools > .button { padding-inline: 0.55rem; font-size: 0.88rem; }
+  .session-actions > .button { padding-inline: 0.55rem; font-size: 0.88rem; }
   .mobile-workspace-navigation .workspace-links { grid-template-columns: minmax(0, 1fr); }
   .tenant-record { grid-template-columns: 2.4rem minmax(0, 1fr); gap: 0.55rem; }
   .record-initial { width: 2.4rem; height: 2.4rem; }
@@ -210,8 +211,7 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 
 @media (max-width: 12rem) {
   .shell { width: calc(100% - 1rem); }
-  .session-tools { width: 100%; margin-left: 0; grid-template-columns: minmax(0, 1fr); }
-  .session-tools > .button { grid-column: 1; grid-row: 3; justify-self: start; }
+  .session-tools { width: 100%; flex-wrap: wrap; }
   .account-email { max-width: 100%; }
   h1 { font-size: 1.4rem; overflow-wrap: anywhere; text-wrap: wrap; }
   h2 { font-size: 1.05rem; overflow-wrap: anywhere; text-wrap: wrap; }
@@ -282,10 +282,10 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
   .shell { width: calc(100% - 2rem); }
   .header-inner { min-height: 3.6rem; }
   .brand { font-size: 1.15rem; }
-  .session-tools { width: 100%; grid-template-columns: minmax(0, 1fr) auto; border-top: 1px solid var(--border); padding-top: 0.4rem; }
+  .session-tools { width: 100%; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 0.4rem; }
   .signed-in-label { display: none; }
   .account-email { max-width: 100%; font-size: 0.9rem; }
-  .session-tools > .button { grid-row: 1; }
+  .session-actions { margin-left: auto; }
   .page-intro { margin-bottom: 0.75rem; }
   .sign-in-shell .page-intro .eyebrow { display: none; }
   .sign-in-shell .auth-card { padding: 1.1rem; }
@@ -298,8 +298,8 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
   .shell { width: calc(100% - 1rem); }
   .sign-in-shell h1 { font-size: 1.6rem; overflow-wrap: anywhere; }
   .sign-in-shell .auth-card { padding: 0.6rem; }
-  .session-tools { grid-template-columns: minmax(0, 1fr); }
-  .session-tools > .button { grid-row: 2; grid-column: 1; }
+  .session-tools { align-items: flex-start; flex-direction: column; }
+  .session-actions { margin-left: 0; }
 }
 .skip-link:not(:focus) { clip-path: inset(50%); }
 @media (max-width: 32rem) {
@@ -529,7 +529,15 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .simple-payments details > summary { border-radius: var(--radius-small); transition: color 130ms ease; }
 .simple-payments details > summary:hover { color: var(--brand); }
 .rent-setup { display: grid; gap: .7rem; max-width: 32rem; }
+.saved-readiness > p { color: var(--text-secondary); }
+.saved-readiness ul { display: grid; gap: .75rem; margin: 1rem 0; padding: 0; list-style: none; }
+.saved-readiness li { display: grid; grid-template-columns: minmax(6.5rem,auto) minmax(0,1fr) auto; align-items: center; gap: .75rem; padding: .8rem; border: 1px solid var(--border); border-radius: .55rem; }
+.saved-readiness li p { margin: .2rem 0 0; color: var(--text-secondary); }
+.readiness-state { width: fit-content; padding: .35rem .55rem; border: 1px solid var(--warning); border-radius: 2rem; background: var(--warning-surface); color: var(--text); font-size: .88rem; font-weight: 650; }
+.readiness-state--ready { border-color: var(--success); background: var(--success-surface); }
+.saved-readiness .field-help { margin-bottom: 0; }
 @media(max-width: 40rem) { .cash-row { align-items: start; flex-direction: column; } }
+@media(max-width: 40rem) { .saved-readiness li { grid-template-columns: minmax(0,1fr); align-items: start; } .saved-readiness li > .button { width: 100%; } }
 
 .payment-worklist-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .payment-overview .cash-row:last-child { border-bottom: 0; }

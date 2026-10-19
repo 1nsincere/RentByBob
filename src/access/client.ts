@@ -4,8 +4,8 @@ import { connectionAllowed, hostedDevelopmentUrl } from './connection'
 const env = import.meta.env
 const url = env.VITE_SUPABASE_URL
 const key = env.VITE_SUPABASE_ANON_KEY
-// Temporary UI debugging switch. Production always uses the real auth flow.
-export const dashboardPreview = import.meta.env.DEV && !new URLSearchParams(location.search).has('auth') && (env.MODE === 'dashboard-preview' || new URLSearchParams(location.search).get('preview') === '1')
+const query = new URLSearchParams(location.search)
+export const dashboardPreview = import.meta.env.DEV && query.get('preview') === '1' && !query.has('auth')
 export const preview = import.meta.env.DEV && dashboardPreview ? await import('./dashboard-preview') : null
 export const hostedDevelopment = url === hostedDevelopmentUrl
 // Hosted access is explicit, project-bound and unavailable in production builds.

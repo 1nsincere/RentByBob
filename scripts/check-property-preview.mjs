@@ -5,12 +5,21 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, hasTouch: true })
   const requests = []
   await page.route('**/*', route => {
-    if (new URL(route.request().url()).origin !== 'http://127.0.0.1:5175') { requests.push(route.request().url()); return route.abort() }
+    if (new URL(route.request().url()).origin !== 'http://127.0.0.1:5173') { requests.push(route.request().url()); return route.abort() }
     return route.continue()
   })
-  await page.goto('http://127.0.0.1:5175')
+  await page.goto('http://127.0.0.1:5173/?preview=1')
   await page.getByRole('heading', { name: 'Welcome back', exact: true }).waitFor()
-  await page.getByRole('button', { name: /Find a tenant/ }).click()
+  await page.getByRole('button', { name: /View the property/ }).click()
+  await page.getByRole('heading', { name: 'Buildings and units', exact: true }).waitFor()
+  assert.equal(await page.getByRole('button', { name: 'Property map', exact: true }).getAttribute('aria-pressed'), 'true')
+  assert.deepEqual(await page.locator('.plan-building strong').allTextContents(), [
+    "Bob's house", 'Building 1', 'Building 2', 'House 1', 'Yamaha property', 'Store 3', 'Store 2', 'Store 1',
+  ])
+  assert.match(await page.locator('.plan-building').filter({ hasText: "Bob's house" }).getAttribute('style'), /left: 26%; top: 68%; width: 25%; height: 25%/)
+  assert.match(await page.locator('.plan-building').filter({ hasText: 'Building 1' }).getAttribute('style'), /left: 26%; top: 32%; width: 24%; height: 24%/)
+  assert.match(await page.locator('.plan-building').filter({ hasText: 'Building 2' }).getAttribute('style'), /left: 52%; top: 32%; width: 24%; height: 24%/)
+  await page.getByRole('link', { name: 'Tenant directory', exact: true }).click()
   await page.getByRole('heading', { name: 'Sample Alex Santos', exact: true }).waitFor()
   assert.equal(await page.locator('.tenant-person-card').count(), 3)
   await page.locator('.tenant-person-card').first().getByRole('button', { name: 'View details' }).click()

@@ -1,4 +1,26 @@
-# Add missed rent month and track arrears - 19 Oct 2026
+# Persisted local cash workflow - 19 Oct 2026
+
+Applied `202610180001_cash_rent_foundation.sql` to the preserved **local** Supabase database only, after exercising the same complete migration in a separate disposable local Supabase project. `SavedPayments` now connects to local transactional RPCs. The tenant portal, hosted development and production were not changed.
+
+Verification: `npm run test:cash:supabase` passed against a throwaway Supabase stack using fictional `.invalid` Auth users and actual local TOTP. It covers RLS/anonymous denial, MFA, explicit verifier identity, direct-write denial, exact balances while pending, idempotent and changed-payload retries, anniversary clamping, oldest-first acknowledgment snapshots, audit-failure rollback, concurrent independent cash confirmations, concurrent charge creation, and the owner/clerk browser flow through confirmation and reload/reprint. The runner stopped only its unique disposable project and deleted its temporary workspace. `npm run test:supabase` then passed all 22 existing local Auth/PostgREST/MFA/access checks, with its scoped fictional fixtures cleaned. `npm test` passed 42 tests; `npm run build` passed with the existing just-over-500 kB chunk advisory; `git diff --check` passed.
+
+Local post-apply verification confirms migration `202610180001` is recorded; all five financial tables exist with RLS enabled; agreement, charge, cash-record and verifier counts are zero. Existing directory records remain present. No cash test fixture was written to the preserved database. Docker Desktop and the existing local stack remain running. No hosted API, hosted migration or production system was contacted.
+
+Guardrail: no cash verifier has been assigned, because the existing James account identity has not been confirmed for this operation. Do not assign by display name or guess an email. The owner must verify the existing confirmed clerk account, then use the staff-only verifier form in Payments and balances. Until that is done, no one can confirm cash. The first actual agreement and rent charges also require owner review of the existing local tenant/room records and terms; none were invented or seeded.
+
+Next: sign in to the local app with the owner MFA account; verify James's exact existing Auth account identity through the owner's trusted account workflow; assign that account as verifier; review the real room/tenant/rent terms before creating the first agreement and charge. Then exercise one approved fictional receipt and acknowledgment locally. Checks, reversal/correction workflows, excess credit, exports, hosted migration and production remain separate gates.
+
+## Preserved property-map layout - 19 Oct 2026
+
+Kept the original site sketch as the default Buildings and units preview: Bob's house, Building 1, Building 2, House 1, Yamaha property and Stores 1-3 retain their relative placement around the road. Building list remains a second way to navigate. The floor-specific view retains the facade/room tiles and a visible return-to-map action. Added a browser regression assertion for the map's marker set and the three rental-building positions.
+
+This is still the supplied illustrative sketch, not a surveyed plan. It remains temporary preview data; no coordinates are written to PostgreSQL. The authenticated database-backed building/unit directory remains separate and does not guess spatial placement from names or IDs.
+
+Evidence: the saved desktop/mobile map and building-view screenshots were reviewed; the property-preview browser check verifies the named landmarks, Bob/Building 1/Building 2 placements, map/list controls, floor and unit details, keyboard/touch building selection, small-screen reflow and no external requests. No financial or database behavior changed.
+
+Next: preserve this sketch when continuing the UI. If the user later wants mapped live database records, first confirm the actual site positions and decide a reviewed, authorized persistence model; do not infer coordinates from the current directory.
+
+## Add missed rent month and track arrears - 19 Oct 2026
 
 Added a staff-only preview flow in Paid rent for adding the selected rent month as a charge. Only active renters with an assigned room, existing rent terms and no charge for that room/month are offered. The confirmation shows the saved rent amount and due date calculated from the existing move-in anniversary setup; cancel leaves records unchanged. A separate list flags renters with positive remaining balances in at least two distinct recorded rent months and shows their locations, month names and total balance. Partial confirmed cash reduces the month balance; pending reports and uncleared checks do not.
 
@@ -128,7 +150,7 @@ User deferred room counts/capacities/entrances until later and confirmed rent is
 
 Evidence: production build passed; 37 isolated tests passed; check-payments-preview.mjs passed exact partial amount, overpayment rejection, review/edit preservation, custom charge/due date, 320/390/768px reflow, reset and zero external requests/runtime errors. Existing workspace browser check passed. Desktop screenshot visually inspected. No accessibility or persisted financial-integrity claim.
 
-Next: review preview at http://127.0.0.1:5175. Before persistence, agree charge schedules/grace, allocation and excess-payment policy, verified collectors and check-clearance authority; design transactional RLS-protected accounting with idempotency/concurrency tests. Pending-to-settled transitions, reversals, editing posted charges and split allocations are not implemented. Room totals include all recorded charges, not only current tenant records. Room configuration questions deferred until user can inspect property.
+Next: review preview at http://127.0.0.1:5173/?preview=1. Before persistence, agree charge schedules/grace, allocation and excess-payment policy, verified collectors and check-clearance authority; design transactional RLS-protected accounting with idempotency/concurrency tests. Pending-to-settled transitions, reversals, editing posted charges and split allocations are not implemented. Room totals include all recorded charges, not only current tenant records. Room configuration questions deferred until user can inspect property.
 
 # Status - 17 Oct 2026, Asia/Manila
 
@@ -288,3 +310,25 @@ The user reported setup exiting before the email prompt. The failure did not rep
 
 ### Setup output-format fix
 The repeated property-check failure was traced to Supabase CLI agent detection: `db query --agent no` renders a table, while the automated environment received a JSON envelope. Setup now requests `--agent no --output-format json`, validates the returned row array and rejects missing/malformed counts. Verified the read-only prerequisite check in a terminal and the actual interactive command reaching the email prompt, then cancelled before entering identity or creating data. No migrations or reset were needed. This supersedes the earlier unconfirmed-cause note.
+
+## Single-origin account app and fictional preview - 19 Oct 2026
+
+Replaced the separate preview port with the existing development origin: `http://127.0.0.1:5173/?preview=1`. The account app remains the default and uses whichever backend its launcher already configured. The preview is explicitly offline/fictional, never initializes the Supabase session, and has a header action back to the account app; the authenticated app has a development-only action to open the preview before sign-in and for staff only (not tenant accounts). `npm run dev:preview` reuses an existing RentByBob server on port 5173 without changing its backend selection, or starts the local authenticated app if no server exists. No hosted configuration, Auth, MFA, RLS, database, migration, financial records or production deployment was changed.
+
+Verification: `npm.cmd run dev:preview` reused the existing RentByBob server on port 5173 and reported that its backend configuration was unchanged. `npm.cmd run build` passed strict TypeScript and Vite compilation (with the existing 503 kB chunk advisory); `npm.cmd test` passed all 42 tests; `git diff --check` passed. The dashboard, admin-worklist, paid-rent, payment-preview, property-preview and workspace-preview browser checks all passed against `/?preview=1`. The dashboard check verified preview entry, temporary sample data reset on reload, return to `?auth=1`, and no off-origin requests while using preview. The property check retained map landmark positions, unknown room counts, room tiles, transitions and reduced-motion behavior. Desktop/mobile dashboard and map/building captures were visually inspected. No sign-in was attempted and no hosted backend request was made by the verification. The previous `5175` URL is no longer supported.
+
+Limitations: this keeps one URL/origin but still intentionally separates sample preview records from signed-in records. A local and hosted Vite configuration cannot both own port 5173 at once; `dev:local` and `dev:hosted` continue to require stopping the other server before switching backend configuration. `dev:preview` does not alter that configured target. Its clean-start fallback was not exercised because an existing server was intentionally left running; it delegates to the existing local launcher, which requires local Supabase.
+
+Next: open http://127.0.0.1:5173/ for the configured account app, or choose “Open fictional preview” (also available via http://127.0.0.1:5173/?preview=1); use “Return to account app” to switch back. Starting local or hosted authenticated development still requires choosing its existing launcher and stopping the other Vite server first. No database or production step is part of this UI milestone.
+
+## Saved cash readiness and over-balance prevention - 19 Oct 2026
+
+Added a live saved-workflow checklist showing whether this property has an owner-designated verifier, saved room agreements, saved monthly charges, and pending/confirmed cash records. Owners can open the existing verifier assignment form from the missing-verifier state; explanatory copy requires identity confirmation of the actual account ID and confirmed email, not inference from a display name. Updated cash workflow wording to refer to the designated verifier rather than assume James is already assigned. No identity, tenant or financial record was created or changed.
+
+Fixed an unsafe/useless form path: before saving a pending cash report, exact decimal strings are parsed as integer centavos and checked against the agreement's current recorded balance. Zero, malformed, out-of-range, and over-balance amounts are rejected before a database call. When no positive recorded rent balance exists, the cash form is replaced with an explanation to add only an approved monthly charge; advance credit remains unavailable. This aligns the UI with the existing transactional confirmation rule and prevents reports that can never be allocated. Pending cash still does not lower balances.
+
+Verification: added focused exact-centavo unit tests, including one-cent boundaries, exact-balance acceptance, over-balance rejection, malformed precision and numeric range. Extended the isolated cash integration browser test to verify readiness display and that an over-balance amount creates no database record/RPC before the valid pending-to-confirmed flow. `npm test` passes 44 tests and `npm run build` passes strict TypeScript/Vite with the existing chunk-size advisory. `npm.cmd run test:cash:supabase` passed the full isolated Auth/MFA/RLS/idempotency/rollback/concurrency and authenticated browser flow, including the new over-balance rejection check and the existing valid pending-to-confirmed acknowledgment/reprint path. Its generated project used fictional `.invalid` identities and a unique disposable local stack; cleanup stopped that stack and removed its temporary workspace. The preserved local DB, hosted development and production were not used or modified.
+
+Limitation: the readiness panel reports database setup state; it cannot prove that the entered agreement or verifier details were independently reviewed. Owner identity verification and rent-term approval remain required before the first real local transaction.
+
+Next: only after owner verification of the exact clerk account and review of actual room/rent terms, exercise one approved local workflow. Do not seed or infer data to make the checklist look complete.

@@ -1,28 +1,34 @@
-# Roadmap — 16 Oct 2026
+# Roadmap — updated 19 Oct 2026
 ## Progress tracker
 
 Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISIONS.md) for unresolved rules. Dates below are planning targets, not completion claims.
 
 | Milestone | Current state | Remaining gate |
 | --- | --- | --- |
-| Local prototype and payment preview | Non-saving payment preview retained; live access UI redesigned with renter-first mobile layouts, staff navigation and measured color pairs | Manual user readability and assistive-technology review (selected browser checks do not establish conformance) |
-| Database access foundation | Eleven migrations implemented; local SQL/API/browser checks | Independent review of cumulative access boundary |
-| Local invitations | Stable attempt IDs, serialized claim, durable states, owner review, no-retry safety and local Auth dispatch implemented | Owner decision on reissue, evidence, expiry and recipient retention; then focused independent security review |
-| First-owner bootstrap | Implemented as a local administrative script | Parallel-session verification remains; no browser endpoint |
-| Frontend authentication and onboarding | Local sign-in, callback, owner assignment, MFA and backup-factor/password recovery implemented | No-email onboarding, all-factors-lost recovery drill, independent review |
-| Basic property and tenant directories | Authorized reads, tenant search/create, owner building/unit create/rename/archive, and owner access-audit review | Broader accessibility review; agreement/occupancy lifecycle remains out of scope |
-| Financial workflows | Non-saving preview/exact-money foundation; policy-independent work may continue | BUSINESS_RULES.md maps policy-dependent features; no invented posting rules |
-| Reports, recovery and pilot | Not implemented | Export verification, restore rehearsal, opening balances and owner acceptance |
+| Staff UI and preview workflows | Dashboard, directory, illustrative property view, cash preview, Paid rent report and sample acknowledgment are implemented and browser-tested | Manual staff review; all preview data is fictional and resets on reload |
+| Database access foundation and hosted development | Eleven access migrations, Auth/MFA, RLS, identity-bound access and invitation workflow are implemented; fictional hosted development exists | Independent review of the cumulative access boundary; do not confuse hosted development with production |
+| Local cash schema and saved workflow | `202610180001_cash_rent_foundation.sql` applied locally; five financial tables with RLS; no financial records/verifier seeded | Owner must identity-confirm the designated clerk; create only reviewed local room agreements/charges; hosted and production untouched |
+| Rental agreements and charges | Live Postgres RPC creates one responsible tenant/room agreement and manually adds an idempotent monthly charge with anniversary clamping | Review existing tenant/room terms before first write; no automatic billing or move-out workflow |
+| Cash report, confirmation and acknowledgment | Live Postgres RPC records pending cash; only explicit MFA clerk verifier confirms; allocation is oldest-first; immutable acknowledgment can be reopened | Verified in isolated local API/Auth/browser tests; run first owner-approved local transaction after identity and terms review |
+| Checks and reconciliation | Design constraints are documented | Separate decisions required for check clearance, returns/reversals, collection handovers and reconciliation evidence |
+| Renter portal and reports | Tenant access foundation exists; spreadsheet-like report is preview-only | Connected statements, renter payment claims, check status, verified reports and Excel export not delivered |
+| Release readiness | No production deployment | Accessibility audit, independent security review, opening-balance plan, backup/restore rehearsal, owner acceptance and a parallel paper-record payment cycle |
 
-Access work has advanced ahead of the original calendar because the latest direction prioritizes database/access dependencies while financial rules remain unresolved. This does not complete the cash-workflow milestone. Invitation dispatch is more reliable but is not operationally ready for real accounts: Auth/PostgreSQL are not atomic, delivery is unconfirmed, and same-recipient reissue is intentionally unavailable pending policy.
+## Current next step: owner identity and first approved local records
 
-## Original planning windows
-There are 46 days to the 1 Dec pilot target. For a solo beginner the full brief is ambitious; policy decisions, onboarding and independent review are schedule risks.
+Keep this narrow: verify the designated account, review the real local tenant/room/rent terms, then exercise one saved agreement, monthly charge, pending-cash report, verifier confirmation, and acknowledgment reprint. Do not include checks, automatic monthly billing, excess credits, adjustments, reversals, move-out, Excel exports or production deployment.
 
-1. 16–22 Oct: local setup, fake-data prototypes, readability review, landlord questions.
-2. 23 Oct–5 Nov, conditional on decisions: schema and permission review, supported auth, one complete cash report -> verification -> settlement -> allocation -> acknowledgment workflow with accounting/RLS/concurrency tests.
-3. 6–19 Nov: checks, approvals, reconciliation, move-out and minimal owner reports; test receipts separately from settlement.
-4. 20–30 Nov: direct API security tests, accessibility review, representative Excel totals/formula injection/visual inspection, separate-environment restore, opening balances and pilot rehearsal.
-5. From 1 Dec: parallel pilot alongside paper records for a full payment cycle; reconcile discrepancies and obtain James/owner acceptance. Release before 1 Jan only if that cycle and all gates finish. Otherwise move launch, not safeguards.
+1. Verify James's account identity using the owner's existing confirmed-account workflow. Assign only the exact approved clerk account as cash verifier; do not infer from display name.
+2. Review actual local tenant, room and rent terms before creating an agreement or rent charge. Keep the first transaction narrow and fictional/local if the terms are not approved.
+3. Run one saved workflow: create agreement, add a monthly charge, record cash as pending, verify receipt, confirm as the designated MFA clerk, and reopen the immutable acknowledgment after reload.
+4. Confirm that only verified cash affected the balance and record any confusion or missing process evidence before widening scope.
 
-Defer email reminders, complex PDFs and nonessential polish. No production deployment until explicitly authorized. Full security, accounting and restore checks are launch gates, not optional scope cuts.
+Verification completed: cash-specific live API/Auth/concurrency and browser tests passed on a separate disposable Supabase stack. The reviewed cash migration is applied to the preserved local database, and RLS was verified on all five financial tables. No local verifier, agreements, charges or cash reports have been populated yet. Do not use actual collections until account identity and rent terms have been reviewed.
+
+Small operational fix completed before that owner-dependent step: the saved Payments screen now summarizes live setup status and blocks a pending cash report if its exact amount exceeds the current balance or there is no positive balance. This prevents a report that the confirmation transaction would later reject because advance credit is not configured. It does not authorize or create terms, verifier assignments, agreements, charges or receipts.
+
+## Schedule and scope
+
+As of 19 Oct 2026, the 1 Dec pilot target is 43 days away and the requested first release before 1 Jan 2027 is 74 days away. The full brief is too broad to promise on that schedule: policy decisions, live financial integration, checks/reconciliation, renter-facing views, exports, independent review and restore testing remain. Treat 1 Dec as conditional, potentially a controlled parallel pilot only if every financial/security/recovery gate and owner acceptance pass. Move dates rather than omit safeguards.
+
+Defer email reminders, complex PDFs and nonessential polish. No production deployment, real-data import, paid service change or hosted migration without separate explicit authorization.
