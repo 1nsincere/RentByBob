@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '../components/atoms'
 import { useProperty, change, occupant, roomPeople, rooms, type Building } from './property-preview-store'
 import { WorkspaceIcon } from '../components/WorkspaceIcon'
+import { type Language } from '../i18n'
 
 function BuildingArt({ building }: { building: Building }) {
   const count = building.floors.reduce((n, f) => n + f.rooms.length, 0)
@@ -45,17 +46,19 @@ function BuildingFacade({ building }: { building: Building }) {
   </svg>
 }
 
-export function TenantDirectoryPreview({ openMap, addTenant, openPayments }: { openMap: () => void; addTenant: () => void; openPayments: () => void }) {
+export function TenantDirectoryPreview({ openMap, addTenant, openPayments, language = 'en' }: { openMap: () => void; addTenant: () => void; openPayments: () => void; language?: Language }) {
+  const bi = language === 'ceb'
+  const tr = (en: string, ceb: string) => bi ? ceb : en
   const { buildings, tenants, notice } = useProperty()
   const [sort, setSort] = useState('name')
   useEffect(() => { if (notice) { setSearch(''); setBuildingId('all'); setFilter('active') } }, [notice])
   const [search, setSearch] = useState(''), [filter, setFilter] = useState('active'), [buildingId, setBuildingId] = useState('all'), [expanded, setExpanded] = useState('')
   const filtered = tenants.filter(t => (filter === 'all' || (filter === 'active') === t.active) && (buildingId === 'all' || t.building === buildingId) && `${t.name} ${buildings.find(b => b.id === t.building)?.name} ${buildings.find(b => b.id === t.building)?.floors.flatMap(f => f.rooms).find(r => r.id === t.room)?.label}`.toLowerCase().includes(search.toLowerCase().trim())).sort((a, b) => sort === 'name' ? a.name.localeCompare(b.name) : (buildings.find(x => x.id === a.building)?.name ?? '').localeCompare(buildings.find(x => x.id === b.building)?.name ?? ''))
   return <section className="visual-directory" aria-labelledby="visual-tenants-heading">
-    <div className="section-heading"><div><p className="eyebrow">PEOPLE & PLACES</p><h2 id="visual-tenants-heading">Tenant directory</h2><p>Find tenants, view their space, and keep records organized.</p></div><Button className="primary" onClick={addTenant}>+ Add tenant</Button></div>
+    <div className="section-heading"><div><p className="eyebrow">{tr('PEOPLE & PLACES','MGA TAWO UG LUGAR')}</p><h2 id="visual-tenants-heading">{tr('Tenant directory','Lista sa mga nag-abang')}</h2><p>{tr('Find tenants, view their space, and keep records organized.','Pangitaa ang mga nag-abang, tan-awa ang ilang lugar, ug han-aya ang mga rekord.')}</p></div><Button className="primary" onClick={addTenant}>+ {tr('Add tenant','Idugang ang nag-abang')}</Button></div>
     {notice && <p className="notice" role="status">{notice} <Button className="quiet-button" onClick={() => change({ notice: '' })}>Dismiss</Button></p>}
-    <div className="directory-stats"><div><strong>{tenants.filter(t => t.active).length}</strong><span>Active tenants</span></div><div><strong>{buildings.length}</strong><span>Buildings & spaces</span></div><div><strong>{tenants.filter(t => t.active && !t.room).length}</strong><span>Awaiting room assignment</span></div></div>
-    <div className="card directory-filters"><div><label htmlFor="visual-search">Search name, building or room</label><input id="visual-search" type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Try Bob's house or Room 01" /></div><div><label htmlFor="visual-building">Building</label><select id="visual-building" value={buildingId} onChange={e => setBuildingId(e.target.value)}><option value="all">All buildings</option>{buildings.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div><div><label htmlFor="visual-status">Tenant status</label><select id="visual-status" value={filter} onChange={e => setFilter(e.target.value)}><option value="active">Active tenants</option><option value="archived">Archived tenants</option><option value="all">All tenants</option></select></div></div>
+    <div className="directory-stats"><div><strong>{tenants.filter(t => t.active).length}</strong><span>{tr('Active tenants','Aktibo nga mga nag-abang')}</span></div><div><strong>{buildings.length}</strong><span>{tr('Buildings & spaces','Mga bilding ug lugar')}</span></div><div><strong>{tenants.filter(t => t.active && !t.room).length}</strong><span>{tr('Awaiting room assignment','Naghulat og kwarto')}</span></div></div>
+    <div className="card directory-filters"><div><label htmlFor="visual-search">{tr('Search name, building or room','Pangitaa ang ngalan, bilding o kwarto')}</label><input id="visual-search" type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder={tr("Try Bob's house or Room 01","Sulayi ang balay ni Bob o Room 01")} /></div><div><label htmlFor="visual-building">{tr('Building','Bilding')}</label><select id="visual-building" value={buildingId} onChange={e => setBuildingId(e.target.value)}><option value="all">{tr('All buildings','Tanang bilding')}</option>{buildings.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div><div><label htmlFor="visual-status">{tr('Tenant status','Kahimtang sa nag-abang')}</label><select id="visual-status" value={filter} onChange={e => setFilter(e.target.value)}><option value="active">{tr('Active tenants','Aktibo nga mga nag-abang')}</option><option value="archived">{tr('Archived tenants','Gi-archive nga mga nag-abang')}</option><option value="all">{tr('All tenants','Tanang nag-abang')}</option></select></div></div>
     <div className="directory-results-bar"><p className="field-help" role="status">{filtered.length} {filtered.length === 1 ? 'tenant' : 'tenants'} shown</p><div><label htmlFor="tenant-sort">Sort by</label><select id="tenant-sort" value={sort} onChange={e => setSort(e.target.value)}><option value="name">Name A–Z</option><option value="building">Building</option></select></div></div>
     <div className="tenant-card-grid">{filtered.map(t => {
       const building = buildings.find(b => b.id === t.building)
@@ -75,7 +78,9 @@ export function TenantDirectoryPreview({ openMap, addTenant, openPayments }: { o
   </section>
 }
 
-export function PropertyMapPreview({ addTenant }: { addTenant: () => void }) {
+export function PropertyMapPreview({ addTenant, language = 'en' }: { addTenant: () => void; language?: Language }) {
+  const bi = language === 'ceb'
+  const tr = (en: string, ceb: string) => bi ? ceb : en
   const { buildings, selected, room } = useProperty()
   const [floorIndex, setFloorIndex] = useState(0), [view, setView] = useState('map'), [adding, setAdding] = useState(false)
   const [enteredBuilding, setEnteredBuilding] = useState('')

@@ -3,16 +3,20 @@ import { Button } from '../components/atoms'
 import { useState } from 'react'
 import { useProperty } from './property-preview-store'
 import { anniversaryDue, confirmedPayments, pesos, remaining, philippineToday, validBusinessDate, type Charge, type Receipt } from './payment-preview-model'
+import { type Language } from '../i18n'
 
 type RentTerms = Record<string, { start: string; cents: bigint }>
 
-export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentTerms = {}, addRentMonth }: {
+export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentTerms = {}, addRentMonth, language = 'en' }: {
   charges: Charge[]
   receipts: Receipt[]
   acknowledgments?: Record<string,CashAcknowledgmentData>
   rentTerms?: RentTerms
   addRentMonth: (tenantId: string, month: string) => string
+  language?: Language
 }) {
+  const bi = language === 'ceb'
+  const tr = (en: string, ceb: string) => bi ? ceb : en
   const [receipt, setReceipt] = useState<CashAcknowledgmentData|null>(null)
   const { tenants, buildings } = useProperty()
   const [month, setMonth] = useState(philippineToday().slice(0, 7))
@@ -67,15 +71,15 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
     return `${property?.name ?? 'Building unavailable'} / ${rentedSpace?.label ?? 'Room unavailable'}`
   }
   return <section className="paid-rent-summary" aria-labelledby="paid-rent-heading">
-    <div className="paid-report-heading"><div><p className="eyebrow">MONTHLY COLLECTION REPORT</p><h3 id="paid-rent-heading">Paid rent</h3><p>Confirmed rent payments with outstanding rent listed below.</p></div><span className="preview-pill">Fictional preview · Resets on reload</span></div>
+    <div className="paid-report-heading"><div><p className="eyebrow">{tr('MONTHLY COLLECTION REPORT','REPORT SA KOLEKSIYON KADA BULAN')}</p><h3 id="paid-rent-heading">{tr('Paid rent','Bayad sa abang')}</h3><p>{tr('Confirmed rent payments with outstanding rent listed below.','Mga kumpirmadong bayad sa abang ug ang nahibilin nga bayranan sa ubos.')}</p></div><span className="preview-pill">{tr('Fictional preview · Resets on reload','Sample lang · Mawala inig abli pag-usab')}</span></div>
     <section className="card paid-report-sheet" aria-label="Confirmed rent payments report">
-      <div className="paid-report-toolbar"><div><label htmlFor="paid-month">Cash received during</label><input id="paid-month" type="month" value={month} onChange={event => setMonth(event.target.value)} /></div><span className="paid-report-period">{validBusinessDate(month + '-01') ? formatMonth(month) : 'Select a valid month'}</span></div>
+      <div className="paid-report-toolbar"><div><label htmlFor="paid-month">{tr('Cash received during','Kwarta nga nadawat niining panahona')}</label><input id="paid-month" type="month" value={month} onChange={event => setMonth(event.target.value)} /></div><span className="paid-report-period">{validBusinessDate(month + '-01') ? formatMonth(month) : tr('Select a valid month','Pilia ang hustong bulan')}</span></div>
       <div className="paid-report-metrics" aria-live="polite">
-        <article><span>Confirmed cash received</span><strong>{pesos(total)}</strong></article>
-        <article><span>Renters who paid</span><strong>{paidRenterCount}</strong></article>
-        <article><span>Confirmed payments</span><strong>{payments.length}</strong></article>
+        <article><span>{tr('Confirmed cash received','Kumpirmadong nadawat nga kwarta')}</span><strong>{pesos(total)}</strong></article>
+        <article><span>{tr('Renters who paid','Mga nag-abang nga mibayad')}</span><strong>{paidRenterCount}</strong></article>
+        <article><span>{tr('Confirmed payments','Mga kumpirmadong bayad')}</span><strong>{payments.length}</strong></article>
       </div>
-      <p className="field-help">Receipt month means when cash was received, not when it was confirmed. Pending reports and uncleared checks are excluded.</p>
+      <p className="field-help">{tr('Receipt month means when cash was received, not when it was confirmed. Pending reports and uncleared checks are excluded.','Ang bulan sa resibo mao ang bulan nga nadawat ang kwarta, dili ang bulan nga gikumpirma. Wala giapil ang wala pa kumpirmaha ug tseke nga wala pa bayri sa bangko.')}</p>
       {!paidRows.length ? <div className="paid-report-empty"><h4>No confirmed payments for this month</h4><p>Choose another month, or confirm a pending cash record after checking receipt.</p></div> :
         <div className="paid-table-scroll" role="region" aria-label="Confirmed payments table" tabIndex={0}>
           <table className="paid-report-table">
@@ -94,8 +98,8 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
         </div>}
     </section>
     <section className="card unpaid-report-sheet" aria-labelledby="unpaid-report-heading">
-      <div className="unpaid-report-heading"><div><p className="eyebrow">OUTSTANDING RENT</p><h4 id="unpaid-report-heading">Renters with rent still due</h4><p>Only recorded rent charges for the selected rent month are included.</p></div><div><label htmlFor="unpaid-month">Rent month</label><input id="unpaid-month" type="month" value={rentMonth} onChange={event => { setRentMonth(event.target.value); setConfirmingTenant(''); setActionMessage('') }} /></div></div>
-      <div className="unpaid-report-total"><span>{unpaidRenterCount} {unpaidRenterCount === 1 ? 'renter' : 'renters'} with a remaining balance</span><strong>{pesos(unpaidTotal)}</strong></div>
+      <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('OUTSTANDING RENT','ABANG NGA WALA PA MABAYRI')}</p><h4 id="unpaid-report-heading">{tr('Renters with rent still due','Mga nag-abang nga naa pay bayranan')}</h4><p>{tr('Only recorded rent charges for the selected rent month are included.','Apil lang ang mga bayranan nga narekord sa napiling bulan.')}</p></div><div><label htmlFor="unpaid-month">{tr('Rent month','Bulan sa abang')}</label><input id="unpaid-month" type="month" value={rentMonth} onChange={event => { setRentMonth(event.target.value); setConfirmingTenant(''); setActionMessage('') }} /></div></div>
+      <div className="unpaid-report-total"><span>{unpaidRenterCount} {tr(unpaidRenterCount === 1 ? 'renter with a remaining balance' : 'renters with a remaining balance',unpaidRenterCount === 1 ? 'nag-abang nga naa pay balanse' : 'mga nag-abang nga naa pay balanse')}</span><strong>{pesos(unpaidTotal)}</strong></div>
       {!unpaidRows.length ? <p className="paid-report-empty">{charges.some(charge => charge.period === rentMonth) ? 'No remaining rent for this month.' : 'No rent charges are recorded for this month. Missing setup does not mean rent is unpaid.'}</p> :
         <div className="paid-table-scroll" role="region" aria-label="Outstanding rent table" tabIndex={0}>
           <table className="paid-report-table unpaid-report-table">
@@ -111,7 +115,7 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
             <tfoot><tr><th scope="row" colSpan={4}>Total still due</th><td className="paid-table-amount">{pesos(unpaidTotal)}</td></tr></tfoot>
           </table>
         </div>}
-      <p className="field-help">Partial confirmed cash reduces the remaining balance. Pending reports and uncleared checks do not.</p>
+      <p className="field-help">{tr('Partial confirmed cash reduces the remaining balance. Pending reports and uncleared checks do not.','Ang bahin nga bayad nga gikumpirma mopaubos sa balanse. Dili mopaubos ang wala pa kumpirmaha o tseke nga wala pa bayri sa bangko.')}</p>
     </section>
     <section className={`card arrears-report-sheet${arrearsRows.length ? ' has-arrears' : ''}`} aria-labelledby="arrears-report-heading">
       <div className="unpaid-report-heading"><div><p className="eyebrow">MULTIPLE MONTHS OUTSTANDING</p><h4 id="arrears-report-heading">Renters with 2 or more unpaid rent months</h4><p>Counts distinct recorded rent months with a remaining balance.</p></div><span className="preview-pill">{arrearsRows.length} {arrearsRows.length === 1 ? 'renter' : 'renters'} flagged</span></div>

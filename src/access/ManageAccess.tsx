@@ -2,8 +2,9 @@ import { useState, type FormEvent } from 'react'
 import { Button } from '../components/atoms'
 import { Feedback } from './AuthForms'
 import { hostedDevelopment, supabase, stateLabels, type Account, type Tenant } from './client'
+import { type Language } from '../i18n'
 
-export function Invitations({ propertyId, owner }: { propertyId: string; owner: boolean }) {
+export function Invitations({ propertyId, owner, language = 'en' }: { propertyId: string; owner: boolean; language?: Language }) {
   const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [error, setError] = useState(false)
   const [attempted, setAttempted] = useState(false); const [email, setEmail] = useState('')
   const [accountType, setAccountType] = useState('tenant'); const [attemptId, setAttemptId] = useState(() => crypto.randomUUID())
@@ -34,12 +35,12 @@ export function Invitations({ propertyId, owner }: { propertyId: string; owner: 
     } finally { setBusy(false) }
   }
   if (hostedDevelopment) return <section className="card" aria-labelledby="invite-account-heading"><h2 id="invite-account-heading">Account invitations</h2><p>Email invitations are unavailable in hosted development. Ask the development administrator to create a fictional test account. An owner must assign its access separately.</p></section>
-  return <section className="card form-card" aria-labelledby="invite-account-heading"><p className="eyebrow">ACCOUNT INVITATION</p><h2 id="invite-account-heading">Invite an account</h2><p>Invitation delivery does not grant property or tenant access. An owner must approve each assignment separately.</p>
+  return <section className="card form-card" aria-labelledby="invite-account-heading"><p className="eyebrow">{language === 'ceb' ? 'IMBITASYON SA ACCOUNT' : 'ACCOUNT INVITATION'}</p><h2 id="invite-account-heading">{language === 'ceb' ? 'Pagdapit og account' : 'Invite an account'}</h2><p>{language === 'ceb' ? 'Ang pagdawat sa imbitasyon dili pa mohatag og access sa propiedad o nag-abang. Kinahanglan aprobahan sa tag-iya ang matag access.' : 'Invitation delivery does not grant property or tenant access. An owner must approve each assignment separately.'}</p>
     <Feedback message={message} error={error} />
     <form onSubmit={submit}>
-      <label htmlFor="invite-email">Invitation email</label><input id="invite-email" name="invite-email" type="email" autoComplete="email" required disabled={busy || attempted} value={email} onChange={event => setEmail(event.target.value)} placeholder="person@example.invalid" aria-describedby="invite-email-help" />
-      <p className="field-help" id="invite-email-help">Local testing accepts fictional addresses ending in .invalid only.</p>
-      <label htmlFor="account-type">Account type</label><select id="account-type" name="account-type" disabled={busy || attempted} value={accountType} onChange={event => setAccountType(event.target.value)}><option value="tenant">Renter/contact</option>{owner && <option value="staff">Staff</option>}</select>
+      <label htmlFor="invite-email">{language === 'ceb' ? 'Email sa imbitasyon' : 'Invitation email'}</label><input id="invite-email" name="invite-email" type="email" autoComplete="email" required disabled={busy || attempted} value={email} onChange={event => setEmail(event.target.value)} placeholder="person@example.invalid" aria-describedby="invite-email-help" />
+      <p className="field-help" id="invite-email-help">{language === 'ceb' ? 'Sa local nga pagsulay, gamita lang ang hinimo-himong email nga matapos og .invalid.' : 'Local testing accepts fictional addresses ending in .invalid only.'}</p>
+      <label htmlFor="account-type">{language === 'ceb' ? 'Klase sa account' : 'Account type'}</label><select id="account-type" name="account-type" disabled={busy || attempted} value={accountType} onChange={event => setAccountType(event.target.value)}><option value="tenant">{language === 'ceb' ? 'Nag-abang/contact' : 'Renter/contact'}</option>{owner && <option value="staff">Staff</option>}</select>
       <Button className="primary" disabled={busy}>{busy ? 'Checking same attempt…' : attempted ? 'Check or continue this same attempt' : 'Start invitation attempt'}</Button>
     </form>
     {attempted && <><p>Attempt reference: <code>{attemptId}</code></p>{attemptStatus && <p>Attempt status: {attemptStatus}</p>}
@@ -49,7 +50,7 @@ export function Invitations({ propertyId, owner }: { propertyId: string; owner: 
   </section>
 }
 
-export function ManageAccess({ propertyId, tenants, changed }: { propertyId: string; tenants: Tenant[]; changed: () => void }) {
+export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: { propertyId: string; tenants: Tenant[]; changed: () => void; language?: Language }) {
   const [account, setAccount] = useState<Account | null>(null); const [email, setEmail] = useState('')
   const [kind, setKind] = useState('contact'); const [role, setRole] = useState('clerk'); const [tenant, setTenant] = useState('')
   const [enabled, setEnabled] = useState(true); const [reason, setReason] = useState(''); const [confirmation, setConfirmation] = useState('')
@@ -61,7 +62,7 @@ export function ManageAccess({ propertyId, tenants, changed }: { propertyId: str
     setAccount(data as Account | null)
     return data
   }
-  return <section className="card form-card" aria-labelledby="manage-access-heading"><p className="eyebrow">OWNER APPROVAL</p><h2 id="manage-access-heading">Assign or disable account access</h2>
+  return <section className="card form-card" aria-labelledby="manage-access-heading"><p className="eyebrow">{language === 'ceb' ? 'APROBADO SA TAG-IYA' : 'OWNER APPROVAL'}</p><h2 id="manage-access-heading">{language === 'ceb' ? 'Ihatag o tangtangon ang access sa account' : 'Assign or disable account access'}</h2>
     <p>Confirm the intended person’s email with them outside this app. Look up that exact address, review the account and target below, then retype the email. A verified email proves mailbox access, not a person’s real-world identity.</p>
     <Feedback message={message} error={error} />
     <form onSubmit={async e => {
