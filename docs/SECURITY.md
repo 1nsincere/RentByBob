@@ -42,6 +42,8 @@ The account statement is rendered only inside the existing staff Payments and ba
 
 Cash-statement security regression coverage also retries `read_rent_workspace` as anonymous and unassigned identities after disposable agreement/charge/cash records exist and requires denial. Browser checks verify pending cash is absent from confirmed statement events. Existing isolated tests continue to require MFA and designated clerk identity for settlement, reject owner confirmation and direct table writes, and cover audit rollback/concurrency. These checks run only against the unique disposable local Supabase stack; they are not an independent security audit or proof of hosted/production configuration.
 
+The saved cash UI parses the `read_rent_workspace` response as untrusted input before rendering. It requires exact decimal strings, valid calendar dates/IDs, known cash collectors, consistent confirmed/acknowledgment state, matching acknowledgment receipt details and allocation totals, valid record relationships, and agreement balances equal to summed charge remaining amounts. Invalid or inconsistent snapshots are withheld with an explicit error; the client does not coerce numbers or manufacture defaults. PostgreSQL authorization and constraints remain authoritative; this validation detects bad/mismatched responses and is not a replacement for them.
+
 See STATUS.md for the exact current test evidence and ONBOARDING.md for identity confirmation, invitation states, resend limits, paper-delivery limitations, 10-second UI refresh, and recovery. No hosted/production security claim.
 
 ## Invitation dispatch reliability — migrations 202610160009 through 202610160011

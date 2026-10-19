@@ -17,6 +17,8 @@ Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISION
 
 ## Current next step: owner identity and first approved local records
 
+The staff/admin feature inventory is maintained in [ADMIN_CAPABILITIES.md](ADMIN_CAPABILITIES.md), including the current gaps and operational gates.
+
 Keep this narrow: verify the designated account, review the real local tenant/room/rent terms, then exercise one saved agreement, monthly charge, pending-cash report, verifier confirmation, and acknowledgment reprint. Do not include checks, automatic monthly billing, excess credits, adjustments, reversals, move-out, Excel exports or production deployment.
 
 1. Verify James's account identity using the owner's existing confirmed-account workflow. Assign only the exact approved clerk account as cash verifier; do not infer from display name.

@@ -360,3 +360,19 @@ Security checks are repeated after disposable statement records exist: anonymous
 Evidence: `npm.cmd run test:cash:supabase` passed all isolated Auth/MFA/RLS/financial and browser assertions, including the new responsive, keyboard, pending-separation and access-denial checks. No preserved local financial records, hosted development or production data were accessed. This automated browser coverage is a useful regression gate, not a complete native browser zoom, assistive-technology, contrast, or WCAG 2.2 AA audit.
 
 Next: owner identity and rent-terms review still gates the first approved saved transaction. Perform a manual screen-reader/keyboard and actual browser zoom review before claiming accessibility conformance; do not widen financial access or add tenant statements/exports without a separate authorization review.
+
+## Validate saved financial snapshots before display - 19 Oct 2026
+
+Added a runtime parser at the saved `read_rent_workspace` boundary. It rejects unexpected response shapes, non-string or malformed/out-of-range money, invalid dates/IDs, unknown cash collectors, inconsistent pending/confirmed/acknowledgment state, acknowledgments whose payment identity/details or allocation totals do not match the report, broken exposed relationships, charge remaining above its original amount, and agreement balances that do not equal the sum of their current charge remaining amounts. Malformed snapshots are withheld and a clear error is shown; no fallback or number coercion is used. Archived units are intentionally excluded from the active unit list, so historical agreements that reference an archived unit remain valid and render with the existing unavailable-location fallback.
+
+Focused model tests cover valid data, malformed money/calendar values, mismatched totals and acknowledgments, settlement-state mismatch, and the archived-unit case. This is a defensive display-integrity check only: database authorization, transactional writes, and PostgreSQL constraints remain the source of truth. No migration, grant or data was changed.
+
+Next: after owner verification of the clerk identity and real terms, exercise the first approved saved workflow locally. Treat the parser as defense in depth, not an independent security review.
+
+Follow-up review: the snapshot parser now also rejects duplicate IDs and agreement tenant IDs that do not exist in the authorized tenant result loaded by the same staff workspace. Added regression tests for both cases. `npm.cmd test` passes 52 tests, `npm.cmd run build` passes, and `git diff --check` passes. The existing Vite chunk-size advisory remains. This change validates displayed data only; owner identity and rent-term review remain the gate before the first saved transaction.
+
+## Admin capabilities inventory - 19 Oct 2026
+
+Added [ADMIN_CAPABILITIES.md](ADMIN_CAPABILITIES.md) as a concise admin/staff feature and gap inventory. It separates authenticated database features from fictional previews, records the current empty financial tables and unassigned verifier, and lists owner decisions and release-readiness gates. Corrected README's stale claim that financial posting and saved balances do not exist: local saved cash/rent RPC workflows are implemented, but they are not yet operationally populated and are not migrated to hosted development or production.
+
+This is documentation-only. No app, database, account, migration, hosted service or production state changed. `git diff --check` passed. Next operational action remains owner confirmation of the clerk identity and review of actual tenant/room/rent terms before the first saved local transaction; see [ADMIN_CAPABILITIES.md](ADMIN_CAPABILITIES.md).

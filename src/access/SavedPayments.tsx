@@ -3,25 +3,30 @@ import { Button } from '../components/atoms'
 import { supabase, type Tenant } from './client'
 import { CashAcknowledgment, decimalPesos, type CashAcknowledgmentData } from './CashAcknowledgment'
 import { AccountStatement } from './AccountStatement'
-import { hasPositiveSavedBalance, savedCashFitsBalance } from './saved-payments-model'
+import { hasPositiveSavedBalance, parseRentWorkspaceSnapshot, savedCashFitsBalance, type RentWorkspaceSnapshot, type SavedCashRecord } from './saved-payments-model'
 
-type Agreement = { id:string; tenant_id:string; unit_id:string; move_in:string; rent:string; balance:string }
-type Unit = { id:string; label:string; building_id:string }
-type Charge = { id:string; agreement_id:string; rental_month:string; due_date:string; amount:string; remaining:string }
-type Cash = { id:string; agreement_id:string; amount:string; received_on:string; collector:string; confirmed_at:string|null; acknowledgment:CashAcknowledgmentData|null }
-type Snapshot = { agreements:Agreement[]; units:Unit[]; charges:Charge[]; cash:Cash[]; verifiers:{user_id:string}[]; buildings:{id:string;label:string}[] }
-// PostgREST returns numeric JSON as numbers; monetary API reads cast to text in SQL RPC below.
 export function SavedPayments({ propertyId, tenants, owner, userId }: { propertyId:string; tenants:Tenant[]; owner:boolean; userId:string }) {
- const [data,setData] = useState<Snapshot|null>(null), [error,setError] = useState(''), [message,setMessage] = useState('')
+ const [data,setData] = useState<RentWorkspaceSnapshot|null>(null), [error,setError] = useState(''), [message,setMessage] = useState('')
  const [selected,setSelected] = useState(''), [receipt,setReceipt] = useState<CashAcknowledgmentData|null>(null)
- const [review,setReview] = useState<Cash|null>(null), [busy,setBusy] = useState(false)
+ const [review,setReview] = useState<SavedCashRecord|null>(null), [busy,setBusy] = useState(false)
  const verifierSetup = useRef<HTMLDetailsElement>(null)
  const request = useRef<{key:string;id:string}|null>(null), sending = useRef(false)
  const refresh = useCallback(async () => {
-  const result = await supabase!.rpc('read_rent_workspace',{p_property_id:propertyId})
+  let result
+  try {
+   result = await supabase!.rpc('read_rent_workspace',{p_property_id:propertyId})
+  } catch {
+   setData(null); setError('Saved rent records could not be loaded. Check your connection and refresh; nothing was changed.'); return
+  }
   if(result.error) { setData(null); setError('Saved rent records are unavailable. The cash migration must be applied and your staff MFA session must be active. Nothing has been saved by this screen.'); return }
-  setData(result.data as Snapshot)
- },[propertyId])
+  try {
+   setData(parseRentWorkspaceSnapshot(result.data, tenants))
+   setError('')
+  } catch {
+   setData(null)
+   setError('Saved rent records could not be validated, so financial details are hidden. Contact the system administrator; nothing was changed.')
+  }
+ },[propertyId,tenants])
  useEffect(()=>{setData(null);setSelected('');setReview(null);setReceipt(null);setError('');void refresh()},[refresh])
  async function mutate(name:string, args:Record<string,unknown>, idempotent=true) {
   if(sending.current) return false

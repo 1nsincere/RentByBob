@@ -82,7 +82,10 @@ Local invitations/reset messages appear in Mailpit at **http://127.0.0.1:54324**
 - Durable invitation states and owner/MFA reconciliation; no automatic retry, resend or access assignment on acceptance.
 - Authorized tenant directory/search/create; staff property/building/unit reads; owner location creation, rename/archive and access-history review.
 - Mobile-first renter record view with clear access and empty states; staff get a labeled mobile workspace menu and desktop sidebar.
-- No financial posting, balances, agreements, occupancy assignments or exports. Pending reports and uncleared checks must never reduce settled balances.
+- Local-only saved rent agreements, manual monthly charges, pending cash reports, designated-verifier confirmation, oldest-first cash allocation, printable/reopenable acknowledgment, and a read-only staff account statement. The local financial tables are currently empty and no verifier is assigned; first use is gated on owner identity and real-term review.
+- Fictional preview-only paid-rent, outstanding-rent and arrears reports. No saved report or spreadsheet export. Pending cash and uncleared checks do not reduce settled balances.
+
+The current admin feature inventory, working limits and exact operational gaps are in [admin capabilities](docs/ADMIN_CAPABILITIES.md). Checks, reconciliation, reversals, corrections, excess credit, tenant-facing financial statements and exports are not implemented. No production deployment is authorized.
 
 Renters have a single records destination and account sign-out; the app does not invent payment or dashboard tabs. Staff use workspace navigation to reach implemented directory, location, invitation, owner-access and security sections. Layouts stack on phones and add a staff sidebar on wide screens. See the [design system](docs/DESIGN_SYSTEM.md) for responsive behavior, contrast measurements and accessibility limitations.
 

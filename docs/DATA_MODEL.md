@@ -4,6 +4,8 @@ Applied only to the preserved local Supabase database after live verification in
 
 The staff account statement is a read-only projection of the authorized workspace snapshot: rent charges, confirmed cash with its acknowledgment allocation snapshot, and current remaining amounts per charge. Pending cash stays separate and is not a settled payment. This adds no table, RPC, grant or mutation.
 
+The browser validates the returned snapshot's structure and exact decimal strings before use, including agreement totals against charge remaining values and confirmed cash against acknowledgment details. Archived unit IDs may be absent from the active-location list while their historical agreements remain visible; the client must not treat that expected archival case as corrupt financial data.
+
 ## Guided cash preview update - 18 Oct 2026
 
 Pending Report stores tenant, cash amount, collector and actual date separately from settled per-charge Receipt allocations. Confirmation recalculates oldest-first allocation. Terms keep the original move-in date and example room rent. These are temporary objects only; transactionality, account permission and persistence are not claimed.
