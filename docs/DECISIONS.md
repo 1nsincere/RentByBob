@@ -2,6 +2,12 @@
 
 Use the existing browser-persisted English/Bisaya preference and manually authored, simple Bisaya. Do not call an external translation service. Translate app-authored labels, instructions, statuses and errors only; retain user-entered names, emails, building/room labels, dates, amounts, IDs and records exactly. Keep technical/security/financial meaning accurate, mark Bisaya as unverified until reviewed by a fluent speaker, and do not describe it as authoritative before that review. This UI-only work does not change Auth, access assignment, financial rules, or database state.
 
+## Preview room-rent change interaction - 20 Oct 2026
+
+For the fictional Payments and balances preview only, keep a saved-in-preview room rent read-only by default. Staff may unlock the rate with an explicit checkbox, choose the first rent month at the proposed rate, and review the current/new amounts and due date before confirming. Confirmation adds that selected month's charge and uses the new rate for subsequent preview charges; previously recorded charges remain unchanged. The selected month must not already have a charge for that room. Returning to edit details preserves the uncommitted form draft; no preview term or charge changes until confirmation.
+
+This does not authorize editing a saved database agreement. Any persisted rent change requires a separate decision on effective date and authorized role, plus a reviewed transactional database operation, audit behavior, idempotency and tests. Do not infer retroactive changes or other rent policy.
+
 ## Responsible tenant and acknowledgments - 18 Oct 2026
 
 User confirmed one responsible tenant per room; others are occupants. A room cannot have a second agreement in this first slice; move-out/reletting must use a later reviewed lifecycle, not deletion. Confirmed cash issues a Cash Payment Acknowledgment for actual received money, including partial payments. Not restricted to fully paid months and not a tax receipt. Print/Save PDF is available to staff; no automatic email, public download or tenant portal delivery. James is a designated confirmed clerk identity, not a hard-coded name/email. Owner can designate verifier but cannot implicitly settle cash.

@@ -1,11 +1,11 @@
-# Roadmap — updated 19 Oct 2026
+# Roadmap — updated 20 Oct 2026
 ## Progress tracker
 
 Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISIONS.md) for unresolved rules. Dates below are planning targets, not completion claims.
 
 | Milestone | Current state | Remaining gate |
 | --- | --- | --- |
-| Staff UI and preview workflows | Dashboard, directory, illustrative property view, cash preview, Paid rent report and sample acknowledgment are implemented and browser-tested | Manual staff review; all preview data is fictional and resets on reload |
+| Staff UI and preview workflows | Dashboard, directory, illustrative property view, cash preview, Paid rent report, sample acknowledgment, clearer payment history and preview-only rent-change review are implemented and browser-tested | Manual staff review; all preview data is fictional and resets on reload; saved rent-term editing remains unimplemented |
 | Database access foundation and hosted development | Eleven access migrations, Auth/MFA, RLS, identity-bound access and invitation workflow are implemented; fictional hosted development exists | Independent review of the cumulative access boundary; do not confuse hosted development with production |
 | Local cash schema and saved workflow | `202610180001_cash_rent_foundation.sql` applied locally; five financial tables with RLS; no financial records/verifier seeded | Owner must identity-confirm the designated clerk; create only reviewed local room agreements/charges; hosted and production untouched |
 | Rental agreements and charges | Live Postgres RPC creates one responsible tenant/room agreement and manually adds an idempotent monthly charge with anniversary clamping | Review existing tenant/room terms before first write; no automatic billing or move-out workflow |

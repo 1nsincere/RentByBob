@@ -1,5 +1,23 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Clearer payment history and controlled preview rent changes - 20 Oct 2026
+
+Improved the fictional Payments and balances preview so staff can distinguish pending cash from confirmed payment history at a glance. Each history item now shows its status, amount, actual receipt date and collector where applicable. Room rent and move-in date are fixed/read-only after setup by default; a labeled checkbox unlocks a proposed rate change. The user must choose the first rent month, review the old/new rates and due date, then explicitly confirm. Confirmation adds that month's charge and changes the rate used for later preview charges, while previously recorded charges keep their original amounts. Returning to edit details preserves the draft for correction; duplicate room/month charges remain rejected.
+
+This is temporary in-memory preview behavior only. It resets on reload and does not update a saved agreement, database, permission, or real financial record. The authenticated saved workflow still has no reviewed rent-term edit operation. The app continues to exclude pending cash from settled balances.
+
+**Verification:** `npm.cmd run build` passed (existing Vite advisory: main JS chunk exceeds 500 kB); `npm.cmd test` passed 54/54; `node scripts/check-payments-preview.mjs` passed payment-history status/amount/date checks, fixed-by-default rent setup, explicit unlock and reset-on-relock, review-before-change, no changes before confirmation, unchanged earlier charges, duplicate-month rejection, resulting balance, narrow-width reflow at 320/390/768px, no external requests and no runtime errors; `git diff --check` passed. Browser test uses fictional offline preview data; no authenticated Supabase or database tests were needed or run. Screenshot files reflect the fictional browser test run.
+
+**Limits and next step:** no persisted rent-edit semantics, database function, RLS policy, migration or saved agreement behavior was introduced. Do not mirror this preview operation into the authenticated workflow until rent-change effective-date, authorization, audit and correction requirements are reviewed and a transactional path is designed. Next, have staff review the updated fictional history/rent screens at desktop and phone widths; then continue with the Docker-gated language/theme browser verification and isolated check/handover workflow gates already recorded below. This is not an accessibility audit or production-readiness claim.
+
+## Clearer pending cash and rent-by-month view - 19 Oct 2026
+
+Refined the fictional payment preview shown in the user's screenshot. The pending cash card now has a visible unconfirmed status, a direct note that it does not reduce rent balance, and distinct collector/receipt-date labels. Monthly rows now separate month/due date, rent charged and still to pay; the combined room total is labeled as applying across accounts and not being an extra charge. At narrow widths the amount groups stack under the month. Updated English/Bisaya labels are presentation-only: no balance calculation, payment status, confirmation flow, or rent rule changed.
+
+Verification: `npm.cmd run build` and `npm.cmd test` passed (54 tests); `node scripts/check-payments-preview.mjs` verifies the pending-vs-balance wording, actual receipt date and collector, September rent charged vs remaining amount, October charged vs remaining amount, the combined room total explanation, and no horizontal overflow at 320/390/768px. It also retains assertions for pending cash not settling, oldest-first allocation and the 44px review action. `git diff --check` passed. The preview uses fictional data and no external requests. These checks do not cover authenticated local Supabase or a full accessibility audit.
+
+Next: open the offline preview with `npm.cmd run dev:preview`, choose Payments and balances, and review the payment account at desktop and narrow phone widths. Then proceed with the documented Docker-gated authenticated browser checks; do not apply the drafted check/handover migration until isolated integration gates pass.
+
 ## Shared visual system and dark-theme contrast - 19 Oct 2026
 
 **Assessment before editing:** the app already had a warm-neutral palette, local/system font stack, 18px baseline, hierarchy, responsive staff sidebar/mobile navigation, labeled controls, 44px targets, visible keyboard focus, restrained transitions, reduced-motion handling, and saved light/dark preference. The prior staff visual refresh had already improved the dashboard, worklist, report and payment surfaces; those foundations were retained.

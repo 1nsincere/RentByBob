@@ -1,8 +1,16 @@
 # RentByBob interface design system
 
+## Payment history and room-rent setup
+
+Keep payment history as distinct, compact entries with textual status, amount and actual receipt date; identify the collector for reported cash. Pending cash must say it is not confirmed and must not appear equivalent to a settled payment. Preserve a labeled empty state when no history exists.
+
+After preview rent setup, display the current monthly rate as a separate summary and keep move-in date/rent fixed by default. Use an explicit, labeled checkbox to unlock the rate. The change review groups current rate, proposed rate, first effective rent month and due date, and states that earlier charges will not change. Provide a clear confirmation action and a separate way back to editing. Reflow the review and history fields on narrow screens; retain readable labels, visible focus and touch-sized controls. This flow is preview-only and must not be presented as an edit to persisted rent agreements.
+
 ## Paid-rent report
 
 Use a spreadsheet-inspired, bordered report sheet with a clear month selector and summary metrics for confirmed cash, distinct renters and confirmed payment groups. The paid table should show renter, location, date cash was received, amount, rent months covered and acknowledgment action, then a total row. Put recorded charges with remaining balances in a separate outstanding section below. Keep receipt month and rent month independently labeled because they answer different questions. On phones, reflow rows into labeled compact cards rather than widening the page. Pending reports and uncleared checks are excluded from settled totals and balances. A missing charge is not labeled unpaid.
+
+In payment account views, visually distinguish a pending cash report from the rent balance: label it “Pending · not confirmed” and explicitly state that it does not reduce the balance. Give collector and actual receipt date separate labels. In rent-by-month lists, keep month and due date apart from two separately labeled amounts: rent charged and still to pay. Label any combined room total as applying across accounts and state that it is not an extra charge. Reflow the amount groups under the month at narrow widths without hiding labels.
 
 The outstanding section may offer an explicit selected-month charge action only to renters with an assigned room and saved rent setup, after showing the exact saved amount and calculated due date for confirmation. Show a separate multiple-months section for renters with positive balances in at least two distinct recorded rent months; include month names, count, rental location and total remaining. State clearly that the list reflects recorded charges, not absent months or overdue determinations. Keep all actions visibly preview-only, announce completion/errors, and stack confirmation controls at narrow widths.
 

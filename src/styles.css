@@ -567,6 +567,34 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .simple-balance strong { font-size: clamp(2rem, 5vw, 2.8rem); color: var(--brand-hover); font-variant-numeric: tabular-nums; }
 .cash-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
 .cash-row p { margin: .3rem 0; }
+.pending-cash-card { border-top: 4px solid var(--warning); }
+.pending-cash-heading { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: .65rem 1rem; }
+.pending-cash-heading h3 { margin: .55rem 0 0; }
+.pending-cash-heading > p { max-width: 24rem; margin: .4rem 0 0; padding: .6rem .75rem; border-radius: var(--radius-small); background: var(--warning-surface); color: var(--warning); font-weight: 600; }
+.pending-cash-row { margin-top: .8rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--page); }
+.pending-cash-details { display: grid; min-width: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: .65rem 1rem; }
+.pending-cash-details > div, .rent-month-amounts > div { display: grid; gap: .15rem; }
+.pending-cash-details > div > span, .rent-month-amounts > div > span, .room-total-note > span { color: var(--text-secondary); font-size: .88rem; line-height: 1.35; }
+.pending-cash-amount { grid-column: 1 / -1; color: var(--text); font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.pending-cash-row > .button { flex: 0 0 auto; }
+.rent-month-card { border-top: 3px solid var(--brand); }
+.rent-month-card > summary { margin-bottom: .8rem; padding: .25rem .2rem; font-size: 1.08rem; }
+.room-total-note { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: .15rem .75rem; margin: 0 0 1rem; padding: .8rem 1rem; border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius-small); background: var(--support); }
+.room-total-note > span { font-weight: 650; }
+.room-total-note > strong { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.room-total-note > small { grid-column: 1 / -1; color: var(--text-secondary); font-size: .88rem; }
+.rent-month-list { display: grid; gap: .65rem; margin-block: 1rem; }
+.rent-month-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(15rem, .9fr); align-items: center; gap: 1rem; padding: .9rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--surface); }
+.rent-month-date { display: grid; gap: .3rem; min-width: 0; }
+.rent-month-date > strong { font-size: 1.05rem; }
+.rent-month-date > span { color: var(--text-secondary); }
+.rent-month-amounts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+.rent-month-amounts > div { min-width: 0; padding: .6rem .7rem; border-radius: .35rem; background: var(--page); }
+.rent-month-amounts > div > strong { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.rent-month-remaining { border-left: 3px solid var(--warning); }
+.rent-month-remaining > strong { color: var(--warning); }
+.rent-month-remaining--paid { border-left-color: var(--success); }
+.rent-month-remaining--paid > strong { color: var(--success); }
 .simple-payments summary { cursor: pointer; min-height: 44px; font-weight: 700; }
 .simple-payments details > summary { border-radius: var(--radius-small); transition: color 130ms ease; }
 .simple-payments details > summary:hover { color: var(--brand); }
@@ -596,9 +624,22 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .statement-pending li + li { margin-top: .5rem; }
 .statement-event .button { margin-top: .4rem; }
 @media(max-width: 40rem) { .cash-row { align-items: start; flex-direction: column; } }
+@media(max-width: 40rem) {
+  .pending-cash-row { align-items: stretch; }
+  .pending-cash-details { width: 100%; }
+  .pending-cash-row > .button { width: 100%; }
+  .rent-month-row { grid-template-columns: minmax(0, 1fr); gap: .7rem; }
+}
 @media(max-width: 40rem) { .saved-readiness li { grid-template-columns: minmax(0,1fr); align-items: start; } .saved-readiness li > .button { width: 100%; } }
 @media(max-width: 48rem) { .cash-queue-row { grid-template-columns: minmax(0,1fr); align-items: start; } .cash-queue-row > .button { width: 100%; } .cash-queue-row .field-help { max-width: none; } }
 @media(max-width: 40rem) { .statement-event-heading { align-items: start; flex-direction: column; gap: .15rem; } .statement-event .button { width: 100%; } }
+@media(max-width: 40rem) {
+  .payment-history-top { align-items: start; flex-direction: column; }
+  .payment-history-row dl { gap: .6rem 1rem; }
+  .rent-change-review dl { grid-template-columns: minmax(0, 1fr); }
+  .rent-change-review .person-actions { flex-direction: column; }
+  .rent-change-review .person-actions .button { width: 100%; }
+}
 
 .payment-worklist-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .payment-overview .cash-row:last-child { border-bottom: 0; }
@@ -651,6 +692,37 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .simple-payments .simple-balance { padding: 1rem 1.15rem; border-left: 3px solid var(--accent); border-radius: .35rem; background: var(--page); }
 .simple-payments details.card { padding-block: 1.1rem; }
 .simple-payments details > summary { padding: .2rem .2rem; }
+.payment-history-card, .room-rent-setup-card { border-top: 3px solid var(--border-hover); }
+.payment-history-card > summary, .room-rent-setup-card > summary { margin-bottom: .6rem; font-size: 1.08rem; }
+.payment-history-list { display: grid; gap: .65rem; margin-block: .8rem; }
+.payment-history-row { min-width: 0; padding: .85rem 1rem; border: 1px solid var(--border); border-left: 3px solid var(--control-border); border-radius: var(--radius-small); background: var(--surface); }
+.payment-history-row--pending { border-left-color: var(--warning); }
+.payment-history-row--confirmed { border-left-color: var(--success); }
+.payment-history-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .6rem; }
+.payment-history-amount { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.payment-history-row dl { display: flex; flex-wrap: wrap; gap: .5rem 2rem; margin: .7rem 0 0; }
+.payment-history-row dl > div { display: grid; gap: .12rem; }
+.payment-history-row dt { color: var(--text-secondary); font-size: .88rem; }
+.payment-history-row dd { margin: 0; font-weight: 600; }
+.payment-history-row .status { order: 0; }
+.current-room-rent { margin: .8rem 0 1rem; padding: .85rem 1rem; border: 1px solid var(--border); border-left: 3px solid var(--brand); border-radius: var(--radius-small); background: var(--support); }
+.current-room-rent > div { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .4rem 1rem; }
+.current-room-rent > div > span { color: var(--text-secondary); font-weight: 600; }
+.current-room-rent > div > strong { font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+.current-room-rent > p { margin: .35rem 0 0; color: var(--text-secondary); font-size: .9rem; }
+.room-rent-form { gap: .35rem; }
+.room-rent-form > input[readonly] { background: var(--support); border-style: dashed; }
+.fixed-field-badge { display: inline-flex; align-items: center; margin-left: .35rem; padding: .1rem .45rem; border: 1px solid var(--control-border); border-radius: 2rem; color: var(--text-secondary); font-size: .78rem; font-weight: 600; vertical-align: middle; }
+.room-rent-form .rent-edit-toggle { display: flex; min-height: 44px; align-items: center; gap: .6rem; margin: .25rem 0 .4rem; padding: .4rem .65rem; border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--page); cursor: pointer; }
+.room-rent-form .rent-edit-toggle input { width: 1.25rem; height: 1.25rem; min-height: 1.25rem; flex: 0 0 1.25rem; margin: 0; accent-color: var(--action); }
+.rent-change-review { margin-top: 1rem; padding: 1rem; border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--radius-small); background: var(--support); }
+.rent-change-review h4 { margin: 0 0 .4rem; }
+.rent-change-review > p { margin-block: .4rem .75rem; }
+.rent-change-review dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; margin: .75rem 0; }
+.rent-change-review dl > div { min-width: 0; padding: .65rem; border: 1px solid var(--border); border-radius: .35rem; background: var(--surface); }
+.rent-change-review dt { color: var(--text-secondary); font-size: .88rem; }
+.rent-change-review dd { margin: .2rem 0 0; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.rent-change-review .person-actions { margin-top: .75rem; }
 .paid-rent-summary > .card:first-of-type { border-top: 3px solid var(--brand); }
 .paid-payment-list > .card { transition: border-color 140ms ease, box-shadow 140ms ease; }
 .paid-payment-list > .card:hover { border-color: var(--border-hover); box-shadow: 0 5px 18px rgb(37 43 49 / 7%); }

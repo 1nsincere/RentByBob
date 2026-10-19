@@ -26,6 +26,8 @@ Payments and balances now guides tenant selection, cash entry, review, pending r
 
 At http://127.0.0.1:5173/?preview=1 choose Payments and balances. Enter fictional per-room charges with individual due dates, review partial cash/report/check entries, and see tenant/room balances and payment history. Only simulated settled cash reduces balances. All entries reset on reload; database payment saving and verification/clearance transitions are not implemented.
 
+Payment history separates pending and confirmed examples with status, amount, receipt date and collector labels. After a fictional rent setup is created, its room rate and move-in date are fixed by default. To test a proposed rate change, unlock the rate, select its first rent month, review the amount and due date, and explicitly confirm. Earlier charges are preserved; duplicate room/month charges are rejected. This updates only in-memory preview state, not saved agreements. Persisted rent-term editing is not implemented.
+
 # Rental records
 
 ## Focused tenant workspace
@@ -85,6 +87,7 @@ Local invitations/reset messages appear in Mailpit at **http://127.0.0.1:54324**
 - Authorized tenant directory/search/create; staff property/building/unit reads; owner location creation, rename/archive and access-history review.
 - Mobile-first renter record view with clear access and empty states; staff get a labeled mobile workspace menu and desktop sidebar.
 - Local-only saved rent agreements, manual monthly charges, pending cash reports, designated-verifier confirmation, oldest-first cash allocation, printable/reopenable acknowledgment, and a read-only staff account statement. The local financial tables are currently empty and no verifier is assigned; first use is gated on owner identity and real-term review.
+- In the fictional payment preview, pending cash is visibly labeled as unconfirmed and not part of the rent balance. Monthly entries separate rent charged from the amount still to pay, with clear due dates and a separately labeled room total. These are presentation clarifications only; calculations and financial rules are unchanged.
 - Fictional preview-only paid-rent, outstanding-rent and arrears reports. No saved report or spreadsheet export. Pending cash and uncleared checks do not reduce settled balances.
 
 The current admin feature inventory, working limits and exact operational gaps are in [admin capabilities](docs/ADMIN_CAPABILITIES.md). The basic check register and owner-entered handover log have UI and a new locally un-applied migration; integration verification is still required. General reconciliation, tenant-facing financial statements, excess credit and exports remain unavailable. No production deployment is authorized.
