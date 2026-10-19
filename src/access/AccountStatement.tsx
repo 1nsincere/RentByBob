@@ -1,6 +1,7 @@
 import { Button } from '../components/atoms'
 import { decimalPesos, type CashAcknowledgmentData } from './CashAcknowledgment'
 import { buildStatementEvents, type StatementCash, type StatementCharge } from './saved-payments-model'
+import { text, type Language } from '../i18n'
 
 function displayDate(value: string) {
   return new Intl.DateTimeFormat('en-PH', {
@@ -25,46 +26,49 @@ export function AccountStatement({
   charges,
   cash,
   openAcknowledgment,
+  language = 'en',
 }: {
   tenantName: string
   rentalSpace: string
   charges: StatementCharge[]
   cash: StatementCash[]
   openAcknowledgment: (acknowledgment: CashAcknowledgmentData) => void
+  language?: Language
 }) {
+  const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const events = buildStatementEvents(charges, cash)
   const pending = cash.filter(payment => payment.confirmed_at === null)
 
   return <section className="card account-statement" aria-labelledby="account-statement-heading">
-    <h3 id="account-statement-heading">Account statement</h3>
+    <h3 id="account-statement-heading">{tr('Account statement', 'Rekord sa account')}</h3>
     <p><strong>{tenantName}</strong> · {rentalSpace}</p>
-    <p>Recorded rent charges and confirmed cash, in date order. Each charge shows its current remaining amount after confirmed payments only.</p>
+    <p>{tr('Recorded rent charges and confirmed cash, in date order. Each charge shows its current remaining amount after confirmed payments only.', 'Mga narekord nga bayranan sa abang ug kwarta nga gikumpirma, sumala sa petsa. Ang nabilin sa matag bayranan naglakip lang sa kumpirmadong bayad.')}</p>
     {events.length ? <ol className="statement-events">
       {events.map(event => {
         if (event.kind === 'charge') return <li className="statement-event" key={`charge:${event.id}`}>
-          <div className="statement-event-heading"><strong>Rent charge · {displayMonth(event.month)}</strong><span>{displayDate(event.date)} due</span></div>
-          <p>Charge: {decimalPesos(event.amount)}</p>
-          <p>Rent remaining: <strong>{decimalPesos(event.remaining)}</strong></p>
+          <div className="statement-event-heading"><strong>{tr('Rent charge ·', 'Bayranan sa abang ·')} {displayMonth(event.month)}</strong><span>{displayDate(event.date)} {tr('due', 'takdang petsa')}</span></div>
+          <p>{tr('Charge:', 'Bayranan:')} {decimalPesos(event.amount)}</p>
+          <p>{tr('Rent remaining:', 'Nabilin nga abang:')} <strong>{decimalPesos(event.remaining)}</strong></p>
         </li>
         const acknowledgment = event.acknowledgment
         return <li className="statement-event" key={`payment:${event.id}`}>
-          <div className="statement-event-heading"><strong>Confirmed cash</strong><span>Received {displayDate(event.date)}</span></div>
-          <p>{decimalPesos(event.amount)} received by {event.collector}</p>
+          <div className="statement-event-heading"><strong>{tr('Confirmed cash', 'Kumpirmadong kwarta')}</strong><span>{tr('Received', 'Nadawat')} {displayDate(event.date)}</span></div>
+          <p>{decimalPesos(event.amount)} {tr('received by', 'gidawat ni')} {event.collector}</p>
           {event.allocations.length
-            ? <p>Applied to {event.allocations.map(allocation => `${displayMonth(allocation.month)} (${decimalPesos(allocation.amount)})`).join(', ')}</p>
-            : <p>Rent allocation details are unavailable in this snapshot.</p>}
-          {acknowledgment && <Button onClick={() => openAcknowledgment(acknowledgment)}>Open acknowledgment</Button>}
+            ? <p>{tr('Applied to', 'Gigamit sa')} {event.allocations.map(allocation => `${displayMonth(allocation.month)} (${decimalPesos(allocation.amount)})`).join(', ')}</p>
+            : <p>{tr('Rent allocation details are unavailable in this snapshot.', 'Wala makita ang detalye sa pagbahin sa bayad sa abang.')}</p>}
+          {acknowledgment && <Button onClick={() => openAcknowledgment(acknowledgment)}>{tr('Open acknowledgment', 'Ablihi ang resibo')}</Button>}
         </li>
       })}
-    </ol> : <p>No saved rent charges or confirmed cash appear in this account yet.</p>}
+    </ol> : <p>{tr('No saved rent charges or confirmed cash appear in this account yet.', 'Wala pay narekord nga bayranan sa abang o kumpirmadong kwarta niini nga account.')}</p>}
     <section className="statement-pending" aria-labelledby="statement-pending-heading">
-      <h4 id="statement-pending-heading">Cash reports awaiting confirmation</h4>
-      <p>These reports are not confirmed payments and are not included in the rent balance.</p>
+      <h4 id="statement-pending-heading">{tr('Cash reports awaiting confirmation', 'Mga report sa kwarta nga wala pa makumpirma')}</h4>
+      <p>{tr('These reports are not confirmed payments and are not included in the rent balance.', 'Wala pa makumpirma kining mga report sa bayad ug wala maapil sa balanse sa abang.')}</p>
       {pending.length ? <ul>
         {pending.map(payment => <li key={payment.id}>
-          <strong>{decimalPesos(payment.amount)}</strong> reported for {displayDate(payment.received_on)} · received by {payment.collector} · Pending verification
+          <strong>{decimalPesos(payment.amount)}</strong> {tr('reported for', 'gi-report para sa')} {displayDate(payment.received_on)} · {tr('received by', 'gidawat ni')} {payment.collector} · {tr('Pending verification', 'Naghulat og kumpirmasyon')}
         </li>)}
-      </ul> : <p>No pending cash reports for this agreement.</p>}
+      </ul> : <p>{tr('No pending cash reports for this agreement.', 'Walay pending nga report sa kwarta niini nga kasabotan.')}</p>}
     </section>
   </section>
 }

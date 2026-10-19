@@ -1,7 +1,7 @@
 import { SavedPayments } from './access/SavedPayments'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { Button } from './components/atoms'
+import { Button, LoadingSkeleton } from './components/atoms'
 import { WorkspaceIcon } from './components/WorkspaceIcon'
 import { dashboardPreview, hostedDevelopment, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
 import { Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
@@ -148,9 +148,9 @@ export function App() {
   const tenantList = snapshot?.tenants.filter(tenant => !role || tenant.property_id === propertyId) ?? []
   const activeTenantCount = tenantList.filter(tenant => !tenant.archived_at).length
   const workspaceStats = role ? [
-    { label: 'Active records', value: String(activeTenantCount), hint: `${tenantList.length} total records` },
-    { label: 'Authorized properties', value: String(snapshot?.properties.length ?? 0), hint: snapshot?.properties.length === 1 ? 'Current property ready' : 'Cross-property access' },
-    { label: 'Access level', value: role === 'owner' ? 'Owner' : 'Clerk', hint: role === 'owner' ? 'Can manage access' : 'Can work with records' },
+    { label: translateText(language, 'Active records', 'Aktibong rekord'), value: String(activeTenantCount), hint: `${tenantList.length} ${translateText(language, 'total records', 'kinatibuk-ang rekord')}` },
+    { label: translateText(language, 'Authorized properties', 'Mga propiedad nga gitugotan'), value: String(snapshot?.properties.length ?? 0), hint: snapshot?.properties.length === 1 ? translateText(language, 'Current property ready', 'Andam ang propiedad') : translateText(language, 'Cross-property access', 'Access sa daghang propiedad') },
+    { label: translateText(language, 'Access level', 'Klase sa access'), value: role === 'owner' ? translateText(language, 'Owner', 'Tag-iya') : 'Clerk', hint: role === 'owner' ? translateText(language, 'Can manage access', 'Makadumala sa access') : translateText(language, 'Can work with records', 'Makagamit sa mga rekord') },
   ] : []
   const translate = (english: string, bisaya: string) => language === 'ceb' ? bisaya : english
   const navigationItems: NavigationItem[] = role ? [
@@ -184,7 +184,7 @@ export function App() {
   }
 
   function staffNavigation() {
-    return <nav aria-label="Property workspace">
+    return <nav aria-label={translateText(language, 'Property workspace', 'Workspace sa propiedad')}>
       <ul className="workspace-links">{navigationItems.map(item =>
         <li key={item.id}>
           <a href={`#${item.id}`} aria-current={activeSection === item.id ? 'location' : undefined}
@@ -196,22 +196,22 @@ export function App() {
   }
 
   return <div className={`app-shell ${route === 'sign-in' ? 'sign-in-shell' : ''} ${dashboardPreview ? 'focused-preview' : ''}`}>
-    <a className="skip-link" href="#main">Skip to content</a>
+    <a className="skip-link" href="#main">{t.skipContent}</a>
     <div className="environment-note">{dashboardPreview ? 'Fictional preview · Offline sample data' : hostedDevelopment ? 'Hosted development · Sign-in + MFA' : supabase ? 'Local development · Sign-in + MFA' : 'Development · Connection not configured'}</div>
     <header className="site-header">
       <div className="shell header-inner">
         <a className="brand" href="/" aria-label="RentByBob home"><span className="brand-mark" aria-hidden="true">R</span><span>Rent<span className="brand-accent">ByBob</span></span></a>
         <div className="session-tools">
           {session && <div className="session-identity">
-            <span className="signed-in-label">{dashboardPreview ? 'Workspace mode' : 'Signed in as'}</span>
+            <span className="signed-in-label">{dashboardPreview ? translateText(language, 'Workspace mode', 'Workspace') : translateText(language, 'Signed in as', 'Nakasulod isip')}</span>
             <span className="account-email">{dashboardPreview ? 'Fictional sample account' : session.user.email}</span>
           </div>}
           <div className="session-actions">
-            <Button className="quiet-button" aria-label={`Use ${theme === 'dark' ? 'day' : 'night'} mode`} aria-pressed={theme === 'dark'} onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? 'Day mode' : 'Night mode'}</Button>
-            <Button className="quiet-button" aria-label={language === 'en' ? 'Ipakita ang Bisaya' : 'Show English'} aria-pressed={language === 'ceb'} onClick={() => setLanguage(current => current === 'en' ? 'ceb' : 'en')}>{language === 'en' ? 'English · Bisaya' : 'Bisaya · English'}</Button>
-            {session && !dashboardPreview && <Button className="quiet-button" onClick={() => void signOut()}>Sign out</Button>}
+            <Button className="quiet-button" aria-label={`${translateText(language, 'Use', 'Gamita ang')} ${theme === 'dark' ? t.dayMode : t.nightMode}`} aria-pressed={theme === 'dark'} onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? t.dayMode : t.nightMode}</Button>
+            <Button className="quiet-button" aria-label={language === 'en' ? t.showBisaya : t.showEnglish} aria-pressed={language === 'ceb'} onClick={() => setLanguage(current => current === 'en' ? 'ceb' : 'en')}>{language === 'en' ? `${t.english} · ${t.bisaya}` : `${t.bisaya} · ${t.english}`}</Button>
+            {session && !dashboardPreview && <Button className="quiet-button" onClick={() => void signOut()}>{t.signOut}</Button>}
             {import.meta.env.DEV && (!session || role) && <Button className="quiet-button" onClick={() => { location.href = dashboardPreview ? '/?auth=1' : '/?preview=1' }}>
-              {dashboardPreview ? 'Return to account app' : 'Open fictional preview'}
+              {dashboardPreview ? t.returnAccount : t.openPreview}
             </Button>}
           </div>
         </div>
@@ -219,62 +219,62 @@ export function App() {
     </header>
     <div className="shell page-shell">
       <main id="main" tabIndex={-1} className={role && route === 'ready' ? 'staff-main' : ''}>
-        {dashboardPreview && <p className="notice" role="status"><strong>Fictional dashboard preview - sign-in skipped.</strong> Sample records are isolated from your account. Changes reset on reload. This mode makes no Supabase requests, database writes or emails.</p>}
+        {dashboardPreview && <p className="notice" role="status"><strong>{translate('Fictional dashboard preview - sign-in skipped.', 'Sample nga dashboard - wala magsulod sa account.')}</strong> {translate('Sample records are isolated from your account. Changes reset on reload. This mode makes no Supabase requests, database writes or emails.', 'Lahi ang sample nga rekord sa imong account. Mawala ang kausaban inig reload. Walay Supabase request, database write o email niining mode.')}</p>}
         <div className="page-intro">
-          <p className="eyebrow">{role ? (language === 'ceb' ? 'WORKSPACE SA PROPIEDAD' : 'PROPERTY WORKSPACE') : session ? (language === 'ceb' ? 'IMONG ACCOUNT' : 'YOUR ACCOUNT') : 'YOUR RENTAL SPACE, SIMPLIFIED'}</p>
+          <p className="eyebrow">{role ? translate('PROPERTY WORKSPACE', 'WORKSPACE SA PROPIEDAD') : session ? translate('YOUR ACCOUNT', 'IMONG ACCOUNT') : translate('YOUR RENTAL SPACE, SIMPLIFIED', 'Sayon nga pagdumala sa imong giabangan')}</p>
           <h1 ref={heading} tabIndex={-1} className="route-heading">
-            {route === 'loading' || route === 'checking' ? translate('Checking access', 'Gisusi ang access')
+            {route === 'loading' || route === 'checking' ? t.checkingAccess
               : route === 'ready' ? role ? `${role === 'owner' ? (language === 'ceb' ? 'Tag-iya' : 'Owner') : (language === 'ceb' ? 'Clerk' : 'Clerk')} ${language === 'ceb' ? 'workspace' : 'workspace'}` : translate('Your rental records', 'Imong mga rekord sa abang')
                 : route === 'sign-in' ? translate('A little less hassle. A little more home.', 'Mas sayon ang pagdumala sa abang.')
                   : route === 'disabled' ? translate('Access disabled', 'Wala na ang access')
                         : route === 'pending' ? translate('Invitation pending', 'Naghulat ang imbitasyon')
-                          : route === 'unassigned' ? translate('Waiting for access', 'Naghulat og access') : translate('Your rental account', 'Imong account sa abang')}
+                          : route === 'unassigned' ? t.waitingAccess : translate('Your rental account', 'Imong account sa abang')}
           </h1>
           {route === 'sign-in' && <p className="page-summary">{t.appSummary}</p>}
-          {route === 'ready' && !role && <p className="page-summary">View the rental records your property owner has shared with you.</p>}
-          {route === 'sign-in' && <div className="welcome-points"><div><span className="welcome-number">01</span><span><strong>Your records</strong><small>Only the information shared with you.</small></span></div><div><span className="welcome-number">02</span><span><strong>Your own account</strong><small>Invited by your property. Managed by you.</small></span></div></div>}
+          {route === 'ready' && !role && <p className="page-summary">{t.yourSharedRecords}</p>}
+          {route === 'sign-in' && <div className="welcome-points"><div><span className="welcome-number">01</span><span><strong>{t.yourRecords}</strong><small>{t.onlySharedInfo}</small></span></div><div><span className="welcome-number">02</span><span><strong>{t.yourOwnAccount}</strong><small>{t.invitedManaged}</small></span></div></div>}
         </div>
 
         {!supabase ? <section className="card auth-card">
-          <h2>Development connection is not configured</h2>
-          <p>Start local development with <code>npm.cmd run dev:local</code>, or the configured hosted development environment with <code>npm.cmd run dev:hosted</code>. No prototype records are substituted.</p>
-        </section> : booting ? <p role="status">Loading your session…</p>
-          : callbackError ? <><Feedback message={callbackError} error /><Button className="primary" onClick={() => { setCallbackError(''); void signOut() }}>Return to sign-in</Button></>
+          <h2>{t.noConnection}</h2>
+          <p>{translate('Start local development with', 'Sugdi ang local development gamit ang')} <code>npm.cmd run dev:local</code>{translate(', or the configured hosted development environment with', ', o ang naka-set up nga hosted development gamit ang')} <code>npm.cmd run dev:hosted</code>. {translate('No prototype records are substituted.', 'Walay prototype nga rekord nga ipuli.')}</p>
+        </section> : booting ? <LoadingSkeleton label={t.sessionLoading} rows={4} />
+          : callbackError ? <><Feedback message={callbackError} error /><Button className="primary" onClick={() => { setCallbackError(''); void signOut() }}>{t.returnSignIn}</Button></>
             : !session ? <SignIn language={language} />
               : <>
                 <Feedback message={error} error />
-                {!dashboardPreview && snapshot && !snapshot.mfa && !setup && <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>Refresh access</Button>}
-                {!snapshot ? <p role="status" className="loading-state">{error ? 'Records unavailable.' : 'Checking your current permissions…'}</p>
-                  : snapshot.mfa ? <Mfa done={() => void refresh()} />
-                    : setup ? <PasswordSetup done={() => { sessionStorage.removeItem(`password-setup:${session.user.id}`); setSetup(false); void refresh() }} />
+                {!dashboardPreview && snapshot && !snapshot.mfa && !setup && <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>{translate('Refresh access', 'I-refresh ang access')}</Button>}
+                {!snapshot ? error ? <p role="status" className="loading-state">{t.recordsUnavailable}</p> : <LoadingSkeleton label={t.checkingPermissions} rows={4} />
+                  : snapshot.mfa ? <Mfa done={() => void refresh()} language={language} />
+                    : setup ? <PasswordSetup language={language} done={() => { sessionStorage.removeItem(`password-setup:${session.user.id}`); setSetup(false); void refresh() }} />
                       : snapshot.access.state !== 'ready' ? <section className="card access-state-card">
-                        <p className={`status status--${snapshot.access.state}`}>{stateLabels[snapshot.access.state] ?? 'Access not available'}</p>
-                        <h2>{snapshot.access.state === 'disabled' ? 'Your access has been turned off'
-                          : snapshot.access.state === 'pending' ? 'Your invitation is not yet confirmed'
-                            : 'Your account is waiting for access'}</h2>
+                        <p className={`status status--${snapshot.access.state}`}>{language === 'ceb' ? (snapshot.access.state === 'pending' ? 'Naghulat' : snapshot.access.state === 'disabled' ? 'Gipalong' : 'Wala ma-assign') : (stateLabels[snapshot.access.state] ?? t.noAccessAvailable)}</p>
+                        <h2>{snapshot.access.state === 'disabled' ? t.accessDisabledTitle
+                          : snapshot.access.state === 'pending' ? t.invitationUnconfirmed
+                            : t.waitingAccess}</h2>
                         <p>{snapshot.access.state === 'disabled'
-                          ? 'Your previous access is disabled. Contact the property owner to review it.'
+                          ? t.contactOwnerReview
                           : snapshot.access.state === 'pending'
-                            ? 'Follow the invitation link sent to your email address. If the invitation has expired or you cannot find it, contact the property owner.'
-                            : 'You are signed in, but an owner has not assigned property or tenant access yet. Contact the owner with this account email.'}</p>
-                        <p>No rental records are available to this account until access is assigned.</p>
+                            ? t.followInvitation
+                            : t.signedNoAccess}</p>
+                        <p>{t.noRecordsUntilAssigned}</p>
                       </section> : role ? <>
                         <div className="mobile-workspace-navigation">
                           <details ref={mobileNavigation}>
-                            <summary><span>Workspace navigation</span><small>{navigationItems.find(item => item.id === activeSection)?.label}</small></summary>
+                            <summary><span>{t.workspaceNavigation}</span><small>{navigationItems.find(item => item.id === activeSection)?.label}</small></summary>
                             {staffNavigation()}
                           </details>
                         </div>
                         <div className="workspace-layout">
                           <aside className="workspace-sidebar">
-                            <p className="sidebar-label">WORKSPACE</p>
+                            <p className="sidebar-label">{t.workspace}</p>
                             {staffNavigation()}
                           </aside>
                           <div className="workspace-content">
                             <div className="workspace-toolbar" hidden={dashboardPreview}>
-                              <p className="status status--ready">Account ready</p>
+                              <p className="status status--ready">{t.accountReady}</p>
                               <div className="property-picker">
-                                <label htmlFor="property">Authorized property</label>
+                                <label htmlFor="property">{t.property}</label>
                                 <select id="property" value={propertyId} onChange={event => {
                                   setPropertyId(event.target.value)
                                   setBackup(false)
@@ -296,7 +296,7 @@ export function App() {
                                 </div>
                               </div>
                             </section>
-                            <section hidden={activeSection !== 'home'} className="workspace-overview" aria-label="Property workspace summary">
+                            <section hidden={activeSection !== 'home'} className="workspace-overview" aria-label={translate('Property workspace summary', 'Kinatibuk-ang kahimtang sa propiedad')}>
                               {workspaceStats.map(stat => (
                                 <article key={stat.label} className="stat-card">
                                   <span className="stat-label">{stat.label}</span>
@@ -308,32 +308,32 @@ export function App() {
                             {preview && <div hidden={activeSection !== 'tenant-records'} tabIndex={-1} id="preview-tenant-records"><preview.TenantDirectoryPreview openPayments={() => selectSection('payment-records')} openMap={() => selectSection('property-locations')} addTenant={() => selectSection('create-tenant')} language={language} /></div>}
                             {!preview && <section hidden={activeSection !== 'tenant-records'} tabIndex={-1} className="card directory-card" id="tenant-records" aria-labelledby="tenant-records-heading">
                               <div className="section-heading">
-                                <div><p className="eyebrow">{language === 'ceb' ? 'MGA TAWO UG NEGOSYO' : 'PEOPLE AND BUSINESSES'}</p><h2 id="tenant-records-heading">{t.tenantDirectory}</h2></div>
-                                <Button className="primary" onClick={() => selectSection('create-tenant')}>Add tenant</Button><span className="record-count">{tenantList.length} {tenantList.length === 1 ? 'record' : 'records'}</span>
+                                <div><p className="eyebrow">{translate('PEOPLE AND BUSINESSES', 'MGA TAWO UG NEGOSYO')}</p><h2 id="tenant-records-heading">{t.tenantDirectory}</h2></div>
+                                <Button className="primary" onClick={() => selectSection('create-tenant')}>{translate('Add tenant', 'Idugang ang nag-abang')}</Button><span className="record-count">{tenantList.length} {translate('records', 'ka rekord')}</span>
                               </div>
                               <p>{translate('Find the people and businesses connected to this property.', 'Pangitaa ang mga tawo ug negosyo nga nalambigit niining propiedad.')}</p>
                               <label htmlFor="tenant-search">{translate('Search tenants by name', 'Pangitaa ang nag-abang pinaagi sa ngalan')}</label>
                               <input id="tenant-search" value={search} onChange={event => setSearch(event.target.value)} type="search" autoComplete="off" aria-describedby="tenant-search-help" />
-                              <p className="field-help" id="tenant-search-help">Results update as you type.</p>
+                              <p className="field-help" id="tenant-search-help">{translate('Results update as you type.', 'Ma-update ang resulta samtang magsulat ka.')}</p>
                               {tenantList.length > 0 && <ul className="records tenant-records">
                                 {tenantList.filter(tenant => tenant.display_name.toLowerCase().includes(search.trim().toLowerCase())).map(tenant =>
                                   <li key={tenant.id} className="tenant-record">
                                     <span className="record-initial" aria-hidden="true">{tenant.display_name.trim().slice(0, 1).toLocaleUpperCase()}</span>
                                     <div className="tenant-record-copy">
                                       <strong>{tenant.display_name}</strong>
-                                      <p>{tenant.kind === 'business' ? 'Business tenant' : 'Individual tenant'}</p>
+                                      <p>{tenant.kind === 'business' ? t.businessTenant : t.individualTenant}</p>
                                     </div>
-                                    <span className={`status status--${tenant.archived_at ? 'archived' : 'ready'}`}>{tenant.archived_at ? 'Archived' : 'Active'}</span>
+                                    <span className={`status status--${tenant.archived_at ? 'archived' : 'ready'}`}>{tenant.archived_at ? t.archived : t.active}</span>
                                   </li>)}
                               </ul>}
                               {tenantList.length === 0 && <div className="empty-state">
-                                <h3>No rental records yet</h3>
-                                <p>Start by adding a tenant record. Account invitations and access are managed separately.</p>
+                                <h3>{t.noRecordsYet}</h3>
+                                <p>{translate('Start by adding a tenant record. Account invitations and access are managed separately.', 'Sugdi pinaagi sa pagdugang og rekord sa nag-abang. Lahi ang mga imbitasyon ug paghatag og access.')}</p>
                               </div>}
                               {tenantList.length > 0 && !tenantList.some(tenant => tenant.display_name.toLowerCase().includes(search.trim().toLowerCase())) && <div className="empty-state">
-                                <h3>No matches found</h3>
-                                <p>No tenant records match “{search.trim()}”. Clear the search to see the full directory.</p>
-                                <Button className="secondary-button" onClick={() => setSearch('')}>Clear search</Button>
+                                <h3>{translate('No matches found', 'Walay nakit-an nga katugbang')}</h3>
+                                <p>{translate('No tenant records match', 'Walay rekord sa nag-abang nga katugbang sa')} “{search.trim()}”. {translate('Clear the search to see the full directory.', 'Hawani ang pangita aron makita ang tibuok lista.')}</p>
+                                <Button className="secondary-button" onClick={() => setSearch('')}>{translate('Clear search', 'Hawani ang pangita')}</Button>
                               </div>}
                             </section>}
                             <div id="property-locations" hidden={activeSection !== 'property-locations'} tabIndex={-1} className="workspace-section">{preview ? <preview.PropertyMapPreview addTenant={() => selectSection('create-tenant')} language={language} /> : <PropertyDirectory key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} />}</div>
@@ -342,39 +342,39 @@ export function App() {
                               <div id="invite-account" hidden={activeSection !== 'invite-account'} tabIndex={-1} className="workspace-section"><Invitations key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} /></div>
                             {role === 'owner' && <>
                               <div id="manage-access" hidden={activeSection !== 'manage-access'} tabIndex={-1} className="workspace-section"><ManageAccess key={`access:${propertyId}`} propertyId={propertyId} tenants={tenantList} changed={() => void refresh()} language={language} /></div>
-                              <div id="invitation-review" hidden={activeSection !== 'invitation-review'} tabIndex={-1} className="workspace-section"><InvitationReconciliation key={`invitation-reconciliation:${propertyId}`} propertyId={propertyId} /></div>
-                              <div id="access-history" hidden={activeSection !== 'access-history'} tabIndex={-1} className="workspace-section"><AccessAudit key={`audit:${propertyId}`} propertyId={propertyId} /></div>
+                              <div id="invitation-review" hidden={activeSection !== 'invitation-review'} tabIndex={-1} className="workspace-section"><InvitationReconciliation key={`invitation-reconciliation:${propertyId}`} propertyId={propertyId} language={language} /></div>
+                              <div id="access-history" hidden={activeSection !== 'access-history'} tabIndex={-1} className="workspace-section"><AccessAudit key={`audit:${propertyId}`} propertyId={propertyId} language={language} /></div>
                             </>}
                             <section hidden={activeSection !== 'account-security'} tabIndex={-1} className="card account-security" id="account-security">
-                              <p className="eyebrow">SIGN-IN AND RECOVERY</p>
+                              <p className="eyebrow">{translate('SIGN-IN AND RECOVERY', 'PAGSULOD UG PAG-RECOVER SA ACCOUNT')}</p>
                               <h2>{t.accountSecurity}</h2>
                               <p>{translate('Enroll a backup authenticator on a separate device before losing access to your main one. Password recovery does not bypass staff MFA.', 'Idugang ang laing pang-authenticator sa lahi nga device aron naa kay lain magamit. Ang pag-usab sa password dili makatangtang sa security check sa staff.')}</p>
-                              <Button disabled={dashboardPreview} className="secondary-button" onClick={() => setBackup(!backup)}>{backup ? 'Close backup setup' : 'Add a backup authenticator'}</Button>
-                              {backup && <Mfa backup done={() => { setBackup(false); void refresh() }} />}
+                              <Button disabled={dashboardPreview} className="secondary-button" onClick={() => setBackup(!backup)}>{backup ? t.closeBackup : t.addBackup}</Button>
+                              {backup && <Mfa backup language={language} done={() => { setBackup(false); void refresh() }} />}
                             </section>
                           </div>
                         </div>
                       </> : <>
-                        <p className="status status--ready renter-status">Account ready</p>
+                        <p className="status status--ready renter-status">{t.accountReady}</p>
                         <section className="card renter-records-card" aria-labelledby="renter-records-heading">
-                          <div className="section-heading"><div><p className="eyebrow">SHARED WITH YOUR ACCOUNT</p><h2 id="renter-records-heading">Your rental records</h2></div></div>
+                          <div className="section-heading"><div><p className="eyebrow">{t.renterRecordsHeading}</p><h2 id="renter-records-heading">{t.yourRecords}</h2></div></div>
                           {snapshot.properties.length > 1 && <div className="property-picker">
-                            <label htmlFor="property">Property</label>
+                            <label htmlFor="property">{t.propertyLabel}</label>
                             <select id="property" value={propertyId} onChange={event => setPropertyId(event.target.value)}>
                               {snapshot.properties.map(property => <option key={property.id} value={property.id}>{property.name}</option>)}
                             </select>
                           </div>}
-                          <p>These are the tenant records your property has authorized for this account. Payment history, balances and online payments are not available here.</p>
+                          <p>{t.recordsSharedNoFinancial}</p>
                           {tenantList.length > 0 ? <ul className="records tenant-records">
                             {tenantList.map(tenant =>
                               <li key={tenant.id} className="tenant-record">
                                 <span className="record-initial" aria-hidden="true">{tenant.display_name.trim().slice(0, 1).toLocaleUpperCase()}</span>
-                                <div className="tenant-record-copy"><strong>{tenant.display_name}</strong><p>{tenant.kind === 'business' ? 'Business tenant' : 'Individual tenant'}</p></div>
-                                <span className={`status status--${tenant.archived_at ? 'archived' : 'ready'}`}>{tenant.archived_at ? 'Archived' : 'Active'}</span>
+                                <div className="tenant-record-copy"><strong>{tenant.display_name}</strong><p>{tenant.kind === 'business' ? t.businessTenant : t.individualTenant}</p></div>
+                                <span className={`status status--${tenant.archived_at ? 'archived' : 'ready'}`}>{tenant.archived_at ? t.archived : t.active}</span>
                               </li>)}
                           </ul> : <div className="empty-state">
-                            <h3>No rental records yet</h3>
-                            <p>There are no records shared with this account for the selected property. Contact the property owner if you expected to see one.</p>
+                            <h3>{t.noRecordsYet}</h3>
+                            <p>{t.noRecordsShared}</p>
                           </div>}
                         </section>
                       </>}
@@ -387,6 +387,7 @@ export function App() {
 
 function CreateTenant({ propertyId, done, language = 'en' }: { propertyId: string; done: () => void; language?: Language }) {
   const t = copy[language]
+  const tr = (english: string, bisaya: string) => translateText(language, english, bisaya)
   const requestId = useRef(crypto.randomUUID())
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
@@ -417,13 +418,13 @@ function CreateTenant({ propertyId, done, language = 'en' }: { propertyId: strin
         done()
       } catch {
         setFailed(true)
-        setMessage('Save could not be confirmed. Keep the same details when retrying; the request identifier prevents a duplicate record.')
+        setMessage(tr('Save could not be confirmed. Keep the same details when retrying; the request identifier prevents a duplicate record.', 'Wala makumpirma ang pag-save. Gamita gihapon ang mao nga detalye kung mosulay pag-usab; malikayan sa request ID ang doble nga rekord.'))
       } finally { setBusy(false) }
     }}>
       <label htmlFor="tenant-name">{translateText(language, 'Tenant display name', 'Ngalan sa nag-abang')}</label>
       <input id="tenant-name" name="tenant-name" autoComplete="off" required maxLength={200} />
       <label htmlFor="tenant-kind">{translateText(language, 'Tenant type', 'Klase sa nag-abang')}</label>
-      <select id="tenant-kind" name="tenant-kind"><option value="individual">Individual</option><option value="business">Business</option></select>
+      <select id="tenant-kind" name="tenant-kind"><option value="individual">{tr('Individual','Tawo')}</option><option value="business">{tr('Business','Negosyo')}</option></select>
       <Button className="primary" disabled={busy}>{busy ? translateText(language, 'Saving tenant record…', 'Girekord ang nag-abang…') : translateText(language, 'Create tenant record', 'Paghimo og rekord sa nag-abang')}</Button>
     </form>
   </section>

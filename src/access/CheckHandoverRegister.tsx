@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '../components/atoms'
 import type { SavedCheck, SavedHandover } from './saved-payments-model'
 import { decimalPesos } from './CashAcknowledgment'
+import { text, type Language } from '../i18n'
 
 type Agreement = { id:string; tenant_id:string; unit_id:string }
 type Snapshot = { checks:SavedCheck[]; handovers:SavedHandover[]; clerks:{user_id:string}[]; agreements:Agreement[]; units:{id:string;label:string;building_id:string}[]; buildings:{id:string;label:string}[] }
@@ -15,7 +16,8 @@ function sameAmount(a:string,b:string) {
  return left!==null&&right!==null&&left===right
 }
 
-export function CheckHandoverRegister({data,tenants,owner,canRecordCheck,busy,mutate}:{data:Snapshot;tenants:{id:string;display_name:string}[];owner:boolean;canRecordCheck:boolean;busy:boolean;mutate:Mutate}) {
+export function CheckHandoverRegister({data,tenants,owner,canRecordCheck,busy,mutate,language='en'}:{data:Snapshot;tenants:{id:string;display_name:string}[];owner:boolean;canRecordCheck:boolean;busy:boolean;mutate:Mutate;language?:Language}) {
+ const tr=(english:string,bisaya:string)=>text(language,english,bisaya)
  const [reason,setReason]=useState<Record<string,string>>({})
  const [handoverMessage,setHandoverMessage]=useState('')
  const [handoverError,setHandoverError]=useState('')
@@ -28,58 +30,58 @@ export function CheckHandoverRegister({data,tenants,owner,canRecordCheck,busy,mu
  }
  async function transition(check:SavedCheck,action:'deposited'|'cleared'|'returned'|'reversed') {
   const text=reason[check.id]?.trim()??''
-  if(action==='reversed'&&!text){setHandoverError('A reason is required to reverse a cleared check.');return}
+  if(action==='reversed'&&!text){setHandoverError(tr('A reason is required to reverse a cleared check.','Kinahanglan og rason sa pagbawi sa kumpirmadong tseke.'));return}
   const saved=await mutate('transition_rent_check',{p_check_id:check.id,p_action:action,p_reason:text})
   if(saved!==false)setReason(value=>({...value,[check.id]:''}))
  }
  return <>
   <section className="card" aria-labelledby="checks-heading">
-   <h3 id="checks-heading">Check register</h3>
-   <p>Reference numbers are generated in order. A check does not reduce rent until the owner marks it cleared after bank confirmation.</p>
+   <h3 id="checks-heading">{tr('Check register','Lista sa mga tseke')}</h3>
+   <p>{tr('Reference numbers are generated in order. A check does not reduce rent until the owner marks it cleared after bank confirmation.','Sunod-sunod ang mga reference number. Dili moubos ang abang tungod sa tseke hangtod kumpirmahon sa tag-iya ang clearance sa bangko.')}</p>
    {canRecordCheck&&data.agreements.length>0&&<form className="rent-setup" onSubmit={event=>{event.preventDefault();const form=new FormData(event.currentTarget);void mutate('record_rent_check',{p_agreement_id:String(form.get('agreement')),p_amount:String(form.get('amount')),p_received_on:String(form.get('date')),p_check_date:String(form.get('checkDate')),p_collector:String(form.get('collector'))})}}>
-    <h4>Record check received</h4>
-    <label htmlFor="check-agreement">Tenant / room</label><select id="check-agreement" name="agreement" required><option value="">Choose an agreement</option>{data.agreements.map(a=><option key={a.id} value={a.id}>{tenants.find(t=>t.id===a.tenant_id)?.display_name??'Tenant'} / {data.units.find(u=>u.id===a.unit_id)?.label??'Room'}</option>)}</select>
-    <label htmlFor="check-amount">Amount (PHP)</label><input id="check-amount" name="amount" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" required />
-    <label htmlFor="check-date">Date received</label><input id="check-date" name="date" type="date" max={today} required />
-    <label htmlFor="check-written-date">Date written on check</label><input id="check-written-date" name="checkDate" type="date" required />
-    <label htmlFor="check-collector">Received by</label><select id="check-collector" name="collector"><option>James</option><option>Bob</option></select>
-    <Button disabled={busy} className="primary">Save check received</Button>
+    <h4>{tr('Record check received','Irekord ang nadawat nga tseke')}</h4>
+    <label htmlFor="check-agreement">{tr('Tenant / room','Nag-abang / kwarto')}</label><select id="check-agreement" name="agreement" required><option value="">{tr('Choose an agreement','Pagpili og kasabotan')}</option>{data.agreements.map(a=><option key={a.id} value={a.id}>{tenants.find(t=>t.id===a.tenant_id)?.display_name??'Tenant'} / {data.units.find(u=>u.id===a.unit_id)?.label??'Room'}</option>)}</select>
+    <label htmlFor="check-amount">{tr('Amount (PHP)','Kantidad (PHP)')}</label><input id="check-amount" name="amount" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" required />
+    <label htmlFor="check-date">{tr('Date received','Petsa nga nadawat')}</label><input id="check-date" name="date" type="date" max={today} required />
+    <label htmlFor="check-written-date">{tr('Date written on check','Petsa nga nakasulat sa tseke')}</label><input id="check-written-date" name="checkDate" type="date" required />
+    <label htmlFor="check-collector">{tr('Received by','Gidawat ni')}</label><select id="check-collector" name="collector"><option>James</option><option>Bob</option></select>
+    <Button disabled={busy} className="primary">{tr('Save check received','I-save ang nadawat nga tseke')}</Button>
    </form>}
-   {!canRecordCheck&&<p>Only an authorized clerk can record check receipt.</p>}
-   {!data.checks.length?<p role="status">No checks recorded.</p>:data.checks.map(check=>{
+   {!canRecordCheck&&<p>{tr('Only an authorized clerk can record check receipt.','Ang gitugot nga clerk lang ang makarekord sa nadawat nga tseke.')}</p>}
+   {!data.checks.length?<p role="status">{tr('No checks recorded.','Walay tseke nga narekord.')}</p>:data.checks.map(check=>{
     const who=nameForCheck(check)
     return <article className="cash-queue-row" key={check.id}>
      <div><strong>{check.reference} · {who.tenant}</strong><p>{who.space}</p></div>
-     <div><strong>{decimalPesos(check.amount)}</strong><p>Received {check.received_on} by {check.collector} · Check dated {check.check_date}</p></div>
-     <p className={`status status--${check.status}`}>{check.status==='received'?'Received — not settled':check.status==='deposited'?'Deposited — awaiting clearance':check.status[0].toUpperCase()+check.status.slice(1)}</p>
-     {check.events.length>0&&<details><summary>Check history</summary><ul>{check.events.map((event,index)=><li key={`${event.occurred_at}-${index}`}>{event.action} · {localTime(event.occurred_at)} · account {event.actor_id} · {event.reason}</li>)}</ul></details>}
+     <div><strong>{decimalPesos(check.amount)}</strong><p>{tr('Received','Nadawat')} {check.received_on} {tr('by','ni')} {check.collector} · {tr('Check dated','Petsa sa tseke')} {check.check_date}</p></div>
+     <p className={`status status--${check.status}`}>{check.status==='received'?tr('Received — not settled','Nadawat — wala pa mabayri'):check.status==='deposited'?tr('Deposited — awaiting clearance','Gideposito — naghulat sa clearance'):language==='ceb'?({cleared:'Gikumpirma sa bangko',returned:'Gibalik sa bangko',reversed:'Gibawi ang kumpirmasyon'} as Record<string,string>)[check.status]??check.status:check.status[0].toUpperCase()+check.status.slice(1)}</p>
+     {check.events.length>0&&<details><summary>{tr('Check history','Kasaysayan sa tseke')}</summary><ul>{check.events.map((event,index)=><li key={`${event.occurred_at}-${index}`}>{language==='ceb'?({received:'Nadawat',deposited:'Gideposito',cleared:'Gikumpirma sa bangko',returned:'Gibalik',reversed:'Gibawi'} as Record<string,string>)[event.action]??event.action:event.action} · {localTime(event.occurred_at)} · {tr('account','account')} {event.actor_id} · {event.reason}</li>)}</ul></details>}
      {owner&&check.status!=='returned'&&check.status!=='reversed'&&<div className="rent-setup">
-      <label htmlFor={`check-reason-${check.id}`}>Owner note (reason required for reversal)</label><input id={`check-reason-${check.id}`} value={reason[check.id]??''} onChange={event=>setReason(value=>({...value,[check.id]:event.target.value}))} maxLength={500} />
+      <label htmlFor={`check-reason-${check.id}`}>{tr('Owner note (reason required for reversal)','Nota sa tag-iya (kinahanglan og rason sa pagbawi)')}</label><input id={`check-reason-${check.id}`} value={reason[check.id]??''} onChange={event=>setReason(value=>({...value,[check.id]:event.target.value}))} maxLength={500} />
       <div className="person-actions">
-       {check.status==='received'&&<Button disabled={busy} onClick={()=>void transition(check,'deposited')}>Record deposit</Button>}
-       {check.status==='deposited'&&<Button disabled={busy} onClick={()=>void transition(check,'cleared')}>Confirm bank clearance</Button>}
-       <Button disabled={busy} onClick={()=>void transition(check,'returned')}>Record returned</Button>
-       {check.status==='cleared'&&<Button disabled={busy} onClick={()=>void transition(check,'reversed')}>Reverse cleared check</Button>}
+       {check.status==='received'&&<Button disabled={busy} onClick={()=>void transition(check,'deposited')}>{tr('Record deposit','Irekord ang deposito')}</Button>}
+       {check.status==='deposited'&&<Button disabled={busy} onClick={()=>void transition(check,'cleared')}>{tr('Confirm bank clearance','Kumpirmaha ang clearance sa bangko')}</Button>}
+       <Button disabled={busy} onClick={()=>void transition(check,'returned')}>{tr('Record returned','Irekord nga gibalik')}</Button>
+       {check.status==='cleared'&&<Button disabled={busy} onClick={()=>void transition(check,'reversed')}>{tr('Reverse cleared check','Bawiha ang kumpirmadong tseke')}</Button>}
       </div>
      </div>}
     </article>
    })}
   </section>
   {owner&&<section className="card" aria-labelledby="handover-heading">
-   <h3 id="handover-heading">Collection handover log</h3>
-   <p>Record the clerk’s stated totals and the amount the owner actually received. This is a comparison record only; differences do not change renter balances.</p>
+   <h3 id="handover-heading">{tr('Collection handover log','Rekord sa pagtugyan sa koleksiyon')}</h3>
+   <p>{tr('Record the clerk’s stated totals and the amount the owner actually received. This is a comparison record only; differences do not change renter balances.','Irekord ang total nga giingon sa clerk ug ang tinuod nga nadawat sa tag-iya. Pagtandi lang kini; dili mausab ang balanse sa nag-abang bisan adunay kalainan.')}</p>
    {handoverError&&<p role="alert" className="notice">{handoverError}</p>}{handoverMessage&&<p role="status" className="notice">{handoverMessage}</p>}
-   <form className="rent-setup" onSubmit={async event=>{event.preventDefault();setHandoverError('');setHandoverMessage('');const form=event.currentTarget;const values=new FormData(form);const expectedCash=String(values.get('expectedCash'));const expectedChecks=String(values.get('expectedChecks'));const actualCash=String(values.get('actualCash'));const actualChecks=String(values.get('actualChecks'));const note=String(values.get('reason'));const different=!sameAmount(expectedCash,actualCash)||!sameAmount(expectedChecks,actualChecks);if(different&&!note.trim()){setHandoverError('Explain any difference between the expected and received totals.');return}const saved=await mutate('record_collection_handover',{p_clerk_id:String(values.get('clerk')),p_handover_on:String(values.get('date')),p_expected_cash:expectedCash,p_expected_checks:expectedChecks,p_actual_cash:actualCash,p_actual_checks:actualChecks,p_difference_reason:note},true);if(saved!==false){form.reset();setHandoverMessage('Handover recorded. Renter balances were not changed.')}}}>
-    <label htmlFor="handover-clerk">Clerk handing over</label><select id="handover-clerk" name="clerk" required><option value="">Choose clerk</option>{data.clerks.map(item=><option key={item.user_id} value={item.user_id}>{item.user_id}</option>)}</select>
-    <label htmlFor="handover-date">Handover date</label><input id="handover-date" name="date" type="date" max={today} required />
-    <label htmlFor="handover-expected-cash">Cash the clerk says was handed over (PHP)</label><input id="handover-expected-cash" name="expectedCash" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" defaultValue="0.00" required />
-    <label htmlFor="handover-expected-checks">Checks the clerk says were handed over (PHP)</label><input id="handover-expected-checks" name="expectedChecks" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" defaultValue="0.00" required />
-    <label htmlFor="handover-actual-cash">Cash actually received by owner (PHP)</label><input id="handover-actual-cash" name="actualCash" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" defaultValue="0.00" required />
-    <label htmlFor="handover-actual-checks">Checks actually received by owner (PHP)</label><input id="handover-actual-checks" name="actualChecks" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" defaultValue="0.00" required />
-    <label htmlFor="handover-reason">Difference reason (required if totals do not match)</label><input id="handover-reason" name="reason" maxLength={500} />
-    <Button disabled={busy||!data.clerks.length} className="primary">Save handover</Button>{!data.clerks.length&&<p>No active clerk account is available.</p>}
+   <form className="rent-setup" onSubmit={async event=>{event.preventDefault();setHandoverError('');setHandoverMessage('');const form=event.currentTarget;const values=new FormData(form);const expectedCash=String(values.get('expectedCash'));const expectedChecks=String(values.get('expectedChecks'));const actualCash=String(values.get('actualCash'));const actualChecks=String(values.get('actualChecks'));const note=String(values.get('reason'));const different=!sameAmount(expectedCash,actualCash)||!sameAmount(expectedChecks,actualChecks);if(different&&!note.trim()){setHandoverError(tr('Explain any difference between the expected and received totals.','Ipasabot ang kalainan sa gilauman ug nadawat nga total.'));return}const saved=await mutate('record_collection_handover',{p_clerk_id:String(values.get('clerk')),p_handover_on:String(values.get('date')),p_expected_cash:expectedCash,p_expected_checks:expectedChecks,p_actual_cash:actualCash,p_actual_checks:actualChecks,p_difference_reason:note},true);if(saved!==false){form.reset();setHandoverMessage(tr('Handover recorded. Renter balances were not changed.','Narekord ang pagtugyan. Wala mausab ang balanse sa nag-abang.'))}}}>
+    <label htmlFor="handover-clerk">{tr('Clerk handing over','Clerk nga motugyan')}</label><select id="handover-clerk" name="clerk" required><option value="">{tr('Choose clerk','Pagpili og clerk')}</option>{data.clerks.map(item=><option key={item.user_id} value={item.user_id}>{item.user_id}</option>)}</select>
+    <label htmlFor="handover-date">{tr('Handover date','Petsa sa pagtugyan')}</label><input id="handover-date" name="date" type="date" max={today} required />
+    <label htmlFor="handover-expected-cash">{tr('Cash the clerk says was handed over (PHP)','Kwarta nga giingon sa clerk nga gitugyan (PHP)')}</label><input id="handover-expected-cash" name="expectedCash" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" defaultValue="0.00" required />
+    <label htmlFor="handover-expected-checks">{tr('Checks the clerk says were handed over (PHP)','Mga tseke nga giingon sa clerk nga gitugyan (PHP)')}</label><input id="handover-expected-checks" name="expectedChecks" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" defaultValue="0.00" required />
+    <label htmlFor="handover-actual-cash">{tr('Cash actually received by owner (PHP)','Kwarta nga tinuod nga nadawat sa tag-iya (PHP)')}</label><input id="handover-actual-cash" name="actualCash" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" defaultValue="0.00" required />
+    <label htmlFor="handover-actual-checks">{tr('Checks actually received by owner (PHP)','Mga tseke nga tinuod nga nadawat sa tag-iya (PHP)')}</label><input id="handover-actual-checks" name="actualChecks" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" defaultValue="0.00" required />
+    <label htmlFor="handover-reason">{tr('Difference reason (required if totals do not match)','Rason sa kalainan (kinahanglan kung lahi ang total)')}</label><input id="handover-reason" name="reason" maxLength={500} />
+    <Button disabled={busy||!data.clerks.length} className="primary">{tr('Save handover','I-save ang pagtugyan')}</Button>{!data.clerks.length&&<p>{tr('No active clerk account is available.','Walay aktibong account sa clerk.')}</p>}
    </form>
-   <h4>Past handovers</h4>{!data.handovers.length?<p>No handovers recorded.</p>:<ul>{data.handovers.map(item=><li key={item.id}>{item.handover_on}: expected cash {decimalPesos(item.expected_cash)}, checks {decimalPesos(item.expected_checks)}; received cash {decimalPesos(item.actual_cash)}, checks {decimalPesos(item.actual_checks)}{item.difference_reason?` — ${item.difference_reason}`:''} · recorded by account {item.recorded_by} at {localTime(item.recorded_at)}</li>)}</ul>}
+   <h4>{tr('Past handovers','Miaging mga pagtugyan')}</h4>{!data.handovers.length?<p>{tr('No handovers recorded.','Walay pagtugyan nga narekord.')}</p>:<ul>{data.handovers.map(item=><li key={item.id}>{item.handover_on}: {tr('expected cash','gilaumang kwarta')} {decimalPesos(item.expected_cash)}, {tr('checks','mga tseke')} {decimalPesos(item.expected_checks)}; {tr('received cash','nadawat nga kwarta')} {decimalPesos(item.actual_cash)}, {tr('checks','mga tseke')} {decimalPesos(item.actual_checks)}{item.difference_reason?` — ${item.difference_reason}`:''} · {tr('recorded by account','gi-rekord sa account')} {item.recorded_by} {tr('at','niadtong')} {localTime(item.recorded_at)}</li>)}</ul>}
   </section>}
  </>
 }

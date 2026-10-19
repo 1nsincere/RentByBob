@@ -18,7 +18,13 @@ export function PaymentOverview({ charges, receipts, reports, open, language = '
     const rent = charges.filter(c => c.tenant === tenant.id)
     const balance = rent.reduce((sum, c) => sum + remaining(c, receipts), 0n)
     const pending = reports.filter(r => r.tenant === tenant.id && !r.confirmed)
-    return { tenant, location: `${building?.name ?? 'No building'} / ${room?.label ?? 'No room assigned'}`, balance, pending, rent }
+    return {
+      tenant,
+      location: `${building?.name ?? tr('No building', 'Walay bilding')} / ${room?.label ?? tr('No room assigned', 'Wala pa mapili og kwarto')}`,
+      balance,
+      pending,
+      rent,
+    }
   })
   const waiting = rows.reduce((sum, r) => sum + r.pending.length, 0)
   const shown = rows.filter(r => (filter === 'all' || (filter === 'pending' ? r.pending.length > 0 : filter === 'unpaid' ? r.balance > 0n : !r.rent.length && r.tenant.active)) && `${r.tenant.name} ${r.location}`.toLowerCase().includes(search.trim().toLowerCase()))
@@ -30,7 +36,7 @@ export function PaymentOverview({ charges, receipts, reports, open, language = '
       <div><label htmlFor="cash-filter">{tr('Show','Ipakita')}</label><select id="cash-filter" value={filter} onChange={e => setFilter(e.target.value)}><option value="pending">{tr('Waiting for James','Naghulat kang James')}</option><option value="unpaid">{tr('Unpaid rent','Wala mabayri nga abang')}</option><option value="setup">{tr('Rent not set up','Wala pa ma-set ang abang')}</option><option value="all">{tr('All tenant accounts','Tanang account sa nag-abang')}</option></select></div>
     </div>
     <p role="status" className="field-help">{shown.length} {tr(shown.length === 1 ? 'account shown' : 'accounts shown',shown.length === 1 ? 'account gipakita' : 'mga account gipakita')}</p>
-    {shown.map(r => <article className="cash-row" key={r.tenant.id}><div><strong>{r.tenant.name}</strong><p>{r.location}</p><p>{r.rent.length ? `${pesos(r.balance)} left to pay` : 'No rent charges recorded'}{!r.tenant.active ? ' / Archived' : ''}</p>{r.pending.length > 0 && <span className="status">{r.pending.length} waiting for confirmation</span>}</div><Button className="secondary-button" onClick={() => open(r.tenant.id)} aria-label={`Open payments for ${r.tenant.name}`}>Open account</Button></article>)}
+    {shown.map(r => <article className="cash-row" key={r.tenant.id}><div><strong>{r.tenant.name}</strong><p>{r.location}</p><p>{r.rent.length ? `${pesos(r.balance)} ${tr('left to pay', 'pa bayran')}` : tr('No rent charges recorded', 'Walay narekord nga bayranan sa abang')}{!r.tenant.active ? ` / ${tr('Archived', 'Gi-archive')}` : ''}</p>{r.pending.length > 0 && <span className="status">{r.pending.length} {tr('waiting for confirmation', 'naghulat og kumpirmasyon')}</span>}</div><Button className="secondary-button" onClick={() => open(r.tenant.id)} aria-label={`${tr('Open payments for', 'Ablihi ang bayad ni')} ${r.tenant.name}`}>{tr('Open account', 'Ablihi ang account')}</Button></article>)}
     {!shown.length && <p className="empty-state">{tr('No matching accounts. Choose another filter or clear your search.','Walay nakit-an nga account. Pilia ang laing filter o tangtanga ang gipangita.')}</p>}
   </section>
 }
