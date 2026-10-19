@@ -1,5 +1,39 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Shared visual system and dark-theme contrast - 19 Oct 2026
+
+**Assessment before editing:** the app already had a warm-neutral palette, local/system font stack, 18px baseline, hierarchy, responsive staff sidebar/mobile navigation, labeled controls, 44px targets, visible keyboard focus, restrained transitions, reduced-motion handling, and saved light/dark preference. The prior staff visual refresh had already improved the dashboard, worklist, report and payment surfaces; those foundations were retained.
+
+**Visible gaps found:** dark mode reused the pale link blue as a filled-action background with white text (including selected navigation/tabs), dashboard and report surfaces still contained fixed light colors, and a dashboard gradient contradicted the documented simple visual direction. Added distinct ink-blue filled-action tokens with white text; centralized theme-aware hover/pressed, table, border, status and avatar colors; and moved dashboard/form/report surfaces onto shared tokens. Replaced the dashboard gradient with a solid surface. Kept the QR code white for scanning and acknowledgment paper styling dark-on-paper for on-screen readability and printing. No Auth, access, financial, data or navigation behavior changed.
+
+**Verification:** `npm.cmd run build` passed (existing 582.07 kB Vite main-chunk advisory); `npm.cmd test` passed 54/54. `node scripts/check-dashboard-preview.mjs` passed offline-preview navigation/reload/no-external-request checks plus dark-theme preference persistence, selected report-control contrast ≥4.5:1, and dark report-header surface. `node scripts/check-paid-rent.mjs` passed report totals, pending exclusion, charge-month separation, confirmation preview, acknowledgment and 320/390/768px reflow. Updated two stale browser-script accessible-name selectors to match the current “Use Night mode” and “Paid rent report” labels. `git diff --check` passed. Contrast ratios in `DESIGN_SYSTEM.md` were calculated from the defined sRGB tokens.
+
+**Limits:** the browser checks use fictional offline preview data; they do not exercise authenticated local Supabase or validate the saved report against the database. The language/browser check is still blocked by Docker's missing Linux engine; fluent-speaker review, full rendered theme review, native 200% zoom, screen-reader and full control-contrast audits remain outstanding. This is not a WCAG conformance claim. No migrations, hosted/production services, real renter records, or emails were touched.
+
+**Next exact step:** start Docker Desktop's Linux engine until `docker info --format '{{.ServerVersion}}'` succeeds, then run `npm.cmd run test:browser -- tests/browser/access.spec.ts` against the unique disposable local stack. Arrange a fluent Bisaya screen review and check the dark/light themes at narrow widths. The next feature milestone should then complete isolated Supabase API, concurrency, audit-rollback and browser checks for the drafted check/handover workflow using `npm.cmd run test:cash:supabase`; keep its migration unapplied until those checks pass. Validate the saved Paid rent report against fictional authorized local records afterward, without adding writes or exports.
+
+## Bilingual UI coverage follow-up — 19 Oct 2026
+
+Expanded the existing browser-persisted English/Bisaya switch without changing the Auth, database, or financial workflows. The authenticated shell and key staff views now pass the selected language through sign-in/password setup/MFA, navigation and dashboard copy, directory/property views, invitations/access review/audit, saved payments and account statement, check/handover UI, and the saved Paid rent report. The fictional preview tenant/property/cash/Paid rent views also have broader coverage, including the property map and report tables. Generic callback, session, access-verification and sign-out failures now resolve to selected-language copy; the document `lang` attribute follows the selection. Manual translations are local; there is no translation service. Names, emails, building/room labels, dates, amounts, IDs, and user-entered records remain as recorded.
+
+Invitation copy describes the existing Supabase Auth setup link, renter-chosen password, and separate owner access assignment. No invitation delivery or financial behavior changed. Added browser assertions for language persistence, unchanged email/property values, invitation boundaries, and the document language attribute.
+
+**Verification for this follow-up:** `npm.cmd run build` passed with the existing Vite main-chunk advisory (main JS bundle 582.07 kB); `npm.cmd test` passed 54/54, including the selected-language application-error helper; `git diff --check` passed. Docker check `docker info --format '{{.ServerVersion}}'` failed because `//./pipe/dockerDesktopLinuxEngine` does not exist. Therefore `npm.cmd run test:browser -- tests/browser/access.spec.ts` and disposable Supabase/API verification were not run. No database, migration, hosted service, production system, or real renter was changed or contacted.
+
+**Copy audit and limits:**
+
+| Screen group | Source review |
+| --- | --- |
+| Authentication, setup links, password recovery and MFA | Static UI and generic callback/session failures have English/Bisaya copy. Browser switch assertions are added but not run. |
+| Navigation, dashboard, tenant directory and property screens | Selected language is wired through the current shell and preview views. Saved names, emails and location labels remain unchanged. Rendered review remains outstanding. |
+| Payments, account statement, check/handover UI and Paid rent | Core labels, instructions, statuses and report tables have bilingual copy; financial records and values are not translated. No report/API behavior changed. |
+| Invitations, access management, reconciliation and audit | Main UI copy is bilingual. Provider/Edge Function returned messages may remain English because their text is preserved as supplied. |
+| Legacy design prototype | `src/prototype/PrototypeApp.tsx` and `PaymentReportForm` contain English-only copy, but are not imported by `src/main.tsx`; they are not part of the mounted application. |
+
+This is a source review, not an exhaustive rendered screen-by-screen review. Bisaya is manually written but has not been reviewed by a fluent speaker and must not be treated as authoritative. The authenticated local browser assertions are present but were not executed because Docker was unavailable; no accessibility conformance claim is made.
+
+**Next exact step:** start Docker Desktop's Linux engine until `docker info --format '{{.ServerVersion}}'` returns a server version. Then run `npm.cmd run test:browser -- tests/browser/access.spec.ts` against the unique disposable local stack using the documented fictional fixtures. Then review the authenticated screens in both languages with a fluent Bisaya speaker and record any corrections. Do not apply the separate check/handover migration or change hosted/production data.
+
 ## Day/night mode and plain Bisaya payment help - 19 Oct 2026
 
 Added header controls beside each other to switch between light/day and dark/night colors, and between English and basic Bisaya. Both choices are stored in this browser's local storage. Language selection updates the main navigation, dashboard actions and labels, and staff Payments and balances headings/help. The payment glossary explains balance, pending cash, check received, cleared, returned, reversal and handover. Text is manually written; names, saved descriptions and financial records are not translated or modified, and no translation service is used.

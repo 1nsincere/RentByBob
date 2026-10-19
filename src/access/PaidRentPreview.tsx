@@ -51,7 +51,7 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
     if (!renter) continue
     const property = buildings.find(item => item.floors.some(floor => floor.rooms.some(itemRoom => itemRoom.id === charge.room)))
     const rentedSpace = property?.floors.flatMap(floor => floor.rooms).find(itemRoom => itemRoom.id === charge.room)
-    const summary = arrearsByTenant.get(renter.id) ?? { tenant: renter, building: property?.name ?? 'Building unavailable', room: rentedSpace?.label ?? 'Room unavailable', months: new Set<string>(), total: 0n }
+    const summary = arrearsByTenant.get(renter.id) ?? { tenant: renter, building: property?.name ?? tr('Building unavailable','Walay rekord sa bilding'), room: rentedSpace?.label ?? tr('Room unavailable','Walay rekord sa kwarto'), months: new Set<string>(), total: 0n }
     summary.months.add(charge.period)
     summary.total += due
     arrearsByTenant.set(renter.id, summary)
@@ -72,7 +72,7 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
   }
   return <section className="paid-rent-summary" aria-labelledby="paid-rent-heading">
     <div className="paid-report-heading"><div><p className="eyebrow">{tr('MONTHLY COLLECTION REPORT','REPORT SA KOLEKSIYON KADA BULAN')}</p><h3 id="paid-rent-heading">{tr('Paid rent','Bayad sa abang')}</h3><p>{tr('Confirmed rent payments with outstanding rent listed below.','Mga kumpirmadong bayad sa abang ug ang nahibilin nga bayranan sa ubos.')}</p></div><span className="preview-pill">{tr('Fictional preview · Resets on reload','Sample lang · Mawala inig abli pag-usab')}</span></div>
-    <section className="card paid-report-sheet" aria-label="Confirmed rent payments report">
+    <section className="card paid-report-sheet" aria-label={tr('Confirmed rent payments report','Report sa kumpirmadong bayad sa abang')}>
       <div className="paid-report-toolbar"><div><label htmlFor="paid-month">{tr('Cash received during','Kwarta nga nadawat niining panahona')}</label><input id="paid-month" type="month" value={month} onChange={event => setMonth(event.target.value)} /></div><span className="paid-report-period">{validBusinessDate(month + '-01') ? formatMonth(month) : tr('Select a valid month','Pilia ang hustong bulan')}</span></div>
       <div className="paid-report-metrics" aria-live="polite">
         <article><span>{tr('Confirmed cash received','Kumpirmadong nadawat nga kwarta')}</span><strong>{pesos(total)}</strong></article>

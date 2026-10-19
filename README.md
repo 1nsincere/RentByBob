@@ -76,7 +76,7 @@ Local invitations/reset messages appear in Mailpit at **http://127.0.0.1:54324**
 
 ## Working features and boundaries
 
-- The header offers a saved day/night display preference. In Payments and balances, “Ibutang sa Bisaya” switches a curated glossary of common payment words from basic English to basic Bisaya. This translates explanations only; tenant names, saved descriptions and financial records are not changed or sent to a translation service.
+- The header offers saved day/night and English/Bisaya preferences. Shared surfaces and report rows adapt to the saved theme; filled actions keep a separate high-contrast ink-blue treatment in both themes. Language coverage now spans the authenticated staff shell and major renter/property/payment/access/report screens, plus the fictional preview workflows; generic sign-in callback, session, access-check and sign-out failures also follow the selected language. App-authored copy is manually translated; names, emails, building/room labels, dates, amounts and saved records are unchanged and no translation service is used. Coverage is not yet complete; some preview and provider-returned error text may remain English. Bisaya has not had fluent-speaker review and is not authoritative. See [status](docs/STATUS.md) for verification and the next step.
 
 - Sign-in, callback/password setup, password recovery, MFA enrollment/challenge/backup factor, sign-out.
 - Unassigned/disabled screens, tenant isolation, server-enforced role/MFA checks and revocation.

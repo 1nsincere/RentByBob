@@ -9,7 +9,7 @@ import { Invitations, ManageAccess } from './access/ManageAccess'
 import { PropertyDirectory } from './access/PropertyDirectory'
 import { AccessAudit } from './access/AccessAudit'
 import { InvitationReconciliation } from './access/InvitationReconciliation'
-import { copy, type Language } from './i18n'
+import { appError, copy, type Language } from './i18n'
 
 type Snapshot = { access: AccessState; mfa: boolean; properties: Property[]; memberships: Membership[]; tenants: Tenant[] }
 type NavigationItem = { id: string; label: string }
@@ -45,6 +45,7 @@ export function App() {
   }, [theme])
 
   useEffect(() => {
+    document.documentElement.lang = language
     try { localStorage.setItem('rentbybob-language', language) } catch { /* Language still works for this session. */ }
   }, [language])
 
@@ -100,7 +101,7 @@ export function App() {
     } catch {
       if (version === generation.current) {
         setSnapshot(null)
-        setError('Access could not be verified. Records are hidden. Check your connection, refresh access or sign in again.')
+        setError('access-verification')
       }
     }
   }, [session, booting, callbackError, setup])
@@ -133,7 +134,7 @@ export function App() {
     setSnapshot(null)
     const { error } = await supabase!.auth.signOut({ scope: 'local' })
     if (error) {
-      setError('Sign-out could not be confirmed. Close this tab to clear this tab’s stored session.')
+      setError('sign-out')
       return
     }
     setSession(null)
@@ -239,10 +240,10 @@ export function App() {
           <h2>{t.noConnection}</h2>
           <p>{translate('Start local development with', 'Sugdi ang local development gamit ang')} <code>npm.cmd run dev:local</code>{translate(', or the configured hosted development environment with', ', o ang naka-set up nga hosted development gamit ang')} <code>npm.cmd run dev:hosted</code>. {translate('No prototype records are substituted.', 'Walay prototype nga rekord nga ipuli.')}</p>
         </section> : booting ? <LoadingSkeleton label={t.sessionLoading} rows={4} />
-          : callbackError ? <><Feedback message={callbackError} error /><Button className="primary" onClick={() => { setCallbackError(''); void signOut() }}>{t.returnSignIn}</Button></>
+          : callbackError ? <><Feedback message={appError(language, callbackError)} error /><Button className="primary" onClick={() => { setCallbackError(''); void signOut() }}>{t.returnSignIn}</Button></>
             : !session ? <SignIn language={language} />
               : <>
-                <Feedback message={error} error />
+                <Feedback message={appError(language, error)} error />
                 {!dashboardPreview && snapshot && !snapshot.mfa && !setup && <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>{translate('Refresh access', 'I-refresh ang access')}</Button>}
                 {!snapshot ? error ? <p role="status" className="loading-state">{t.recordsUnavailable}</p> : <LoadingSkeleton label={t.checkingPermissions} rows={4} />
                   : snapshot.mfa ? <Mfa done={() => void refresh()} language={language} />

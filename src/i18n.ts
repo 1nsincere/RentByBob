@@ -2,6 +2,37 @@ export type Language = 'en' | 'ceb'
 
 export const text = (language: Language, english: string, bisaya: string) => language === 'ceb' ? bisaya : english
 
+const appErrors: Record<string, Record<Language, string>> = {
+  'link-invalid': {
+    en: 'This link is invalid, expired or already used. Sign in if you already set a password, or ask the owner to review the invitation. Do not repeatedly resend it.',
+    ceb: 'Dili balido, ni-expire o nagamit na kini nga link. Sulod kon nakahimo na ka og password, o pangayo sa tag-iya nga susihon ang imbitasyon. Ayaw ipadala pag-usab kanunay.',
+  },
+  'link-verification': {
+    en: 'This link could not be verified. Request help from the owner or return to sign-in.',
+    ceb: 'Wala makumpirma kini nga link. Pangayo og tabang sa tag-iya o balik sa pagsulod.',
+  },
+  'session-load': {
+    en: 'Your session could not be loaded. Please sign in again.',
+    ceb: 'Wala makarga ang imong session. Palihog sulod pag-usab.',
+  },
+  'session-verification': {
+    en: 'Your session could not be verified. Return to sign-in and try again when connected.',
+    ceb: 'Wala makumpirma ang imong session. Balik sa pagsulod ug sulayi pag-usab kon nakakonekta na.',
+  },
+  'access-verification': {
+    en: 'Access could not be verified. Records are hidden. Check your connection, refresh access or sign in again.',
+    ceb: 'Wala makumpirma ang access. Gitago ang mga rekord. Susiha ang koneksyon, i-refresh ang access o sulod pag-usab.',
+  },
+  'sign-out': {
+    en: 'Sign-out could not be confirmed. Close this tab to clear this tab’s stored session.',
+    ceb: 'Wala makumpirma ang paggawas sa account. Sirad-i kining tab aron tangtangon ang session nga gitipigan dinhi.',
+  },
+}
+
+export function appError(language: Language, key: string) {
+  return appErrors[key]?.[language] ?? key
+}
+
 export const copy = {
   en: {
     appName: 'RentByBob',

@@ -35,17 +35,17 @@ export async function initializeAuth() {
     const type = params.get('type')
     if (params.has('error') || query.has('error') || params.has('error_code') || query.has('error_code') ||
       !['invite', 'recovery'].includes(type ?? '') || !params.get('access_token') || !params.get('refresh_token')) {
-      return { session: null, setup: false, failure: 'This link is invalid, expired or already used. Sign in if you already set a password, or ask the owner to review the invitation. Do not repeatedly resend it.' }
+      return { session: null, setup: false, failure: 'link-invalid' }
     }
     const { data, error } = await supabase.auth.setSession({ access_token: params.get('access_token')!, refresh_token: params.get('refresh_token')! })
-    if (error || !data.session) return { session: null, setup: false, failure: 'This link could not be verified. Request help from the owner or return to sign-in.' }
+    if (error || !data.session) return { session: null, setup: false, failure: 'link-verification' }
     sessionStorage.setItem(`password-setup:${data.session.user.id}`, 'required')
     history.replaceState(null, '', '/')
     return { session: data.session, setup: true, failure: '' }
   }
   const { data, error } = await supabase.auth.getSession()
-  return { session: data.session, setup: !!data.session && sessionStorage.getItem(`password-setup:${data.session.user.id}`) === 'required', failure: error ? 'Your session could not be loaded. Please sign in again.' : '' }
+  return { session: data.session, setup: !!data.session && sessionStorage.getItem(`password-setup:${data.session.user.id}`) === 'required', failure: error ? 'session-load' : '' }
 }
 
 // One callback exchange, even under React StrictMode.
-export const initialized = initializeAuth().catch(() => ({ session: null, setup: false, failure: 'Your session could not be verified. Return to sign-in and try again when connected.' }))
+export const initialized = initializeAuth().catch(() => ({ session: null, setup: false, failure: 'session-verification' }))

@@ -63,6 +63,30 @@ try {
   assert.ok(Math.abs(stats[1].y - stats[2].y) < 2, 'secondary summary cards should share a row')
   await page.screenshot({ path: 'docs/screenshots/dashboard-landing-mobile.png', fullPage: true })
   assert.deepEqual(externalRequests, [])
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.getByRole('button', { name: 'Use Night mode', exact: true }).click()
+  assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark')
+  await page.getByRole('link', { name: 'Payments and balances', exact: true }).click()
+  await page.getByRole('button', { name: 'Paid rent report', exact: true }).click()
+  const themeContrast = await page.locator('.simple-payments > .segmented-control .button[aria-pressed="true"]').evaluate(element => {
+    const channels = value => value.match(/[\d.]+/g).slice(0, 3).map(Number).map(channel => {
+      const normalized = channel / 255
+      return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4
+    })
+    const [r, g, b] = channels(getComputedStyle(element).color)
+    const [br, bg, bb] = channels(getComputedStyle(element).backgroundColor)
+    const luminance = (red, green, blue) => 0.2126 * red + 0.7152 * green + 0.0722 * blue
+    const foreground = luminance(r, g, b)
+    const background = luminance(br, bg, bb)
+    return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
+  })
+  assert.ok(themeContrast >= 4.5, `dark selected-control contrast ${themeContrast.toFixed(2)}:1 is below 4.5:1`)
+  assert.equal(await page.locator('.paid-report-table thead th').first().evaluate(element => getComputedStyle(element).backgroundColor), 'rgb(46, 54, 58)')
+  assert.equal(await page.evaluate(() => localStorage.getItem('rentbybob-theme')), 'dark')
+  await page.reload()
+  await page.getByRole('heading', { name: 'Owner workspace', exact: true }).waitFor()
+  assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark')
+  assert.deepEqual(externalRequests, [])
   await page.getByRole('button', { name: 'Return to account app', exact: true }).click()
   await page.waitForURL(url => url.searchParams.get('auth') === '1')
   assert.equal(await page.getByText('Fictional dashboard preview - sign-in skipped.').count(), 0)

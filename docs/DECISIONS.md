@@ -1,3 +1,7 @@
+## Language-switch copy and data boundary
+
+Use the existing browser-persisted English/Bisaya preference and manually authored, simple Bisaya. Do not call an external translation service. Translate app-authored labels, instructions, statuses and errors only; retain user-entered names, emails, building/room labels, dates, amounts, IDs and records exactly. Keep technical/security/financial meaning accurate, mark Bisaya as unverified until reviewed by a fluent speaker, and do not describe it as authoritative before that review. This UI-only work does not change Auth, access assignment, financial rules, or database state.
+
 ## Responsible tenant and acknowledgments - 18 Oct 2026
 
 User confirmed one responsible tenant per room; others are occupants. A room cannot have a second agreement in this first slice; move-out/reletting must use a later reviewed lifecycle, not deletion. Confirmed cash issues a Cash Payment Acknowledgment for actual received money, including partial payments. Not restricted to fully paid months and not a tax receipt. Print/Save PDF is available to staff; no automatic email, public download or tenant portal delivery. James is a designated confirmed clerk identity, not a hard-coded name/email. Owner can designate verifier but cannot implicitly settle cash.

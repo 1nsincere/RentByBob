@@ -66,7 +66,24 @@ Measured sRGB contrast ratios for the updated token combinations:
 | Control border `#747982` | Ivory `#F7F4ED` | 3.98:1 | Adjacent control edge ≥3:1 |
 | Control border `#747982` | Stone `#EEEAE4` | 3.67:1 | Adjacent control edge ≥3:1 |
 
+Dark-theme token checks:
+
+| Foreground / indicator | Background | Ratio | Check |
+| --- | --- | ---: | --- |
+| White `#FFFFFF` | Ink-blue action `#245A81` | 7.36:1 | Normal text ≥4.5:1 |
+| White `#FFFFFF` | Pressed/hover action `#194363` | 10.37:1 | Normal text ≥4.5:1 |
+| Main text `#F1F3F2` | Page `#171B1D` | 15.56:1 | Normal text ≥4.5:1 |
+| Secondary `#C3CBCE` | Surface `#22282B` | 9.07:1 | Normal text ≥4.5:1 |
+| Focus `#92CAFF` | Page `#171B1D` | 10.00:1 | Focus indicator |
+| Control border `#93A2A8` | Surface `#22282B` | 5.67:1 | Adjacent control edge ≥3:1 |
+
 These are token-pair checks only, not an accessibility certification or a complete rendered component contrast audit. Status pairs remain text-labeled. Browser verification covered the payment worklist at 320/390/768px, 200% root text at 320px with visible button target sizing, and paid-rent behavior at narrow widths. Full native zoom, keyboard, assistive-technology and manual touch review remain outstanding.
+
+## Dark-theme surface and action consistency - 19 Oct 2026
+
+The prior dark theme reused light-blue link colors as filled action backgrounds while retaining white text, and several dashboard/form/report surfaces still used fixed light colors. Split filled actions (`--action`, `--action-hover`, `--on-action`) from link colors and added shared theme tokens for table headers/stripes, pressed/hover surfaces, borders, status outlines and avatars. Applied them to selected navigation/tabs, property controls, dashboard actions, reports and semantic notices. Replaced the dashboard gradient fill with a solid surface. The acknowledgment preview remains intentionally paper-colored and uses dark print text in either theme; the MFA QR remains white for scanning.
+
+The focused offline-preview browser check verifies the selected Paid rent control meets 4.5:1 in dark mode, the table heading uses a dark surface, the theme preference survives reload, and preview makes no external requests. It does not certify every rendered pair or native zoom/assistive-technology behavior. See [STATUS.md](STATUS.md) for test results and the next review step.
 
 ## Three-section workflow polish - 17 Oct 2026
 
@@ -92,7 +109,9 @@ The 60–30–10 distribution is an approximate visual balance—not a contrast 
 | 30% | Cards, forms, navigation and supporting panels | White `#FFFFFF`; soft stone `#EEEAE4` |
 | 10% | Primary actions, selected navigation, links and small emphasis | Ink blue `#245A81`; pressed/hover `#194363`; muted brass `#8D642E` |
 
-Text colors are charcoal `#252B31` and secondary `#4B535C`. Control boundaries use `#747982`; semantic error, success and warning states use separate restrained foreground/surface pairs. The status word remains visible, so color and small shape markers are never the only status signal. Cards use light borders, modest rounding and a subtle shadow. There are no gradients, glass effects, decorative charts, icon-only primary actions or motion-heavy transitions.
+Text colors are charcoal `#252B31` and secondary `#4B535C`. Control boundaries use `#747982`; semantic error, success and warning states use separate restrained foreground/surface pairs. The status word remains visible, so color and small shape markers are never the only status signal. Cards use light borders, modest rounding and a subtle shadow. There are no decorative gradient fills (the illustrative property map retains a dotted-grid pattern), glass effects, decorative charts, icon-only primary actions or motion-heavy transitions.
+
+The saved dark theme uses page `#171B1D`, surface `#22282B`, supporting surface `#2E363A`, main text `#F1F3F2` and secondary text `#C3CBCE`. Link/focus colors remain light blue, while filled actions, selected navigation and selected tabs use the separate ink-blue action colors `#245A81` / `#194363` with white text. Dashboard, form, map-control and report surfaces use theme tokens; the acknowledgment remains paper-colored for legible printing.
 
 ### Measured contrast
 
