@@ -255,6 +255,21 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     assert.equal(await acknowledgmentButton.evaluate(element => element.matches(':focus-visible')), true, 'Acknowledgment action must have visible keyboard focus')
     pass('Statement acknowledgment action is keyboard reachable with visible focus')
 
+    await page.getByRole('button', { name: 'Paid rent report', exact: true }).click()
+    const paidReport = page.locator('.paid-rent-summary')
+    await page.getByLabel('Cash received during', { exact: true }).fill('2024-04')
+    await expect(paidReport.locator('.paid-report-metrics article').nth(0).locator('strong')).toHaveText('₱9,100.50')
+    await expect(paidReport.locator('.paid-report-metrics article').nth(1).locator('strong')).toHaveText('1')
+    await expect(paidReport.locator('.paid-report-metrics article').nth(2).locator('strong')).toHaveText('3')
+    await expect(paidReport.locator('.paid-report-table').first().locator('tbody tr')).toHaveCount(3)
+    await page.getByLabel('Rent month', { exact: true }).fill('2024-04')
+    await expect(paidReport.locator('.unpaid-report-total strong')).toHaveText('₱5,000.25')
+    await expect(paidReport.locator('.unpaid-report-table tbody tr')).toHaveCount(1)
+    await page.getByLabel('Rent month', { exact: true }).fill('2024-05')
+    await expect(paidReport.locator('.unpaid-report-sheet .paid-report-empty'))
+      .toContainText('No rent charges are recorded for this month. Missing setup does not mean rent is unpaid.')
+    pass('Saved Paid rent report uses receipt month, excludes pending cash/checks, and separates recorded outstanding rent')
+
     const checkSection = page.locator('section.card:has(#checks-heading)')
     await checkSection.getByLabel('Tenant / room', { exact: true }).selectOption(agreementId)
     await checkSection.getByLabel('Amount (PHP)', { exact: true }).fill('200.00')
@@ -522,7 +537,7 @@ if (process.argv[2] === 'create-users') {
   assert.equal(checkReceipt.data, 'CHK-0001')
   assert.equal((await rpc('record_rent_check', checkRequest, clerk)).data, 'CHK-0001')
   const checkPending = await rpc('read_rent_workspace', { p_property_id: property }, owner)
-  assert.equal(checkPending.data.agreements.find(row => row.id === agreementId).balance, '1000.00')
+  assert.equal(checkPending.data.agreements.find(row => row.id === agreementId).balance, '6000.25')
   assert.equal(checkPending.data.checks.find(row => row.id === checkId).status, 'received')
   expectDenied(await rpc('record_rent_check', { ...checkRequest, p_id: randomUUID() }, owner), 'Owner attempting clerk check receipt')
   expectDenied(await rpc('transition_rent_check', {
@@ -541,7 +556,7 @@ if (process.argv[2] === 'create-users') {
   }, owner)))
   assert.equal(simultaneousClearances.filter(result => result.response.ok).length, 2)
   const clearedCheck = await rpc('read_rent_workspace', { p_property_id: property }, owner)
-  assert.equal(clearedCheck.data.agreements.find(row => row.id === agreementId).balance, '500.00')
+  assert.equal(clearedCheck.data.agreements.find(row => row.id === agreementId).balance, '5500.25')
   assert.equal(clearedCheck.data.checks.find(row => row.id === checkId).events.filter(event => event.action === 'cleared').length, 1)
   pass('Check reference is stable; receipt stays pending; owner-only concurrent clearance settles exactly once')
 
@@ -559,14 +574,14 @@ if (process.argv[2] === 'create-users') {
   expectDenied(failedClearance, 'Check clearance with injected audit failure')
   const afterCheckAuditFailure = await rpc('read_rent_workspace', { p_property_id: property }, owner)
   assert.equal(afterCheckAuditFailure.data.checks.find(row => row.id === auditCheckId).status, 'deposited')
-  assert.equal(afterCheckAuditFailure.data.agreements.find(row => row.id === agreementId).balance, '500.00')
+  assert.equal(afterCheckAuditFailure.data.agreements.find(row => row.id === agreementId).balance, '5500.25')
   pass('Injected check audit failure rolls back clearance and allocation')
 
   assert.ok((await rpc('transition_rent_check', {
     p_property_id: property, p_id: randomUUID(), p_check_id: checkId, p_action: 'reversed', p_reason: 'Bank reversal',
   }, owner)).response.ok)
   const afterReversal = await rpc('read_rent_workspace', { p_property_id: property }, owner)
-  assert.equal(afterReversal.data.agreements.find(row => row.id === agreementId).balance, '1000.00')
+  assert.equal(afterReversal.data.agreements.find(row => row.id === agreementId).balance, '6000.25')
   const returnedCheckId = randomUUID()
   assert.ok((await rpc('record_rent_check', { ...checkRequest, p_id: returnedCheckId, p_amount: '100.00' }, clerk)).response.ok)
   assert.ok((await rpc('transition_rent_check', {
@@ -579,7 +594,7 @@ if (process.argv[2] === 'create-users') {
     p_property_id: property, p_id: randomUUID(), p_check_id: returnedCheckId, p_action: 'returned', p_reason: 'Bank returned check',
   }, owner)).response.ok)
   const afterReturn = await rpc('read_rent_workspace', { p_property_id: property }, owner)
-  assert.equal(afterReturn.data.agreements.find(row => row.id === agreementId).balance, '1000.00')
+  assert.equal(afterReturn.data.agreements.find(row => row.id === agreementId).balance, '6000.25')
   const handover = {
     p_property_id: property, p_id: randomUUID(), p_clerk_id: process.env.CASH_TEST_CLERK_ID,
     p_handover_on: requestDate, p_expected_cash: '100.00', p_expected_checks: '600.00',
@@ -591,7 +606,7 @@ if (process.argv[2] === 'create-users') {
   assert.ok((await rpc('record_collection_handover', handover, owner)).response.ok)
   const handoverSnapshot = await rpc('read_rent_workspace', { p_property_id: property }, owner)
   assert.equal(handoverSnapshot.data.handovers.length, 1)
-  assert.equal(handoverSnapshot.data.agreements.find(row => row.id === agreementId).balance, '1000.00')
+  assert.equal(handoverSnapshot.data.agreements.find(row => row.id === agreementId).balance, '6000.25')
   const anonymousChecks = await request('/rest/v1/check_records?select=id')
   expectDenied(anonymousChecks, 'Anonymous check register read')
   pass('Returned and reversed checks stay unsettled; handover mismatch is audited without changing rent balance')

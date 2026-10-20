@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { Button } from '../components/atoms'
 import type { Tenant } from './client'
 import { decimalPesos, type CashAcknowledgmentData } from './CashAcknowledgment'
-import type { RentWorkspaceSnapshot, SavedCharge } from './saved-payments-model'
+import type { RentWorkspaceSnapshot } from './saved-payments-model'
+import { buildSavedPaidRentReport, moneyFromMinor } from './saved-paid-rent-report-model'
 import { text, type Language } from '../i18n'
 
 function currentPhilippineMonth() {
@@ -20,57 +21,15 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('en-PH', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`))
 }
 
-function moneyMinor(value: string) {
-  const [whole, fraction = ''] = value.split('.')
-  return BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'))
-}
-
-function moneyFromMinor(value: bigint) {
-  return `${value / 100n}.${(value % 100n).toString().padStart(2, '0')}`
-}
-
 export function SavedPaidRentReport({ data, tenants, openAcknowledgment, language = 'en' }: { data: RentWorkspaceSnapshot; tenants: Tenant[]; openAcknowledgment: (acknowledgment: CashAcknowledgmentData) => void; language?: Language }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [receiptMonth, setReceiptMonth] = useState(currentPhilippineMonth)
   const [rentMonth, setRentMonth] = useState(currentPhilippineMonth)
-  const report = useMemo(() => {
-    const agreementById = new Map(data.agreements.map(agreement => [agreement.id, agreement]))
-    const unitById = new Map(data.units.map(unit => [unit.id, unit]))
-    const buildingById = new Map(data.buildings.map(building => [building.id, building]))
-    const tenantById = new Map(tenants.map(tenant => [tenant.id, tenant]))
-    const confirmed = data.cash.filter(payment => payment.confirmed_at !== null && payment.received_on.slice(0, 7) === receiptMonth)
-    const cashTotal = confirmed.reduce((sum, payment) => sum + moneyMinor(payment.amount), 0n)
-    const paidTenantIds = new Set(confirmed.flatMap(payment => {
-      const agreement = agreementById.get(payment.agreement_id)
-      return agreement ? [agreement.tenant_id] : []
-    }))
-    const outstanding = data.charges.filter(charge => charge.rental_month.slice(0, 7) === rentMonth && moneyMinor(charge.remaining) > 0n)
-      .map(charge => ({ charge, ...locationFor(charge, agreementById, unitById, buildingById, tenantById, language) }))
-      .sort((left, right) => left.charge.due_date.localeCompare(right.charge.due_date) || left.tenant.localeCompare(right.tenant))
-    const outstandingTotal = outstanding.reduce((sum, row) => sum + moneyMinor(row.charge.remaining), 0n)
-    const byTenant = new Map<string, { tenant: string; location: string; months: Set<string>; total: bigint }>()
-    for (const charge of data.charges) {
-      if (moneyMinor(charge.remaining) === 0n) continue
-      const agreement = agreementById.get(charge.agreement_id)
-      if (!agreement) continue
-      const unit = unitById.get(agreement.unit_id)
-      const building = unit && buildingById.get(unit.building_id)
-      const tenant = tenantById.get(agreement.tenant_id)?.display_name ?? text(language, 'Tenant unavailable', 'Walay rekord sa nag-abang')
-      const current = byTenant.get(agreement.tenant_id) ?? {
-        tenant,
-        location: `${building?.label ?? text(language, 'Building unavailable', 'Walay rekord sa bilding')} / ${unit?.label ?? text(language, 'Room unavailable', 'Walay rekord sa kwarto')}`,
-        months: new Set<string>(),
-        total: 0n,
-      }
-      current.months.add(charge.rental_month)
-      current.total += moneyMinor(charge.remaining)
-      byTenant.set(agreement.tenant_id, current)
-    }
-    const arrears = [...byTenant.entries()].filter(([, row]) => row.months.size >= 2)
-      .map(([id, row]) => ({ id, ...row, periods: [...row.months].sort() }))
-      .sort((left, right) => right.periods.length - left.periods.length || left.tenant.localeCompare(right.tenant))
-    return { agreementById, unitById, buildingById, tenantById, confirmed, cashTotal, paidTenantIds, outstanding, outstandingTotal, arrears }
-  }, [data, tenants, receiptMonth, rentMonth, language])
+  const report = useMemo(() => buildSavedPaidRentReport(data, tenants, receiptMonth, rentMonth, {
+    tenantUnavailable: tr('Tenant unavailable', 'Walay rekord sa nag-abang'),
+    buildingUnavailable: tr('Building unavailable', 'Walay rekord sa bilding'),
+    roomUnavailable: tr('Room unavailable', 'Walay rekord sa kwarto'),
+  }), [data, tenants, receiptMonth, rentMonth, language])
 
   return <section className="paid-rent-summary" aria-labelledby="saved-paid-rent-heading">
     <div className="paid-report-heading"><div><p className="eyebrow">{tr('SAVED COLLECTION REPORT', 'GITIPIG NGA REPORT SA KOLEKSIYON')}</p><h3 id="saved-paid-rent-heading">{tr('Paid rent', 'Bayad sa abang')}</h3><p>{tr('Saved records only. Pending cash is not confirmed income.', 'Mga natipig nga rekord lang. Dili pa kumpirmadong kita ang pending nga kwarta.')}</p></div><span className="status status--ready">{tr('Live database report', 'Report gikan sa database')}</span></div>
@@ -99,7 +58,7 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, languag
         </div>}
     </section>
     <section className="card unpaid-report-sheet" aria-labelledby="saved-outstanding-heading">
-      <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('OUTSTANDING RENT', 'NAWALA PA NGA ABANG')}</p><h4 id="saved-outstanding-heading">{tr('Renters with rent still due', 'Mga nag-abang nga naa pay balanse')}</h4><p>{tr('Only rent charges recorded for the selected rent month are included.', 'Apil lang ang bayranan nga narekord sa gipiling bulan sa abang.')}</p></div><div><label htmlFor="saved-rent-month">{tr('Rent month', 'Bulan sa abang')}</label><input id="saved-rent-month" type="month" value={rentMonth} onChange={event => setRentMonth(event.target.value)} /></div></div>
+      <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('OUTSTANDING RENT', 'NAA PAY BAYRANAN SA ABANG')}</p><h4 id="saved-outstanding-heading">{tr('Renters with rent still due', 'Mga nag-abang nga naa pay balanse')}</h4><p>{tr('Only rent charges recorded for the selected rent month are included.', 'Apil lang ang bayranan nga narekord sa gipiling bulan sa abang.')}</p></div><div><label htmlFor="saved-rent-month">{tr('Rent month', 'Bulan sa abang')}</label><input id="saved-rent-month" type="month" value={rentMonth} onChange={event => setRentMonth(event.target.value)} /></div></div>
       <div className="unpaid-report-total"><span>{report.outstanding.length} {tr('recorded charges with a remaining balance', 'ka narekord nga bayranan nga naa pay balanse')}</span><strong>{decimalPesos(moneyFromMinor(report.outstandingTotal))}</strong></div>
       {!report.outstanding.length ? <p className="paid-report-empty">{data.charges.some(charge => charge.rental_month.slice(0, 7) === rentMonth) ? tr('No remaining rent for this month.', 'Walay nabilin nga abang niining bulana.') : tr('No rent charges are recorded for this month. Missing setup does not mean rent is unpaid.', 'Walay bayranan sa abang nga narekord niining bulana. Ang walay rekord dili pasabot nga wala mabayri ang abang.')}</p> :
         <div className="paid-table-scroll" role="region" aria-label={tr('Outstanding rent table', 'Lamesa sa nabilin nga abang')} tabIndex={0}>
@@ -122,21 +81,4 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, languag
       <p className="field-help">{tr('This is based only on recorded charges; it cannot identify months without a charge or determine that rent is overdue.', 'Mga narekord nga bayranan lang ang basihan; dili niini makita ang bulan nga walay bayranan o matino nga overdue na ang abang.')}</p>
     </section>
   </section>
-}
-
-function locationFor(
-  charge: SavedCharge,
-  agreementById: Map<string, RentWorkspaceSnapshot['agreements'][number]>,
-  unitById: Map<string, RentWorkspaceSnapshot['units'][number]>,
-  buildingById: Map<string, RentWorkspaceSnapshot['buildings'][number]>,
-  tenantById: Map<string, Tenant>,
-  language: Language,
-) {
-  const agreement = agreementById.get(charge.agreement_id)
-  const unit = agreement && unitById.get(agreement.unit_id)
-  const building = unit && buildingById.get(unit.building_id)
-  return {
-    tenant: agreement ? tenantById.get(agreement.tenant_id)?.display_name ?? text(language, 'Tenant unavailable', 'Walay rekord sa nag-abang') : text(language, 'Tenant unavailable', 'Walay rekord sa nag-abang'),
-    location: `${building?.label ?? text(language, 'Building unavailable', 'Walay rekord sa bilding')} / ${unit?.label ?? text(language, 'Room unavailable', 'Walay rekord sa kwarto')}`,
-  }
 }

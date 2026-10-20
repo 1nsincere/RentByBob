@@ -26,7 +26,7 @@ try {
  assert.match(await page.locator('#payment-tenant').locator('xpath=..').locator('.simple-balance strong').innerText(),/7,000.00/)
  await page.getByLabel('Find tenant or room').fill('')
  await page.getByLabel('Show',{exact:true}).selectOption('pending')
- assert.match(await page.locator('.payment-overview').innerText(),/2 cash records/)
+ assert.match(await page.locator('.payment-overview').innerText(),/2 cash records are waiting for James/)
  await page.evaluate(()=>scrollTo(0,0))
  await page.screenshot({path:'docs/screenshots/admin-worklist.png',fullPage:true})
  for(const width of [320,390,768]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'overflow '+width)}

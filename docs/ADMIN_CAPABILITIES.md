@@ -1,6 +1,6 @@
 # Admin and staff capabilities
 
-Updated 19 Oct 2026. This is an implementation inventory, not a production-readiness claim. The authenticated workspace uses local Supabase unless started with the explicit hosted-development launcher. The no-sign-in preview is fictional and resets on reload.
+Updated 20 Oct 2026. This is an implementation inventory, not a production-readiness claim. The authenticated workspace uses local Supabase unless started with the explicit hosted-development launcher. The no-sign-in preview is fictional and resets on reload.
 
 ## Available in the authenticated workspace
 
@@ -19,7 +19,7 @@ Updated 19 Oct 2026. This is an implementation inventory, not a production-readi
 | Check register | A clerk can record a check against an agreement and gets a sequential reference such as `CHK-0001`. An owner can record deposit, bank-confirmed clearance, return, or reasoned reversal. Only cleared checks reduce rent and are allocated oldest due first. | Migration and UI are drafted and PGlite-tested, but not yet checked against Supabase API/browser or applied locally. The first UI does not capture bank name, check number, check date or images. Excess check credit is rejected; no cash/check matching exists. |
 | Collection handovers | Owner can save clerk-stated cash/check totals, actual amounts received, date and a reason for any difference. | Migration and UI are drafted and PGlite-tested, but not yet checked against Supabase API/browser or applied locally. This is a one-step owner log, not a clerk submission/owner acceptance or full reconciliation workflow. |
 | Account statement | Staff can read saved charges, confirmed cash by actual receipt date, rent months allocated, current remaining amount per charge, and reopen an acknowledgment. | Read-only staff view. No renter-facing balance/history or export. |
-| Reports | Authenticated local Payments and balances now includes a read-only Paid rent report from the saved staff snapshot: confirmed cash by actual receipt month, recorded outstanding charges by rent month, and arrears across two or more recorded months. The fictional preview has a similar report. | The saved report is not yet integration-checked against the local API because Docker is stopped. No Excel export, report scheduling, or inference for months without a charge. Pending cash and uncleared checks are excluded. |
+| Reports | Authenticated local Payments and balances now includes a read-only Paid rent report from the saved staff snapshot: confirmed cash by actual receipt month, recorded outstanding charges by rent month, and arrears across two or more recorded months. The fictional preview has a similar report. | The saved report is not yet integration-checked against the local API because Docker is stopped. A receipt-month/charge-month browser assertion has been added to the isolated cash runner but remains unexecuted. No Excel export, report scheduling, or inference for months without a charge. Pending cash and uncleared checks are excluded. |
 
 ## Missing before routine operational use
 

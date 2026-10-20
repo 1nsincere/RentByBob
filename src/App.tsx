@@ -35,6 +35,13 @@ export function App() {
     catch { return 'en' }
   })
   const t = copy[language]
+  const environmentLabel = dashboardPreview
+    ? translateText(language, 'Fictional preview · Offline sample data', 'Sample nga preview · Sample nga datos nga offline')
+    : hostedDevelopment
+      ? translateText(language, 'Hosted development · Sign-in + MFA', 'Hosted development · Pagsulod + MFA')
+      : supabase
+        ? translateText(language, 'Local development · Sign-in + MFA', 'Local development · Pagsulod + MFA')
+        : translateText(language, 'Development · Connection not configured', 'Development · Wala ma-set up ang koneksyon')
   const generation = useRef(0)
   const heading = useRef<HTMLHeadingElement>(null)
   const mobileNavigation = useRef<HTMLDetailsElement>(null)
@@ -198,14 +205,14 @@ export function App() {
 
   return <div className={`app-shell ${route === 'sign-in' ? 'sign-in-shell' : ''} ${dashboardPreview ? 'focused-preview' : ''}`}>
     <a className="skip-link" href="#main">{t.skipContent}</a>
-    <div className="environment-note">{dashboardPreview ? 'Fictional preview · Offline sample data' : hostedDevelopment ? 'Hosted development · Sign-in + MFA' : supabase ? 'Local development · Sign-in + MFA' : 'Development · Connection not configured'}</div>
+    <div className="environment-note">{environmentLabel}</div>
     <header className="site-header">
       <div className="shell header-inner">
-        <a className="brand" href="/" aria-label="RentByBob home"><span className="brand-mark" aria-hidden="true">R</span><span>Rent<span className="brand-accent">ByBob</span></span></a>
+        <a className="brand" href="/" aria-label={translateText(language, 'RentByBob home', 'Panimalay sa RentByBob')}><span className="brand-mark" aria-hidden="true">R</span><span>Rent<span className="brand-accent">ByBob</span></span></a>
         <div className="session-tools">
           {session && <div className="session-identity">
-            <span className="signed-in-label">{dashboardPreview ? translateText(language, 'Workspace mode', 'Workspace') : translateText(language, 'Signed in as', 'Nakasulod isip')}</span>
-            <span className="account-email">{dashboardPreview ? 'Fictional sample account' : session.user.email}</span>
+            <span className="signed-in-label">{dashboardPreview ? translateText(language, 'Workspace mode', 'Lugar sa trabaho') : translateText(language, 'Signed in as', 'Nakasulod isip')}</span>
+            <span className="account-email">{dashboardPreview ? translateText(language, 'Fictional sample account', 'Hinimo-himong sample nga account') : session.user.email}</span>
           </div>}
           <div className="session-actions">
             <Button className="quiet-button" aria-label={`${translateText(language, 'Use', 'Gamita ang')} ${theme === 'dark' ? t.dayMode : t.nightMode}`} aria-pressed={theme === 'dark'} onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? t.dayMode : t.nightMode}</Button>
@@ -225,7 +232,7 @@ export function App() {
           <p className="eyebrow">{role ? translate('PROPERTY WORKSPACE', 'WORKSPACE SA PROPIEDAD') : session ? translate('YOUR ACCOUNT', 'IMONG ACCOUNT') : translate('YOUR RENTAL SPACE, SIMPLIFIED', 'Sayon nga pagdumala sa imong giabangan')}</p>
           <h1 ref={heading} tabIndex={-1} className="route-heading">
             {route === 'loading' || route === 'checking' ? t.checkingAccess
-              : route === 'ready' ? role ? `${role === 'owner' ? (language === 'ceb' ? 'Tag-iya' : 'Owner') : (language === 'ceb' ? 'Clerk' : 'Clerk')} ${language === 'ceb' ? 'workspace' : 'workspace'}` : translate('Your rental records', 'Imong mga rekord sa abang')
+              : route === 'ready' ? role ? language === 'ceb' ? role === 'owner' ? 'Panid sa tag-iya' : 'Panid sa clerk' : role === 'owner' ? 'Owner workspace' : 'Clerk workspace' : translate('Your rental records', 'Imong mga rekord sa abang')
                 : route === 'sign-in' ? translate('A little less hassle. A little more home.', 'Mas sayon ang pagdumala sa abang.')
                   : route === 'disabled' ? translate('Access disabled', 'Wala na ang access')
                         : route === 'pending' ? translate('Invitation pending', 'Naghulat ang imbitasyon')
@@ -285,7 +292,7 @@ export function App() {
                             </div>
                             <section hidden={activeSection !== 'home'} tabIndex={-1} id="dashboard-home" className="dashboard-home" aria-labelledby="dashboard-welcome-heading">
                               <div className="dashboard-welcome">
-                                <p className="eyebrow">{role === 'owner' ? (language === 'ceb' ? 'WORKSPACE SA TAG-IYA' : 'OWNER WORKSPACE') : (language === 'ceb' ? 'WORKSPACE SA STAFF' : 'STAFF WORKSPACE')}</p>
+                                <p className="eyebrow">{role === 'owner' ? (language === 'ceb' ? 'TRABAHO SA TAG-IYA' : 'OWNER WORKSPACE') : (language === 'ceb' ? 'TRABAHO SA STAFF' : 'STAFF WORKSPACE')}</p>
                                 <h2 id="dashboard-welcome-heading">{t.welcome}</h2>
                                 <p className="dashboard-identity">{translate('Signed in as', 'Nakasulod isip')} <strong>{session.user.email}</strong></p>
                                 <h3>{t.today}</h3>
