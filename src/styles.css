@@ -189,6 +189,27 @@ code { max-width: 100%; overflow-wrap: anywhere; }
 .section-heading h2 { margin-bottom: 0; }
 .record-count { color: var(--text-secondary); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
 .tenant-records { margin: 1rem 0 0; }
+.tenant-directory-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; max-width: 46rem; }
+.tenant-directory-filters > div { min-width: 0; }
+.property-directory-search { max-width: 46rem; margin-top: 1rem; }
+.availability-preview-notice { padding: 0.45rem 1rem; background: var(--warning-surface); color: var(--warning); text-align: center; font-size: 0.9rem; font-weight: 650; }
+.availability-preview-header { min-height: 4.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem max(1.25rem, calc((100% - 72rem) / 2)); border-bottom: 1px solid var(--border); background: var(--surface); }
+.availability-preview-mode { color: var(--text-secondary); font-size: 0.95rem; }
+.availability-preview-main { width: min(100% - 2.5rem, 60rem); margin: 0 auto; padding-block: clamp(1.5rem, 5vw, 3rem); }
+.availability-preview-main:focus { outline: none; }
+.availability-preview-intro { max-width: 44rem; margin-bottom: 1.5rem; }
+.availability-preview-intro h1 { margin-bottom: 0.65rem; }
+.availability-preview-intro > p:last-child { max-width: 40rem; margin-bottom: 0; color: var(--text-secondary); }
+.availability-preview-caution { margin-bottom: 1.25rem; padding: 1rem 1.1rem; border: 1px solid var(--warning-border); border-radius: var(--radius); background: var(--warning-surface); color: var(--text); }
+.availability-preview-caution p { margin: 0.25rem 0 0; }
+.availability-buildings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.availability-building { min-width: 0; padding: 1.2rem; }
+.availability-building h2 { margin-bottom: 0.15rem; }
+.availability-building > p { margin: 0; color: var(--text-secondary); }
+.availability-room-list { margin: 0.85rem 0 0; padding: 0; list-style: none; }
+.availability-room { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.85rem 0; border-top: 1px solid var(--border); }
+.availability-preview-footnote { max-width: 50rem; margin: 1.5rem 0 0; color: var(--text-secondary); font-size: 0.95rem; }
+.availability-preview-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); color: var(--text-secondary); text-align: center; font-size: 0.9rem; }
 .records { margin: 1rem 0; padding: 0; list-style: none; }
 .records > li { min-width: 0; padding: 1rem 0; border-top: 1px solid var(--border); }
 .tenant-record { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr) auto; align-items: center; gap: 0.75rem; }
@@ -418,7 +439,7 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .unplaced-buildings .button { margin: .3rem; }
 #preview-tenant-records:focus { outline: 2px solid var(--focus); outline-offset: 4px; }
 @media (max-width: 70rem) { .floor-layout { grid-template-columns: minmax(0,1fr); } .floor-settings { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); padding-top: 1rem; } .directory-filters { grid-template-columns: 1fr 1fr; } .directory-filters > :first-child { grid-column: 1 / -1; } }
-@media (max-width: 40rem) { .directory-stats { gap: .4rem; } .directory-stats > div { padding: .75rem; } .directory-stats strong { font-size: 1.4rem; } .directory-stats span { font-size: .85rem; } .directory-filters { grid-template-columns: 1fr; } .room-editor { grid-template-columns: minmax(0,1fr); } .building-inspector { padding: 1rem; } .person-actions .button { width: auto; } .map-toolbar .segmented-control { width: 100%; } .segmented-control .button { width: auto; flex: 1; } }
+@media (max-width: 40rem) { .directory-stats { gap: .4rem; } .directory-stats > div { padding: .75rem; } .directory-stats strong { font-size: 1.4rem; } .directory-stats span { font-size: .85rem; } .directory-filters, .tenant-directory-filters { grid-template-columns: 1fr; } .room-editor { grid-template-columns: minmax(0,1fr); } .building-inspector { padding: 1rem; } .person-actions .button { width: auto; } .map-toolbar .segmented-control { width: 100%; } .segmented-control .button { width: auto; flex: 1; } }
 @media (max-width: 22rem) { .directory-stats { grid-template-columns: 1fr; } .directory-stats > div { display: flex; align-items: center; gap: .75rem; } .tenant-place { flex-wrap: wrap; } }
 
 .building-entry { animation: building-entry-arrive 650ms cubic-bezier(.2,.72,.25,1) both; }

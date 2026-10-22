@@ -1,5 +1,47 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Release-readiness CI first slice - 22 Oct 2026
+
+Added `.github/workflows/quality.yml` to run for pull requests targeting `main` and pushes to `main`, with read-only repository permission, Node 24, lockfile install, and no deploy credentials/job. Added `npm.cmd run verify:release` for the complete unit suite, strict production build, and production artifact validation. The artifact check confirms the emitted JavaScript/CSS are referenced from `index.html` and that the development-only public availability preview is absent from production JavaScript.
+
+**Validation:** `npm.cmd run verify:release` passed: unit tests 65/65, strict TypeScript/Vite build, and production artifact check (two JavaScript chunks, one stylesheet, with no public availability preview markers). `git diff --check` passed. Workflow configuration was source-reviewed; it has not run on GitHub from this worktree.
+
+**Deployment blocker:** There is no owner-approved staging Supabase project configured. `connectionAllowed` currently permits local Supabase, isolated cash-test ports, and one explicitly targeted hosted-development URL only in a development build; it rejects all Supabase URLs in a production build. This is fail-closed, but it means a built staging/production app cannot yet authenticate. Do not loosen this guard without an exact owner-approved staging project and a test proving other projects remain rejected. No backend, database, secrets, Cloudflare project, or production deployment was touched.
+
+**Next exact steps:** owner creates a separate staging Supabase project with synthetic data and provides its exact project identity through their secure setup process; then add/test a project-specific staging target, run the full API/MFA/RLS/financial/browser suite against staging or a disposable stack, and configure a manual Cloudflare Pages staging deployment. Complete accessibility, performance, independent review, recovery drill and owner acceptance before production authorization.
+
+## Fictional public room-listing concept - 22 Oct 2026
+
+Responded to the request for prospective renters to view available rooms by adding a separate development-only page at `/?availability=preview`. The page groups fictional available sample rooms by building, labels the data as fictional and not connected to rental records, and is view-only. Its route dynamically imports only the standalone listing component; it does not initialize the authenticated app, load authorized snapshots, contact Supabase, or make external requests. Added the public-listing request, roadmap decisions and privacy gates to [ROADMAP.md](ROADMAP.md) and [DECISIONS.md](DECISIONS.md).
+
+**Validation:** `node scripts/check-public-availability-preview.mjs` passed, verifying sample building/room groups, fictional-data boundary, view-only controls, visible keyboard skip link, no Supabase/API or external requests, no authenticated app module load, no runtime errors, and no horizontal overflow at 320/390/768px. `npm.cmd test` passed 65/65. `npm.cmd run build` passed and split the authenticated app into a separate chunk; the production output contains no public preview route/component. `git diff --check` passed.
+
+**Limitations and next step:** This is not a real vacancy feed and must not be used to advertise current vacancies. Before connecting records, define who can publish a room, how availability is authoritatively established/currently updated, exactly which fields may be public, and whether inquiries are in scope. Do not infer vacancies from missing agreement/charge data or deploy/QR-link real listings without owner approval.
+
+## Saved property directory search - 22 Oct 2026
+
+Added a read-only search across saved building/section and unit labels. Searching a building retains its units; searching for a unit shows that matching unit with its parent for context. Archived locations stay searchable and visible, since they remain part of the historical directory. A live count reports how many building/unit rows are displayed. No location records, backend queries, permissions, occupancy, or billing behavior changed.
+
+**Validation:** `node --test tests/property-directory.test.ts` passed 4/4 for default results/count, building matches, unit matches with parent context, archived matches, and no matches. `npm.cmd run build` passed; Vite still reports the existing advisory for a main bundle above 500 kB. The current authenticated directory was not opened against a database.
+
+**Limitations and next step:** Search is label-only and does not change location data or reveal occupancy. Review the saved directory in the normal authenticated UI when available, including narrow-screen layout. Do not add room assignments or move-in/move-out operations until the owner confirms occupancy, timing, conflicts, archiving, and access rules.
+
+## Staff tenant directory filters - 22 Oct 2026
+
+Added read-only filters to the authenticated staff tenant directory for active/archived status and individual/business record type. The existing name search combines with both filters, the default “all” selections preserve the previous full-list behavior, and a live result count plus a clear-all action makes narrowed results easier to understand. Filters operate only on the already-authorized property snapshot; no database, access, or financial behavior changed.
+
+**Validation:** `npm.cmd test` passed 61/61, including new search, combined-filter, status-filter, and unchanged-default tests. `npm.cmd run build` passed; Vite retains its existing advisory that the main JS chunk exceeds 500 kB. `git diff --check` passed. The authenticated screen was not exercised against a temporary or preserved database.
+
+**Limitations and next step:** This adds directory navigation only; it does not edit tenant records, assign rooms/occupants, or implement occupancy lifecycle. Review the controls in the authenticated staff UI when convenient. Before implementing persisted occupancy or move-in/move-out, confirm the unresolved arrangement, effective dates, overlap/capacity, archival, and access rules with the owner.
+
+## Property room counts and invited-account clarity improvements - 21 Oct 2026
+
+Updated the preview property map to match the counted room plan for Bob's house, Building 1 and Building 2: Bob's house has six rent rooms, the first building's ground floor includes the apartment plus three rentable rooms, the second floor has six rentable rooms, the second building's ground floor includes the gym plus three rentable rooms, and the second floor has five rentable rooms. The preview still allows the floor count to be increased later if the property grows, while keeping the layout from overstating room counts on the facade.
+
+Also tightened the preview room-rent control so the saved monthly rate stays fixed until a deliberate change is enabled, and it returns to the existing amount smoothly when the toggle is turned back off without saving. This reduces confusion during room-rent edits and keeps the new rate review step clear before the next monthly charge is added.
+
+Added clearer invited-renter status guidance in the user account view and owner access assignment review so it is easier to distinguish between an active account, an accepted invitation, a shared tenant record, and the final owner approval step. This keeps the tenant-side flow easier to understand without changing the underlying access or financial rules.
+
 ## Priority follow-up: check/handover gate, language, operations and usability - 20 Oct 2026
 
 **Check register/handover:** Reviewed `202610190001_check_handover.sql`, the PGlite migration-backed tests, and the separate-session Supabase runner. The migration remains unapplied to the preserved local database. Isolated Supabase API/MFA/RLS, direct-write denial, idempotency, concurrency, audit rollback, and authenticated browser verification are still required before considering local application. Preflight command `docker info --format '{{.ServerVersion}}'` failed with `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine ... open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.` No isolated stack was started and no migration or database was changed.

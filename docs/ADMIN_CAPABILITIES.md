@@ -1,6 +1,6 @@
 # Admin and staff capabilities
 
-Updated 20 Oct 2026. This is an implementation inventory, not a production-readiness claim. The authenticated workspace uses local Supabase unless started with the explicit hosted-development launcher. The no-sign-in preview is fictional and resets on reload.
+Updated 22 Oct 2026. This is an implementation inventory, not a production-readiness claim. The authenticated workspace uses local Supabase unless started with the explicit hosted-development launcher. The no-sign-in preview is fictional and resets on reload.
 
 ## Available in the authenticated workspace
 
@@ -8,8 +8,8 @@ Updated 20 Oct 2026. This is an implementation inventory, not a production-readi
 | --- | --- | --- |
 | Sign-in and security | Sign in, complete required staff authenticator MFA, add a backup authenticator, recover a password, and sign out. Access is checked against current database membership. | All-factors-lost recovery still needs an owner-run procedure and drill. Hosted-development email invitations/recovery are unavailable. |
 | Dashboard | See the signed-in account and shortcuts to payments, tenant creation, property locations, and tenant search. | It is a navigation page, not an operational collections dashboard with live financial KPIs. |
-| Tenant directory | Search authorized property records and create individual or business tenant records. | No persisted occupant/household list, unit assignment, agreement, move-out, duplicate-person resolution, or tenant edit flow. Access assignment is separate. |
-| Buildings and units | Staff can view property locations. Owners can create, rename, and archive buildings/sections and units; archive retains history and archiving a building archives its units. | No live site map, measured floor plan, bed model, occupancy assignment/capacity, or reactivation workflow. Preview map geometry is illustrative and temporary. |
+| Tenant directory | Search authorized property records; filter by active/archived status and individual/business type; see matching-result counts; create individual or business tenant records. | No persisted occupant/household list, unit assignment, agreement, move-out, duplicate-person resolution, or tenant edit flow. Filters are read-only and do not change which records the user is authorized to load. Access assignment is separate. |
+| Buildings and units | Staff can search saved building/section and unit labels; matching units retain parent context. Owners can create, rename, and archive buildings/sections and units; archive retains history and archiving a building archives its units. | Search is read-only and includes archived locations. No live site map, measured floor plan, bed model, occupancy assignment/capacity, or reactivation workflow. Preview map geometry is illustrative and temporary. |
 | Invitations | Owner can invite renter or staff accounts; clerk can invite renters. Stable attempts and guarded provider dispatch are recorded. | Invitation does not assign access or prove delivery. Same-recipient reissue/resend is unavailable pending policy. Hosted-development email is unavailable. |
 | Account access | Owner can find an exact account email, review the matched identity, assign tenant contact or staff access, and disable access with audit. | Owner must verify real-world identity and tenant relationship. Clerks cannot grant access. No bulk management or self-service renter linking. |
 | Invitation review | Owner can inspect masked invitation attempt state/evidence, continue only a saved `prepared` request, and append a review note. | Cannot resend, override uncertainty, prove inbox delivery, or grant access. Recipient-retention/reissue policy remains open. |

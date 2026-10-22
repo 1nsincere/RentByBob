@@ -12,6 +12,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test tests/*.test.ts",
+    "verify:release": "npm test && npm run build && node scripts/check-production-build.mjs",
     "test:supabase": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-supabase-api.ps1",
     "test:cash:supabase": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-cash-supabase.ps1",
     "dev:hosted": "node scripts/start-hosted-ui.mjs",

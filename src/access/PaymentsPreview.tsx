@@ -27,6 +27,7 @@ export function PaymentsPreview({ language = 'en' }: { language?: Language }) {
  const [acknowledgments, setAcknowledgments] = useState<Record<string,CashAcknowledgmentData>>({})
  const [paymentView, setPaymentView] = useState('records')
  const [editingRent, setEditingRent] = useState(false)
+ const [rentAmountInput, setRentAmountInput] = useState('')
  const [rentChangeReview, setRentChangeReview] = useState<RentChangeReview | null>(null)
  const [rentFormVersion, setRentFormVersion] = useState(0)
  const processed = useRef(new Set<string>())
@@ -61,6 +62,18 @@ export function PaymentsPreview({ language = 'en' }: { language?: Language }) {
  if (review) { try { allocations = oldestFirst(list, receipts, review.cents) } catch (e) { reviewError = (e as Error).message } }
  const dateText = (date: string) => new Intl.DateTimeFormat('en-PH', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(date+'T00:00:00Z'))
  const monthText = (month: string) => new Intl.DateTimeFormat('en-PH', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(month+'-01T00:00:00Z'))
+ const formatRentAmount = (cents: bigint) => `${(cents / 100n).toString()}.${(cents % 100n).toString().padStart(2, '0')}`
+ useEffect(() => {
+  if (!tenant) return
+  setRentAmountInput(terms[tenant.id] ? formatRentAmount(terms[tenant.id].cents) : '')
+ }, [tenant.id])
+ useEffect(() => {
+  if (!tenant) return
+  const current = terms[tenant.id] ? formatRentAmount(terms[tenant.id].cents) : ''
+  if (!editingRent || rentChangeReview) {
+   setRentAmountInput(current)
+  }
+ }, [tenant, terms, editingRent, rentChangeReview])
  function reset() { setEntry(false); setDraft(null); setVerify(null); setError(''); setNotice(''); setDuplicateAccepted(false) }
  function openAccount(id: string) { setSelected(id); reset(); requestAnimationFrame(() => { accountHeading.current?.focus(); accountHeading.current?.scrollIntoView({ block: 'start' }) }) }
  return <section className="payments-preview simple-payments" aria-labelledby="payments-heading">
@@ -151,8 +164,17 @@ export function PaymentsPreview({ language = 'en' }: { language?: Language }) {
   } catch(e) { setError(e instanceof Error ? e.message : tr('Could not update room rent.','Wala ma-update ang abang sa kwarto.')) }
  }}>
  <label htmlFor="rent-start">{tr('Move-in date','Petsa sa pagsulod')} {terms[tenant.id] && <span className="fixed-field-badge">{tr('Fixed','Naka-fix')}</span>}</label><input id="rent-start" name="start" type="date" defaultValue={terms[tenant.id]?.start} readOnly={!!terms[tenant.id]} disabled={!!rentChangeReview} required />
- <label htmlFor="monthly-rent">{tr('Room rent (PHP)','Abang sa kwarto (PHP)')} {terms[tenant.id] && !editingRent && <span className="fixed-field-badge">{tr('Fixed','Naka-fix')}</span>}</label><input id="monthly-rent" name="rent" inputMode="decimal" defaultValue={terms[tenant.id] ? (terms[tenant.id].cents / 100n).toString()+'.'+(terms[tenant.id].cents % 100n).toString().padStart(2,'0') : ''} readOnly={!!terms[tenant.id] && !editingRent} disabled={!!rentChangeReview} aria-describedby={editingRent ? 'rent-change-help' : undefined} required />
- {terms[tenant.id] && <label className="rent-edit-toggle"><input type="checkbox" checked={editingRent} disabled={!!rentChangeReview} onChange={e => { setEditingRent(e.target.checked); setRentChangeReview(null); setError(''); if (!e.target.checked) setRentFormVersion(version => version + 1) }} />{tr('Change room rent','Usba ang abang sa kwarto')}</label>}
+ <label htmlFor="monthly-rent">{tr('Room rent (PHP)','Abang sa kwarto (PHP)')} {terms[tenant.id] && !editingRent && <span className="fixed-field-badge">{tr('Fixed','Naka-fix')}</span>}</label><input id="monthly-rent" name="rent" inputMode="decimal" value={rentAmountInput} onChange={e => setRentAmountInput(e.target.value)} readOnly={!!terms[tenant.id] && !editingRent} disabled={!!rentChangeReview} aria-describedby={editingRent ? 'rent-change-help' : undefined} required />
+ {terms[tenant.id] && <label className="rent-edit-toggle"><input type="checkbox" checked={editingRent} disabled={!!rentChangeReview} onChange={e => {
+   const next = e.target.checked
+   setEditingRent(next)
+   setRentChangeReview(null)
+   setError('')
+   if (!next) {
+    setRentAmountInput(formatRentAmount(terms[tenant.id].cents))
+    setRentFormVersion(version => version + 1)
+   }
+ }} />{tr('Change room rent','Usba ang abang sa kwarto')}</label>}
  {editingRent && <p className="field-help" id="rent-change-help">{tr('The new rate starts with the month selected below. Existing recorded charges will not change.','Magsugod ang bag-ong kantidad sa bulan nga pilion sa ubos. Dili mausab ang mga daang narekord nga bayranan.')}</p>}
  <label htmlFor="rent-month">{tr('Month to add','Bulan nga idugang')}</label><input id="rent-month" name="month" type="month" disabled={!!rentChangeReview} required />
  <Button className="secondary-button" disabled={!!rentChangeReview}>{tr("Add this month's rent","Idugang ang abang niining bulana")}</Button>

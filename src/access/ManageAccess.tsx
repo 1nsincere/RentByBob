@@ -90,7 +90,13 @@ export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: 
       catch { setError(true); setMessage(tr('Account lookup failed. Owner access and MFA are required. No assignment was made.', 'Napakyas ang pagpangita sa account. Kinahanglan ang access sa tag-iya ug MFA. Walay access nga gi-assign.')) }
       finally { setBusy(false) }
     }}><label htmlFor="lookup-email">{tr('Exact account email', 'Eksaktong email sa account')}</label><input id="lookup-email" type="email" autoComplete="email" required value={email} onChange={e => { setEmail(e.target.value); setAccount(null); setReview(false) }} /><Button className="secondary-button" disabled={busy}>{busy ? tr('Searching…', 'Gipangita…') : tr('Find account', 'Pangitaa ang account')}</Button></form>
-    {account && <div className="divider"><h3>{tr('Matched account', 'Nakit-an nga account')}</h3><p><strong>{account.email}</strong></p><p>{language === 'ceb' ? ({pending:'Naghulat',disabled:'Gipalong',unassigned:'Wala ma-assign',ready:'Andam'} as Record<string,string>)[account.state] ?? tr('Unknown access state','Wala mailhi nga kahimtang sa access') : stateLabels[account.state] ?? tr('Unknown access state','Wala mailhi nga kahimtang sa access')}</p>
+    {account && <div className="divider"><h3>{tr('Matched account', 'Nakit-an nga account')}</h3>
+      <div className="notice" role="status">
+        <strong>{tr('Assignment summary', 'Kinatibuk-ang summary sa assignment')}</strong>
+        <p>{tr('Email matched:', 'Katugbang nga email:')} <strong>{account.email}</strong></p>
+        <p>{tr('Access state:', 'Kahimtang sa access:')} <strong>{language === 'ceb' ? ({pending:'Naghulat',disabled:'Gipalong',unassigned:'Wala ma-assign',ready:'Andam'} as Record<string,string>)[account.state] ?? tr('Unknown access state','Wala mailhi nga kahimtang sa access') : stateLabels[account.state] ?? tr('Unknown access state','Wala mailhi nga kahimtang sa access')}</strong></p>
+        <p>{tr('Invitation status:', 'Kahimtang sa imbitasyon:')} <strong>{account.accepted ? tr('Accepted', 'Gidawat') : tr('Still waiting for acceptance', 'Naghulat pa sa pagdawat')}</strong></p>
+      </div>
       <p>{tr('Current staff access:', 'Karon nga access sa staff:')} {account.staff_role ? (language === 'ceb' ? account.staff_role === 'owner' ? 'Tag-iya' : 'Klerk' : account.staff_role) : tr('None', 'Wala')}</p>
       <ul>{account.contacts.map(c => <li key={c.tenant_id}>{c.name}: {c.enabled ? tr('Enabled', 'Aktibo') : tr('Disabled', 'Gipalong')}</li>)}</ul>
       {!account.accepted ? <p>{tr('Wait for invitation acceptance before assigning access.', 'Hulata nga dawaton una ang imbitasyon sa dili pa mo-assign og access.')}</p> : <form onSubmit={async e => {

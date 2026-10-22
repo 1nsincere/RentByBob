@@ -10,6 +10,7 @@ import { PropertyDirectory } from './access/PropertyDirectory'
 import { AccessAudit } from './access/AccessAudit'
 import { InvitationReconciliation } from './access/InvitationReconciliation'
 import { appError, copy, type Language } from './i18n'
+import { filterTenantDirectory, type TenantKindFilter, type TenantStatusFilter } from './access/tenant-directory-model'
 
 type Snapshot = { access: AccessState; mfa: boolean; properties: Property[]; memberships: Membership[]; tenants: Tenant[] }
 type NavigationItem = { id: string; label: string }
@@ -25,6 +26,8 @@ export function App() {
   const [propertyId, setPropertyId] = useState('')
   const [backup, setBackup] = useState(false)
   const [search, setSearch] = useState('')
+  const [tenantStatusFilter, setTenantStatusFilter] = useState<TenantStatusFilter>('all')
+  const [tenantKindFilter, setTenantKindFilter] = useState<TenantKindFilter>('all')
   const [activeSection, setActiveSection] = useState('home')
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try { return localStorage.getItem('rentbybob-theme') === 'dark' ? 'dark' : 'light' }
@@ -153,7 +156,11 @@ export function App() {
   }
 
   const role = snapshot?.memberships.find(membership => membership.property_id === propertyId)?.role
-  const tenantList = snapshot?.tenants.filter(tenant => !role || tenant.property_id === propertyId) ?? []
+  const tenantList = snapshot?.tenants.filter(tenant => {
+    if (propertyId && tenant.property_id !== propertyId) return false
+    return !role || tenant.property_id === propertyId
+  }) ?? []
+  const visibleTenantList = filterTenantDirectory(tenantList, search, tenantStatusFilter, tenantKindFilter)
   const activeTenantCount = tenantList.filter(tenant => !tenant.archived_at).length
   const workspaceStats = role ? [
     { label: translateText(language, 'Active records', 'Aktibong rekord'), value: String(activeTenantCount), hint: `${tenantList.length} ${translateText(language, 'total records', 'kinatibuk-ang rekord')}` },
@@ -287,6 +294,8 @@ export function App() {
                                   setPropertyId(event.target.value)
                                   setBackup(false)
                                   setSearch('')
+                                  setTenantStatusFilter('all')
+                                  setTenantKindFilter('all')
                                 }}>{snapshot.properties.map(property => <option key={property.id} value={property.id}>{property.name}</option>)}</select>
                               </div>
                             </div>
@@ -323,25 +332,61 @@ export function App() {
                               <label htmlFor="tenant-search">{translate('Search tenants by name', 'Pangitaa ang nag-abang pinaagi sa ngalan')}</label>
                               <input id="tenant-search" value={search} onChange={event => setSearch(event.target.value)} type="search" autoComplete="off" aria-describedby="tenant-search-help" />
                               <p className="field-help" id="tenant-search-help">{translate('Results update as you type.', 'Ma-update ang resulta samtang magsulat ka.')}</p>
-                              {tenantList.length > 0 && <ul className="records tenant-records">
-                                {tenantList.filter(tenant => tenant.display_name.toLowerCase().includes(search.trim().toLowerCase())).map(tenant =>
-                                  <li key={tenant.id} className="tenant-record">
+                              {tenantList.length > 0 && <>
+                                <div className="tenant-directory-filters">
+                                  <div>
+                                    <label htmlFor="tenant-status-filter">{translate('Record status', 'Kahimtang sa rekord')}</label>
+                                    <select id="tenant-status-filter" value={tenantStatusFilter} onChange={event => setTenantStatusFilter(
+                                      event.target.value === 'active' ? 'active' : event.target.value === 'archived' ? 'archived' : 'all',
+                                    )}>
+                                      <option value="all">{translate('All statuses', 'Tanang kahimtang')}</option>
+                                      <option value="active">{t.active}</option>
+                                      <option value="archived">{t.archived}</option>
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label htmlFor="tenant-kind-filter">{translate('Record type', 'Klase sa rekord')}</label>
+                                    <select id="tenant-kind-filter" value={tenantKindFilter} onChange={event => setTenantKindFilter(
+                                      event.target.value === 'individual' ? 'individual' : event.target.value === 'business' ? 'business' : 'all',
+                                    )}>
+                                      <option value="all">{translate('All types', 'Tanang klase')}</option>
+                                      <option value="individual">{t.individualTenant}</option>
+                                      <option value="business">{t.businessTenant}</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <p className="field-help" aria-live="polite">
+                                  {translate('Showing', 'Nagpakita og')} {visibleTenantList.length} {translate('of', 'gikan sa')} {tenantList.length} {translate('records', 'ka rekord')}.
+                                </p>
+                              </>}
+                              {visibleTenantList.length > 0 && <ul className="records tenant-records">
+                                {visibleTenantList.map(tenant => {
+                                  const propertyName = snapshot?.properties.find(property => property.id === tenant.property_id)?.name ?? translate('Property', 'Propiedad')
+                                  return <li key={tenant.id} className="tenant-record">
                                     <span className="record-initial" aria-hidden="true">{tenant.display_name.trim().slice(0, 1).toLocaleUpperCase()}</span>
                                     <div className="tenant-record-copy">
                                       <strong>{tenant.display_name}</strong>
                                       <p>{tenant.kind === 'business' ? t.businessTenant : t.individualTenant}</p>
+                                      <small>{propertyName}</small>
                                     </div>
                                     <span className={`status status--${tenant.archived_at ? 'archived' : 'ready'}`}>{tenant.archived_at ? t.archived : t.active}</span>
-                                  </li>)}
+                                  </li>
+                                })}
                               </ul>}
                               {tenantList.length === 0 && <div className="empty-state">
                                 <h3>{t.noRecordsYet}</h3>
                                 <p>{translate('Start by adding a tenant record. Account invitations and access are managed separately.', 'Sugdi pinaagi sa pagdugang og rekord sa nag-abang. Lahi ang mga imbitasyon ug paghatag og access.')}</p>
                               </div>}
-                              {tenantList.length > 0 && !tenantList.some(tenant => tenant.display_name.toLowerCase().includes(search.trim().toLowerCase())) && <div className="empty-state">
+                              {tenantList.length > 0 && visibleTenantList.length === 0 && <div className="empty-state">
                                 <h3>{translate('No matches found', 'Walay nakit-an nga katugbang')}</h3>
-                                <p>{translate('No tenant records match', 'Walay rekord sa nag-abang nga katugbang sa')} “{search.trim()}”. {translate('Clear the search to see the full directory.', 'Hawani ang pangita aron makita ang tibuok lista.')}</p>
-                                <Button className="secondary-button" onClick={() => setSearch('')}>{translate('Clear search', 'Hawani ang pangita')}</Button>
+                                <p>{search.trim()
+                                  ? <>{translate('No tenant records match', 'Walay rekord sa nag-abang nga katugbang sa')} “{search.trim()}”. {translate('Try changing your search or filters.', 'Sulayi usbon ang pangita o mga filter.')}</>
+                                  : translate('No tenant records match the selected filters.', 'Walay rekord sa nag-abang nga katugbang sa gipiling mga filter.')}</p>
+                                <Button className="secondary-button" onClick={() => {
+                                  setSearch('')
+                                  setTenantStatusFilter('all')
+                                  setTenantKindFilter('all')
+                                }}>{translate('Clear search and filters', 'Hawani ang pangita ug mga filter')}</Button>
                               </div>}
                             </section>}
                             <div id="property-locations" hidden={activeSection !== 'property-locations'} tabIndex={-1} className="workspace-section">{preview ? <preview.PropertyMapPreview addTenant={() => selectSection('create-tenant')} language={language} /> : <PropertyDirectory key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} />}</div>
@@ -373,16 +418,27 @@ export function App() {
                             </select>
                           </div>}
                           <p>{t.recordsSharedNoFinancial}</p>
+                          <div className="status status--ready" aria-live="polite">{translate('Account active', 'Aktibo ang account')} · {snapshot.properties.find(property => property.id === propertyId)?.name ?? translate('Your property', 'Imong propiedad')}</div>
+                          <div className="notice" role="status">
+                            <strong>{translate('Invitation and record status', 'Kahimtang sa imbitasyon ug rekord')}</strong>
+                            <ul className="info-list">
+                              <li>{translate('This account is active but may not yet have a shared tenant record.', 'Aktibo ang account apan posible nga wala pa kini adunay gi-share nga rekord sa nag-abang.')}</li>
+                              <li>{tenantList.length > 0 ? translate('A shared tenant record is visible for this property.', 'Adunay gi-share nga rekord sa nag-abang para niining propiedad.') : translate('No shared record is visible yet. Ask the owner to confirm the correct property assignment.', 'Wala pa makita ang gi-share nga rekord. Pangayo sa tag-iya nga kumpirmahon ang husto nga assignment sa propiedad.')}</li>
+                              <li>{translate('Room or payment updates appear only after the owner confirms the right record and property.', 'Makita lang ang update sa kwarto o bayad human makumpirma sa tag-iya ang husto nga rekord ug propiedad.')}</li>
+                            </ul>
+                          </div>
                           {tenantList.length > 0 ? <ul className="records tenant-records">
-                            {tenantList.map(tenant =>
-                              <li key={tenant.id} className="tenant-record">
+                            {tenantList.map(tenant => {
+                              const propertyName = snapshot?.properties.find(property => property.id === tenant.property_id)?.name ?? translate('Property', 'Propiedad')
+                              return <li key={tenant.id} className="tenant-record">
                                 <span className="record-initial" aria-hidden="true">{tenant.display_name.trim().slice(0, 1).toLocaleUpperCase()}</span>
-                                <div className="tenant-record-copy"><strong>{tenant.display_name}</strong><p>{tenant.kind === 'business' ? t.businessTenant : t.individualTenant}</p></div>
+                                <div className="tenant-record-copy"><strong>{tenant.display_name}</strong><p>{tenant.kind === 'business' ? t.businessTenant : t.individualTenant}</p><small>{propertyName}</small></div>
                                 <span className={`status status--${tenant.archived_at ? 'archived' : 'ready'}`}>{tenant.archived_at ? t.archived : t.active}</span>
-                              </li>)}
+                              </li>
+                            })}
                           </ul> : <div className="empty-state">
                             <h3>{t.noRecordsYet}</h3>
-                            <p>{t.noRecordsShared}</p>
+                            <p>{translate('This account is active, but no tenant record has been shared with it yet. Ask the owner to review the property assignment and confirm the correct renter record before expecting payment or room updates.', 'Aktibo ang account, pero wala pa ma-share niini ang bisan unsang rekord sa nag-abang. Pangayo sa tag-iya nga susihon ang assignment sa property ug pagkumpirma sa husto nga rekord sa nag-abang sa dili pa magpaabot og bayad o update sa kwarto.')}</p>
                           </div>}
                         </section>
                       </>}

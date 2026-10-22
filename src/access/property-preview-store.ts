@@ -5,10 +5,10 @@ export type Floor = { label: string; count: number | null; rooms: Room[] }
 export type Building = { id: string; name: string; floors: Floor[]; x?: number; y?: number; w?: number; h?: number }
 export const rooms = (prefix: string, count: number): Room[] => Array.from({ length: count }, (_, i) => ({ id: `${prefix}-${i + 1}`, label: `Room ${String(i + 1).padStart(2, '0')}`, kind: 'Room' }))
 const special = (id: string, label: string, kind = label): Room => ({ id, label, kind })
-const initial: Building[] = [
+export const initialBuildings: Building[] = [
   { id: 'bob', name: "Bob's house", x: 26, y: 68, w: 25, h: 25, floors: [{ label: 'Rooms for rent', count: 6, rooms: rooms('bob', 6) }] },
-  { id: 'b1', name: 'Building 1', x: 26, y: 32, w: 24, h: 24, floors: [{ label: 'Ground floor', count: null, rooms: [special('apartment', 'Apartment')] }, { label: 'Second floor', count: null, rooms: [] }] },
-  { id: 'b2', name: 'Building 2', x: 52, y: 32, w: 24, h: 24, floors: [{ label: 'Ground floor', count: null, rooms: [special('gym', 'Gym', 'Shared space')] }, { label: 'Second floor', count: null, rooms: [] }] },
+  { id: 'b1', name: 'Building 1', x: 26, y: 32, w: 24, h: 24, floors: [{ label: 'Ground floor', count: 3, rooms: [special('apartment', 'Apartment'), ...rooms('b1-ground', 3)] }, { label: 'Second floor', count: 6, rooms: rooms('b1-second', 6) }] },
+  { id: 'b2', name: 'Building 2', x: 52, y: 32, w: 24, h: 24, floors: [{ label: 'Ground floor', count: 3, rooms: [special('gym', 'Gym', 'Shared space'), ...rooms('b2-ground', 3)] }, { label: 'Second floor', count: 5, rooms: rooms('b2-second', 5) }] },
   { id: 'house', name: 'House 1', x: 78, y: 32, w: 20, h: 24, floors: [{ label: 'Whole house', count: 0, rooms: [special('house-unit', 'Whole house', 'House')] }] },
   { id: 'yamaha', name: 'Yamaha property', x: 43, y: 3, w: 20, h: 25, floors: [{ label: 'Commercial space', count: 0, rooms: [special('yamaha-unit', 'Commercial unit', 'Commercial')] }] },
   ...[3, 2, 1].map((n, i): Building => ({ id: `store${n}`, name: `Store ${n}`, x: 15 + i * 9, y: 3, w: 8, h: 25, floors: [{ label: 'Shop', count: 0, rooms: [special(`shop-${n}`, `Shop ${n}`, 'Commercial')] }] })),
@@ -20,7 +20,7 @@ const initialTenants: PreviewTenant[] = [
   { id: 'shop', name: 'Sample Corner Shop', initials: 'CS', building: 'store1', room: 'shop-1', active: true, type: 'Business', email: 'shop@example.invalid', since: '01 Jul 2026', people: [] },
   { id: 'archived', name: 'Sample Former Tenant', initials: 'FT', building: 'house', room: 'house-unit', active: false, type: 'Individual', email: 'former@example.invalid', since: '01 Jan 2026', people: ['Sample Former Tenant'] },
 ]
-let state = { buildings: initial, tenants: initialTenants, selected: 'bob', paymentTenant: '', room: '', notice: '', draftLocation: null as { building: string; room: string } | null }
+let state = { buildings: initialBuildings, tenants: initialTenants, selected: 'bob', paymentTenant: '', room: '', notice: '', draftLocation: null as { building: string; room: string } | null }
 const listeners = new Set<() => void>()
 export function change(next: Partial<typeof state>) { state = { ...state, ...next }; listeners.forEach(fn => fn()) }
 export function useProperty() { return useSyncExternalStore(fn => { listeners.add(fn); return () => listeners.delete(fn) }, () => state) }

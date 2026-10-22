@@ -2,6 +2,12 @@
 
 Use the existing browser-persisted English/Bisaya preference and manually authored, simple Bisaya. Do not call an external translation service. Translate app-authored labels, instructions, statuses and errors only; retain user-entered names, emails, building/room labels, dates, amounts, IDs and records exactly. Keep technical/security/financial meaning accurate, mark Bisaya as unverified until reviewed by a fluent speaker, and do not describe it as authoritative before that review. This UI-only work does not change Auth, access assignment, financial rules, or database state.
 
+## Public room availability request - 22 Oct 2026
+
+The user wants prospective renters who inquire to reach a public, view-only listing through a website URL or QR code, grouped by building and showing rooms marked available. Implement a separate fictional development preview while the real publication model is pending. Do not connect it to tenant, staff, or payment snapshots; the current saved model does not track occupancy/vacancy. Do not assume a room is vacant because it has no saved agreement or charge.
+
+Unresolved before real publication: owner-controlled publish/unpublish permissions; authoritative availability and freshness; exact public fields (including whether to show rent, photos, amenities, location or contact details); inquiry workflow; and public hosting approval. Never expose renter names, account data, financial records, or staff/security information. QR generation follows a stable, owner-authorized public URL; a QR code is not an access-control mechanism. This request does not add self-registration, public account access, online payments, or production deployment.
+
 ## Preview room-rent change interaction - 20 Oct 2026
 
 For the fictional Payments and balances preview only, keep a saved-in-preview room rent read-only by default. Staff may unlock the rate with an explicit checkbox, choose the first rent month at the proposed rate, and review the current/new amounts and due date before confirming. Confirmation adds that selected month's charge and uses the new rate for subsequent preview charges; previously recorded charges remain unchanged. The selected month must not already have a charge for that room. Returning to edit details preserves the uncommitted form draft; no preview term or charge changes until confirmation.
