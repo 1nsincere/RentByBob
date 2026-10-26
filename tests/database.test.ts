@@ -143,9 +143,9 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
       from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname in ('public','private') and p.prosecdef
     `)
-    // 41 adds read_renter_account (202610260001), reverse_rent_cash and end_rental_agreement (202610270001), and six
-    // public-listing functions (202610270002). Update only after reviewing any new definer function.
-    assert.equal(result.rows.length, 41)
+    // 42 adds read_renter_account (202610260001), reverse_rent_cash and end_rental_agreement (202610270001), six
+    // public-listing functions (202610270002) and setup_property_from_sketch (202610270003). Update only after review.
+    assert.equal(result.rows.length, 42)
     // The only reviewed anonymous entry points: read listed rooms and leave an inquiry (202610270002).
     const anonymousAllowed = new Set(['read_public_listings', 'submit_rental_inquiry'])
     for (const fn of result.rows) {

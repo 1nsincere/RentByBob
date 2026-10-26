@@ -11,7 +11,7 @@ import { filterTenantDirectory, type TenantKindFilter, type TenantStatusFilter }
 const SavedPayments = deferredScreen(() => import('./access/SavedPayments').then(module => module.SavedPayments))
 const Invitations = deferredScreen(() => import('./access/ManageAccess').then(module => module.Invitations))
 const ManageAccess = deferredScreen(() => import('./access/ManageAccess').then(module => module.ManageAccess))
-const PropertyDirectory = deferredScreen(() => import('./access/PropertyDirectory').then(module => module.PropertyDirectory))
+const PropertyDirectory = deferredScreen(() => import('./access/PropertyLocations').then(module => module.PropertyLocations))
 const AccessAudit = deferredScreen(() => import('./access/AccessAudit').then(module => module.AccessAudit))
 const InvitationReconciliation = deferredScreen(() => import('./access/InvitationReconciliation').then(module => module.InvitationReconciliation))
 const CollectionsOverview = deferredScreen(() => import('./access/CollectionsOverview').then(module => module.CollectionsOverview))
@@ -37,6 +37,8 @@ export function App() {
   const [tenantKindFilter, setTenantKindFilter] = useState<TenantKindFilter>('all')
   const [activeSection, setActiveSection] = useState('home')
   const [visitedSections, setVisitedSections] = useState<string[]>(['home'])
+  // Current room per tenant (open agreements only), shown on directory cards; 'unavailable' if the rent data cannot load.
+  const [tenantRooms, setTenantRooms] = useState<Record<string, string> | 'unavailable' | null>(null)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try { return localStorage.getItem('rentbybob-theme') === 'dark' ? 'dark' : 'light' }
     catch { return 'light' }
@@ -225,6 +227,26 @@ export function App() {
   const navigationKey = navigationItems.map(item => item.id).join('|')
 
   useEffect(() => {
+    if (preview || !supabase || !role || !propertyId || activeSection !== 'tenant-records') return
+    let alive = true
+    void (async () => {
+      try {
+        const { data, error } = await supabase!.rpc('read_rent_workspace', { p_property_id: propertyId })
+        if (error) throw error
+        const workspace = data as { agreements: { tenant_id: string; unit_id: string; ended_on?: string | null }[]; units: { id: string; label: string; building_id: string }[]; buildings: { id: string; label: string }[] }
+        const rooms: Record<string, string> = {}
+        for (const agreement of workspace.agreements.filter(item => !item.ended_on)) {
+          const unit = workspace.units.find(item => item.id === agreement.unit_id)
+          const building = unit && workspace.buildings.find(item => item.id === unit.building_id)
+          if (unit) rooms[agreement.tenant_id] = `${building?.label ?? ''} · ${unit.label}`
+        }
+        if (alive) setTenantRooms(rooms)
+      } catch { if (alive) setTenantRooms('unavailable') }
+    })()
+    return () => { alive = false }
+  }, [role, propertyId, activeSection])
+
+  useEffect(() => {
     if (navigationKey && !navigationItems.some(item => item.id === activeSection)) setActiveSection('home')
   }, [navigationKey, activeSection])
 
@@ -405,7 +427,7 @@ export function App() {
                                   {translate('Showing', 'Nagpakita og')} {visibleTenantList.length} {translate('of', 'gikan sa')} {tenantList.length} {translate('records', 'ka rekord')}.
                                 </p>
                               </>}
-                              {visibleTenantList.length > 0 && <ul className="records tenant-records">
+                              {visibleTenantList.length > 0 && <ul className="records tenant-records tenant-records--cards">
                                 {visibleTenantList.map(tenant => {
                                   const propertyName = snapshot?.properties.find(property => property.id === tenant.property_id)?.name ?? translate('Property', 'Propiedad')
                                   return <li key={tenant.id} className="tenant-record">
@@ -413,7 +435,7 @@ export function App() {
                                     <div className="tenant-record-copy">
                                       <strong>{tenant.display_name}</strong>
                                       <p>{tenant.kind === 'business' ? t.businessTenant : t.individualTenant}</p>
-                                      <small>{propertyName}</small>
+                                      <small className="tenant-room">{tenantRooms === 'unavailable' ? translate('Room details unavailable', 'Wala makita ang detalye sa kwarto') : tenantRooms?.[tenant.id] ?? (tenantRooms ? translate('No current room agreement', 'Walay kasabotan sa kwarto karon') : propertyName)}</small>
                                       {!tenant.archived_at && <small className={`renter-link ${snapshot?.renterLinks.includes(tenant.id) ? 'renter-link--linked' : ''}`}>{snapshot?.renterLinks.includes(tenant.id) ? translate('Renter can sign in', 'Makasulod ang nag-abang') : translate('No renter login yet', 'Wala pay login ang nag-abang')}</small>}
                                     </div>
                                     <span className={`status status--${tenant.archived_at ? 'archived' : 'ready'}`}>{tenant.archived_at ? t.archived : t.active}</span>

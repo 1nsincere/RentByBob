@@ -81,7 +81,7 @@ try {
   assert.equal(await page.locator('.floor-count-card strong').first().textContent(), '6 rentable rooms')
   assert.equal(await page.locator('.facade-room-door').count(), 6)
   assert.equal(await page.locator('.facade-occupant-mark').count(), 2, 'occupied example rooms carry a non-colour mark')
-  assert.match(await page.locator('.facade-art').getAttribute('aria-label'), /6 rentable rooms, 2 with example occupants/)
+  assert.match(await page.locator('.facade-art').getAttribute('aria-label'), /6 rentable rooms, 2 occupied/)
   assert.equal(await page.locator('.room-tile').count(), 6)
   await page.setViewportSize({ width: 390, height: 844 })
   await page.getByRole('button', { name: 'Back to property map', exact: true }).tap()

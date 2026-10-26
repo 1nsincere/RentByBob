@@ -21,7 +21,7 @@ assert.ok(stylesheetFiles.some(file => html.includes(`/assets/${file}`)),
 
 const javascript = await Promise.all(javascriptFiles.map(file => readFile(path.join(assetDirectory, file), 'utf8')))
 const bundle = javascript.join('\n')
-for (const deferredScreen of ['SavedPayments', 'PropertyDirectory', 'ManageAccess', 'AccessAudit', 'InvitationReconciliation']) {
+for (const deferredScreen of ['SavedPayments', 'PropertyLocations', 'ManageAccess', 'AccessAudit', 'InvitationReconciliation']) {
   assert.ok(javascriptFiles.some(file => file.startsWith(`${deferredScreen}-`)),
     `production build must keep ${deferredScreen} in a deferred screen chunk`)
 }
@@ -31,6 +31,9 @@ for (const developmentOnlyMarker of [
   'Sample screen loaded',
   'Fictional renter preview',
   'Fictional sample boarding houses',
+  // Preview fixture tenants must never ship in the production app.
+  'Sample Alex Santos',
+  'Sample Corner Shop',
   'RenterPortalPreview',
   'availability=preview',
 ]) {

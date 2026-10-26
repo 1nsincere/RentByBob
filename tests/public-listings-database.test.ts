@@ -59,7 +59,7 @@ test('public listings expose only listed, unoccupied rooms; inquiries are write-
   await as(outsider); await assert.rejects(list(free, true), /Staff MFA required/)
   await as(clerk)
   await assert.rejects(list(free, true, '0'), /positive monthly rent/)
-  await assert.rejects(list(archivedRoom, true), /active room/)
+  await assert.rejects(list(archivedRoom, true), /active rentable room/)
   await list(free, true)
   await list(occupied, true, '3000.00', 'Ground floor')
   await list(b2room, true, '4200.50', 'Near the gym')

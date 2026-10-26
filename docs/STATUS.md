@@ -1,5 +1,17 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Preview features brought to the real app: payments tabs, tenant cards, property map - 26 Oct 2026
+
+**Payments (real):** `SavedPayments.tsx` now keeps the selected agreement and three figures (rent left, waiting for confirmation, monthly rent) in a persistent account header, with tabs: Account · To confirm (count) · Checks & handovers · Monthly rent · Setup. The glossary is collapsed. No payment logic changed.
+
+**Tenant directory (real):** cards showing type, status, renter-login badge and the current room from open agreements (staff-authorized rent data).
+
+**Property map (real):** migration `202610270003_property_layout.sql` adds `buildings.sketch_slot` (fixed sketch positions), `units.floor_label` and `units.kind` (room, apartment, shared, house, commercial), and owner-only `setup_property_from_sketch` (creates the approved layout once; reuses active buildings/rooms by name; never duplicates; audited). `create_rental_agreement` and `set_room_listing` reject the shared gym. Buildings and units opens on `RealPropertyMap.tsx` (sketch map, building front view, floor tabs, Occupied/Vacant room tiles, no names) with the existing management list one tab away (`PropertyLocations.tsx`). Drawings moved to `BuildingDrawings.tsx` so production code carries no preview fixture data; the artifact check now fails if preview tenant names ship.
+
+**Validation (26 Oct 2026):** PGlite `tests/property-layout-database.test.ts` (owner-only, exact layout, idempotent rerun, existing Building 1 reused, gym unrentable/unlistable). `npm run verify:release` 81/81 (definer functions 42). Offline browser checks 10/10. Live disposable `npm.cmd run test:cash:supabase` passed (exit 0), including tabbed payments throughout, tenant card room, and the owner creating the layout with the map showing Vacant, Shared space and Occupied correctly and no renter name.
+
+**Next exact step:** the owner applies `202610270003` locally with `npx.cmd supabase db push --local` (the assistant is not permitted to change the preserved database), then opens Buildings and units → Review layout → Create layout.
+
 ## Public room listings, inquiry inbox and payments workspace redesign - 26 Oct 2026
 
 **Public rooms (user request):** migration `202610270002_public_room_listings.sql` (see SECURITY.md). Public page `/rooms` (`PublicRooms.tsx`, `public-listings-model.ts`): building tabs with room counts, room cards (room, rent per month, description), and an "Ask about this room" dialog (bottom sheet on phones) with a hidden anti-bot field and a stable request ID per dialog. `public/_redirects` serves `/rooms` on Cloudflare Pages. The dev sample `/?availability=preview` now shows the same page with fictional Building 1, Building 2 and Bob's house rooms and a simulated send (excluded from production). Staff screen "Room listings & inquiries" (`RoomListingsManager.tsx`): Listings and Inquiries tabs, building tabs, per-room "Show on public page", rent and description, status text (visible / listed but hidden by an agreement / not listed), and "Mark handled" for inquiries.
