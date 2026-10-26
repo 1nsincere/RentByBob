@@ -1,3 +1,10 @@
+## Production-prep rules chosen by the user - 26 Oct 2026
+
+- **Reversal of confirmed cash:** owner only (with MFA), written reason required. The cash record and acknowledgment are kept unchanged; the payment is marked reversed, its rent-month allocations move into an append-only reversal record, and the rent it paid becomes owed again. Renters no longer see a reversed payment as paid.
+- **Monthly rent:** staff review, then one-click add. The screen lists active agreements missing a charge for the chosen month (amount and move-in due date shown); nothing is charged until staff confirm. No scheduled automatic charging.
+- **Move-out:** owner records a move-out date and reason. Full months only (the move-out month is charged in full, no proration); no deposit handling; unpaid rent stays owed on the ended agreement; no charge may be added for a later month, and the move-out cannot precede an already-recorded later month. The room can take a new agreement starting the day after the move-out date.
+- **Backups:** daily, keep 30 days, stored privately outside the repository; restore must be rehearsed on a throwaway copy.
+
 ## Draft safety and renter password change - 26 Oct 2026
 
 Implementation choices within the user's "do what is best" direction: access is re-checked in place rather than by unmounting the workspace (the server still enforces access on every request); a renter password change requires the current password; and leaving with unsaved form typing asks first. Dashboard collection figures reuse the existing Paid rent report definitions and add no new financial rule.

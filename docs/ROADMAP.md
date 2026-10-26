@@ -23,12 +23,12 @@ Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISION
 
 Development can continue without these, but each blocks the item it names:
 
-1. **Apply migrations locally:** approve applying `202610190001_check_handover.sql` and `202610260001_renter_account_view.sql` to the preserved local database (after a backup). This blocks real local use of the check register, handover log, renter view and dashboard figures.
+1. **Apply migrations locally:** a verified backup exists; run `npx.cmd supabase db push --local` to apply `202610190001`, `202610260001` and `202610270001` (the assistant was not permitted to change the preserved database). This blocks real local use of checks, handovers, the renter view, dashboard figures, reversals and move-out.
 2. **Clerk identity:** confirm James's exact existing account before he is assigned as cash verifier. This blocks the first real saved cash confirmation.
 3. **Real rent terms:** review the actual tenant, room and rent terms before the first saved agreement or charge.
 4. **Returned checks:** decide whether and how renters are told about a returned check. Currently it is omitted from the renter view.
 5. **Staging:** create a separate staging Supabase project before any hosted deployment work. Consider raising its minimum password length to match the app's 12.
-6. **Recovery:** choose backup/restore targets (acceptable data loss and recovery time) and an owner for recovery.
+6. **Backups:** daily with 30-day retention was chosen and the restore rehearsal passes; schedule the daily task (command in OPERATIONS.md) and keep a second off-machine copy.
 7. **Public room listing:** answer the publication and privacy questions below before any real listing.
 
 ## New feature request: public room availability

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { createHmac, randomUUID } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
 import { chromium, expect } from '@playwright/test'
 
 const apiUrl = process.env.CASH_TEST_API_URL
@@ -286,6 +287,15 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(paidReport.locator('.unpaid-report-sheet .paid-report-empty'))
       .toContainText('No rent charges are recorded for this month. Missing setup does not mean rent is unpaid.')
     pass('Saved Paid rent report uses receipt month, excludes pending cash/checks, and separates recorded outstanding rent')
+    await page.getByLabel('Cash received during', { exact: true }).fill('2024-04')
+    await page.getByLabel('Rent month', { exact: true }).fill('2024-04')
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download for Excel (.csv)', exact: true }).click()])
+    const csv = (await readFile(await download.path())).toString('utf8')
+    assert.ok(csv.startsWith('﻿'), 'Export starts with a UTF-8 BOM for Excel')
+    assert.ok(csv.includes('Total confirmed cash,,,9100.50,'), 'Export confirmed-cash total matches the screen')
+    assert.ok(csv.includes('Total still due,,,,,5000.25'), 'Export outstanding total matches the screen')
+    assert.equal(download.suggestedFilename(), 'rentbybob-paid-rent-2024-04-rent-2024-04.csv')
+    pass('Paid rent report exports to a CSV with the same totals as the screen')
 
     await page.getByRole('button', { name: 'Rent and cash records', exact: true }).click()
     const checkSection = page.locator('section.card:has(#checks-heading)')
@@ -363,12 +373,46 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     assert.ok(await page.locator('button:visible').evaluateAll(buttons => buttons.every(button => button.getBoundingClientRect().height >= 44)), 'Visible button is smaller than 44px at 200% text size')
     pass('Statement and cash queue reflow at narrow widths and 200% text size with 44px buttons')
     pass('Confirmed balance and immutable acknowledgment persist and reopen after reload')
+
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.evaluate(() => { document.documentElement.style.fontSize = '' })
+    const centavos = text => { const [whole, fraction = '00'] = String(text).replace(/[₱,\s]/g, '').split('.'); return BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0')) }
+    // Monthly rent review lists this agreement for the current month; nothing is added without confirmation.
+    const batch = page.locator('.monthly-rent-batch')
+    await expect(batch.locator('.monthly-rent-list li').filter({ hasText: 'Sample API test renter' })).toHaveCount(1)
+    // Owner reverses a confirmed payment with a reason: the rent it paid is owed again and the record stays.
+    const balanceBefore = centavos(await page.locator('.simple-balance strong').textContent())
+    const reversedPayment = page.locator('.statement-event').filter({ hasText: '₱100.00 received by' }).first()
+    await reversedPayment.getByRole('button', { name: 'Reverse payment', exact: true }).click()
+    await reversedPayment.getByLabel('Reason (required)').fill('Fictional test: recorded twice')
+    await reversedPayment.getByRole('button', { name: 'Reverse payment', exact: true }).click()
+    await expect(reversedPayment.locator('.status--error')).toContainText('Fictional test: recorded twice')
+    await expect(page.locator('.simple-balance strong')).toHaveText(/₱/)
+    await expect.poll(async () => centavos(await page.locator('.simple-balance strong').textContent())).toBe(balanceBefore + 10000n)
+    await reversedPayment.getByRole('button', { name: 'Open acknowledgment', exact: true }).waitFor()
+    pass('Owner UI reverses a confirmed payment with a reason; rent reopens and the acknowledgment remains')
+    // Owner records move-out: notice shown, unpaid rent still owed, and no further monthly rent is offered.
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date())
+    const moveOut = page.locator('details.move-out')
+    await moveOut.locator('summary').click()
+    await moveOut.getByLabel('Move-out date').fill(today)
+    await moveOut.getByLabel('Reason (required)').fill('Fictional test move-out')
+    await moveOut.getByRole('button', { name: 'Save move-out', exact: true }).click()
+    await expect(page.locator('.notice').filter({ hasText: 'Any unpaid rent above is still owed.' })).toBeVisible()
+    // Full months only: the move-out month is still offered in full; the following month is not.
+    await expect(batch.locator('.monthly-rent-list li').filter({ hasText: 'Sample API test renter' })).toHaveCount(1)
+    const [year, month] = today.split('-').map(Number)
+    const nextMonth = month === 12 ? `${year + 1}-01` : `${year}-${String(month + 1).padStart(2, '0')}`
+    await batch.getByLabel('Rent month', { exact: true }).fill(nextMonth)
+    await expect(batch.locator('.monthly-rent-list li').filter({ hasText: 'Sample API test renter' })).toHaveCount(0)
+    pass('Owner UI records move-out; the move-out month stays a full month, later months are not offered, and the balance stays owed')
   } catch (error) {
     // Fictional disposable data only; report what the screen showed so a failure is diagnosable after the stack is removed.
     const screen = await page.evaluate(() => ({
       alerts: [...document.querySelectorAll('[role="alert"]')].map(element => element.textContent?.trim().slice(0, 300)).filter(Boolean),
       paidReportSection: Boolean(document.querySelector('.paid-rent-summary')),
       pressedViews: [...document.querySelectorAll('.segmented-control [aria-pressed="true"]')].map(element => element.textContent?.trim()),
+      monthlyRent: document.querySelector('.monthly-rent-batch')?.textContent?.replace(/\s+/g, ' ').slice(0, 400) ?? null,
     })).catch(() => null)
     console.error(`Browser diagnostics: ${JSON.stringify({ screen, browserErrors: browserErrors.slice(0, 8) })}`)
     throw error

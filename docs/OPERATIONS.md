@@ -44,6 +44,23 @@ Local startup: start Docker Desktop, local Supabase, the invite-account function
 
 Before `npm.cmd run test:cash:supabase` copies migrations or creates its temporary Supabase project, it checks `docker info --format '{{.ServerVersion}}'` and stops unless the Linux engine returns a server version. If that check fails, no test workspace or stack is created. A successful preflight only establishes Docker availability; it does not establish that integration checks passed or permit using the preserved local database.
 
+## Backups, restore rehearsal, staging and quality checks - 26 Oct 2026
+
+**Daily backup (chosen: daily, keep 30 days).** `scripts/backup-local.ps1` writes a full custom-format `pg_dump` of the local Supabase database (all schemas, including Auth) to `%USERPROFILE%\RentByBob-backups\local\`, checks that it is readable, and deletes backups older than 30 days. It refuses any container other than the local database on port 54322 and refuses to write inside the repository. To schedule it daily at 9 PM (owner-run, from the project folder in PowerShell):
+
+```powershell
+$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -File `"$PWD\scripts\backup-local.ps1`""
+Register-ScheduledTask -TaskName 'RentByBob daily backup' -Action $action -Trigger (New-ScheduledTaskTrigger -Daily -At 9pm) -Description 'Local RentByBob database backup, 30-day retention'
+```
+
+Docker Desktop and the local stack must be running at that time. Copy the backup folder to a second private location (external drive or private cloud folder) regularly; a backup on the same disk does not survive disk failure.
+
+**Restore rehearsal.** `scripts/rehearse-restore.ps1` restores the newest backup into a throwaway container (same image, no published ports), compares exact row counts for every `public` and `auth` table with the local database using read-only queries, prints the restore time, and removes the container. Run it monthly and after schema changes. To restore for real, stop the app, take a fresh backup of the current state, then restore with `pg_restore --clean --if-exists` into the target only after the owner confirms the target; that procedure has not been rehearsed against a live target.
+
+**Staging.** Staging builds connect only to the exact project pinned in `stagingUrl` (`src/access/connection.ts`), which is `null` until the owner creates a separate staging Supabase project. Then: (1) set `stagingUrl` to its exact `https://<ref>.supabase.co` in a reviewed commit; (2) apply all migrations to staging only; (3) in staging Auth, disable public sign-up, enable TOTP MFA, set the site and redirect URLs to the staging site, raise minimum password length to 12, and configure an email sender for invitations; (4) build with `npm run build:staging` using environment variables `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (public anon key only) and `VITE_SUPABASE_TARGET=staging` (in Cloudflare Pages project settings, never committed); (5) run the live checks against staging with fictional data.
+
+**Quality checks.** `npm run test:offline` (10 offline browser checks, including the axe-core accessibility scan), `npm run test:perf` (production-build Core Web Vitals on an emulated slow phone), and `npm.cmd run test:cash:supabase` (disposable live Supabase suite). Automated accessibility checks cover only part of WCAG; manual screen-reader and older-adult testing is still required.
+
 ## Backup and recovery rehearsal — not yet tested
 
 There is no evidenced database backup schedule, retention policy, agreed RPO/RTO, or completed restore drill. The private Git repository protects source history only; it is not a backup of PostgreSQL records, Auth identities/MFA, storage, provider configuration, or application secrets. The current local financial database is documented as empty, but do not rely on that assumption when selecting a target. Supabase provider backups and what they cover have not been verified for an operational project. Backup-authenticator self-service is tested; all-factors-lost recovery and data restoration are separate and untested.

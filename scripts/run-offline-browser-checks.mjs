@@ -11,6 +11,7 @@ const checks = [
   ['check-admin-worklist.mjs', 5173],
   ['check-deferred-screen.mjs', 5173],
   ['check-renter-preview.mjs', 5173],
+  ['check-accessibility.mjs', 5173],
   ['check-public-availability-preview.mjs', 5174],
 ]
 const vite = path.resolve('node_modules/vite/bin/vite.js')

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Button } from '../components/atoms'
 import { decimalPesos, type CashAcknowledgmentData } from './CashAcknowledgment'
 import { buildStatementEvents, type StatementCash, type StatementCharge } from './saved-payments-model'
@@ -26,6 +27,9 @@ export function AccountStatement({
   charges,
   cash,
   openAcknowledgment,
+  owner = false,
+  busy = false,
+  reverse,
   language = 'en',
 }: {
   tenantName: string
@@ -33,11 +37,15 @@ export function AccountStatement({
   charges: StatementCharge[]
   cash: StatementCash[]
   openAcknowledgment: (acknowledgment: CashAcknowledgmentData) => void
+  owner?: boolean
+  busy?: boolean
+  reverse?: (cashId: string, reason: string) => Promise<unknown>
   language?: Language
 }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const events = buildStatementEvents(charges, cash)
   const pending = cash.filter(payment => payment.confirmed_at === null)
+  const [reversing, setReversing] = useState('')
 
   return <section className="card account-statement" aria-labelledby="account-statement-heading">
     <h3 id="account-statement-heading">{tr('Account statement', 'Rekord sa account')}</h3>
@@ -51,13 +59,23 @@ export function AccountStatement({
           <p>{tr('Rent remaining:', 'Nabilin nga abang:')} <strong>{decimalPesos(event.remaining)}</strong></p>
         </li>
         const acknowledgment = event.acknowledgment
-        return <li className="statement-event" key={`payment:${event.id}`}>
-          <div className="statement-event-heading"><strong>{tr('Confirmed cash', 'Kumpirmadong kwarta')}</strong><span>{tr('Received', 'Nadawat')} {displayDate(event.date)}</span></div>
+        const reversal = event.reversal
+        return <li className={`statement-event ${reversal ? 'statement-event--reversed' : ''}`} key={`payment:${event.id}`}>
+          <div className="statement-event-heading"><strong>{reversal ? tr('Reversed cash', 'Gibawi nga kwarta') : tr('Confirmed cash', 'Kumpirmadong kwarta')}</strong><span>{tr('Received', 'Nadawat')} {displayDate(event.date)}</span></div>
           <p>{decimalPesos(event.amount)} {tr('received by', 'gidawat ni')} {event.collector}</p>
-          {event.allocations.length
+          {reversal ? <p className="status status--error">{tr('Reversed', 'Gibawi')} {displayDate(reversal.reversed_at.slice(0, 10))}: {reversal.reason}. {tr('It no longer pays any rent.', 'Dili na kini bayad sa bisan unsang abang.')}</p>
+            : event.allocations.length
             ? <p>{tr('Applied to', 'Gigamit sa')} {event.allocations.map(allocation => `${displayMonth(allocation.month)} (${decimalPesos(allocation.amount)})`).join(', ')}</p>
             : <p>{tr('Rent allocation details are unavailable in this snapshot.', 'Wala makita ang detalye sa pagbahin sa bayad sa abang.')}</p>}
           {acknowledgment && <Button onClick={() => openAcknowledgment(acknowledgment)}>{tr('Open acknowledgment', 'Ablihi ang resibo')}</Button>}
+          {owner && reverse && !reversal && (reversing !== event.id
+            ? <Button className="secondary-button" disabled={busy} onClick={() => setReversing(event.id)}>{tr('Reverse payment', 'Bawia ang bayad')}</Button>
+            : <form className="statement-reverse" onSubmit={async e => { e.preventDefault(); const reason = String(new FormData(e.currentTarget).get('reason')).trim(); if (!reason) return; if (await reverse(event.id, reason)) setReversing('') }}>
+              <p><strong>{tr('Reverse this confirmed payment?', 'Bawion kining kumpirmadong bayad?')}</strong> {tr('The rent it paid will be owed again. The payment, its acknowledgment and this reason stay in the history.', 'Mabayran na usab ang abang nga gibayran niini. Magpabilin sa kasaysayan ang bayad, ang resibo ug kining rason.')}</p>
+              <label htmlFor={`reverse-reason-${event.id}`}>{tr('Reason (required)', 'Rason (kinahanglan)')}</label>
+              <textarea id={`reverse-reason-${event.id}`} name="reason" required maxLength={500} />
+              <div className="person-actions"><Button className="primary" disabled={busy}>{tr('Reverse payment', 'Bawia ang bayad')}</Button><Button type="button" disabled={busy} onClick={() => setReversing('')}>{tr('Keep payment', 'Ayaw bawia')}</Button></div>
+            </form>)}
         </li>
       })}
     </ol> : <p>{tr('No saved rent charges or confirmed cash appear in this account yet.', 'Wala pay narekord nga bayranan sa abang o kumpirmadong kwarta niini nga account.')}</p>}

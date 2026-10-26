@@ -101,6 +101,8 @@ try {
   assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark')
   await page.getByRole('link', { name: 'Payments and balances', exact: true }).click()
   await page.getByRole('button', { name: 'Paid rent report', exact: true }).click()
+  // Measure the settled colours, not the 130 ms hover-to-selected transition.
+  await page.waitForTimeout(400)
   const themeContrast = await page.locator('.simple-payments > .segmented-control .button[aria-pressed="true"]').evaluate(element => {
     const channels = value => value.match(/[\d.]+/g).slice(0, 3).map(Number).map(channel => {
       const normalized = channel / 255

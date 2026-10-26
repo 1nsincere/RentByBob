@@ -52,7 +52,8 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
 
   await t.test('every application table has RLS and anonymous access is denied', async () => {
     const rows = (await db.query<{ relrowsecurity: boolean }>("select relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'")).rows
-    assert.equal(rows.length, 18)
+    // 19 includes cash_reversals (202610270001); every table must still have RLS (next assertion).
+    assert.equal(rows.length, 19)
     assert.ok(rows.every(r => r.relrowsecurity))
     await db.exec('set role anon')
     await denied('select * from public.tenants')
@@ -142,8 +143,9 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
       from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname in ('public','private') and p.prosecdef
     `)
-    // 33 includes read_renter_account (202610260001); update only after reviewing any new definer function.
-    assert.equal(result.rows.length, 33)
+    // 35 adds read_renter_account (202610260001), reverse_rent_cash and end_rental_agreement (202610270001).
+    // Update only after reviewing any new definer function.
+    assert.equal(result.rows.length, 35)
     for (const fn of result.rows) {
       assert.ok(fn.proconfig.some(value => value === 'search_path=""'), fn.proname)
       assert.equal(fn.anon_execute, false, fn.proname)

@@ -274,7 +274,8 @@ export function App() {
     <div className="shell page-shell">
       <main id="main" tabIndex={-1} className={role && route === 'ready' ? 'staff-main' : ''}>
         {dashboardPreview && <p className="notice" role="status"><strong>{translate('Fictional dashboard preview - sign-in skipped.', 'Sample nga dashboard - wala magsulod sa account.')}</strong> {translate('Sample records are isolated from your account. Changes reset on reload. This mode makes no Supabase requests, database writes or emails.', 'Lahi ang sample nga rekord sa imong account. Mawala ang kausaban inig reload. Walay Supabase request, database write o email niining mode.')}</p>}
-        <div className="page-intro">
+        {/* While starting up, the intro is kept for screen readers but takes no space, so nothing jumps when the real screen arrives. */}
+        <div className={`page-intro ${booting ? 'visually-hidden' : ''}`}>
           <p className="eyebrow">{role ? translate('PROPERTY WORKSPACE', 'WORKSPACE SA PROPIEDAD') : session ? translate('YOUR ACCOUNT', 'IMONG ACCOUNT') : translate('YOUR RENTAL SPACE, SIMPLIFIED', 'Sayon nga pagdumala sa imong giabangan')}</p>
           <h1 ref={heading} tabIndex={-1} className="route-heading">
             {route === 'loading' || route === 'checking' ? t.checkingAccess
@@ -289,10 +290,10 @@ export function App() {
           {route === 'sign-in' && <div className="welcome-points"><div><span className="welcome-number">01</span><span><strong>{t.yourRecords}</strong><small>{t.onlySharedInfo}</small></span></div><div><span className="welcome-number">02</span><span><strong>{t.yourOwnAccount}</strong><small>{t.invitedManaged}</small></span></div></div>}
         </div>
 
-        {!supabase ? <section className="card auth-card">
+        {booting ? <div className="boot-placeholder"><LoadingSkeleton label={t.sessionLoading} rows={4} /></div> : !supabase ? <section className="card auth-card">
           <h2>{t.noConnection}</h2>
           <p>{translate('Start local development with', 'Sugdi ang local development gamit ang')} <code>npm.cmd run dev:local</code>{translate(', or the configured hosted development environment with', ', o ang naka-set up nga hosted development gamit ang')} <code>npm.cmd run dev:hosted</code>. {translate('No prototype records are substituted.', 'Walay prototype nga rekord nga ipuli.')}</p>
-        </section> : booting ? <LoadingSkeleton label={t.sessionLoading} rows={4} />
+        </section>
           : callbackError ? <><Feedback message={appError(language, callbackError)} error /><Button className="primary" onClick={() => { setCallbackError(''); void signOut() }}>{t.returnSignIn}</Button></>
             : !session ? <SignIn language={language} />
               : <>

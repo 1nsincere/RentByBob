@@ -16,3 +16,17 @@ test('hosted development requires explicit target, exact project and a developme
     assert.equal(connectionAllowed(url, 'hosted-development', true), false)
   }
 })
+
+test('staging connects only to the exact pinned project with an explicit staging target', () => {
+  const pinned = 'https://abcdefghijklmnopqrst.supabase.co'
+  assert.equal(connectionAllowed(pinned, 'staging', false, null), false, 'no staging project pinned yet: staging cannot connect')
+  assert.equal(connectionAllowed(pinned, 'staging', false, pinned), true, 'production-style staging build with the pinned project')
+  assert.equal(connectionAllowed(pinned, undefined, false, pinned), false, 'staging target must be explicit')
+  assert.equal(connectionAllowed(pinned, 'hosted-development', true, pinned), false)
+  for (const url of [undefined, 'https://zyxwvutsrqponmlkjihg.supabase.co', pinned + '/', pinned + '.evil.invalid', 'http://abcdefghijklmnopqrst.supabase.co', hostedDevelopmentUrl]) {
+    assert.equal(connectionAllowed(url, 'staging', false, pinned), false, `rejects ${url}`)
+  }
+  for (const badPin of ['https://short.supabase.co', 'https://abcdefghijklmnopqrst.supabase.co/', 'https://ABCDEFGHIJKLMNOPQRST.supabase.co', hostedDevelopmentUrl]) {
+    assert.equal(connectionAllowed(badPin, 'staging', false, badPin), false, `refuses malformed or development pin ${badPin}`)
+  }
+})

@@ -17,7 +17,7 @@ function AgreementView({ agreement, language, preview, openAcknowledgment }: { a
     <div className="renter-room-heading">
       <span className="stat-icon tone-violet" aria-hidden="true"><WorkspaceIcon kind="building" /></span>
       <div><p className="eyebrow">{tr('YOUR RENTAL SPACE', 'IMONG GIABANGAN')}</p><h3 id={`renter-room-${agreement.id}`}>{agreement.building} · {agreement.room}</h3>
-        <p className="field-help">{tr('Moved in', 'Misulod')} {dayName(agreement.move_in)}</p></div>
+        <p className="field-help">{tr('Moved in', 'Misulod')} {dayName(agreement.move_in)}{agreement.ended_on && <> · <span className="status status--archived">{tr('Moved out', 'Nibalhin na')} {dayName(agreement.ended_on)}</span></>}</p></div>
     </div>
 
     <div className="workspace-overview renter-overview">

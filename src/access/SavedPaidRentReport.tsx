@@ -4,6 +4,7 @@ import type { Tenant } from './client'
 import { decimalPesos, type CashAcknowledgmentData } from './CashAcknowledgment'
 import type { RentWorkspaceSnapshot } from './saved-payments-model'
 import { buildSavedPaidRentReport, moneyFromMinor } from './saved-paid-rent-report-model'
+import { paidRentCsv } from './paid-rent-csv.ts'
 import { text, type Language } from '../i18n'
 
 function currentPhilippineMonth() {
@@ -31,7 +32,40 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, languag
     roomUnavailable: tr('Room unavailable', 'Walay rekord sa kwarto'),
   }), [data, tenants, receiptMonth, rentMonth, language])
 
+  function downloadCsv() {
+    const location = (unitId: string | undefined) => {
+      const unit = unitId ? report.unitById.get(unitId) : undefined
+      const building = unit && report.buildingById.get(unit.building_id)
+      return `${building?.label ?? 'Building unavailable'} / ${unit?.label ?? 'Room unavailable'}`
+    }
+    const csv = paidRentCsv({
+      receiptMonth, rentMonth,
+      confirmed: report.confirmed.map(payment => {
+        const agreement = report.agreementById.get(payment.agreement_id)
+        return {
+          renter: (agreement && report.tenantById.get(agreement.tenant_id)?.display_name) ?? 'Tenant unavailable',
+          space: location(agreement?.unit_id),
+          receivedOn: payment.received_on,
+          amount: payment.amount,
+          months: [...new Set(payment.acknowledgment?.allocations.map(allocation => allocation.month.slice(0, 7)) ?? [])].sort(),
+          receipt: payment.acknowledgment?.number ?? '',
+        }
+      }),
+      confirmedTotal: moneyFromMinor(report.cashTotal),
+      outstanding: report.outstanding.map(({ charge, tenant, location: space }) => ({ renter: tenant, space, month: charge.rental_month.slice(0, 7), dueDate: charge.due_date, charged: charge.amount, remaining: charge.remaining })),
+      outstandingTotal: moneyFromMinor(report.outstandingTotal),
+    })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    link.download = `rentbybob-paid-rent-${receiptMonth}-rent-${rentMonth}.csv`
+    document.body.append(link)
+    link.click()
+    link.remove()
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000)
+  }
+
   return <section className="paid-rent-summary" aria-labelledby="saved-paid-rent-heading">
+    <div className="report-export"><Button className="secondary-button" onClick={downloadCsv}>{tr('Download for Excel (.csv)', 'I-download para sa Excel (.csv)')}</Button><span className="field-help">{tr('Exports both tables below for the selected months. Contains renter names; store it privately.', 'Ma-export ang duha ka lamesa sa ubos para sa gipiling mga bulan. Naay ngalan sa mga nag-abang; tipigi kini nga pribado.')}</span></div>
     <div className="paid-report-heading"><div><p className="eyebrow">{tr('SAVED COLLECTION REPORT', 'GITIPIG NGA REPORT SA KOLEKSIYON')}</p><h3 id="saved-paid-rent-heading">{tr('Paid rent', 'Bayad sa abang')}</h3><p>{tr('Saved records only. Pending cash is not confirmed income.', 'Mga natipig nga rekord lang. Dili pa kumpirmadong kita ang pending nga kwarta.')}</p></div><span className="status status--ready">{tr('Live database report', 'Report gikan sa database')}</span></div>
     <section className="card paid-report-sheet" aria-label={tr('Confirmed rent payments report', 'Report sa kumpirmadong bayad sa abang')}>
       <div className="paid-report-toolbar"><div><label htmlFor="saved-receipt-month">{tr('Cash received during', 'Kwarta nga nadawat niadtong')}</label><input id="saved-receipt-month" type="month" value={receiptMonth} onChange={event => setReceiptMonth(event.target.value)} /></div><span className="paid-report-period">{formatMonth(receiptMonth)}</span></div>

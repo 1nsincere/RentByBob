@@ -12,7 +12,7 @@ export type RenterUnconfirmed =
   | { kind: 'cash'; id: string; amount: string; received_on: string }
   | { kind: 'check'; id: string; reference: string; amount: string; received_on: string; status: 'received' | 'deposited' }
 export type RenterAgreement = {
-  id: string; building: string; room: string; move_in: string; rent: string; balance: string
+  id: string; building: string; room: string; move_in: string; ended_on?: string | null; rent: string; balance: string
   charges: RenterCharge[]; payments: RenterPayment[]; unconfirmed: RenterUnconfirmed[]
 }
 export type RenterTenant = { id: string; display_name: string; kind: 'individual' | 'business'; property: string; agreements: RenterAgreement[] }
@@ -71,6 +71,7 @@ function validUnconfirmed(value: unknown): value is RenterUnconfirmed {
 
 function validAgreement(value: unknown): value is RenterAgreement {
   if (!record(value) || !uuid(value.id) || !text(value.building) || !text(value.room) || !date(value.move_in) ||
+    !(value.ended_on == null || (date(value.ended_on) && value.ended_on >= value.move_in)) ||
     !money(value.rent, false) || !money(value.balance, true) ||
     !Array.isArray(value.charges) || !value.charges.every(validCharge) ||
     !Array.isArray(value.payments) || !value.payments.every(validPayment) ||
