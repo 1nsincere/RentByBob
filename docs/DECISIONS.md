@@ -1,3 +1,19 @@
+## Draft safety and renter password change - 26 Oct 2026
+
+Implementation choices within the user's "do what is best" direction: access is re-checked in place rather than by unmounting the workspace (the server still enforces access on every request); a renter password change requires the current password; and leaving with unsaved form typing asks first. Dashboard collection figures reuse the existing Paid rent report definitions and add no new financial rule.
+
+## Renter self-service view - 26 Oct 2026
+
+User chose that signed-in renters may see their room, rent, balance and confirmed payments, superseding the 19 Oct deferral of renter-facing statements. Sign-in stays invitation-based email + password; renters are not asked for staff MFA, and email one-time codes were not chosen. Rules applied: the balance uses the same rule as staff (confirmed cash and cleared checks only); pending cash and received/deposited checks are listed as "waiting for confirmation" and never reduce it; the view is read-only and states that payments are not made on the website. Not shown to renters: collectors' internal records, verifier/staff account IDs, handovers, other tenants. Returned or reversed checks are currently omitted from the renter view; how (or whether) to tell a renter about a returned check is an open owner decision. Monthly status words are descriptive ("Paid", "Partly paid", "Not paid yet"); no overdue, grace-period or late-fee rule is implied.
+
+## Building sketch reflects entered room counts - 26 Oct 2026
+
+User asked for the building sketch to depend on the number of rooms. This reverses the 19 Oct choice that facade doors were decorative and did not indicate a count. In the fictional preview, the front view now draws one door per entered space per floor, distinguishes rooms from apartments, shared and commercial spaces, marks example-occupied rooms with colour plus a person mark, and shows "Room count not set" instead of inventing doors. It remains illustrative and preview-only: no surveyed layout, capacity, vacancy or occupancy policy is implied, and the saved database still has no floor model.
+
+## Dashboard-style visual theme - 26 Oct 2026
+
+User supplied a property-management dashboard as inspiration and permitted routine UI decisions. Adopted its navy sidebar, bright-blue actions, gradient hero, tinted icon circles and motion. Deliberately not adopted: charts, revenue/overdue KPIs, search and notifications, because no approved data, report definition or workflow exists for them. Any future financial KPI needs an agreed definition and must exclude pending reports and uncleared checks.
+
 ## Language-switch copy and data boundary
 
 Use the existing browser-persisted English/Bisaya preference and manually authored, simple Bisaya. Do not call an external translation service. Translate app-authored labels, instructions, statuses and errors only; retain user-entered names, emails, building/room labels, dates, amounts, IDs and records exactly. Keep technical/security/financial meaning accurate, mark Bisaya as unverified until reviewed by a fluent speaker, and do not describe it as authoritative before that review. This UI-only work does not change Auth, access assignment, financial rules, or database state.

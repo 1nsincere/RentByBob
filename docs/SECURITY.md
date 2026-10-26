@@ -22,6 +22,12 @@ PaymentsPreview is exported only through the development preview module. Entries
 
 # Security plan
 
+## Renter read model and client session handling - 26 Oct 2026
+
+`public.read_renter_account()` (migration `202610260001`) is a SECURITY DEFINER function with an empty search path, executable by `authenticated` only. It takes no parameters and derives scope from `auth.uid()`: unarchived tenants with an unrevoked contact link. It returns no staff or verifier IDs, handovers or other tenants, and its balance rule matches staff. PGlite isolation tests (with mutation checks) and a live disposable run verify this. The definer-function inventory test now expects 33.
+
+The client no longer unmounts the workspace on token refresh, focus or tab visibility changes; it re-checks access in place every 10 seconds and on focus. This is a UX change only: RLS and RPC authorization are unchanged. Renter password changes re-verify the current password before `updateUser` (Supabase `secure_password_change` is off locally). The local `minimum_password_length` in `supabase/config.toml` is 6, while the app requires 12; consider raising the Auth setting for staging and production as an owner-approved configuration change.
+
 ## Preview creation boundary - 17 Oct 2026
 
 Add tenant in preview now mutates in-memory fixtures only; it does not use the offline Supabase transport or grant Auth access. Email is optional and restricted to fictional .invalid addresses. Named occupants are sample data and are cleared on reload. New browser tests confirm zero external requests during create/review/location flows. Actual local/hosted mutation functions, RLS and MFA remain unchanged; UI-only minimum occupancy is not a backend security or financial rule.

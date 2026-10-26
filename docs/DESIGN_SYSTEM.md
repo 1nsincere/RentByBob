@@ -1,5 +1,51 @@
 # RentByBob interface design system
 
+## Theme v2: property-management dashboard style - 26 Oct 2026
+
+Supersedes the earlier same-day "visual refresh". The user supplied a property-management dashboard screenshot as inspiration and asked for a less basic, more polished feel with gradients and motion. Adopted from it: a navy sidebar panel with a bright-blue active item, bright-blue primary buttons with a subtle vertical gradient, a cool grey-blue page, white cards with soft shadows, tinted icon circles on dashboard actions and summary tiles, and a blue gradient welcome card with white action cards inside. Not adopted: charts, revenue KPIs, search and notification icons, because the app has no approved data or workflow behind them, and fictional financial figures must not look real.
+
+Implementation: token values at the top of `src/styles.css` (including new `--nav-*`, `--tone-*`, `--hero-gradient` and `--facade-*` tokens) plus one labeled "Theme v2" block at the end. Dashboard actions and summary tiles gained `aria-hidden` icons; no logic or data changed.
+
+Rules:
+- One elevation system: top-level cards share border and shadow; nested cards are flat. Decorative stripes are removed; left bars remain only where they mark something to act on (cash confirmation review, rent-change review, amount still due, preview notice).
+- Motion: cards lift 2px on hover, buttons press down slightly, and dashboard and directory content rises in over 420ms. Tiles in one row animate together so the layout never looks uneven; only the tenant card list is staggered. All transforms and entrance animations are removed under `prefers-reduced-motion`.
+- Focus rings show for keyboard users on focused containers (`:focus-visible`), turn white on the navy sidebar and blue hero, and are omitted on headings focused only for screen-reader announcement.
+- Phone header: identity on its own line and labeled toggles in one wrapping row; the identity line is hidden in the fictional preview because the environment bar already labels it.
+
+Measured contrast (sRGB, WCAG formula), 26 Oct 2026:
+
+| Foreground | Background | Ratio | Minimum |
+| --- | --- | ---: | ---: |
+| Text `#0F1D33` | Page `#F2F5FA` | 15.45:1 | 4.5 |
+| Secondary `#4B5A70` | Support `#EAEEF5` | 6.02:1 | 4.5 |
+| White | Primary `#1D5FD6` | 5.74:1 | 4.5 |
+| White | Gradient top `#2563EB` | 5.17:1 | 4.5 |
+| Hero text `#EEF3FF` | Hero gradient top `#2563EB` | 4.65:1 | 4.5 |
+| Primary `#1D5FD6` | Page `#F2F5FA` | 5.25:1 | 4.5 |
+| Nav text `#C9D5E8` | Sidebar top `#13305C` | 8.83:1 | 4.5 |
+| Nav label `#8FA3C2` | Sidebar top `#13305C` | 5.10:1 | 4.5 |
+| Control border `#7A8699` | Support `#EAEEF5` | 3.17:1 | 3 |
+| Icon tones (blue/teal/violet/amber) | Their tints | 4.37–5.68:1 | 3 |
+| Dark text `#E9EEF7` | Dark surface `#111D31` | 14.50:1 | 4.5 |
+| Dark secondary `#A9B6CA` | Dark support `#19273F` | 7.29:1 | 4.5 |
+| White | Dark primary `#2563EB` | 5.17:1 | 4.5 |
+| Dark icon tones | Their dark tints | 6.42–8.91:1 | 3 |
+| Selected-room label `#9A3412` / `#FDBA74` | Surface (light/dark) | 7.31 / 10.01:1 | 4.5 |
+
+A lighter gradient stop (`#2F74EA`) was rejected because white text measured 4.37:1. These are token measurements plus automated reflow, target and contrast checks, not a WCAG audit or a review with older users.
+
+## Building front view drawn from room counts - 26 Oct 2026
+
+Supersedes "Lodging-house facade illustration" below. The user asked for the building sketch to depend on the number of rooms. The front view now draws one door per space on each floor, using the counts and spaces entered in the preview:
+- Rooms are panel doors labeled with their number. Apartments, houses and commercial units use an amber glass-door shape labeled with their name; shared spaces use the same shape.
+- Rooms with an example tenant are filled blue and carry a white person mark, so occupancy is not shown by colour alone. The selected room has an orange outline and an underlined label.
+- At most 10 doors sit in a row. Larger floors wrap into more rows, and the building widens with its busiest floor, so doors never overlap; this is checked at 14 rooms.
+- A floor with no confirmed count shows a dashed "Room count not set" band rather than invented doors.
+- The text alternative lists each floor's rentable rooms, special spaces and example-occupied count. The caption says positions and sizes are illustrative, not surveyed.
+- Map and list thumbnails draw one band of windows per floor (up to 4 floors and 8 windows), and map tile subtitles are computed from the data (for example "9 rooms · 2 floors · Apartment").
+
+Still preview-only and fictional: the saved database has no floor or occupancy model, and nothing here implies measured layout, capacity or vacancy.
+
 ## Payment history and room-rent setup
 
 Keep payment history as distinct, compact entries with textual status, amount and actual receipt date; identify the collector for reported cash. Pending cash must say it is not confirmed and must not appear equivalent to a settled payment. Preserve a labeled empty state when no history exists.
@@ -24,7 +70,7 @@ For the dashboard preview, make the active-record count the prominent summary it
 
 Make the landing page the default staff workspace section. Show “Welcome back” and the authenticated email as the account identifier, followed by “What would you like to do today?” Give four clear, touch-sized actions: Log a payment, Add a tenant, View the property, and Find a tenant. Each action navigates to the corresponding existing screen without creating data. Keep the four choices in a two-column desktop layout and a single-column mobile layout; allow long email addresses to wrap. Keep a persistent Dashboard navigation item with a distinct icon and visible keyboard focus. Do not display this workspace on tenant-facing pages or assume an unverified profile name.
 
-## Lodging-house facade illustration
+## Lodging-house facade illustration (historical; superseded 26 Oct 2026 by "Building front view drawn from room counts")
 
 The focused building view uses a flat front elevation with a pitched roof, eaves, gable detail, horizontal floor divisions, a foundation and door-shaped room motifs. Render one floor band per configured floor and use a small, repeatable set of doors as a visual motif. The accessible image label and caption must state that door symbols do not indicate a room count; confirmed counts remain in the textual floor summaries and room tiles. Keep Building 1/2 at “Not set” until entered. Do not imply measured sizes, placement or a surveyed facade. This is a development illustration, not a tenant-facing plan.
 

@@ -4,6 +4,22 @@
 
 Renters have one main destination: the real rental records authorized for their account. They see whether access is pending, ready or disabled, a useful empty state when no records are shared, and sign-out in the compact account header. There are no payment, balance or placeholder tabs. Staff use the labeled **Workspace navigation** menu to reach implemented directory, location, invitation and owner-review sections; on larger screens the same links appear in a sidebar. Navigation stays in document flow and does not cover content while scrolling or when the software keyboard opens. See [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) for responsive behavior and verification limits.
 
+## Giving a renter access to their rent record - 26 Oct 2026
+
+What the renter will see: their room, monthly rent, balance, rent by month, confirmed payments and cash acknowledgments. Pending cash and uncleared checks appear separately as "waiting for confirmation" and do not lower the balance. The page is view-only; renters still pay their collector in person. Renters sign in with email and password and are not asked for the staff authenticator code. To preview it with fictional data in development, open `/?preview=renter`.
+
+Prerequisite: migrations `202610190001_check_handover.sql` and `202610260001_renter_account_view.sql` must be applied to the database the app uses. Until then, a signed-in renter sees "Your rent record could not be loaded."
+
+Owner steps:
+1. **Confirm the person outside the app.** Agree the exact email address and which tenant record (room) is theirs.
+2. **Tenant record:** make sure the tenant exists in the Tenant directory. Its row shows "No renter login yet".
+3. **Invite:** Invite account → renter, using that exact email. The renter opens the email link and sets a password of at least 12 characters.
+4. **Link:** Assign or disable access → look up the exact email → check the matched account → choose the tenant record → assign. The directory row now shows "✓ Renter can sign in".
+5. **Rent setup (if not done):** in Payments and balances, the saved room agreement and monthly charges must exist; otherwise the renter sees "Your room is not set up yet".
+6. **Tell the renter** to sign in at the usual address. They can change their password under Password at the bottom of their page; it asks for the current password first.
+
+Removing access: Assign or disable access → disable the contact link. The renter immediately sees no records; payment history stays intact for staff. Archiving the tenant also removes renter access.
+
 ## Identity and assignment contract
 
 Invitation delivery and permission assignment are separate. Supabase Auth invitation acceptance verifies control of the invited email; it does not prove real-world identity or add an application membership. Staff actions require AAL2, enforced in PostgreSQL, not just the interface.
