@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, LoadingSkeleton } from '../components/atoms'
 import { WorkspaceIcon } from '../components/WorkspaceIcon'
+import { RoomPicker } from './RoomPicker'
+import type { DbBuilding as Building, DbUnit as Unit } from './property-drawn'
 import { decimalPesos } from './CashAcknowledgment'
 import { philippineToday } from './payment-preview-model.ts'
 import { supabase } from './client'
 import { text, type Language } from '../i18n'
 
-type Building = { id: string; label: string }
-type Unit = { id: string; label: string; building_id: string; floor_label: string | null; kind: string }
 type Draft = { name: string; kind: 'individual' | 'business'; building: string; room: string; moveIn: string; rent: string }
 const empty = (): Draft => ({ name: '', kind: 'individual', building: '', room: '', moveIn: philippineToday(), rent: '' })
 
@@ -61,7 +61,6 @@ export function AddTenant({ propertyId, preselect, assignTenant, done, openDirec
   }, [assignTenant, load])
   useEffect(() => { if (step !== 'form' || error) panel.current?.focus() }, [step, error])
 
-  const vacant = units.filter(unit => unit.building_id === draft.building && unit.kind !== 'shared' && !occupied.has(unit.id))
   const unit = units.find(item => item.id === draft.room)
   const building = buildings.find(item => item.id === draft.building)
   const edit = (patch: Partial<Draft>) => { setDraft(previous => ({ ...previous, ...patch })); setError('') }
@@ -121,11 +120,9 @@ export function AddTenant({ propertyId, preselect, assignTenant, done, openDirec
         </>}
       </fieldset>
       <fieldset><legend><span>02</span> {tr('Room', 'Kwarto')}</legend>
-        <label htmlFor="tenant-building">{tr('Building', 'Bilding')}</label>
-        <select id="tenant-building" value={draft.building} onChange={e => edit({ building: e.target.value, room: '' })}><option value="">{existing ? tr('Choose building', 'Pagpili og bilding') : tr('Assign a room later', 'I-assign ang kwarto unya')}</option>{buildings.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
+        <p className="field-help">{existing ? tr('Choose the building, then a glowing (vacant) door or room.', 'Pilia ang bilding, dayon ang nagsiga (bakante) nga pultahan o kwarto.') : tr('Choose the building, then a glowing (vacant) door or room. Or assign a room later.', 'Pilia ang bilding, dayon ang nagsiga (bakante) nga pultahan o kwarto. O i-assign unya.')}</p>
+        <RoomPicker buildings={buildings} units={units} occupied={occupied} building={draft.building} room={draft.room} allowLater={!existing} language={language} onChange={(building, room) => edit({ building, room })} />
         {draft.building && <>
-          <label htmlFor="tenant-room">{tr('Vacant room', 'Bakante nga kwarto')}</label>
-          <select id="tenant-room" value={draft.room} onChange={e => edit({ room: e.target.value })}><option value="">{vacant.length ? tr('Choose a room', 'Pagpili og kwarto') : tr('No vacant rooms in this building', 'Walay bakante nga kwarto')}</option>{vacant.map(item => <option key={item.id} value={item.id}>{item.label}{item.floor_label ? ` · ${item.floor_label}` : ''}</option>)}</select>
           {unit && <div className="form-grid"><div><label htmlFor="tenant-move-in">{tr('Move-in date', 'Petsa sa pagsulod')}</label><input id="tenant-move-in" type="date" value={draft.moveIn} onChange={e => edit({ moveIn: e.target.value })} /></div>
             <div><label htmlFor="tenant-rent">{tr('Monthly rent (PHP)', 'Binulan nga abang (PHP)')}</label><input id="tenant-rent" inputMode="decimal" value={draft.rent} onChange={e => edit({ rent: e.target.value })} placeholder="3500.00" /></div></div>}
           <p className="field-help">{tr('Rent is due on the same day each month as the move-in date (the last day in shorter months).', 'Ang abang bayran sa parehong adlaw matag bulan sama sa petsa sa pagsulod (kataposang adlaw sa mubo nga bulan).')}</p>

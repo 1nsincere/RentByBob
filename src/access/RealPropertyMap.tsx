@@ -1,28 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, LoadingSkeleton } from '../components/atoms'
 import { BuildingArt, BuildingFacade } from './BuildingDrawings'
-import type { Building as DrawnBuilding, Floor, Room } from './property-preview-store'
-import { sketchPositions, type SketchSlot } from './property-sketch.ts'
+import { sketchPositions } from './property-sketch.ts'
+import { drawnKind, toDrawn, type DbBuilding, type DbUnit } from './property-drawn'
 import { philippineToday } from './payment-preview-model.ts'
 import { supabase } from './client'
 import { text, type Language } from '../i18n'
-
-type DbBuilding = { id: string; label: string; sketch_slot: SketchSlot | null }
-type DbUnit = { id: string; label: string; building_id: string; floor_label: string | null; kind: 'room' | 'apartment' | 'shared' | 'house' | 'commercial' }
-const drawnKind: Record<DbUnit['kind'], string> = { room: 'Room', apartment: 'Apartment', shared: 'Shared space', house: 'House', commercial: 'Commercial' }
-const floorOrder = (label: string | null) => label === 'Ground floor' ? 0 : label === 'Second floor' ? 1 : label ? 2 : -1
-
-// Converts saved buildings/rooms into the drawing model: one floor band per saved floor label.
-function toDrawn(building: DbBuilding, units: DbUnit[], language: Language): DrawnBuilding {
-  const tr = (english: string, bisaya: string) => text(language, english, bisaya)
-  const own = units.filter(unit => unit.building_id === building.id)
-  const labels = [...new Set(own.map(unit => unit.floor_label))].sort((a, b) => floorOrder(a) - floorOrder(b))
-  const floors: Floor[] = labels.map(label => {
-    const rooms: Room[] = own.filter(unit => unit.floor_label === label).map(unit => ({ id: unit.id, label: unit.label, kind: drawnKind[unit.kind] }))
-    return { label: label ?? tr('Rooms', 'Mga kwarto'), count: rooms.filter(room => room.kind === 'Room').length, rooms }
-  })
-  return { id: building.id, name: building.label, floors: floors.length ? floors : [{ label: tr('No rooms yet', 'Wala pay kwarto'), count: null, rooms: [] }] }
-}
 
 // Real property map: fixed sketch positions, building front views, Occupied/Vacant from current agreements only.
 // Selecting a room shows its details and actions (add tenant, open payments, owner rename). No renter names are shown.
@@ -135,7 +118,7 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
         const drawn = toDrawn(current, units, language)
         const floor = drawn.floors[Math.min(floorIndex, drawn.floors.length - 1)]
         return <>
-          <figure className="building-facade"><BuildingFacade building={drawn} selectedRoom="" language={language} isOccupied={isOccupied} />
+          <figure className="building-facade"><BuildingFacade building={drawn} selectedRoom={selected} language={language} isOccupied={isOccupied} onPick={id => { setFloorIndex(Math.max(0, drawn.floors.findIndex(item => item.rooms.some(room => room.id === id)))); selectRoom(id) }} />
             <figcaption>{tr('Drawn from the saved rooms on each floor: one door per space, shaded when occupied. Not a surveyed plan.', 'Gikan sa na-save nga kwarto matag andana: usa ka pultahan matag lugar, may kolor kon giokupahan. Dili sukod nga plano.')}</figcaption></figure>
           {drawn.floors.length > 1 && <div className="floor-tabs" role="group" aria-label={tr('Choose floor', 'Pilia ang andana')}>{drawn.floors.map((item, index) => <Button key={item.label} aria-pressed={item === floor} onClick={() => { setFloorIndex(index); setSelected('') }}>{item.label}</Button>)}</div>}
           {drawn.floors.length > 1 && <p className="field-help">{tr('Choose a floor, then select a room to see its details.', 'Pilia ang andana, dayon pilia ang kwarto aron makita ang detalye.')}</p>}

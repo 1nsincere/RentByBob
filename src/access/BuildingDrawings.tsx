@@ -25,7 +25,8 @@ export function BuildingArt({ building }: { building: Building }) {
 
 // Front view drawn from the entered layout: one door per space, wrapping into rows; width grows with the busiest floor.
 // Occupancy is supplied by the caller: the fictional preview store, or current agreements on the real map.
-export function BuildingFacade({ building, selectedRoom, language = 'en', isOccupied }: { building: Building; selectedRoom: string; language?: Language; isOccupied: (roomId: string) => boolean }) {
+// With onPick, vacant doors are clickable for mouse/touch; pickers must also offer room buttons for keyboard users.
+export function BuildingFacade({ building, selectedRoom, language = 'en', isOccupied, pickable, onPick }: { building: Building; selectedRoom: string; language?: Language; isOccupied: (roomId: string) => boolean; pickable?: (roomId: string) => boolean; onPick?: (roomId: string) => void }) {
   const tr = (en: string, ceb: string) => language === 'ceb' ? ceb : en
   const perRow = 10, slot = 84, doorWidth = 60, doorHeight = 100, rowHeight = 148, storyTop = 42
   const rowsFor = (floor: Floor) => floor.rooms.length ? Math.ceil(floor.rooms.length / perRow) : 1
@@ -68,8 +69,10 @@ export function BuildingFacade({ building, selectedRoom, language = 'en', isOccu
           const x = centre - (inRow * slot - (slot - doorWidth)) / 2 + (spaceIndex % perRow) * slot
           const y = top + storyTop + row * rowHeight
           const kind = isRentalRoom(room) ? 'room' : room.kind === 'Shared space' ? 'shared' : 'unit'
-          return <g key={room.id} transform={`translate(${x} ${y})`}
-            className={`facade-room-door facade-space--${kind} ${isOccupied(room.id) ? 'is-occupied' : ''} ${room.id === selectedRoom ? 'is-selected' : ''}`}>
+          // Clickable: any door when onPick is given (unless pickable says no). Glowing (is-pickable): only doors a picker offers.
+          const canPick = Boolean(onPick && (pickable ? pickable(room.id) : true)), glow = Boolean(onPick && pickable?.(room.id))
+          return <g key={room.id} transform={`translate(${x} ${y})`} onClick={canPick ? () => onPick!(room.id) : undefined}
+            className={`facade-room-door facade-space--${kind} ${isOccupied(room.id) ? 'is-occupied' : ''} ${room.id === selectedRoom ? 'is-selected' : ''} ${canPick ? 'is-clickable' : ''} ${glow ? 'is-pickable' : ''}`}>
             <rect className="facade-door-frame" width={doorWidth} height={doorHeight} rx="9" />
             {kind === 'room' ? <>
               <rect className="facade-door-panel" x="8" y="8" width={doorWidth - 16} height={doorHeight - 16} rx="5" />

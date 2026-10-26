@@ -60,7 +60,7 @@ export function TenantDirectory({ propertyId, tenants, renterLinks, owner, activ
   return <section className="card directory-card" aria-labelledby="tenant-records-heading">
     <div className="section-heading">
       <div><p className="eyebrow">{tr('PEOPLE AND BUSINESSES', 'MGA TAWO UG NEGOSYO')}</p><h2 id="tenant-records-heading">{t.tenantDirectory}</h2></div>
-      <Button className="primary" onClick={addTenant}>{tr('Add tenant', 'Idugang ang nag-abang')}</Button><span className="record-count">{tenants.length} {tr('records', 'ka rekord')}</span>
+      <div className="directory-heading-actions"><span className="record-count">{tenants.length} {tr('records', 'ka rekord')}</span><Button className="primary" onClick={addTenant}>{tr('Add tenant', 'Idugang ang nag-abang')}</Button></div>
     </div>
     <p>{tr('Find tenants, see their room, and open their payments.', 'Pangitaa ang nag-abang, tan-awa ang ilang kwarto, ug ablihi ang ilang bayad.')}</p>
     <div ref={noticeRef} tabIndex={-1}>{notice && <p role={notice.error ? 'alert' : 'status'} className={`notice${notice.error ? ' notice--error' : ''}`}>{notice.text}</p>}</div>

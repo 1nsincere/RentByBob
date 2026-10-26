@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import { createHmac, randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
+import os from 'node:os'
+import path from 'node:path'
 import { chromium, expect } from '@playwright/test'
 
 const apiUrl = process.env.CASH_TEST_API_URL
@@ -232,8 +234,10 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await map.getByRole('button', { name: "Add tenant to Bob's house Room 01", exact: true }).click()
     const addTenant = page.locator('.add-tenant')
     await expect(addTenant.getByRole('heading', { name: 'Add tenant record', exact: true })).toBeVisible()
-    await expect(addTenant.getByLabel('Vacant room')).toHaveValue(/.+/)
-    expect(await addTenant.locator('#tenant-room option:checked').textContent()).toBe('Room 01')
+    // The visual picker opens on Bob's house with Room 01 chosen (door highlighted, room button pressed).
+    await expect(addTenant.getByRole('button', { name: /^Bob's house, \d+ vacant rooms?$/ })).toHaveAttribute('aria-pressed', 'true')
+    await expect(addTenant.getByRole('button', { name: 'Room 01, Room, Vacant', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expect(addTenant.locator('.facade-room-door.is-selected')).toHaveCount(1)
     await addTenant.getByRole('button', { name: 'Review tenant record', exact: true }).click()
     await expect(addTenant.getByRole('alert')).toHaveText('Enter the tenant or business name.')
     await addTenant.getByLabel(/^Tenant or business name/).fill('Sample One-Step Renter')
@@ -297,9 +301,14 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(addTenant.getByRole('heading', { name: 'Assign a room', exact: true })).toBeVisible()
     await addTenant.getByRole('button', { name: 'Review tenant record', exact: true }).click()
     await expect(addTenant.getByRole('alert')).toHaveText('Choose the building and vacant room for this tenant.')
-    await addTenant.getByLabel('Building', { exact: true }).selectOption({ label: "Bob's house" })
-    assert.equal(await addTenant.locator('#tenant-room option', { hasText: 'Room 01' }).count(), 0, 'Occupied rooms are not offered')
-    await addTenant.getByLabel('Vacant room', { exact: true }).selectOption({ label: 'Room 02' })
+    await addTenant.getByRole('button', { name: /^Bob's house, \d+ vacant rooms?$/ }).click()
+    await expect(addTenant.getByRole('button', { name: 'Room 01, Room, Occupied', exact: true })).toBeDisabled()
+    assert.ok(await addTenant.locator('.facade-room-door.is-pickable').count() >= 1, 'Vacant doors on the drawing are clickable')
+    await addTenant.locator('.facade-room-door.is-pickable').first().click()
+    await expect(addTenant.locator('.room-picker-rooms .room-tile[aria-pressed="true"]')).toHaveCount(1)
+    await addTenant.getByRole('button', { name: 'Room 02, Room, Vacant', exact: true }).click()
+    await expect(addTenant.getByRole('button', { name: 'Room 02, Room, Vacant', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await axeScan(page, 'visual room picker')
     await addTenant.getByLabel('Monthly rent (PHP)').fill('2800.50')
     await addTenant.getByRole('button', { name: 'Review tenant record', exact: true }).click()
     await addTenant.getByRole('button', { name: 'Confirm and assign room', exact: true }).click()
@@ -608,6 +617,32 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(browserInquiry.locator('.status')).toHaveText('Handled')
     pass('Visitor inquiry from the public /rooms page reaches staff, who mark it handled')
     await axeScan(page, 'room listings')
+    // Staff idle sign-out, with a fake clock: warning at 30 minutes (Escape keeps the session), sign-out 2 minutes later.
+    const idlePage = await browser.newPage()
+    await idlePage.clock.install()
+    await idlePage.goto(uiUrl)
+    await idlePage.getByLabel('Email address', { exact: true }).fill(ownerEmail)
+    await idlePage.getByLabel('Password', { exact: true }).fill(password)
+    await idlePage.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await expect(idlePage.getByRole('heading', { name: 'Staff security check' })).toBeVisible()
+    await idlePage.getByLabel('Six-digit authenticator code').fill(totp(ownerSecret))
+    await idlePage.getByRole('button', { name: 'Verify code', exact: true }).click()
+    await expect(idlePage.getByRole('heading', { name: 'Owner workspace' })).toBeVisible()
+    await idlePage.clock.fastForward('29:00')
+    await expect(idlePage.getByRole('heading', { name: 'Are you still there?' })).toBeHidden()
+    await idlePage.clock.fastForward('01:05')
+    await expect(idlePage.getByRole('heading', { name: 'Are you still there?' })).toBeVisible()
+    await expect(idlePage.getByRole('button', { name: 'Stay signed in', exact: true })).toBeFocused()
+    await axeScan(idlePage, 'idle warning')
+    await idlePage.keyboard.press('Escape')
+    await expect(idlePage.getByRole('heading', { name: 'Are you still there?' })).toBeHidden()
+    await idlePage.clock.fastForward('31:00')
+    await expect(idlePage.getByRole('heading', { name: 'Are you still there?' })).toBeVisible()
+    await idlePage.clock.fastForward('02:05')
+    await expect(idlePage.getByRole('status').filter({ hasText: 'You were signed out after 30 minutes without activity.' })).toBeVisible()
+    await expect(idlePage.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
+    await idlePage.close()
+    pass('Idle staff sessions warn at 30 minutes, can be kept with Escape or a button, and sign out 2 minutes later')
     if (accessibilityIssues.length) console.error(`Accessibility issues: ${JSON.stringify(accessibilityIssues, null, 1)}`)
     assert.equal(accessibilityIssues.length, 0, `${accessibilityIssues.length} automated accessibility issue(s) on real screens`)
     pass('Real signed-in screens (owner, renter and public) have no automated WCAG 2.1 A/AA violations')
@@ -618,8 +653,11 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
       paidReportSection: Boolean(document.querySelector('.paid-rent-summary')),
       pressedViews: [...document.querySelectorAll('.segmented-control [aria-pressed="true"]')].map(element => element.textContent?.trim()),
       monthlyRent: document.querySelector('.monthly-rent-batch')?.textContent?.replace(/\s+/g, ' ').slice(0, 400) ?? null,
+      visibleText: document.body.innerText.replace(/\s+/g, ' ').slice(0, 700),
     })).catch(() => null)
     console.error(`Browser diagnostics: ${JSON.stringify({ screen, browserErrors: browserErrors.slice(0, 8) })}`)
+    const failureShot = path.join(os.tmpdir(), 'rentbybob-live-failure.png')
+    if (await page.screenshot({ path: failureShot, fullPage: true }).then(() => true).catch(() => false)) console.error(`Failure screenshot (fictional data): ${failureShot}`)
     throw error
   } finally {
     await browser.close()

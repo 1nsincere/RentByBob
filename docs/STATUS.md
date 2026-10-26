@@ -1,5 +1,21 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Security tightening, visual room picker, animations, UI fixes - 27 Oct 2026
+
+**Security (user: "tighten its security"):** staff idle sign-out (30 min + 2 min warning, shared across tabs; Escape or "Stay signed in" keeps the session); Auth now enforces 12-character passwords, recent sign-in for password changes, 60 s between reset emails, 15 code verifications per 5 min, and 12 h / 2 h server session limits (`supabase/config.toml`); migration `202610270006_default_privileges.sql` stops new tables/functions from inheriting browser-role rights and removes all direct table writes from browser roles; production builds no longer show developer instructions when unconfigured; `/auth/callback` is served explicitly on Pages. Details in SECURITY.md; runbook in DEPLOYMENT.md.
+
+**Visual room picker (user: "assign it using the room availables in the building"):** Add tenant / Assign a room now shows building cards (drawing + vacant count), then the building's front view with glowing vacant doors to click, plus room buttons (keyboard/screen reader path); occupied and shared spaces are visible but cannot be chosen. Map doors are clickable too and select the room (and its floor).
+
+**Animation:** buildings on the map and in the picker rise in one after another, building art lifts and windows light on hover, vacant doors glow, the chosen door pops, room tiles stagger in; all removed under reduced motion.
+
+**UI fixes from screenshot review:** pending cash cards readable in the narrow account column; dashboard collections four across (two by two on smaller screens); "1 check" wording; directory heading groups Add tenant with the count; compact toolbar (single property shown as text, Refresh access inside); Add tenant has the same recoverable "section did not open" boundary as other screens; grid minimums clamp so 320 px at 200% text does not overflow.
+
+**Test reliability:** Tailwind now scans only `src/` (docs/screenshot writes no longer reload a running dev server mid-test); live-suite failures save a screenshot and the visible page text.
+
+**Validation (27 Oct 2026):** `npm test` 88/88 (new: privileges, idle model). Live disposable suite exit 0, 46 checks (idle flow with a fake clock; picker door and button selection; axe on the picker and idle warning). Offline 10/10 (caught and fixed a 200% text overflow). Build, artifact check and `npm run test:csp` pass.
+
+**Owner next steps:** `npx.cmd supabase db push --local` (applies 202610270004–0006), then `npx.cmd supabase stop` and `npx.cmd supabase start` to load the stricter Auth settings.
+
 ## Simple add-tenant and payments; preview parity for directory and map; deployment headers - 27 Oct 2026
 
 **Add tenant (user: "too many steps"):** one screen like the preview: name, type, optional building → vacant room, move-in date and monthly rent, review, one save. Migration `202610270004_register_tenant.sql` (`register_tenant`) creates the tenant and agreement in one transaction, so a refused room leaves no tenant behind. The same screen assigns a room to an existing tenant (from the directory) through the existing `create_rental_agreement`.

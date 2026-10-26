@@ -1,3 +1,7 @@
+## Security defaults chosen by the assistant (user delegated: "tighten its security") - 27 Oct 2026
+
+Staff are signed out after 30 minutes without activity (2-minute warning with Stay signed in); server sessions end after 12 hours or 2 hours idle; passwords need 12+ characters at the Auth server. These are adjustable defaults, not business rules: change `IDLE_WARN_MS`/`IDLE_GRACE_MS` in `src/access/idle-model.ts` and `[auth.sessions]` in `supabase/config.toml` if the office finds them too strict.
+
 ## Simple add-tenant and payments flow; preview features in live - 26 Oct 2026
 
 User direction: payments were "too complicated" and adding a tenant had "too many steps"; the live app should work like the preview, and from now on every preview feature should be in the live app.

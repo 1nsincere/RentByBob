@@ -51,7 +51,7 @@ export function CollectionsOverview({ propertyId, tenants, openPayments, languag
         <span className="stat-icon tone-amber" aria-hidden="true"><WorkspaceIcon kind="calendar" /></span>
         <span className="stat-label">{tr('Waiting for confirmation', 'Naghulat og kumpirmasyon')}</span>
         <strong>{waiting}</strong>
-        <small>{overview.pendingCash.count} {tr('cash', 'kwarta')} ({decimalPesos(overview.pendingCash.total)}) · {overview.unclearedChecks.count} {tr('checks not cleared', 'tseke nga wala pa ma-clear')} ({decimalPesos(overview.unclearedChecks.total)}). {tr('Not counted as paid.', 'Wala giihap nga bayad.')}</small>
+        <small>{overview.pendingCash.count} {tr('cash', 'kwarta')} ({decimalPesos(overview.pendingCash.total)}) · {overview.unclearedChecks.count} {tr(overview.unclearedChecks.count === 1 ? 'check not cleared' : 'checks not cleared', 'tseke nga wala pa ma-clear')} ({decimalPesos(overview.unclearedChecks.total)}). {tr('Not counted as paid.', 'Wala giihap nga bayad.')}</small>
       </article>
       <article className="stat-card">
         <span className="stat-icon tone-blue" aria-hidden="true"><WorkspaceIcon kind="home" /></span>

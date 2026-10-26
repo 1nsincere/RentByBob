@@ -5,6 +5,7 @@ import { WorkspaceIcon } from './components/WorkspaceIcon'
 import { DeferredBoundary, deferredScreen } from './components/DeferredScreen'
 import { dashboardPreview, hostedDevelopment, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
 import { ChangePassword, Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
+import { IdleSignOut } from './access/IdleSignOut'
 import { appError, copy, type Language } from './i18n'
 
 const SavedPayments = deferredScreen(() => import('./access/SavedPayments').then(module => module.SavedPayments))
@@ -186,7 +187,14 @@ export function App() {
   const route = booting ? 'loading' : callbackError ? 'link-error' : !session ? 'sign-in'
     : !snapshot ? 'checking' : snapshot.mfa ? 'mfa' : setup ? 'password' : snapshot.access.state
   useEffect(() => { heading.current?.focus() }, [route])
+  // The idle sign-out notice stays on the sign-in screen until the person signs in again (token refresh events must not clear it).
+  const previousRoute = useRef(route)
+  useEffect(() => { if (previousRoute.current === 'sign-in' && route !== 'sign-in' && route !== 'loading') setIdleNotice(false); previousRoute.current = route }, [route])
 
+  // Staff idle sign-out: keep a ref to the latest signOut so the timer callback stays stable.
+  const signOutRef = useRef<() => Promise<void>>(async () => {})
+  const [idleNotice, setIdleNotice] = useState(false)
+  const expireIdle = useCallback(() => { setIdleNotice(true); void signOutRef.current() }, [])
   async function signOut() {
     if (dashboardPreview) { location.href = '/?auth=1'; return }
     generation.current++
@@ -261,6 +269,8 @@ export function App() {
     </nav>
   }
 
+  signOutRef.current = signOut
+  const staffWorkspaceOpen = Boolean(session && role && snapshot && !snapshot.mfa && !setup && !dashboardPreview && !preview)
   return <div className={`app-shell ${route === 'sign-in' ? 'sign-in-shell' : ''} ${dashboardPreview ? 'focused-preview' : ''}`}>
     <a className="skip-link" href="#main">{t.skipContent}</a>
     <div className="environment-note">{environmentLabel}</div>
@@ -304,13 +314,14 @@ export function App() {
 
         {booting ? <div className="boot-placeholder"><LoadingSkeleton label={t.sessionLoading} rows={4} /></div> : !supabase ? <section className="card auth-card">
           <h2>{t.noConnection}</h2>
-          <p>{translate('Start local development with', 'Sugdi ang local development gamit ang')} <code>npm.cmd run dev:local</code>{translate(', or the configured hosted development environment with', ', o ang naka-set up nga hosted development gamit ang')} <code>npm.cmd run dev:hosted</code>. {translate('No prototype records are substituted.', 'Walay prototype nga rekord nga ipuli.')}</p>
+          {import.meta.env.PROD ? <p>{translate('The app cannot reach its records right now. Please try again later, or contact the property owner.', 'Dili makakonektar ang app sa mga rekord karon. Sulayi pag-usab unya, o kontaka ang tag-iya.')}</p>
+            : <p>{translate('Start local development with', 'Sugdi ang local development gamit ang')} <code>npm.cmd run dev:local</code>{translate(', or the configured hosted development environment with', ', o ang naka-set up nga hosted development gamit ang')} <code>npm.cmd run dev:hosted</code>. {translate('No prototype records are substituted.', 'Walay prototype nga rekord nga ipuli.')}</p>}
         </section>
           : callbackError ? <><Feedback message={appError(language, callbackError)} error /><Button className="primary" onClick={() => { setCallbackError(''); void signOut() }}>{t.returnSignIn}</Button></>
-            : !session ? <SignIn language={language} />
+            : !session ? <>{idleNotice && <p className="notice" role="status">{translate('You were signed out after 30 minutes without activity. Sign in again to continue.', 'Na-sign out ka human sa 30 minutos nga walay lihok. Sulod pag-usab aron magpadayon.')}</p>}<SignIn language={language} /></>
               : <>
                 <Feedback message={appError(language, error)} error />
-                {!dashboardPreview && snapshot && !snapshot.mfa && !setup && <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>{translate('Refresh access', 'I-refresh ang access')}</Button>}
+                {!dashboardPreview && snapshot && !snapshot.mfa && !setup && !role && <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>{translate('Refresh access', 'I-refresh ang access')}</Button>}
                 {!snapshot ? error ? <p role="status" className="loading-state">{t.recordsUnavailable}</p> : <LoadingSkeleton label={t.checkingPermissions} rows={4} />
                   : snapshot.mfa ? <Mfa done={() => void refresh()} language={language} />
                     : setup ? <PasswordSetup language={language} done={() => { sessionStorage.removeItem(`password-setup:${session.user.id}`); setSetup(false); void refresh() }} />
@@ -340,13 +351,14 @@ export function App() {
                           <div className="workspace-content">
                             <div className="workspace-toolbar" hidden={dashboardPreview}>
                               <p className="status status--ready">{t.accountReady}</p>
-                              <div className="property-picker">
+                              {snapshot.properties.length > 1 ? <div className="property-picker">
                                 <label htmlFor="property">{t.property}</label>
                                 <select id="property" value={propertyId} onChange={event => {
                                   setPropertyId(event.target.value)
                                   setBackup(false)
                                 }}>{snapshot.properties.map(property => <option key={property.id} value={property.id}>{property.name}</option>)}</select>
-                              </div>
+                              </div> : <p className="toolbar-property"><span>{t.property}</span> <strong>{snapshot.properties.find(property => property.id === propertyId)?.name}</strong></p>}
+                              <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>{translate('Refresh access', 'I-refresh ang access')}</Button>
                             </div>
                             <section hidden={activeSection !== 'home'} tabIndex={-1} id="dashboard-home" className="dashboard-home" aria-labelledby="dashboard-welcome-heading">
                               <div className="dashboard-welcome">
@@ -390,7 +402,7 @@ export function App() {
                               : visitedSections.includes('property-locations') && <DeferredBoundary loadingLabel={translate('Loading property locations…', 'Gikarga ang mga lokasyon…')} rows={3} language={language} reset={PropertyDirectory.reset}>
                                 <PropertyDirectory.Screen key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} startAgreement={unitId => { setTenantRoom({ unitId, nonce: Date.now() }); selectSection('create-tenant') }} locate={locateUnit} openPaymentsForUnit={tenantId => { setPaymentTenant({ tenantId, nonce: Date.now() }); selectSection('payment-records') }} language={language} />
                               </DeferredBoundary>}</div>
-                            <div id="create-tenant" hidden={activeSection !== 'create-tenant'} tabIndex={-1} className="workspace-section">{preview ? <preview.AddTenantPreview showDirectory={() => selectSection('tenant-records')} showBuildings={() => selectSection('property-locations')} language={language} /> : <AddTenant.Screen key={`create:${propertyId}`} propertyId={propertyId} preselect={tenantRoom} assignTenant={assignTenant} done={() => void refresh()} openDirectory={() => selectSection('tenant-records')} openPayments={() => selectSection('payment-records')} language={language} />}</div>
+                            <div id="create-tenant" hidden={activeSection !== 'create-tenant'} tabIndex={-1} className="workspace-section">{preview ? <preview.AddTenantPreview showDirectory={() => selectSection('tenant-records')} showBuildings={() => selectSection('property-locations')} language={language} /> : <DeferredBoundary loadingLabel={translate('Loading the tenant form…', 'Gikarga ang porma…')} rows={3} language={language} reset={AddTenant.reset}><AddTenant.Screen key={`create:${propertyId}`} propertyId={propertyId} preselect={tenantRoom} assignTenant={assignTenant} done={() => void refresh()} openDirectory={() => selectSection('tenant-records')} openPayments={() => selectSection('payment-records')} language={language} /></DeferredBoundary>}</div>
                             <div id="payment-records" hidden={activeSection !== 'payment-records'} tabIndex={-1} className="workspace-section">{preview
                               ? <preview.PaymentsPreview language={language} />
                               : visitedSections.includes('payment-records') && <DeferredBoundary loadingLabel={translate('Loading payment records…', 'Gikarga ang mga rekord sa bayad…')} rows={3} language={language} reset={SavedPayments.reset}>
@@ -420,6 +432,7 @@ export function App() {
                       </>}
               </>}
       </main>
+      {staffWorkspaceOpen && <IdleSignOut expire={expireIdle} language={language} />}
       <footer className="site-footer"><span>RentByBob</span><span>{t.footer}</span></footer>
     </div>
   </div>
