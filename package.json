@@ -11,6 +11,7 @@
     "test:browser": "playwright test",
     "test:offline": "node scripts/run-offline-browser-checks.mjs",
     "test:perf": "npm run build && node scripts/check-performance.mjs",
+    "test:csp": "npm run build && node scripts/check-production-csp.mjs",
     "build": "tsc --noEmit && vite build",
     "build:staging": "tsc --noEmit && vite build --mode staging",
     "preview": "vite preview --host 127.0.0.1",

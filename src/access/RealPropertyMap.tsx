@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, LoadingSkeleton } from '../components/atoms'
 import { BuildingArt, BuildingFacade } from './BuildingDrawings'
 import type { Building as DrawnBuilding, Floor, Room } from './property-preview-store'
@@ -25,7 +25,11 @@ function toDrawn(building: DbBuilding, units: DbUnit[], language: Language): Dra
 }
 
 // Real property map: fixed sketch positions, building front views, Occupied/Vacant from current agreements only.
-export function RealPropertyMap({ propertyId, owner, startAgreement, language = 'en' }: { propertyId: string; owner: boolean; startAgreement?: (unitId: string) => void; language?: Language }) {
+// Selecting a room shows its details and actions (add tenant, open payments, owner rename). No renter names are shown.
+export function RealPropertyMap({ propertyId, owner, startAgreement, locate = null, openPaymentsForUnit, language = 'en' }: {
+  propertyId: string; owner: boolean; startAgreement?: (unitId: string) => void; language?: Language
+  locate?: { unitId: string; nonce: number } | null; openPaymentsForUnit?: (tenantId: string) => void
+}) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [buildings, setBuildings] = useState<DbBuilding[]>([])
   const [units, setUnits] = useState<DbUnit[]>([])
@@ -36,6 +40,11 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, language = 
   const [reviewing, setReviewing] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null)
+  const [selected, setSelected] = useState('')
+  const [tenantByUnit, setTenantByUnit] = useState<Record<string, string>>({})
+  const [renaming, setRenaming] = useState(false), [newLabel, setNewLabel] = useState(''), [renameReason, setRenameReason] = useState('')
+  const panelHeading = useRef<HTMLHeadingElement>(null)
+  const located = useRef(0)
 
   const load = useCallback(async () => {
     try {
@@ -49,13 +58,36 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, language = 
       if (rent.error) setOccupied(null)
       else {
         const today = philippineToday()
-        setOccupied(new Set((rent.data.agreements as { unit_id: string; move_in: string; ended_on?: string | null }[])
-          .filter(agreement => agreement.move_in <= today && (!agreement.ended_on || agreement.ended_on >= today)).map(agreement => agreement.unit_id)))
+        const current = (rent.data.agreements as { unit_id: string; tenant_id: string; move_in: string; ended_on?: string | null }[])
+          .filter(agreement => agreement.move_in <= today && (!agreement.ended_on || agreement.ended_on >= today))
+        setOccupied(new Set(current.map(agreement => agreement.unit_id)))
+        setTenantByUnit(Object.fromEntries(current.map(agreement => [agreement.unit_id, agreement.tenant_id])))
       }
       setState('ready')
     } catch { setState('failed') }
   }, [propertyId])
   useEffect(() => { void load() }, [load])
+  // "Locate room" from the tenant directory: reload, open that building on the room's floor and select the room.
+  useEffect(() => { if (locate) void load() }, [locate, load])
+  useEffect(() => {
+    if (!locate || state !== 'ready' || located.current === locate.nonce) return
+    const unit = units.find(item => item.id === locate.unitId)
+    const building = unit && buildings.find(item => item.id === unit.building_id)
+    if (!unit || !building) return
+    located.current = locate.nonce
+    const floors = toDrawn(building, units, language).floors
+    setEntered(building.id); setFloorIndex(Math.max(0, floors.findIndex(floor => floor.rooms.some(room => room.id === unit.id)))); selectRoom(unit.id)
+  }, [locate, state, units, buildings])
+  function selectRoom(unitId: string) { setSelected(unitId); setRenaming(false); requestAnimationFrame(() => panelHeading.current?.focus()) }
+  async function rename(unitId: string) {
+    if (!newLabel.trim() || !renameReason.trim()) { setMessage({ text: tr('Enter the new room name and a reason.', 'Isulod ang bag-ong ngalan sa kwarto ug rason.'), error: true }); return }
+    setBusy(true); setMessage(null)
+    const { error } = await supabase!.rpc('manage_property_location', { p_property_id: propertyId, p_location_id: unitId, p_action: 'rename', p_label: newLabel.trim(), p_reason: renameReason.trim() })
+    setBusy(false)
+    if (error) { setMessage({ text: error.code === '23505' ? tr('Another room in this building already has that name. Nothing changed.', 'Naa nay laing kwarto niini nga bilding nga ingon ana og ngalan. Walay nausab.') : error.code === '42501' ? tr('Only the owner with an active authenticator session can rename rooms.', 'Ang tag-iya lang nga naay aktibo nga authenticator ang makausab sa ngalan.') : tr('The room could not be renamed. Nothing changed.', 'Wala mausab ang ngalan sa kwarto. Walay nausab.'), error: true }); return }
+    setRenaming(false); setMessage({ text: `${tr('Room renamed to', 'Giilisan ang ngalan sa kwarto ngadto sa')} ${newLabel.trim()}.`, error: false })
+    await load(); requestAnimationFrame(() => panelHeading.current?.focus())
+  }
 
   async function runSetup() {
     setBusy(true); setMessage(null)
@@ -97,7 +129,7 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, language = 
     </div>}
 
     {current ? <section className="card building-entry" aria-labelledby="real-building-heading">
-      <div className="building-entry-toolbar"><Button className="secondary-button" onClick={() => { setEntered(''); setFloorIndex(0) }}>{tr('Back to property map', 'Balik sa mapa')}</Button><span className="preview-pill">{summary(current)}</span></div>
+      <div className="building-entry-toolbar"><Button className="secondary-button" onClick={() => { setEntered(''); setFloorIndex(0); setSelected('') }}>{tr('Back to property map', 'Balik sa mapa')}</Button><span className="preview-pill">{summary(current)}</span></div>
       <div className="building-entry-title"><div><p className="eyebrow">{tr('FRONT VIEW', 'ATUBANGAN')}</p><h3 id="real-building-heading">{current.label}</h3></div></div>
       {(() => {
         const drawn = toDrawn(current, units, language)
@@ -105,9 +137,28 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, language = 
         return <>
           <figure className="building-facade"><BuildingFacade building={drawn} selectedRoom="" language={language} isOccupied={isOccupied} />
             <figcaption>{tr('Drawn from the saved rooms on each floor: one door per space, shaded when occupied. Not a surveyed plan.', 'Gikan sa na-save nga kwarto matag andana: usa ka pultahan matag lugar, may kolor kon giokupahan. Dili sukod nga plano.')}</figcaption></figure>
-          {drawn.floors.length > 1 && <div className="floor-tabs" role="group" aria-label={tr('Choose floor', 'Pilia ang andana')}>{drawn.floors.map((item, index) => <Button key={item.label} aria-pressed={item === floor} onClick={() => setFloorIndex(index)}>{item.label}</Button>)}</div>}
+          {drawn.floors.length > 1 && <div className="floor-tabs" role="group" aria-label={tr('Choose floor', 'Pilia ang andana')}>{drawn.floors.map((item, index) => <Button key={item.label} aria-pressed={item === floor} onClick={() => { setFloorIndex(index); setSelected('') }}>{item.label}</Button>)}</div>}
+          {drawn.floors.length > 1 && <p className="field-help">{tr('Choose a floor, then select a room to see its details.', 'Pilia ang andana, dayon pilia ang kwarto aron makita ang detalye.')}</p>}
           <div className="room-grid">{floor.rooms.map(room => { const unit = units.find(item => item.id === room.id)!
-            return <div key={room.id} className={`room-tile ${isOccupied(room.id) ? 'occupied' : ''} ${unit.kind === 'shared' ? 'shared' : ''}`}><strong>{room.label}</strong><span>{tr(drawnKind[unit.kind], drawnKind[unit.kind])}</span><span className={`status ${unit.kind === 'shared' ? '' : isOccupied(room.id) ? 'status--pending' : 'status--ready'}`}>{statusFor(unit)}</span>{startAgreement && unit.kind !== 'shared' && occupied !== null && !isOccupied(room.id) && <Button className="secondary-button" aria-label={`${tr('Add tenant to', 'Idugang og nag-abang sa')} ${current.label} ${room.label}`} onClick={() => startAgreement(room.id)}>{tr('Add tenant', 'Idugang og nag-abang')}</Button>}</div> })}</div>
+            return <button type="button" key={room.id} aria-pressed={selected === room.id} aria-label={`${room.label}, ${tr(drawnKind[unit.kind], drawnKind[unit.kind])}, ${statusFor(unit)}`} onClick={() => selectRoom(room.id)} className={`room-tile ${isOccupied(room.id) ? 'occupied' : ''} ${unit.kind === 'shared' ? 'shared' : ''} ${selected === room.id ? 'selected' : ''}`}><strong>{room.label}</strong><span>{tr(drawnKind[unit.kind], drawnKind[unit.kind])}</span><span className={`status ${unit.kind === 'shared' ? '' : isOccupied(room.id) ? 'status--pending' : 'status--ready'}`}>{statusFor(unit)}</span></button> })}</div>
+          {(() => { const unit = units.find(item => item.id === selected && item.building_id === current.id); if (!unit) return <p className="field-help selected-space-empty">{tr('Select a space above to view its details.', 'Pilia ang lugar sa ibabaw aron makita ang detalye.')}</p>
+            const taken = isOccupied(unit.id), tenantId = tenantByUnit[unit.id]
+            return <section className="card selected-space" aria-labelledby="selected-space-heading"><p className="eyebrow">{tr('SELECTED SPACE', 'NAPILING LUGAR')}</p><h4 id="selected-space-heading" ref={panelHeading} tabIndex={-1}>{current.label} · {unit.label}</h4>
+              <dl className="selected-space-facts"><div><dt>{tr('Type', 'Klase')}</dt><dd>{tr(drawnKind[unit.kind], drawnKind[unit.kind])}</dd></div><div><dt>{tr('Floor', 'Andana')}</dt><dd>{unit.floor_label ?? tr('Not set', 'Wala pa')}</dd></div><div><dt>{tr('Status', 'Kahimtang')}</dt><dd>{statusFor(unit)}</dd></div></dl>
+              {unit.kind === 'shared' ? <p className="field-help">{tr('Shared space for everyone; it cannot be rented or listed.', 'Gipaambit nga lugar; dili kini paabangan o i-lista.')}</p>
+                : taken ? <p className="field-help">{tr('Occupied. Tenant names are not shown on the map; open the payments account to see who rents it.', 'Giokupahan. Walay ngalan sa nag-abang sa mapa; ablihi ang account sa bayad aron makita kinsa.')}</p>
+                : occupied !== null && <p className="field-help">{tr('Vacant: no current agreement. An upcoming move-in may still be saved.', 'Bakante: walay kasabotan karon. Basin naay umaabot nga pagsulod nga na-save.')}</p>}
+              <div className="person-actions">
+                {startAgreement && unit.kind !== 'shared' && occupied !== null && !taken && <Button className="primary" aria-label={`${tr('Add tenant to', 'Idugang og nag-abang sa')} ${current.label} ${unit.label}`} onClick={() => startAgreement(unit.id)}>{tr('Add tenant to this space', 'Idugang og nag-abang niini nga lugar')}</Button>}
+                {openPaymentsForUnit && taken && tenantId && <Button className="secondary-button" onClick={() => openPaymentsForUnit(tenantId)}>{tr('View rent and payments', 'Tan-awa ang abang ug bayad')}</Button>}
+                {owner && !renaming && <Button className="secondary-button" onClick={() => { setRenaming(true); setNewLabel(unit.label); setRenameReason(''); setMessage(null) }}>{tr('Rename room', 'Usba ang ngalan sa kwarto')}</Button>}
+              </div>
+              {renaming && <form className="rent-setup rename-room" onSubmit={event => { event.preventDefault(); void rename(unit.id) }}>
+                <label htmlFor="rename-room-label">{tr('New room name', 'Bag-ong ngalan sa kwarto')}</label><input id="rename-room-label" value={newLabel} maxLength={200} onChange={event => setNewLabel(event.target.value)} />
+                <label htmlFor="rename-room-reason">{tr('Reason (required)', 'Rason (kinahanglan)')}</label><input id="rename-room-reason" value={renameReason} maxLength={500} onChange={event => setRenameReason(event.target.value)} placeholder={tr('Example: match the number on the door', 'Pananglitan: ipares sa numero sa pultahan')} />
+                <div className="person-actions"><Button className="primary" disabled={busy}>{busy ? tr('Saving…', 'Gi-save…') : tr('Save room name', 'I-save ang ngalan')}</Button><Button type="button" disabled={busy} onClick={() => setRenaming(false)}>{tr('Cancel', 'Kanselahon')}</Button></div>
+              </form>}
+            </section> })()}
         </>
       })()}
     </section> : placed.length > 0 && <div className="map-scroll" tabIndex={0} role="region" aria-label={tr('Property sketch. Scroll sideways on small screens.', 'Drawing sa propiedad. I-scroll pahalang sa gamay nga screen.')}><div className="property-plan">

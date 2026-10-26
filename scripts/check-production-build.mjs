@@ -41,4 +41,14 @@ for (const developmentOnlyMarker of [
     `production JavaScript must not include development-only preview or test marker: ${developmentOnlyMarker}`)
 }
 
-console.log(`Production artifact verified: ${javascriptFiles.length} JavaScript chunk(s), ${stylesheetFiles.length} stylesheet(s); no public availability preview code.`)
+// Cloudflare Pages security headers ship with the build and keep their key protections.
+const headers = await readFile(path.join(outputDirectory, '_headers'), 'utf8')
+for (const required of ["script-src 'self'", "frame-ancestors 'none'", "object-src 'none'", 'X-Content-Type-Options: nosniff', 'Referrer-Policy:', 'Strict-Transport-Security:']) {
+  assert.ok(headers.includes(required), `dist/_headers must keep: ${required}`)
+}
+assert.ok(!/unsafe-eval/.test(headers) && !/script-src[^;]*unsafe-inline/.test(headers), 'dist/_headers must not allow eval or inline scripts')
+assert.ok(!/<script(?![^>]*\bsrc=)[^>]*>/.test(html), 'index.html must not contain inline scripts (blocked by the CSP)')
+const redirects = await readFile(path.join(outputDirectory, '_redirects'), 'utf8')
+assert.ok(/^\/rooms \/index\.html 200$/m.test(redirects), 'dist/_redirects must serve /rooms')
+
+console.log(`Production artifact verified: ${javascriptFiles.length} JavaScript chunk(s), ${stylesheetFiles.length} stylesheet(s); no public availability preview code; security headers and redirects present.`)

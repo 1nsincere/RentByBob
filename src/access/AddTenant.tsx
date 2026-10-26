@@ -13,8 +13,10 @@ const empty = (): Draft => ({ name: '', kind: 'individual', building: '', room: 
 
 // One-step tenant registration (same layout as the preview): details, optional vacant room with move-in date and
 // rent, review, then a single transactional save (register_tenant). No occupant names are collected.
-export function AddTenant({ propertyId, preselect, done, openDirectory, openPayments, language = 'en' }: {
+export function AddTenant({ propertyId, preselect, assignTenant, done, openDirectory, openPayments, language = 'en' }: {
   propertyId: string; preselect?: { unitId: string; nonce: number } | null; done: () => void
+  // Opened from a directory card: give an existing tenant (no current room) a room instead of creating a new record.
+  assignTenant?: { id: string; name: string; kind: 'individual' | 'business'; nonce: number } | null
   openDirectory: () => void; openPayments: () => void; language?: Language
 }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
@@ -29,6 +31,7 @@ export function AddTenant({ propertyId, preselect, done, openDirectory, openPaym
   const ids = useRef({ tenant: crypto.randomUUID(), agreement: crypto.randomUUID() })
   const panel = useRef<HTMLDivElement>(null)
   const applied = useRef(0)
+  const [existing, setExisting] = useState<{ id: string; name: string } | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -48,9 +51,14 @@ export function AddTenant({ propertyId, preselect, done, openDirectory, openPaym
   useEffect(() => {
     if (!preselect || state !== 'ready' || applied.current === preselect.nonce) return
     const unit = units.find(item => item.id === preselect.unitId)
-    if (unit) { applied.current = preselect.nonce; setDraft(previous => ({ ...(step === 'saved' ? empty() : previous), building: unit.building_id, room: unit.id })); setStep('form'); setError(''); ids.current = { tenant: crypto.randomUUID(), agreement: crypto.randomUUID() } }
+    if (unit) { applied.current = preselect.nonce; setExisting(null); setDraft(previous => ({ ...(step === 'saved' ? empty() : previous), building: unit.building_id, room: unit.id })); setStep('form'); setError(''); ids.current = { tenant: crypto.randomUUID(), agreement: crypto.randomUUID() } }
   }, [preselect, state, units])
   useEffect(() => { if (preselect) void load() }, [preselect, load])
+  useEffect(() => {
+    if (!assignTenant) return
+    setExisting({ id: assignTenant.id, name: assignTenant.name }); setDraft({ ...empty(), name: assignTenant.name, kind: assignTenant.kind }); setStep('form'); setError('')
+    ids.current = { tenant: crypto.randomUUID(), agreement: crypto.randomUUID() }; void load()
+  }, [assignTenant, load])
   useEffect(() => { if (step !== 'form' || error) panel.current?.focus() }, [step, error])
 
   const vacant = units.filter(unit => unit.building_id === draft.building && unit.kind !== 'shared' && !occupied.has(unit.id))
@@ -59,6 +67,7 @@ export function AddTenant({ propertyId, preselect, done, openDirectory, openPaym
   const edit = (patch: Partial<Draft>) => { setDraft(previous => ({ ...previous, ...patch })); setError('') }
   function problem() {
     if (!draft.name.trim()) return tr('Enter the tenant or business name.', 'Isulod ang ngalan sa nag-abang o negosyo.')
+    if (existing && !unit) return tr('Choose the building and vacant room for this tenant.', 'Pilia ang bilding ug bakante nga kwarto para niini nga nag-abang.')
     if (draft.building && !unit) return tr('Choose a vacant room, or choose "Assign a room later".', 'Pagpili og bakante nga kwarto, o pilia ang "I-assign unya".')
     if (unit && !/^\d{4}-\d{2}-\d{2}$/.test(draft.moveIn)) return tr('Choose the move-in date.', 'Pilia ang petsa sa pagsulod.')
     if (unit && (!/^\d{1,12}(\.\d{1,2})?$/.test(draft.rent.trim()) || Number(draft.rent) <= 0)) return tr('Enter the monthly rent, for example 3500 or 3500.50.', 'Isulod ang binulan nga abang, pananglitan 3500 o 3500.50.')
@@ -66,10 +75,12 @@ export function AddTenant({ propertyId, preselect, done, openDirectory, openPaym
   }
   async function save() {
     setBusy(true); setError('')
-    const { error: rpcError } = await supabase!.rpc('register_tenant', {
-      p_property_id: propertyId, p_tenant_id: ids.current.tenant, p_display_name: draft.name.trim(), p_kind: draft.kind,
-      p_agreement_id: unit ? ids.current.agreement : null, p_unit_id: unit?.id ?? null, p_move_in: unit ? draft.moveIn : null, p_rent: unit ? draft.rent.trim() : null,
-    })
+    const { error: rpcError } = existing && unit
+      ? await supabase!.rpc('create_rental_agreement', { p_property_id: propertyId, p_id: ids.current.agreement, p_tenant_id: existing.id, p_unit_id: unit.id, p_move_in: draft.moveIn, p_rent: draft.rent.trim() })
+      : await supabase!.rpc('register_tenant', {
+        p_property_id: propertyId, p_tenant_id: ids.current.tenant, p_display_name: draft.name.trim(), p_kind: draft.kind,
+        p_agreement_id: unit ? ids.current.agreement : null, p_unit_id: unit?.id ?? null, p_move_in: unit ? draft.moveIn : null, p_rent: unit ? draft.rent.trim() : null,
+      })
     setBusy(false)
     if (rpcError) {
       setError(rpcError.code === '42501' ? tr('Your staff session needs the authenticator code again. Nothing was saved.', 'Kinahanglan na usab ang authenticator code. Walay na-save.')
@@ -79,19 +90,19 @@ export function AddTenant({ propertyId, preselect, done, openDirectory, openPaym
     }
     setStep('saved'); done(); void load()
   }
-  function reset() { setDraft(empty()); setStep('form'); setError(''); ids.current = { tenant: crypto.randomUUID(), agreement: crypto.randomUUID() } }
+  function reset() { setExisting(null); setDraft(empty()); setStep('form'); setError(''); ids.current = { tenant: crypto.randomUUID(), agreement: crypto.randomUUID() } }
 
   if (state === 'failed') return <p className="notice notice--error" role="alert">{tr('Rooms could not be loaded. Check your connection and staff session, then reload.', 'Wala ma-load ang mga kwarto. Susiha ang koneksyon ug staff session, dayon i-reload.')}</p>
   if (state === 'loading') return <LoadingSkeleton label={tr('Loading rooms…', 'Gikarga ang mga kwarto…')} rows={3} />
   return <section className="add-tenant-preview add-tenant" aria-labelledby="add-tenant-heading">
-    <div className="section-heading"><div><p className="eyebrow">{tr('DIRECTORY MANAGEMENT', 'PAGDUMALA SA LISTA')}</p><h2 id="add-tenant-heading">{tr('Add tenant record', 'Idugang ang nag-abang')}</h2><p>{tr('Add the person or business and, if they are moving in, their room and rent in one step.', 'Idugang ang tawo o negosyo ug, kon mosulod na, ang ilang kwarto ug abang sa usa ka lakang.')}</p></div></div>
+    <div className="section-heading"><div><p className="eyebrow">{tr('DIRECTORY MANAGEMENT', 'PAGDUMALA SA LISTA')}</p><h2 id="add-tenant-heading">{existing ? tr('Assign a room', 'Hatagi og kwarto') : tr('Add tenant record', 'Idugang ang nag-abang')}</h2><p>{existing ? tr('Choose the vacant room, move-in date and monthly rent for this tenant.', 'Pilia ang bakante nga kwarto, petsa sa pagsulod ug binulan nga abang para niini nga nag-abang.') : tr('Add the person or business and, if they are moving in, their room and rent in one step.', 'Idugang ang tawo o negosyo ug, kon mosulod na, ang ilang kwarto ug abang sa usa ka lakang.')}</p></div></div>
     <ol className="form-progress" aria-label={tr('Form progress', 'Pag-uswag sa porma')}>
       <li aria-current={step === 'form' ? 'step' : undefined}><span>1</span>{tr('Tenant & room', 'Nag-abang ug kwarto')}</li>
       <li aria-current={step === 'review' ? 'step' : undefined}><span>2</span>{tr('Review details', 'Susiha ang detalye')}</li>
       <li aria-current={step === 'saved' ? 'step' : undefined}><span>3</span>{tr('Added', 'Nadugang')}</li>
     </ol>
     <div ref={panel} tabIndex={-1} className="form-feedback">{error && <p role="alert" className="notice notice--error">{error}</p>}</div>
-    {step === 'saved' ? <section className="card tenant-success"><span className="success-mark" aria-hidden="true">✓</span><h3>{tr('Tenant added', 'Nadugang ang nag-abang')}</h3>
+    {step === 'saved' ? <section className="card tenant-success"><span className="success-mark" aria-hidden="true">✓</span><h3>{existing ? tr('Room assigned', 'Na-assign ang kwarto') : tr('Tenant added', 'Nadugang ang nag-abang')}</h3>
       <p><strong>{draft.name.trim()}</strong> {unit ? `${tr('is now in', 'naa na sa')} ${building?.label} · ${unit.label}, ${tr('rent', 'abang')} ${decimalPesos(draft.rent.trim())} ${tr('per month from', 'matag bulan sugod')} ${draft.moveIn}.` : tr('was added without a room. Assign a room any time from here or the property map.', 'nadugang nga walay kwarto. Mahimong i-assign unya dinhi o sa mapa.')}</p>
       <div className="person-actions"><Button className="primary" onClick={reset}>{tr('Add another tenant', 'Idugang og lain')}</Button><Button onClick={openDirectory}>{tr('View tenant directory', 'Tan-awa ang lista')}</Button>{unit && <Button onClick={openPayments}>{tr('Go to payments', 'Adto sa bayad')}</Button>}</div>
     </section> : step === 'review' ? <section className="card tenant-review" aria-labelledby="tenant-review-heading"><h3 id="tenant-review-heading">{tr('Review tenant details', 'Susiha ang detalye sa nag-abang')}</h3>
@@ -99,17 +110,19 @@ export function AddTenant({ propertyId, preselect, done, openDirectory, openPaym
         <><dt>{tr('Room', 'Kwarto')}</dt><dd>{unit ? `${building?.label} · ${unit.label}${unit.floor_label ? ` (${unit.floor_label})` : ''}` : tr('Assign later', 'I-assign unya')}</dd></>
         {unit && <><><dt>{tr('Move-in date', 'Petsa sa pagsulod')}</dt><dd>{draft.moveIn}</dd></><><dt>{tr('Monthly rent', 'Binulan nga abang')}</dt><dd>{decimalPesos(draft.rent.trim())}</dd></></>}</dl>
       {unit && <p className="field-help">{tr('Saving creates the tenant and their room agreement together. Monthly rent is then added from Payments; nothing is charged yet.', 'Ang pag-save mohimo sa nag-abang ug sa kasabotan sa kwarto. Idugang ang binulan nga abang sa Payments; walay masingil pa.')}</p>}
-      <div className="form-actions"><Button className="secondary-button" disabled={busy} onClick={() => setStep('form')}>{tr('Edit details', 'Usba ang detalye')}</Button><Button className="primary" disabled={busy} onClick={() => void save()}>{busy ? tr('Saving…', 'Gi-save…') : tr('Confirm and add tenant', 'Kumpirmaha ug idugang')}</Button></div>
+      <div className="form-actions"><Button className="secondary-button" disabled={busy} onClick={() => setStep('form')}>{tr('Edit details', 'Usba ang detalye')}</Button><Button className="primary" disabled={busy} onClick={() => void save()}>{busy ? tr('Saving…', 'Gi-save…') : existing ? tr('Confirm and assign room', 'Kumpirmaha ug i-assign') : tr('Confirm and add tenant', 'Kumpirmaha ug idugang')}</Button></div>
     </section> : <div className="tenant-form-layout"><form className="card tenant-entry-form" onSubmit={e => { e.preventDefault(); const message = problem(); if (message) { setError(message); return } setStep('review') }}>
       <fieldset><legend><span>01</span> {tr('Tenant details', 'Detalye sa nag-abang')}</legend>
+        {existing ? <><p className="existing-tenant"><strong>{existing.name}</strong> · {tr('existing tenant record', 'naa nay rekord')}</p><Button type="button" className="secondary-button" onClick={reset}>{tr('Add a new tenant instead', 'Idugang hinuon og bag-ong nag-abang')}</Button></> : <>
         <label htmlFor="tenant-name">{tr('Tenant or business name', 'Ngalan sa nag-abang o negosyo')} <span className="required-label">{tr('Required', 'Kinahanglan')}</span></label>
         <input id="tenant-name" value={draft.name} onChange={e => edit({ name: e.target.value })} maxLength={200} autoComplete="off" placeholder={tr('Example: Juan Dela Cruz or Barbershop', 'Pananglitan: Juan Dela Cruz o Barbershop')} />
         <label htmlFor="tenant-kind">{tr('Record type', 'Klase sa rekord')}</label>
         <select id="tenant-kind" value={draft.kind} onChange={e => edit({ kind: e.target.value as Draft['kind'] })}><option value="individual">{tr('Individual', 'Indibidwal')}</option><option value="business">{tr('Business (store or shop)', 'Negosyo (tindahan)')}</option></select>
+        </>}
       </fieldset>
       <fieldset><legend><span>02</span> {tr('Room', 'Kwarto')}</legend>
         <label htmlFor="tenant-building">{tr('Building', 'Bilding')}</label>
-        <select id="tenant-building" value={draft.building} onChange={e => edit({ building: e.target.value, room: '' })}><option value="">{tr('Assign a room later', 'I-assign ang kwarto unya')}</option>{buildings.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
+        <select id="tenant-building" value={draft.building} onChange={e => edit({ building: e.target.value, room: '' })}><option value="">{existing ? tr('Choose building', 'Pagpili og bilding') : tr('Assign a room later', 'I-assign ang kwarto unya')}</option>{buildings.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
         {draft.building && <>
           <label htmlFor="tenant-room">{tr('Vacant room', 'Bakante nga kwarto')}</label>
           <select id="tenant-room" value={draft.room} onChange={e => edit({ room: e.target.value })}><option value="">{vacant.length ? tr('Choose a room', 'Pagpili og kwarto') : tr('No vacant rooms in this building', 'Walay bakante nga kwarto')}</option>{vacant.map(item => <option key={item.id} value={item.id}>{item.label}{item.floor_label ? ` · ${item.floor_label}` : ''}</option>)}</select>

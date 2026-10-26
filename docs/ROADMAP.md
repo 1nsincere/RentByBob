@@ -23,7 +23,7 @@ Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISION
 
 Development can continue without these, but each blocks the item it names:
 
-1. **Apply migrations locally:** a verified backup exists; run `npx.cmd supabase db push --local` to apply `202610190001`, `202610260001` and `202610270001` (the assistant was not permitted to change the preserved database). This blocks real local use of checks, handovers, the renter view, dashboard figures, reversals and move-out.
+1. **Apply migrations locally:** run `npx.cmd supabase db push --local` to apply `202610270004` (one-step add tenant) and `202610270005` (archive guard); earlier ones are applied (the assistant does not change the preserved database). This blocks real local use of checks, handovers, the renter view, dashboard figures, reversals and move-out.
 2. **Clerk identity:** confirm James's exact existing account before he is assigned as cash verifier. This blocks the first real saved cash confirmation.
 3. **Real rent terms:** review the actual tenant, room and rent terms before the first saved agreement or charge.
 4. **Returned checks:** decide whether and how renters are told about a returned check. Currently it is omitted from the renter view.

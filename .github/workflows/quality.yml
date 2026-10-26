@@ -56,3 +56,6 @@ jobs:
 
       - name: Run offline browser checks
         run: npm run test:offline
+
+      - name: Check the production build under its own security headers
+        run: npm run test:csp

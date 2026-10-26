@@ -6,7 +6,6 @@ import { DeferredBoundary, deferredScreen } from './components/DeferredScreen'
 import { dashboardPreview, hostedDevelopment, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
 import { ChangePassword, Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
 import { appError, copy, type Language } from './i18n'
-import { filterTenantDirectory, type TenantKindFilter, type TenantStatusFilter } from './access/tenant-directory-model'
 
 const SavedPayments = deferredScreen(() => import('./access/SavedPayments').then(module => module.SavedPayments))
 const Invitations = deferredScreen(() => import('./access/ManageAccess').then(module => module.Invitations))
@@ -16,6 +15,7 @@ const AccessAudit = deferredScreen(() => import('./access/AccessAudit').then(mod
 const InvitationReconciliation = deferredScreen(() => import('./access/InvitationReconciliation').then(module => module.InvitationReconciliation))
 const CollectionsOverview = deferredScreen(() => import('./access/CollectionsOverview').then(module => module.CollectionsOverview))
 const RoomListingsManager = deferredScreen(() => import('./access/RoomListingsManager').then(module => module.RoomListingsManager))
+const TenantDirectory = deferredScreen(() => import('./access/TenantDirectory').then(module => module.TenantDirectory))
 const AddTenant = deferredScreen(() => import('./access/AddTenant').then(module => module.AddTenant))
 const RenterPortal = deferredScreen(() => import('./access/RenterPortal').then(module => module.RenterPortal))
 
@@ -34,16 +34,14 @@ export function App() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
   const [propertyId, setPropertyId] = useState('')
   const [backup, setBackup] = useState(false)
-  const [search, setSearch] = useState('')
-  const [tenantStatusFilter, setTenantStatusFilter] = useState<TenantStatusFilter>('all')
-  const [tenantKindFilter, setTenantKindFilter] = useState<TenantKindFilter>('all')
   const [activeSection, setActiveSection] = useState('home')
   const [visitedSections, setVisitedSections] = useState<string[]>(['home'])
   // Set when staff click "Start agreement" on a vacant room in the property map.
   const [tenantRoom, setTenantRoom] = useState<{ unitId: string; nonce: number } | null>(null)
   const [paymentTenant, setPaymentTenant] = useState<{ tenantId: string; nonce: number } | null>(null)
+  const [locateUnit, setLocateUnit] = useState<{ unitId: string; nonce: number } | null>(null)
+  const [assignTenant, setAssignTenant] = useState<{ id: string; name: string; kind: 'individual' | 'business'; nonce: number } | null>(null)
   // Current room per tenant (open agreements only), shown on directory cards; 'unavailable' if the rent data cannot load.
-  const [tenantRooms, setTenantRooms] = useState<Record<string, string> | 'unavailable' | null>(null)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try { return localStorage.getItem('rentbybob-theme') === 'dark' ? 'dark' : 'light' }
     catch { return 'light' }
@@ -211,7 +209,6 @@ export function App() {
     if (propertyId && tenant.property_id !== propertyId) return false
     return !role || tenant.property_id === propertyId
   }) ?? []
-  const visibleTenantList = filterTenantDirectory(tenantList, search, tenantStatusFilter, tenantKindFilter)
   const activeTenantCount = tenantList.filter(tenant => !tenant.archived_at).length
   const workspaceStats = role ? [
     { label: translateText(language, 'Active records', 'Aktibong rekord'), value: String(activeTenantCount), hint: `${tenantList.length} ${translateText(language, 'total records', 'kinatibuk-ang rekord')}` },
@@ -236,25 +233,6 @@ export function App() {
   ].filter(item => !dashboardPreview || ['home', 'tenant-records', 'property-locations', 'create-tenant', 'payment-records'].includes(item.id)) : []
   const navigationKey = navigationItems.map(item => item.id).join('|')
 
-  useEffect(() => {
-    if (preview || !supabase || !role || !propertyId || activeSection !== 'tenant-records') return
-    let alive = true
-    void (async () => {
-      try {
-        const { data, error } = await supabase!.rpc('read_rent_workspace', { p_property_id: propertyId })
-        if (error) throw error
-        const workspace = data as { agreements: { tenant_id: string; unit_id: string; ended_on?: string | null }[]; units: { id: string; label: string; building_id: string }[]; buildings: { id: string; label: string }[] }
-        const rooms: Record<string, string> = {}
-        for (const agreement of workspace.agreements.filter(item => !item.ended_on)) {
-          const unit = workspace.units.find(item => item.id === agreement.unit_id)
-          const building = unit && workspace.buildings.find(item => item.id === unit.building_id)
-          if (unit) rooms[agreement.tenant_id] = `${building?.label ?? ''} · ${unit.label}`
-        }
-        if (alive) setTenantRooms(rooms)
-      } catch { if (alive) setTenantRooms('unavailable') }
-    })()
-    return () => { alive = false }
-  }, [role, propertyId, activeSection])
 
   useEffect(() => {
     if (navigationKey && !navigationItems.some(item => item.id === activeSection)) setActiveSection('home')
@@ -367,9 +345,6 @@ export function App() {
                                 <select id="property" value={propertyId} onChange={event => {
                                   setPropertyId(event.target.value)
                                   setBackup(false)
-                                  setSearch('')
-                                  setTenantStatusFilter('all')
-                                  setTenantKindFilter('all')
                                 }}>{snapshot.properties.map(property => <option key={property.id} value={property.id}>{property.name}</option>)}</select>
                               </div>
                             </div>
@@ -402,80 +377,20 @@ export function App() {
                               ))}
                             </section>
                             {preview && <div hidden={activeSection !== 'tenant-records'} tabIndex={-1} id="preview-tenant-records"><preview.TenantDirectoryPreview openPayments={() => selectSection('payment-records')} openMap={() => selectSection('property-locations')} addTenant={() => selectSection('create-tenant')} language={language} /></div>}
-                            {!preview && <section hidden={activeSection !== 'tenant-records'} tabIndex={-1} className="card directory-card" id="tenant-records" aria-labelledby="tenant-records-heading">
-                              <div className="section-heading">
-                                <div><p className="eyebrow">{translate('PEOPLE AND BUSINESSES', 'MGA TAWO UG NEGOSYO')}</p><h2 id="tenant-records-heading">{t.tenantDirectory}</h2></div>
-                                <Button className="primary" onClick={() => selectSection('create-tenant')}>{translate('Add tenant', 'Idugang ang nag-abang')}</Button><span className="record-count">{tenantList.length} {translate('records', 'ka rekord')}</span>
-                              </div>
-                              <p>{translate('Find the people and businesses connected to this property.', 'Pangitaa ang mga tawo ug negosyo nga nalambigit niining propiedad.')}</p>
-                              <label htmlFor="tenant-search">{translate('Search tenants by name', 'Pangitaa ang nag-abang pinaagi sa ngalan')}</label>
-                              <input id="tenant-search" value={search} onChange={event => setSearch(event.target.value)} type="search" autoComplete="off" aria-describedby="tenant-search-help" />
-                              <p className="field-help" id="tenant-search-help">{translate('Results update as you type.', 'Ma-update ang resulta samtang magsulat ka.')}</p>
-                              {tenantList.length > 0 && <>
-                                <div className="tenant-directory-filters">
-                                  <div>
-                                    <label htmlFor="tenant-status-filter">{translate('Record status', 'Kahimtang sa rekord')}</label>
-                                    <select id="tenant-status-filter" value={tenantStatusFilter} onChange={event => setTenantStatusFilter(
-                                      event.target.value === 'active' ? 'active' : event.target.value === 'archived' ? 'archived' : 'all',
-                                    )}>
-                                      <option value="all">{translate('All statuses', 'Tanang kahimtang')}</option>
-                                      <option value="active">{t.active}</option>
-                                      <option value="archived">{t.archived}</option>
-                                    </select>
-                                  </div>
-                                  <div>
-                                    <label htmlFor="tenant-kind-filter">{translate('Record type', 'Klase sa rekord')}</label>
-                                    <select id="tenant-kind-filter" value={tenantKindFilter} onChange={event => setTenantKindFilter(
-                                      event.target.value === 'individual' ? 'individual' : event.target.value === 'business' ? 'business' : 'all',
-                                    )}>
-                                      <option value="all">{translate('All types', 'Tanang klase')}</option>
-                                      <option value="individual">{t.individualTenant}</option>
-                                      <option value="business">{t.businessTenant}</option>
-                                    </select>
-                                  </div>
-                                </div>
-                                <p className="field-help" aria-live="polite">
-                                  {translate('Showing', 'Nagpakita og')} {visibleTenantList.length} {translate('of', 'gikan sa')} {tenantList.length} {translate('records', 'ka rekord')}.
-                                </p>
-                              </>}
-                              {visibleTenantList.length > 0 && <ul className="records tenant-records tenant-records--cards">
-                                {visibleTenantList.map(tenant => {
-                                  const propertyName = snapshot?.properties.find(property => property.id === tenant.property_id)?.name ?? translate('Property', 'Propiedad')
-                                  return <li key={tenant.id} className="tenant-record">
-                                    <span className="record-initial" aria-hidden="true">{tenant.display_name.trim().slice(0, 1).toLocaleUpperCase()}</span>
-                                    <div className="tenant-record-copy">
-                                      <strong>{tenant.display_name}</strong>
-                                      <p>{tenant.kind === 'business' ? t.businessTenant : t.individualTenant}</p>
-                                      <small className="tenant-room">{tenantRooms === 'unavailable' ? translate('Room details unavailable', 'Wala makita ang detalye sa kwarto') : tenantRooms?.[tenant.id] ?? (tenantRooms ? translate('No current room agreement', 'Walay kasabotan sa kwarto karon') : propertyName)}</small>
-                                      {!tenant.archived_at && <small className={`renter-link ${snapshot?.renterLinks.includes(tenant.id) ? 'renter-link--linked' : ''}`}>{snapshot?.renterLinks.includes(tenant.id) ? translate('Renter can sign in', 'Makasulod ang nag-abang') : translate('No renter login yet', 'Wala pay login ang nag-abang')}</small>}
-                                      {typeof tenantRooms === 'object' && tenantRooms?.[tenant.id] && <Button className="secondary-button tenant-card-action" aria-label={`${translate('View rent and payments for', 'Tan-awa ang abang ug bayad ni')} ${tenant.display_name}`} onClick={() => { setPaymentTenant({ tenantId: tenant.id, nonce: Date.now() }); selectSection('payment-records') }}>{translate('View rent and payments', 'Tan-awa ang abang ug bayad')}</Button>}
-                                    </div>
-                                    <span className={`status status--${tenant.archived_at ? 'archived' : 'ready'}`}>{tenant.archived_at ? t.archived : t.active}</span>
-                                  </li>
-                                })}
-                              </ul>}
-                              {tenantList.length === 0 && <div className="empty-state">
-                                <h3>{t.noRecordsYet}</h3>
-                                <p>{translate('Start by adding a tenant record. Account invitations and access are managed separately.', 'Sugdi pinaagi sa pagdugang og rekord sa nag-abang. Lahi ang mga imbitasyon ug paghatag og access.')}</p>
-                              </div>}
-                              {tenantList.length > 0 && visibleTenantList.length === 0 && <div className="empty-state">
-                                <h3>{translate('No matches found', 'Walay nakit-an nga katugbang')}</h3>
-                                <p>{search.trim()
-                                  ? <>{translate('No tenant records match', 'Walay rekord sa nag-abang nga katugbang sa')} “{search.trim()}”. {translate('Try changing your search or filters.', 'Sulayi usbon ang pangita o mga filter.')}</>
-                                  : translate('No tenant records match the selected filters.', 'Walay rekord sa nag-abang nga katugbang sa gipiling mga filter.')}</p>
-                                <Button className="secondary-button" onClick={() => {
-                                  setSearch('')
-                                  setTenantStatusFilter('all')
-                                  setTenantKindFilter('all')
-                                }}>{translate('Clear search and filters', 'Hawani ang pangita ug mga filter')}</Button>
-                              </div>}
-                            </section>}
+                            {!preview && <div id="tenant-records" hidden={activeSection !== 'tenant-records'} tabIndex={-1} className="workspace-section">{visitedSections.includes('tenant-records') && <DeferredBoundary loadingLabel={translate('Loading tenants…', 'Gikarga ang mga nag-abang…')} rows={3} language={language} reset={TenantDirectory.reset}>
+                              <TenantDirectory.Screen key={`directory:${propertyId}`} propertyId={propertyId} tenants={tenantList} renterLinks={snapshot.renterLinks} owner={role === 'owner'} active={activeSection === 'tenant-records'} language={language}
+                                addTenant={() => selectSection('create-tenant')}
+                                openPayments={tenantId => { setPaymentTenant({ tenantId, nonce: Date.now() }); selectSection('payment-records') }}
+                                locateRoom={unitId => { setLocateUnit({ unitId, nonce: Date.now() }); selectSection('property-locations') }}
+                                assignRoom={tenant => { setAssignTenant({ id: tenant.id, name: tenant.display_name, kind: tenant.kind === 'business' ? 'business' : 'individual', nonce: Date.now() }); selectSection('create-tenant') }}
+                                refresh={() => refresh()} />
+                            </DeferredBoundary>}</div>}
                             <div id="property-locations" hidden={activeSection !== 'property-locations'} tabIndex={-1} className="workspace-section">{preview
                               ? <preview.PropertyMapPreview addTenant={() => selectSection('create-tenant')} language={language} />
                               : visitedSections.includes('property-locations') && <DeferredBoundary loadingLabel={translate('Loading property locations…', 'Gikarga ang mga lokasyon…')} rows={3} language={language} reset={PropertyDirectory.reset}>
-                                <PropertyDirectory.Screen key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} startAgreement={unitId => { setTenantRoom({ unitId, nonce: Date.now() }); selectSection('create-tenant') }} language={language} />
+                                <PropertyDirectory.Screen key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} startAgreement={unitId => { setTenantRoom({ unitId, nonce: Date.now() }); selectSection('create-tenant') }} locate={locateUnit} openPaymentsForUnit={tenantId => { setPaymentTenant({ tenantId, nonce: Date.now() }); selectSection('payment-records') }} language={language} />
                               </DeferredBoundary>}</div>
-                            <div id="create-tenant" hidden={activeSection !== 'create-tenant'} tabIndex={-1} className="workspace-section">{preview ? <preview.AddTenantPreview showDirectory={() => selectSection('tenant-records')} showBuildings={() => selectSection('property-locations')} language={language} /> : <AddTenant.Screen key={`create:${propertyId}`} propertyId={propertyId} preselect={tenantRoom} done={() => void refresh()} openDirectory={() => selectSection('tenant-records')} openPayments={() => selectSection('payment-records')} language={language} />}</div>
+                            <div id="create-tenant" hidden={activeSection !== 'create-tenant'} tabIndex={-1} className="workspace-section">{preview ? <preview.AddTenantPreview showDirectory={() => selectSection('tenant-records')} showBuildings={() => selectSection('property-locations')} language={language} /> : <AddTenant.Screen key={`create:${propertyId}`} propertyId={propertyId} preselect={tenantRoom} assignTenant={assignTenant} done={() => void refresh()} openDirectory={() => selectSection('tenant-records')} openPayments={() => selectSection('payment-records')} language={language} />}</div>
                             <div id="payment-records" hidden={activeSection !== 'payment-records'} tabIndex={-1} className="workspace-section">{preview
                               ? <preview.PaymentsPreview language={language} />
                               : visitedSections.includes('payment-records') && <DeferredBoundary loadingLabel={translate('Loading payment records…', 'Gikarga ang mga rekord sa bayad…')} rows={3} language={language} reset={SavedPayments.reset}>

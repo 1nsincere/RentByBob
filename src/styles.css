@@ -1260,3 +1260,18 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
 .account-header:focus-visible, .payment-entry h3:focus-visible, .payment-review h3:focus-visible, .cash-confirmation-review h3:focus-visible { outline: 3px solid var(--focus, var(--accent)); outline-offset: 3px; }
 .tenant-record .tenant-card-action { margin-top: .6rem; width: fit-content; }
 @media (max-width: 40rem) { .tenant-record .tenant-card-action { width: 100%; } }
+
+/* Real map room details and directory card actions (preview parity, 27 Oct 2026). */
+button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: left; cursor: pointer; }
+.selected-space { margin-top: 1rem; display: grid; gap: .75rem; }
+.selected-space h4 { margin: 0; font-size: 1.25rem; }
+.selected-space h4:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.selected-space-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .75rem; margin: 0; }
+.selected-space-facts dt { color: var(--text-secondary); font-size: .9rem; }
+.selected-space-facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.selected-space-empty { margin-top: 1rem; }
+.tenant-card-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+.tenant-card-actions .tenant-card-action { margin-top: 0; }
+.archive-tenant-form { display: grid; gap: .4rem; margin-top: .75rem; padding: .9rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--surface-muted, var(--surface)); }
+.existing-tenant { margin: 0 0 .5rem; font-size: 1.05rem; }
+@media (max-width: 40rem) { .tenant-card-actions { flex-direction: column; } .tenant-card-actions .tenant-card-action { width: 100%; } }

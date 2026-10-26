@@ -1,5 +1,26 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Simple add-tenant and payments; preview parity for directory and map; deployment headers - 27 Oct 2026
+
+**Add tenant (user: "too many steps"):** one screen like the preview: name, type, optional building → vacant room, move-in date and monthly rent, review, one save. Migration `202610270004_register_tenant.sql` (`register_tenant`) creates the tenant and agreement in one transaction, so a refused room leaves no tenant behind. The same screen assigns a room to an existing tenant (from the directory) through the existing `create_rental_agreement`.
+
+**Payments (user: "too complicated"):** rebuilt like the preview: "What needs attention?" list beside the selected account; Record cash payment → amount/date/collector → review showing which months it pays (oldest first) and a duplicate warning → save as pending; the verifier confirms with "Review cash". Account tabs: Rent by month (with add month), Payment history (statement, acknowledgments, reversal), Room rent setup (fixed rent/move-in, move-out). Property-wide confirmations, checks & handovers, monthly rent for everyone and setup are under "More tools". Same RPCs and safety rules; pending cash still never lowers a balance.
+
+**Tenant directory (new `TenantDirectory.tsx`):** search by name, building or room; filters for status (active by default), type and building (including "No room yet"); sort by name or room; card actions View rent and payments, Locate room, Assign a room, and owner-only Archive with a required reason.
+
+**Property map:** room tiles are selectable; a "Selected space" panel shows type, floor and status (no names) with Add tenant to this space, View rent and payments (occupied), and owner Rename room (reason required, existing audited function). Locate room opens the building on the right floor with the room selected.
+
+**Archiving rule:** migration `202610270005_archive_tenant_guard.sql` makes `archive_tenant` refuse while the tenant has an open agreement or one ending today or later (Philippine date), and requires a reason. Archived tenants already could not get a new room.
+
+**Deployment readiness:** `public/_headers` (CSP with self-only scripts, no framing, nosniff, referrer and permissions policies, HSTS, immutable asset caching), `robots.txt` (only `/rooms` indexable), favicon and theme colour. The production artifact check now fails if the headers, `/rooms` rewrite or inline-script ban regress. New `npm run test:csp` serves the production build with its own headers and fails on any CSP violation on `/` and `/rooms`; added to CI.
+
+**Validation (27 Oct 2026):** `npm test` 86/86 (new: register-tenant and archive-guard PGlite tests, a mutation removing the archive guard fails its test; simple-payments and directory model tests). Live disposable `npm.cmd run test:cash:supabase` exit 0 with 45 checks, including one-step add, tenant card → payments, the new cash review flow, locate, rename, assign-room and archive, and axe scans of the new screens. Offline browser checks 10/10. `npm run test:csp` passed. Production build and artifact check passed.
+
+**Next exact step for the owner:** apply `202610270004` and `202610270005` locally with `npx.cmd supabase db push --local` (the assistant does not change the preserved database).
+
+**Not carried over by rule:** occupant names (owner decision) and changing a saved rent (needs an owner rule: from which month, and who may change it).
+
+
 ## Accessibility of real screens, start agreement from the map, inquiry badge - 26 Oct 2026
 
 **Local database:** the owner applied `202610270003`; verified 17/17 migrations, layout columns present, Bob's property has 8 of 8 buildings placed and 30 rooms, and anonymous execution is still limited to the two public-listing functions.

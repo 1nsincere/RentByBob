@@ -1,3 +1,10 @@
+## Response headers and tenant archiving - 27 Oct 2026
+
+- `public/_headers` (Cloudflare Pages) sets a Content-Security-Policy allowing only same-origin scripts (no inline scripts, no eval), Supabase over HTTPS/WSS for data, no framing (`frame-ancestors 'none'`, `X-Frame-Options: DENY`), `nosniff`, a strict referrer policy, a restrictive permissions policy, HSTS and `Cross-Origin-Opener-Policy`. Inline style attributes are allowed (`style-src 'unsafe-inline'`); scripts are not. `scripts/check-production-build.mjs` fails if these protections are removed, and `npm run test:csp` renders `/` and `/rooms` under the headers and fails on any violation. If a staging/production Supabase project uses a custom domain, add it to `connect-src`.
+- `robots.txt` allows indexing only of `/rooms`; staff screens require sign-in regardless.
+- `archive_tenant` (owner, MFA) now requires a reason and refuses while the tenant has an open agreement or one ending today or later; record the move-out first. Archiving keeps all financial history.
+- `register_tenant` adds no new permission: it calls `create_tenant` and `create_rental_agreement` with their existing checks in one transaction.
+
 ## Saved cash local verification - 19 Oct 2026
 
 ## Check register and handover migration - 19 Oct 2026
