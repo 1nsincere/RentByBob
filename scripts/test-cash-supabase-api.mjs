@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { createHmac, randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 import { chromium, expect } from '@playwright/test'
 
 const apiUrl = process.env.CASH_TEST_API_URL
@@ -138,6 +139,19 @@ function expectDenied(result, description) {
   assert.ok(result.response.status >= 400, `${description} unexpectedly succeeded`)
 }
 
+// Automated WCAG 2.1 A/AA scan (axe-core) of real signed-in screens with fictional data. Screenshots are written
+// only with UPDATE_SCREENSHOTS=1. Issues are collected and asserted at the end of the browser flow.
+const axeSource = await readFile(new URL('../node_modules/axe-core/axe.min.js', import.meta.url), 'utf8')
+const accessibilityIssues = []
+async function axeScan(target, name) {
+  await target.waitForTimeout(400)
+  await target.addScriptTag({ content: axeSource })
+  const violations = await target.evaluate(async () => (await window.axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] } })).violations
+    .map(v => ({ id: v.id, impact: v.impact, count: v.nodes.length, targets: v.nodes.slice(0, 3).map(n => n.target.join(' ')), detail: v.nodes[0]?.failureSummary?.split('\n').slice(1, 3).join(' ') })))
+  for (const violation of violations) accessibilityIssues.push({ screen: name, ...violation })
+  if (process.env.UPDATE_SCREENSHOTS === '1') await target.screenshot({ path: fileURLToPath(new URL(`../docs/screenshots/live-${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`, import.meta.url)), fullPage: true })
+}
+
 function pass(message) {
   console.log(`PASS: ${message}`)
 }
@@ -177,10 +191,14 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await collections.getByText('Not counted as paid.', { exact: false }).waitFor()
     assert.equal(await page.locator('.collections-unavailable').count(), 0, 'Collection figures must load for MFA staff')
     pass('Owner dashboard shows live collection figures with unconfirmed money kept separate')
+    await expect(page.locator('.inquiry-alert')).toContainText('1 new inquiry')
+    pass('Dashboard shows unanswered public inquiries')
+    await axeScan(page, 'dashboard')
     await page.getByRole('link', { name: 'Tenant directory', exact: true }).first().click()
     await expect(page.locator('.tenant-record').filter({ hasText: 'Sample API test renter' }).locator('.renter-link--linked')).toHaveText(/Renter can sign in/)
     await expect(page.locator('.tenant-record').filter({ hasText: 'Sample API test renter' }).locator('.tenant-room')).toHaveText('Test building · Test room')
     pass('Staff directory shows which tenants have an active renter login and their current room')
+    await axeScan(page, 'tenant directory')
 
     // Property map: owner creates the sketch layout once; occupancy comes from agreements and shows no names.
     await page.getByRole('link', { name: 'Buildings and units', exact: true }).first().click()
@@ -189,6 +207,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await map.getByRole('button', { name: 'Create layout', exact: true }).click()
     await expect(map.getByRole('status')).toContainText('Layout ready: 8 buildings and 30 rooms created') // the test property has no Building 1 to reuse
     await expect(map.locator('.plan-building')).toHaveCount(8)
+    await axeScan(page, 'property map')
     await map.getByRole('button', { name: /^Explore Bob's house/ }).click()
     await expect(map.locator('.room-tile')).toHaveCount(6)
     await expect(map.locator('.room-tile .status')).toHaveText(Array(6).fill('Vacant'))
@@ -198,8 +217,18 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await map.getByRole('button', { name: 'Back to property map', exact: true }).click()
     await map.locator('.unplaced-buildings').getByRole('button', { name: /^Test building/ }).click()
     await expect(map.locator('.room-tile').filter({ hasText: 'Test room' }).locator('.status')).toHaveText('Occupied')
+    assert.equal(await map.locator('.room-tile').filter({ hasText: 'Test room' }).getByRole('button', { name: /Start agreement/ }).count(), 0, 'Occupied rooms offer no new agreement')
     assert.equal(await map.getByText('Sample API test renter').count(), 0, 'No renter names on the property map')
+    await axeScan(page, 'building view')
     pass('Owner creates the sketch layout once; the map shows Occupied/Vacant from agreements with no renter names')
+    // A vacant room starts an agreement: Payments opens on Setup with that room preselected.
+    await map.getByRole('button', { name: 'Back to property map', exact: true }).click()
+    await map.getByRole('button', { name: /^Explore Bob's house/ }).click()
+    await map.getByRole('button', { name: "Start agreement for Bob's house Room 01", exact: true }).click()
+    await expect(page.getByRole('tab', { name: 'Setup', exact: true })).toHaveAttribute('aria-selected', 'true')
+    await expect(page.locator('details.create-agreement')).toHaveAttribute('open', '')
+    expect(await page.locator('#agreement-unit option:checked').textContent()).toBe("Bob's house / Room 01")
+    pass('Start agreement on a vacant map room opens the new-agreement form with that room selected')
 
     await page.getByRole('link', { name: 'Payments and balances', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Saved rent and cash' })).toBeVisible()
@@ -209,13 +238,16 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(ownerQueue.getByRole('heading', { name: 'Cash awaiting confirmation' })).toBeVisible()
     await expect(ownerQueue.locator('.cash-queue-row')).toHaveCount(2)
     await expect(ownerQueue.getByRole('button', { name: 'Review confirmation', exact: true })).toHaveCount(0)
+    await axeScan(page, 'payments to confirm')
     await page.getByRole('tab', { name: 'Setup', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Saved workflow readiness' })).toBeVisible()
     await expect(page.getByText('An owner-designated verifier is assigned.', { exact: true })).toBeVisible()
+    await axeScan(page, 'payments setup')
     await page.getByRole('tab', { name: 'Account', exact: true }).click()
     await page.getByLabel('Tenant / room agreement').selectOption(agreementId)
     const balance = page.locator('.simple-balance strong')
     await expect(balance).toHaveText('₱6,000.25')
+    await axeScan(page, 'payments account')
     const cashRowCount = await page.locator('.cash-row').count()
     await page.getByLabel('Amount (PHP)').fill('6000.26')
     // Returning to the window, and the 10-second background access re-check, must not discard the unsaved entry.
@@ -323,6 +355,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     assert.ok(csv.includes('Total still due,,,,,5000.25'), 'Export outstanding total matches the screen')
     assert.equal(download.suggestedFilename(), 'rentbybob-paid-rent-2024-04-rent-2024-04.csv')
     pass('Paid rent report exports to a CSV with the same totals as the screen')
+    await axeScan(page, 'paid rent report')
 
     await page.getByRole('button', { name: 'Rent and cash records', exact: true }).click()
     await page.getByRole('tab', { name: 'Checks & handovers', exact: true }).click()
@@ -338,6 +371,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(uiCheck).toContainText('Received — not settled')
     await expect(page.locator('.simple-balance strong')).toHaveText('₱5,900.25')
     pass('Clerk UI records a short-reference check without changing rent balance')
+    await axeScan(page, 'payments checks')
 
     await page.getByRole('button', { name: 'Sign out', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
@@ -410,6 +444,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await page.getByRole('tab', { name: 'Monthly rent', exact: true }).click()
     const batch = page.locator('.monthly-rent-batch')
     await expect(batch.locator('.monthly-rent-list li').filter({ hasText: 'Sample API test renter' })).toHaveCount(1)
+    await axeScan(page, 'payments monthly rent')
     // Owner reverses a confirmed payment with a reason: the rent it paid is owed again and the record stays.
     const balanceBefore = centavos(await page.locator('.simple-balance strong').textContent())
     await page.getByRole('tab', { name: 'Account', exact: true }).click()
@@ -449,13 +484,19 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await visitor.getByRole('button', { name: 'Send message', exact: true }).click()
     await visitor.getByText('Message sent. Thank you!', { exact: true }).waitFor()
     assert.equal(await visitor.locator('.public-room-card').filter({ hasText: 'Test room' }).count(), 0, 'Occupied room is not shown publicly')
+    await axeScan(visitor, 'public rooms')
     await visitor.close()
-    await page.getByRole('link', { name: 'Room listings & inquiries', exact: true }).first().click()
+    await expect(page.locator('.workspace-sidebar').getByRole('link', { name: /^Room listings & inquiries/ })).toHaveText(/\(2 new\)/, { timeout: 20000 })
+    await page.locator('.workspace-sidebar').getByRole('link', { name: /^Room listings & inquiries/ }).click()
     await page.getByRole('button', { name: /^Inquiries/ }).click()
     const browserInquiry = page.locator('.inquiry-item').filter({ hasText: 'Sample Browser Visitor' })
     await browserInquiry.getByRole('button', { name: 'Mark handled', exact: true }).click()
     await expect(browserInquiry.locator('.status')).toHaveText('Handled')
     pass('Visitor inquiry from the public /rooms page reaches staff, who mark it handled')
+    await axeScan(page, 'room listings')
+    if (accessibilityIssues.length) console.error(`Accessibility issues: ${JSON.stringify(accessibilityIssues, null, 1)}`)
+    assert.equal(accessibilityIssues.length, 0, `${accessibilityIssues.length} automated accessibility issue(s) on real screens`)
+    pass('Real signed-in screens (owner, renter and public) have no automated WCAG 2.1 A/AA violations')
   } catch (error) {
     // Fictional disposable data only; report what the screen showed so a failure is diagnosable after the stack is removed.
     const screen = await page.evaluate(() => ({
@@ -791,6 +832,7 @@ if (process.argv[2] === 'create-users') {
     await renterPage.getByLabel('Password', { exact: true }).fill(newRenterPassword)
     await renterPage.getByRole('button', { name: 'Sign in', exact: true }).click()
     await renterPage.getByRole('heading', { name: /^Hello, / }).waitFor({ timeout: 30000 })
+  await axeScan(renterPage, 'renter view')
   } finally {
     await renterBrowser.close()
   }

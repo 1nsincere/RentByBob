@@ -18,6 +18,7 @@ export const previewSnapshot = {
     { id: 'preview-archived', property_id: property.id, display_name: 'Sample Archived Tenant', kind: 'individual', archived_at: '2026-10-01T00:00:00Z' },
   ],
   renterLinks: ['preview-alex'],
+  newInquiries: 0,
 }
 
 // This transport never calls fetch. All writes fail explicitly; no real Auth

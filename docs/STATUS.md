@@ -1,5 +1,17 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Accessibility of real screens, start agreement from the map, inquiry badge - 26 Oct 2026
+
+**Local database:** the owner applied `202610270003`; verified 17/17 migrations, layout columns present, Bob's property has 8 of 8 buildings placed and 30 rooms, and anonymous execution is still limited to the two public-listing functions.
+
+**Real-screen accessibility:** the live disposable suite now runs the axe-core WCAG 2.1 A/AA scan on 13 real signed-in or public screens (owner dashboard, tenant directory, property map, building view, Payments Account/To confirm/Checks/Monthly rent/Setup, paid rent report, room listings, renter view, public `/rooms`) and fails on any violation. It found one real issue, fixed: handled inquiries (and paid renter months) were dimmed with transparency, dropping text contrast to 3.79:1; they now use a muted background instead. With `UPDATE_SCREENSHOTS=1` the suite saves `docs/screenshots/live-*.png` (fictional data only); a path-decoding bug that briefly wrote them to a stray `Rent%20Tracker%20System` Desktop folder was fixed (files moved, empty folder removed).
+
+**UI:** the real Payments Account tab places cash entry beside the statement on wide screens. A vacant room on the property map offers "Start agreement", which opens Payments → Setup with the new-agreement form open and that room preselected (occupied and shared rooms offer no button). The staff menu shows "Room listings & inquiries (N new)" and the dashboard shows a notice with "Open inquiries" while unhandled inquiries exist (count fetched with the 10-second staff refresh; shown as no badge if unavailable).
+
+**Validation (26 Oct 2026):** live `npm.cmd run test:cash:supabase` passed (exit 0), including the new accessibility, dashboard-notice, "(2 new)" badge and start-agreement steps. Offline browser checks 10/10; `npm run verify:release` 81/81.
+
+**Limitations:** automated accessibility rules cover only part of WCAG; no screen-reader or older-adult session yet.
+
 ## Preview features brought to the real app: payments tabs, tenant cards, property map - 26 Oct 2026
 
 **Payments (real):** `SavedPayments.tsx` now keeps the selected agreement and three figures (rent left, waiting for confirmation, monthly rent) in a persistent account header, with tabs: Account · To confirm (count) · Checks & handovers · Monthly rent · Setup. The glossary is collapsed. No payment logic changed.

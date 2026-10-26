@@ -19,7 +19,8 @@ const RoomListingsManager = deferredScreen(() => import('./access/RoomListingsMa
 const RenterPortal = deferredScreen(() => import('./access/RenterPortal').then(module => module.RenterPortal))
 
 // renterLinks: tenant IDs with an active (unrevoked) renter login link, readable by staff under existing RLS.
-type Snapshot = { access: AccessState; mfa: boolean; properties: Property[]; memberships: Membership[]; tenants: Tenant[]; renterLinks: string[] }
+// newInquiries: unhandled public-page inquiries visible to this staff account (0 when unavailable).
+type Snapshot = { access: AccessState; mfa: boolean; properties: Property[]; memberships: Membership[]; tenants: Tenant[]; renterLinks: string[]; newInquiries: number }
 type NavigationItem = { id: string; label: string }
 const translateText = (language: Language, english: string, bisaya: string) => language === 'ceb' ? bisaya : english
 
@@ -37,6 +38,8 @@ export function App() {
   const [tenantKindFilter, setTenantKindFilter] = useState<TenantKindFilter>('all')
   const [activeSection, setActiveSection] = useState('home')
   const [visitedSections, setVisitedSections] = useState<string[]>(['home'])
+  // Set when staff click "Start agreement" on a vacant room in the property map.
+  const [agreementStart, setAgreementStart] = useState<{ unitId: string; nonce: number } | null>(null)
   // Current room per tenant (open agreements only), shown on directory cards; 'unavailable' if the rent data cannot load.
   const [tenantRooms, setTenantRooms] = useState<Record<string, string> | 'unavailable' | null>(null)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -133,7 +136,7 @@ export function App() {
       const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
       if (assuranceError) throw assuranceError
       const mfa = access.staff_mfa_required && assurance.currentLevel !== 'aal2'
-      let properties: Property[] = [], memberships: Membership[] = [], tenants: Tenant[] = [], renterLinks: string[] = []
+      let properties: Property[] = [], memberships: Membership[] = [], tenants: Tenant[] = [], renterLinks: string[] = [], newInquiries = 0
       if (access.state === 'ready' && !mfa && !setup) {
         const [p, m, t, c] = await Promise.all([
           supabase.from('properties').select('id,name').order('name'),
@@ -146,10 +149,15 @@ export function App() {
         memberships = m.data
         tenants = t.data
         renterLinks = [...new Set(c.data.map(link => link.tenant_id as string))]
+        if (memberships.length) {
+          // Badge only: an unavailable inquiry table must not block the workspace, so a failure shows no count.
+          const inquiries = await supabase.from('rental_inquiries').select('id', { count: 'exact', head: true }).is('handled_at', null)
+          newInquiries = inquiries.error ? 0 : inquiries.count ?? 0
+        }
       }
       if (version !== generation.current) return
       setError('')
-      setSnapshot({ access, mfa, properties, memberships, tenants, renterLinks })
+      setSnapshot({ access, mfa, properties, memberships, tenants, renterLinks, newInquiries })
       setPropertyId(previous => properties.some(property => property.id === previous) ? previous : properties[0]?.id ?? '')
     } catch {
       if (version === generation.current) {
@@ -215,7 +223,7 @@ export function App() {
     { id: 'property-locations', label: translate('Buildings and units', 'Mga bilding ug kwarto') },
     { id: 'create-tenant', label: translate('Add tenant record', 'Idugang ang nag-abang') },
     { id: 'payment-records', label: translate('Payments and balances', 'Mga bayad ug balanse') },
-    { id: 'room-listings', label: translate('Room listings & inquiries', 'Lista sa kwarto ug pangutana') },
+    { id: 'room-listings', label: `${translate('Room listings & inquiries', 'Lista sa kwarto ug pangutana')}${snapshot?.newInquiries ? ` (${snapshot.newInquiries} ${translate('new', 'bag-o')})` : ''}` },
     { id: 'invite-account', label: translate('Invite account', 'Pagdapit og account') },
     ...(role === 'owner' ? [
       { id: 'manage-access', label: translate('Assign or disable access', 'Ihatag o tangtangon ang access') },
@@ -377,6 +385,7 @@ export function App() {
                                 </div>
                               </div>
                             </section>
+                            {!preview && activeSection === 'home' && (snapshot?.newInquiries ?? 0) > 0 && <div className="notice inquiry-alert" role="status"><p><strong>{snapshot!.newInquiries} {translate(snapshot!.newInquiries === 1 ? 'new inquiry' : 'new inquiries', 'ka bag-ong pangutana')}</strong> {translate('from people asking about rooms on the public page.', 'gikan sa mga tawo nga nangutana bahin sa kwarto sa publiko nga panid.')}</p><Button className="primary" onClick={() => selectSection('room-listings')}>{translate('Open inquiries', 'Ablihi ang mga pangutana')}</Button></div>}
                             {!preview && propertyId && activeSection === 'home' && <DeferredBoundary loadingLabel={translate('Loading collection figures…', 'Gikarga ang mga numero sa koleksiyon…')} rows={2} language={language} reset={CollectionsOverview.reset}>
                               <CollectionsOverview.Screen key={propertyId} propertyId={propertyId} tenants={tenantList} openPayments={() => selectSection('payment-records')} language={language} />
                             </DeferredBoundary>}
@@ -461,13 +470,13 @@ export function App() {
                             <div id="property-locations" hidden={activeSection !== 'property-locations'} tabIndex={-1} className="workspace-section">{preview
                               ? <preview.PropertyMapPreview addTenant={() => selectSection('create-tenant')} language={language} />
                               : visitedSections.includes('property-locations') && <DeferredBoundary loadingLabel={translate('Loading property locations…', 'Gikarga ang mga lokasyon…')} rows={3} language={language} reset={PropertyDirectory.reset}>
-                                <PropertyDirectory.Screen key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} />
+                                <PropertyDirectory.Screen key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} startAgreement={unitId => { setAgreementStart({ unitId, nonce: Date.now() }); selectSection('payment-records') }} language={language} />
                               </DeferredBoundary>}</div>
                             <div id="create-tenant" hidden={activeSection !== 'create-tenant'} tabIndex={-1} className="workspace-section">{preview ? <preview.AddTenantPreview showDirectory={() => selectSection('tenant-records')} showBuildings={() => selectSection('property-locations')} language={language} /> : <CreateTenant key={`create:${propertyId}`} propertyId={propertyId} done={() => void refresh()} language={language} />}</div>
                             <div id="payment-records" hidden={activeSection !== 'payment-records'} tabIndex={-1} className="workspace-section">{preview
                               ? <preview.PaymentsPreview language={language} />
                               : visitedSections.includes('payment-records') && <DeferredBoundary loadingLabel={translate('Loading payment records…', 'Gikarga ang mga rekord sa bayad…')} rows={3} language={language} reset={SavedPayments.reset}>
-                                <SavedPayments.Screen key={propertyId} propertyId={propertyId} tenants={tenantList} owner={role === 'owner'} userId={session.user.id} language={language} />
+                                <SavedPayments.Screen key={propertyId} propertyId={propertyId} tenants={tenantList} owner={role === 'owner'} userId={session.user.id} agreementStart={agreementStart} language={language} />
                               </DeferredBoundary>}</div>
                               <div id="room-listings" hidden={activeSection !== 'room-listings'} tabIndex={-1} className="workspace-section">{visitedSections.includes('room-listings') && <DeferredBoundary loadingLabel={translate('Loading room listings…', 'Gikarga ang lista sa kwarto…')} rows={3} language={language} reset={RoomListingsManager.reset}><RoomListingsManager.Screen key={`listings:${propertyId}`} propertyId={propertyId} language={language} /></DeferredBoundary>}</div>
                               <div id="invite-account" hidden={activeSection !== 'invite-account'} tabIndex={-1} className="workspace-section">{visitedSections.includes('invite-account') && <DeferredBoundary loadingLabel={translate('Loading invitations…', 'Gikarga ang mga imbitasyon…')} rows={2} language={language} reset={Invitations.reset}><Invitations.Screen key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} /></DeferredBoundary>}</div>

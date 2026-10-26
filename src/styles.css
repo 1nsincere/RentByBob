@@ -1111,7 +1111,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
 .renter-month dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 1rem; margin: 0; }
 .renter-month dt { color: var(--text-secondary); font-size: 0.82rem; font-weight: 600; }
 .renter-month dd { margin: 0; font-weight: 650; font-variant-numeric: tabular-nums; }
-.renter-month--paid { opacity: 0.92; }
+.renter-month--paid { background: var(--support); }
 .renter-month > .status { justify-self: end; }
 .renter-payment-list li { display: flex; align-items: center; gap: 0.9rem; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
 .renter-payment-copy { display: grid; flex: 1 1 auto; gap: 0.1rem; min-width: 0; }
@@ -1144,6 +1144,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
 .tenant-records--cards > li.tenant-record { align-items: start; padding: 1rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); box-shadow: var(--shadow-card); }
 .tenant-records--cards .record-initial { background: var(--tone-blue-bg); color: var(--tone-blue); font-weight: 700; }
 .tenant-room { display: block; margin-top: 0.35rem; color: var(--text); font-weight: 600; overflow-wrap: anywhere; }
+.inquiry-alert { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; margin: 0 0 1.25rem; }
+.inquiry-alert p { margin: 0; }
 .renter-link { display: block; margin-top: 0.15rem; color: var(--text-secondary); }
 .renter-link--linked { color: var(--success); font-weight: 650; }
 .renter-link--linked::before { content: "¹3  "; }
@@ -1176,6 +1178,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
 .account-tab:not([aria-selected="true"]):hover { background: var(--surface); color: var(--brand); }
 .account-tab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .account-panel { margin-top: 0.6rem; }
+/* Real Payments, Account tab: cash entry beside the statement on wide screens; move-out and rent months span both. */
+@media (min-width: 72rem) {
+  #pay-panel-account { display: grid; grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr); gap: 0 1.25rem; align-items: start; }
+  #pay-panel-account > details { grid-column: 1 / -1; }
+  #pay-panel-account > .account-statement { margin-top: 1rem; }
+}
+.pay-panel { margin-top: 0.75rem; }
 /* Compact pending banner inside the account workspace (one row per report, no oversized card). */
 .account-workspace .pending-cash-card { padding: 0.9rem 1.1rem; border-color: var(--warning-border); background: var(--warning-surface); }
 .account-workspace .pending-cash-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.85rem; margin-bottom: 0.6rem; }
@@ -1199,7 +1208,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
 .listing-row .button { margin-top: 0.5rem; }
 .inquiry-item p { margin: 0.4rem 0; }
 .inquiry-message { padding: 0.6rem 0.75rem; border-radius: 0.6rem; background: var(--surface); white-space: pre-wrap; }
-.inquiry-item--handled { opacity: 0.8; }
+/* Handled items are marked by a muted background and the status word, never by transparency (keeps text contrast). */
+.inquiry-item--handled { background: var(--support); }
 @media (max-width: 40rem) { .listing-fields { grid-template-columns: minmax(0, 1fr); } }
 .public-rooms-main { padding-block: 1.5rem 2.5rem; }
 .public-rooms-hero { margin-bottom: 1.25rem; }
