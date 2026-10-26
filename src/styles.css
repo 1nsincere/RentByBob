@@ -1253,3 +1253,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
   .public-rooms-hero h1 { font-size: 1.8rem; }
 }
 @media (prefers-reduced-motion: reduce) { .public-building-tab:hover { transform: none; } }
+
+/* Simple live Payments (mirrors the preview): selected worklist row, cash plan and tenant card action. */
+.payment-overview .worklist-row[aria-current="true"] { background: var(--brand-tint); box-shadow: inset 4px 0 0 var(--brand); padding-inline-start: .9rem; }
+.cash-plan { display: grid; gap: .35rem; margin: .25rem 0 1rem; padding-inline-start: 1.25rem; }
+.account-header:focus-visible, .payment-entry h3:focus-visible, .payment-review h3:focus-visible, .cash-confirmation-review h3:focus-visible { outline: 3px solid var(--focus, var(--accent)); outline-offset: 3px; }
+.tenant-record .tenant-card-action { margin-top: .6rem; width: fit-content; }
+@media (max-width: 40rem) { .tenant-record .tenant-card-action { width: 100%; } }

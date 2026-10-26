@@ -16,6 +16,7 @@ const AccessAudit = deferredScreen(() => import('./access/AccessAudit').then(mod
 const InvitationReconciliation = deferredScreen(() => import('./access/InvitationReconciliation').then(module => module.InvitationReconciliation))
 const CollectionsOverview = deferredScreen(() => import('./access/CollectionsOverview').then(module => module.CollectionsOverview))
 const RoomListingsManager = deferredScreen(() => import('./access/RoomListingsManager').then(module => module.RoomListingsManager))
+const AddTenant = deferredScreen(() => import('./access/AddTenant').then(module => module.AddTenant))
 const RenterPortal = deferredScreen(() => import('./access/RenterPortal').then(module => module.RenterPortal))
 
 // renterLinks: tenant IDs with an active (unrevoked) renter login link, readable by staff under existing RLS.
@@ -39,7 +40,8 @@ export function App() {
   const [activeSection, setActiveSection] = useState('home')
   const [visitedSections, setVisitedSections] = useState<string[]>(['home'])
   // Set when staff click "Start agreement" on a vacant room in the property map.
-  const [agreementStart, setAgreementStart] = useState<{ unitId: string; nonce: number } | null>(null)
+  const [tenantRoom, setTenantRoom] = useState<{ unitId: string; nonce: number } | null>(null)
+  const [paymentTenant, setPaymentTenant] = useState<{ tenantId: string; nonce: number } | null>(null)
   // Current room per tenant (open agreements only), shown on directory cards; 'unavailable' if the rent data cannot load.
   const [tenantRooms, setTenantRooms] = useState<Record<string, string> | 'unavailable' | null>(null)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -446,6 +448,7 @@ export function App() {
                                       <p>{tenant.kind === 'business' ? t.businessTenant : t.individualTenant}</p>
                                       <small className="tenant-room">{tenantRooms === 'unavailable' ? translate('Room details unavailable', 'Wala makita ang detalye sa kwarto') : tenantRooms?.[tenant.id] ?? (tenantRooms ? translate('No current room agreement', 'Walay kasabotan sa kwarto karon') : propertyName)}</small>
                                       {!tenant.archived_at && <small className={`renter-link ${snapshot?.renterLinks.includes(tenant.id) ? 'renter-link--linked' : ''}`}>{snapshot?.renterLinks.includes(tenant.id) ? translate('Renter can sign in', 'Makasulod ang nag-abang') : translate('No renter login yet', 'Wala pay login ang nag-abang')}</small>}
+                                      {typeof tenantRooms === 'object' && tenantRooms?.[tenant.id] && <Button className="secondary-button tenant-card-action" aria-label={`${translate('View rent and payments for', 'Tan-awa ang abang ug bayad ni')} ${tenant.display_name}`} onClick={() => { setPaymentTenant({ tenantId: tenant.id, nonce: Date.now() }); selectSection('payment-records') }}>{translate('View rent and payments', 'Tan-awa ang abang ug bayad')}</Button>}
                                     </div>
                                     <span className={`status status--${tenant.archived_at ? 'archived' : 'ready'}`}>{tenant.archived_at ? t.archived : t.active}</span>
                                   </li>
@@ -470,13 +473,13 @@ export function App() {
                             <div id="property-locations" hidden={activeSection !== 'property-locations'} tabIndex={-1} className="workspace-section">{preview
                               ? <preview.PropertyMapPreview addTenant={() => selectSection('create-tenant')} language={language} />
                               : visitedSections.includes('property-locations') && <DeferredBoundary loadingLabel={translate('Loading property locations…', 'Gikarga ang mga lokasyon…')} rows={3} language={language} reset={PropertyDirectory.reset}>
-                                <PropertyDirectory.Screen key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} startAgreement={unitId => { setAgreementStart({ unitId, nonce: Date.now() }); selectSection('payment-records') }} language={language} />
+                                <PropertyDirectory.Screen key={`locations:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} startAgreement={unitId => { setTenantRoom({ unitId, nonce: Date.now() }); selectSection('create-tenant') }} language={language} />
                               </DeferredBoundary>}</div>
-                            <div id="create-tenant" hidden={activeSection !== 'create-tenant'} tabIndex={-1} className="workspace-section">{preview ? <preview.AddTenantPreview showDirectory={() => selectSection('tenant-records')} showBuildings={() => selectSection('property-locations')} language={language} /> : <CreateTenant key={`create:${propertyId}`} propertyId={propertyId} done={() => void refresh()} language={language} />}</div>
+                            <div id="create-tenant" hidden={activeSection !== 'create-tenant'} tabIndex={-1} className="workspace-section">{preview ? <preview.AddTenantPreview showDirectory={() => selectSection('tenant-records')} showBuildings={() => selectSection('property-locations')} language={language} /> : <AddTenant.Screen key={`create:${propertyId}`} propertyId={propertyId} preselect={tenantRoom} done={() => void refresh()} openDirectory={() => selectSection('tenant-records')} openPayments={() => selectSection('payment-records')} language={language} />}</div>
                             <div id="payment-records" hidden={activeSection !== 'payment-records'} tabIndex={-1} className="workspace-section">{preview
                               ? <preview.PaymentsPreview language={language} />
                               : visitedSections.includes('payment-records') && <DeferredBoundary loadingLabel={translate('Loading payment records…', 'Gikarga ang mga rekord sa bayad…')} rows={3} language={language} reset={SavedPayments.reset}>
-                                <SavedPayments.Screen key={propertyId} propertyId={propertyId} tenants={tenantList} owner={role === 'owner'} userId={session.user.id} agreementStart={agreementStart} language={language} />
+                                <SavedPayments.Screen key={propertyId} propertyId={propertyId} tenants={tenantList} owner={role === 'owner'} userId={session.user.id} focusTenant={paymentTenant} language={language} />
                               </DeferredBoundary>}</div>
                               <div id="room-listings" hidden={activeSection !== 'room-listings'} tabIndex={-1} className="workspace-section">{visitedSections.includes('room-listings') && <DeferredBoundary loadingLabel={translate('Loading room listings…', 'Gikarga ang lista sa kwarto…')} rows={3} language={language} reset={RoomListingsManager.reset}><RoomListingsManager.Screen key={`listings:${propertyId}`} propertyId={propertyId} language={language} /></DeferredBoundary>}</div>
                               <div id="invite-account" hidden={activeSection !== 'invite-account'} tabIndex={-1} className="workspace-section">{visitedSections.includes('invite-account') && <DeferredBoundary loadingLabel={translate('Loading invitations…', 'Gikarga ang mga imbitasyon…')} rows={2} language={language} reset={Invitations.reset}><Invitations.Screen key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} /></DeferredBoundary>}</div>
@@ -507,47 +510,3 @@ export function App() {
   </div>
 }
 
-function CreateTenant({ propertyId, done, language = 'en' }: { propertyId: string; done: () => void; language?: Language }) {
-  const t = copy[language]
-  const tr = (english: string, bisaya: string) => translateText(language, english, bisaya)
-  const requestId = useRef(crypto.randomUUID())
-  const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState('')
-  const [failed, setFailed] = useState(false)
-  return <section className="card form-card" aria-labelledby="create-tenant-heading">
-    <p className="eyebrow">{language === 'ceb' ? 'PAGDUMALA SA LISTA' : 'DIRECTORY MANAGEMENT'}</p>
-    <h2 id="create-tenant-heading">{t.addTenant}</h2>
-    <p>{translateText(language, 'This creates a directory record only. It does not set occupancy, charges or account access.', 'Kini maghimo lang og rekord sa lista. Dili kini magbutang og nagpuyo, bayranan, o access sa account.')}</p>
-    <Feedback message={message} error={failed} />
-    <form onSubmit={async event => {
-      event.preventDefault()
-      if (busy) return
-      const form = event.currentTarget
-      const values = new FormData(form)
-      setBusy(true)
-      try {
-        const { error } = await supabase!.rpc('create_tenant', {
-          p_property_id: propertyId,
-          p_tenant_id: requestId.current,
-          p_display_name: String(values.get('tenant-name')).trim(),
-          p_kind: String(values.get('tenant-kind')),
-        })
-        if (error) throw error
-        requestId.current = crypto.randomUUID()
-        setFailed(false)
-        setMessage(translateText(language, 'Tenant record saved. Account access remains separate.', 'Narekord na ang nag-abang. Lahi ang paghatag og access sa account.'))
-        form.reset()
-        done()
-      } catch {
-        setFailed(true)
-        setMessage(tr('Save could not be confirmed. Keep the same details when retrying; the request identifier prevents a duplicate record.', 'Wala makumpirma ang pag-save. Gamita gihapon ang mao nga detalye kung mosulay pag-usab; malikayan sa request ID ang doble nga rekord.'))
-      } finally { setBusy(false) }
-    }}>
-      <label htmlFor="tenant-name">{translateText(language, 'Tenant display name', 'Ngalan sa nag-abang')}</label>
-      <input id="tenant-name" name="tenant-name" autoComplete="off" required maxLength={200} />
-      <label htmlFor="tenant-kind">{translateText(language, 'Tenant type', 'Klase sa nag-abang')}</label>
-      <select id="tenant-kind" name="tenant-kind"><option value="individual">{tr('Individual','Tawo')}</option><option value="business">{tr('Business','Negosyo')}</option></select>
-      <Button className="primary" disabled={busy}>{busy ? translateText(language, 'Saving tenant record…', 'Girekord ang nag-abang…') : translateText(language, 'Create tenant record', 'Paghimo og rekord sa nag-abang')}</Button>
-    </form>
-  </section>
-}
