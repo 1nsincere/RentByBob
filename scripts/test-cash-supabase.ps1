@@ -27,6 +27,17 @@ function Test-PortAvailable([int]$Port) {
 }
 
 try {
+  $dockerOutput = @(& docker info --format '{{.ServerVersion}}' 2>&1 | ForEach-Object { $_.ToString() })
+  $dockerExitCode = $LASTEXITCODE
+  if ($dockerExitCode -ne 0) {
+    throw "Docker Desktop's Linux engine is unavailable (docker info exited $dockerExitCode). Start the engine and retry; no disposable test workspace or stack was created."
+  }
+  $dockerVersion = ($dockerOutput -join ' ').Trim()
+  if ([string]::IsNullOrWhiteSpace($dockerVersion)) {
+    throw 'Docker info returned no server version; no disposable test workspace or stack was created.'
+  }
+  Write-Output "Docker Desktop Linux engine is available (server version $dockerVersion)."
+
   New-Item -ItemType Directory -Path $supabaseDir -Force | Out-Null
   Copy-Item -LiteralPath $migrationSource -Destination $supabaseDir -Recurse
 

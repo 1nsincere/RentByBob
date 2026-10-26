@@ -36,7 +36,7 @@ export function appError(language: Language, key: string) {
 export const copy = {
   en: {
     appName: 'RentByBob',
-    appSummary: 'Your rental records, together in one simple space. Sign in to see what your property owner has shared with you.',
+    appSummary: 'See your room, rent balance and confirmed payments in one simple place. Sign in with the account your property invited you to.',
     signIn: 'Sign in', email: 'Email address', password: 'Password', continue: 'Enter your account details to continue.',
     invitationEmail: 'Use the email from your invitation.', forgot: 'Forgot password?', resetPassword: 'Reset your password',
     sendReset: 'Send reset link', newHere: 'New here?', askInvite: 'Ask your property owner or clerk for an invitation.',
@@ -58,7 +58,7 @@ export const copy = {
     currentPropertyReady: 'Current property ready', crossPropertyAccess: 'Cross-property access', accessLevel: 'Access level',
     canManageAccess: 'Can manage access', canWorkWithRecords: 'Can work with records',
     yourSharedRecords: 'View the rental records your property owner has shared with you.', yourRecords: 'Your records',
-    onlySharedInfo: 'Only the information shared with you.', yourOwnAccount: 'Your own account', invitedManaged: 'Invited by your property. Managed by you.',
+    onlySharedInfo: 'Your rent, balance and confirmed payments. View only.', yourOwnAccount: 'Your own account', invitedManaged: 'Invited by your property. Managed by you.',
     accessDisabledTitle: 'Your access has been turned off', invitationUnconfirmed: 'Your invitation is not yet confirmed',
     waitingAccess: 'Your account is waiting for access', contactOwnerReview: 'Your previous access is disabled. Contact the property owner to review it.',
     followInvitation: 'Follow the secure setup link sent to your email. Verify your email and choose your own password. If the link has expired or is missing, contact the property owner.',
@@ -100,7 +100,7 @@ export const copy = {
   },
   ceb: {
     appName: 'RentByBob',
-    appSummary: 'Ang imong mga rekord sa abang ania sa usa ka lugar. Sulod aron makita ang gipaambit sa tag-iya sa propiedad.',
+    appSummary: 'Tan-awa ang imong kwarto, nabilin nga abang ug kumpirmadong bayad sa usa ka sayon nga lugar. Sulod gamit ang account nga gidapit sa imong propiedad.',
     signIn: 'Sulod', email: 'Address sa email', password: 'Password', continue: 'Isulat ang detalye sa imong account aron mopadayon.',
     invitationEmail: 'Gamita ang email gikan sa imong imbitasyon.', forgot: 'Nakalimot sa password?', resetPassword: 'Usba ang password',
     sendReset: 'Ipadala ang link sa pag-usab', newHere: 'Bag-o pa diri?', askInvite: 'Pangayo og imbitasyon sa tag-iya o klerk.',
@@ -122,7 +122,7 @@ export const copy = {
     currentPropertyReady: 'Andam ang propiedad', crossPropertyAccess: 'Pagtugot sa daghang propiedad', accessLevel: 'Klase sa pagtugot',
     canManageAccess: 'Makadumala sa pagtugot', canWorkWithRecords: 'Makagamit sa mga rekord',
     yourSharedRecords: 'Tan-awa ang mga rekord sa abang nga gipaambit sa tag-iya.', yourRecords: 'Imong mga rekord',
-    onlySharedInfo: 'Ang gipaambit lang kanimo.', yourOwnAccount: 'Imong kaugalingong account', invitedManaged: 'Gidapit sa propiedad. Ikaw ang nagdumala sa account.',
+    onlySharedInfo: 'Imong abang, nabilin ug kumpirmadong bayad. Tan-awon lamang.', yourOwnAccount: 'Imong kaugalingong account', invitedManaged: 'Gidapit sa propiedad. Ikaw ang nagdumala sa account.',
     accessDisabledTitle: 'Gipalong ang imong access', invitationUnconfirmed: 'Wala pa makumpirma ang imong imbitasyon',
     waitingAccess: 'Naghulat pa ang imong account og access', contactOwnerReview: 'Gipalong ang imong miaging access. Kontaka ang tag-iya aron susihon kini.',
     followInvitation: 'Gamita ang luwas nga setup link sa imong email. Kumpirmaha ang email ug pagpili og kaugalingong password. Kung wala na o na-expire ang link, kontaka ang tag-iya.',

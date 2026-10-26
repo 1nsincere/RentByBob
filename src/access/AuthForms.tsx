@@ -120,3 +120,55 @@ export function Mfa({ done, backup = false, language = 'en' }: { done: () => voi
     <p className="small">{t.lostAuthenticator}</p>
   </section>
 }
+
+// Renter password change. The current password is re-verified first so an unattended signed-in device
+// cannot be used to replace it; the new password follows the same 12-character rule as first-time setup.
+export function ChangePassword({ email, language = 'en' }: { email: string; language?: Language }) {
+  const t = copy[language]
+  const tr = (english: string, bisaya: string) => text(language, english, bisaya)
+  const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const fail = (english: string, bisaya: string) => { setError(true); setMessage(tr(english, bisaya)) }
+  return <section className="card renter-security" aria-labelledby="change-password-heading">
+    <p className="eyebrow">{tr('YOUR ACCOUNT', 'IMONG ACCOUNT')}</p>
+    <h2 id="change-password-heading">{tr('Password', 'Password')}</h2>
+    <p className="field-help">{tr('Signed in as', 'Nakasulod isip')} <strong>{email}</strong>. {tr('Change the password you use to sign in. You will need your current password.', 'Usba ang password nga imong gamiton sa pagsulod. Kinahanglan nimo ang imong karon nga password.')}</p>
+    <Feedback message={message} error={error} />
+    {!open ? <Button className="secondary-button" onClick={() => { setOpen(true); setMessage('') }}>{tr('Change password', 'Usba ang password')}</Button>
+      : <form onSubmit={async e => {
+        e.preventDefault(); if (busy) return
+        const form = new FormData(e.currentTarget)
+        const current = String(form.get('current-password')), next = String(form.get('changed-password'))
+        if (next !== form.get('changed-password-confirm')) return fail('The new passwords do not match. Please check both fields.', 'Dili magkapareho ang bag-ong mga password. Susiha ang duha ka field.')
+        if (next === current) return fail('Choose a new password that is different from your current one.', 'Pagpili og bag-ong password nga lahi sa imong karon.')
+        setBusy(true); setMessage('')
+        try {
+          const check = await supabase!.auth.signInWithPassword({ email, password: current })
+          if (check.error) { fail('Your current password is not correct. Nothing was changed.', 'Dili husto ang imong karon nga password. Walay nausab.'); return }
+          const { error: updateError } = await supabase!.auth.updateUser({ password: next })
+          if (updateError) throw updateError
+          setOpen(false); setError(false)
+          setMessage(tr('Password changed. Use your new password the next time you sign in.', 'Nausab na ang password. Gamita ang bag-ong password sa sunod nimong pagsulod.'))
+        } catch { fail('The password could not be changed. Nothing was saved. Try again, or contact the owner if this continues.', 'Wala nausab ang password. Walay na-save. Sulayi pag-usab, o kontaka ang tag-iya kon magpadayon kini.') }
+        finally { setBusy(false) }
+      }}>
+        <label htmlFor="current-password">{tr('Current password', 'Karon nga password')}</label>
+        <input id="current-password" name="current-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required />
+        <label htmlFor="changed-password">{t.newPassword}</label>
+        <div className="password-input-row">
+          <input id="changed-password" name="changed-password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={12} required aria-describedby="changed-password-help" />
+          <Button type="button" className="secondary-button password-toggle" aria-label={showPassword ? t.hidePasswords : t.showPasswords} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? t.hidePassword : t.showPassword}</Button>
+        </div>
+        <p className="field-help" id="changed-password-help">{t.passwordHelp}</p>
+        <label htmlFor="changed-password-confirm">{t.confirmPassword}</label>
+        <input id="changed-password-confirm" name="changed-password-confirm" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={12} required />
+        <div className="form-actions renter-security-actions">
+          <Button type="button" className="secondary-button" disabled={busy} onClick={() => { setOpen(false); setMessage('') }}>{tr('Cancel', 'Kanselahon')}</Button>
+          <Button className="primary" disabled={busy}>{busy ? tr('Saving…', 'Nag-save…') : tr('Save new password', 'I-save ang bag-ong password')}</Button>
+        </div>
+      </form>}
+  </section>
+}

@@ -1,51 +1,92 @@
 import { useEffect, useState } from 'react'
 import { Button } from '../components/atoms'
-import { useProperty, change, occupant, roomPeople, rooms, type Building } from './property-preview-store'
+import { useProperty, change, occupant, roomPeople, rooms, type Building, type Floor, type Room } from './property-preview-store'
 import { WorkspaceIcon } from '../components/WorkspaceIcon'
 import { type Language } from '../i18n'
 
+const isRentalRoom = (room: Room) => room.kind === 'Room'
+const spaceShort = (room: Room) => room.kind === 'Room' ? room.label.replace(/^Room\s*/i, '') : room.label.length > 9 ? `${room.label.slice(0, 8)}…` : room.label
+
+// Map/list thumbnail: one band per floor (up to 4) with a window per space, so the icon tracks the entered layout.
 function BuildingArt({ building }: { building: Building }) {
-  const count = building.floors.reduce((n, f) => n + f.rooms.length, 0)
+  const floors = building.floors.slice(-4)
+  const bandHeight = 34 / floors.length
   return <svg viewBox="0 0 120 72" className="building-art" aria-hidden="true">
-    <path d="M12 23 60 5 108 23V28H12Z" fill="currentColor" opacity=".7" />
-    <rect x="20" y="28" width="80" height="39" rx="3" fill="currentColor" opacity=".18" />
-    {Array.from({ length: Math.min(12, Math.max(2, count)) }, (_, i) => <rect key={i} x={29 + (i % 6) * 11} y={34 + Math.floor(i / 6) * 14} width="7" height="9" rx="1" fill="currentColor" />)}
-    <path d="M14 68H106" stroke="currentColor" strokeWidth="3" />
+    <path d="M10 25 60 5 110 25V29H10Z" className="building-art-roof" />
+    <rect x="18" y="28" width="84" height="39" rx="3" className="building-art-wall" />
+    {[...floors].reverse().map((floor, band) => {
+      const windows = Math.min(8, Math.max(1, floor.rooms.length))
+      const width = Math.min(8, 66 / windows - 2.5)
+      const top = 31 + band * bandHeight
+      return <g key={floor.label}>{Array.from({ length: windows }, (_, i) =>
+        <rect key={i} x={60 - (windows * (width + 2.5) - 2.5) / 2 + i * (width + 2.5)} y={top + 2} width={width} height={Math.max(3, bandHeight - 6)} rx="1" className="building-art-window" />)}</g>
+    })}
+    <path d="M12 68H108" strokeWidth="3" className="building-art-ground" />
   </svg>
 }
 
-function BuildingFacade({ building, language = 'en' }: { building: Building; language?: Language }) {
+// Front view drawn from the entered layout: one door per space, wrapping into rows; width grows with the busiest floor.
+function BuildingFacade({ building, selectedRoom, language = 'en' }: { building: Building; selectedRoom: string; language?: Language }) {
   const tr = (en: string, ceb: string) => language === 'ceb' ? ceb : en
-  const storyHeight = 180
-  const wallTop = 91
-  const wallBottom = wallTop + building.floors.length * storyHeight
-  const height = wallBottom + 30
-  return <svg className="facade-art" viewBox={`0 0 720 ${height}`} role="img" aria-label={`${building.floors.length}-${tr('floor illustrative facade with decorative room doors; door symbols do not indicate room count','andana nga hulagway sa atubangan nga adunay dekorasyon nga pultahan; dili sukod sa gidaghanon sa kwarto ang mga pultahan')}`}>
-    <path className="facade-roof-shape" d="M34 91 360 12 686 91 678 108 360 39 42 108Z" />
-    <path className="facade-roof-edge" d="M40 91 360 16 680 91" />
-    <path className="facade-wall" d={`M68 96 360 34 652 96V${wallBottom}H68Z`} />
-    <path className="facade-gable-detail" d="M112 88 360 38 608 88" />
-    {building.floors.map((floor, floorIndex) => {
-      const rowTop = wallTop + floorIndex * storyHeight
-      const doorY = rowTop + 34
-      const roomCount = Math.max(0, floor.rooms.length)
-      const gap = roomCount <= 1 ? 0 : (600 - 120) / (roomCount - 1)
+  const perRow = 10, slot = 84, doorWidth = 60, doorHeight = 100, rowHeight = 148, storyTop = 42
+  const rowsFor = (floor: Floor) => floor.rooms.length ? Math.ceil(floor.rooms.length / perRow) : 1
+  const widest = Math.max(4, ...building.floors.map(floor => Math.min(perRow, floor.rooms.length)))
+  const wallWidth = Math.max(520, widest * slot + 140)
+  const width = wallWidth + 120, left = 60, right = left + wallWidth, centre = width / 2
+  const roofPeak = 14, wallTop = 104
+  let cursor = wallTop
+  // Upper floors are drawn above lower ones; the first listed floor sits at ground level.
+  const placed = building.floors.map((floor, index) => ({ floor, index, height: storyTop + rowsFor(floor) * rowHeight })).reverse()
+    .map(story => { const top = cursor; cursor += story.height; return { ...story, top } })
+  const wallBottom = cursor
+  const describe = (floor: Floor) => {
+    if (floor.count === null && !floor.rooms.length) return tr('room count not set', 'wala pa matino ang ihap sa kwarto')
+    const rentable = floor.rooms.filter(isRentalRoom).length
+    const others = floor.rooms.filter(room => !isRentalRoom(room)).map(room => room.label)
+    const occupied = floor.rooms.filter(room => occupant(room.id)).length
+    return [`${rentable} ${tr(rentable === 1 ? 'rentable room' : 'rentable rooms', 'ka kwarto nga paabangan')}`, ...others, `${occupied} ${tr('with example occupants', 'adunay sample nga nagpuyo')}`].join(', ')
+  }
+  const label = `${building.name}, ${tr('illustrative front view', 'hulagway sa atubangan')}: ${building.floors.map(floor => `${floor.label}: ${describe(floor)}`).join('; ')}`
+  return <svg className="facade-art" viewBox={`0 0 ${width} ${wallBottom + 34}`} role="img" aria-label={label}>
+    <defs>
+      <linearGradient id="facade-wall-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" className="facade-wall-stop-top" /><stop offset="1" className="facade-wall-stop-bottom" /></linearGradient>
+      <linearGradient id="facade-roof-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" className="facade-roof-stop-top" /><stop offset="1" className="facade-roof-stop-bottom" /></linearGradient>
+    </defs>
+    <path className="facade-roof-shape" fill="url(#facade-roof-fill)" d={`M${left - 26} ${wallTop} ${centre} ${roofPeak} ${right + 26} ${wallTop} ${right + 18} ${wallTop + 14} ${centre} ${roofPeak + 26} ${left - 18} ${wallTop + 14}Z`} />
+    <path className="facade-wall" fill="url(#facade-wall-fill)" d={`M${left} ${wallTop + 6} ${centre} ${roofPeak + 30} ${right} ${wallTop + 6}V${wallBottom}H${left}Z`} />
+    {placed.map(({ floor, top, height, index }) => {
+      const spaces = floor.rooms
       return <g className="facade-story" key={floor.label}>
-        {floorIndex > 0 && <path className="facade-story-line" d={`M72 ${rowTop}H648`} />}
-        <text className="facade-floor-label" x="82" y={rowTop + 17}>{floor.label}</text>
-        {Array.from({ length: roomCount }, (_, doorIndex) => {
-          const x = 120 + doorIndex * gap
-          return <g className="facade-room-door" key={`${floor.label}-${doorIndex}`} transform={`translate(${x} ${doorY})`}>
-            <rect className="facade-door-frame" width="58" height="110" rx="2" />
-            <rect className="facade-door-panel" x="6" y="6" width="46" height="98" rx="1" />
-            <path className="facade-door-panel-line" d="M8 66H50" />
-            <circle className="facade-door-knob" cx="45" cy="78" r="2.5" />
+        {index > 0 && <path className="facade-story-line" d={`M${left + 6} ${top + height}H${right - 6}`} />}
+        <text className="facade-floor-label" x={left + 22} y={top + 28}>{floor.label}</text>
+        {!spaces.length && <g className="facade-unset">
+          <rect x={left + 40} y={top + storyTop} width={wallWidth - 80} height={rowHeight - 40} rx="12" />
+          <text x={centre} y={top + storyTop + (rowHeight - 40) / 2 + 6} textAnchor="middle">{floor.count === null ? tr('Room count not set', 'Wala pa matino ang ihap') : tr('No spaces yet', 'Wala pay lugar')}</text>
+        </g>}
+        {spaces.map((room, spaceIndex) => {
+          const row = Math.floor(spaceIndex / perRow)
+          const inRow = Math.min(perRow, spaces.length - row * perRow)
+          const x = centre - (inRow * slot - (slot - doorWidth)) / 2 + (spaceIndex % perRow) * slot
+          const y = top + storyTop + row * rowHeight
+          const kind = isRentalRoom(room) ? 'room' : room.kind === 'Shared space' ? 'shared' : 'unit'
+          return <g key={room.id} transform={`translate(${x} ${y})`}
+            className={`facade-room-door facade-space--${kind} ${occupant(room.id) ? 'is-occupied' : ''} ${room.id === selectedRoom ? 'is-selected' : ''}`}>
+            <rect className="facade-door-frame" width={doorWidth} height={doorHeight} rx="9" />
+            {kind === 'room' ? <>
+              <rect className="facade-door-panel" x="8" y="8" width={doorWidth - 16} height={doorHeight - 16} rx="5" />
+              <circle className="facade-door-knob" cx={doorWidth - 15} cy={doorHeight * 0.58} r="3" />
+              {occupant(room.id) && <g className="facade-occupant-mark"><circle cx={doorWidth / 2} cy="30" r="7" /><path d={`M${doorWidth / 2 - 12} 54a12 12 0 0 1 24 0`} /></g>}
+            </> : <>
+              <rect className="facade-door-glass" x="7" y="8" width={doorWidth - 14} height="34" rx="4" />
+              <path className="facade-door-panel-line" d={`M${doorWidth / 2} 46V${doorHeight - 8}`} />
+            </>}
+            <text className="facade-door-label" x={doorWidth / 2} y={doorHeight + 24} textAnchor="middle">{spaceShort(room)}</text>
           </g>
         })}
       </g>
     })}
-    <path className="facade-foundation" d={`M58 ${wallBottom}H662V${wallBottom + 12}H58Z`} />
-    <path className="facade-ground-line" d={`M38 ${wallBottom + 16}H682`} />
+    <path className="facade-foundation" d={`M${left - 10} ${wallBottom}H${right + 10}V${wallBottom + 12}H${left - 10}Z`} />
+    <path className="facade-ground-line" d={`M${left - 40} ${wallBottom + 18}H${right + 40}`} />
   </svg>
 }
 
@@ -97,6 +138,14 @@ export function PropertyMapPreview({ addTenant, language = 'en' }: { addTenant: 
     select(id)
     if (['bob', 'b1', 'b2'].includes(id)) setEnteredBuilding(id)
   }
+  // Tile subtitle follows the entered layout: confirmed rentable rooms, floors and named special spaces.
+  function buildingSummary(b: Building) {
+    const rentable = b.floors.flatMap(f => f.rooms).filter(isRentalRoom).length
+    const special = b.floors.flatMap(f => f.rooms).filter(r => !isRentalRoom(r))
+    if (!rentable) return special[0]?.kind === 'House' ? tr('Whole-house rental','Abang sa tibuok balay') : tr('Commercial space','Lugar pangnegosyo')
+    const unset = b.floors.some(f => f.count === null)
+    return [`${rentable}${unset ? '+' : ''} ${tr(rentable === 1 ? 'room' : 'rooms','ka kwarto')}`, `${b.floors.length} ${tr(b.floors.length === 1 ? 'floor' : 'floors','andana')}`, ...special.map(r => r.label)].join(' · ')
+  }
   function update(next: Building) { change({ buildings: buildings.map(b => b.id === next.id ? next : b) }) }
   const selectedRoom = floor.rooms.find(r => r.id === room)
   const floorCountLabel = (count: number | null) => count === null ? tr('Not set','Wala pa matino') : `${count} ${tr(count === 1 ? 'rentable room' : 'rentable rooms',count === 1 ? 'kwarto nga paabangan' : 'mga kwarto nga paabangan')}`
@@ -122,7 +171,7 @@ export function PropertyMapPreview({ addTenant, language = 'en' }: { addTenant: 
     {!enteredBuilding && view === 'map' && <div className="map-scroll" tabIndex={0} role="region" aria-label={tr('Property sketch. Scroll horizontally on small screens, or use Building list.','Hulagway sa propiedad. I-scroll pahalang sa gamay nga screen o gamita ang lista sa mga bilding.')}><div className="property-plan">
       <svg viewBox="0 0 1000 650" preserveAspectRatio="none" className="plan-roads" aria-hidden="true"><path d="M0 400H1000M230 400V650" stroke="#343c38" strokeWidth="58" /><path d="M0 400H1000M230 440V650" stroke="#d4d9d3" strokeWidth="2" strokeDasharray="12 12" /></svg>
       <span className="road-label">{tr('ACCESS ROAD','AGIANAN PADULONG SA PROPIEDAD')}</span><span className="plan-caption">{tr('PROPERTY OVERVIEW','TIBUOK NGA PROPIEDAD')}</span>
-      {buildings.filter(b => b.x !== undefined).map(b => <button type="button" key={b.id} className={`plan-building ${b.id === selected ? 'selected' : ''} ${b.id.startsWith('store') ? 'store-building' : ''}`} style={{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.w}%`, height: `${b.h}%` }} onClick={() => explore(b.id)} aria-pressed={b.id === selected} aria-label={`${tr('Explore','Tan-awa')} ${b.name}`}><BuildingArt building={b} /><strong>{b.name}</strong>{!b.id.startsWith('store') && <span>{b.id === 'bob' ? `${b.floors[0].count ?? '?'} ${tr('rooms for rent','ka kwarto nga paabangan')}` : b.id === 'b1' ? `2 ${tr('floors · Apartment','andana · Apartment')}` : b.id === 'b2' ? `2 ${tr('floors · Gym','andana · Gym')}` : b.id === 'house' ? tr('Whole-house rental','Abang sa tibuok balay') : tr('Commercial space','Lugar pangnegosyo')}</span>}</button>)}
+      {buildings.filter(b => b.x !== undefined).map(b => <button type="button" key={b.id} className={`plan-building ${b.id === selected ? 'selected' : ''} ${b.id.startsWith('store') ? 'store-building' : ''}`} style={{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.w}%`, height: `${b.h}%` }} onClick={() => explore(b.id)} aria-pressed={b.id === selected} aria-label={`${tr('Explore','Tan-awa')} ${b.name}`}><BuildingArt building={b} /><strong>{b.name}</strong>{!b.id.startsWith('store') && <span>{buildingSummary(b)}</span>}</button>)}
     </div></div>}
     {!enteredBuilding && view === 'list' && <div className="building-list">{buildings.map(b => <button type="button" key={b.id} className={`building-list-card ${b.id === selected ? 'selected' : ''}`} aria-pressed={b.id === selected} onClick={() => explore(b.id)}><BuildingArt building={b} /><strong>{b.name}</strong><span>{b.floors.length} {tr(b.floors.length === 1 ? 'level' : 'levels',b.floors.length === 1 ? 'andana' : 'andana')}</span></button>)}</div>}
     {!enteredBuilding && view === 'map' && buildings.some(b => b.x === undefined) && <div className="unplaced-buildings"><h3>{tr('Not placed on sketch','Wala pa gibutang sa hulagway')}</h3>{buildings.filter(b => b.x === undefined).map(b => <Button key={b.id} aria-pressed={selected === b.id} onClick={() => select(b.id)}>{b.name}</Button>)}</div>}
@@ -131,8 +180,8 @@ export function PropertyMapPreview({ addTenant, language = 'en' }: { addTenant: 
       <div className="building-entry-title"><div><p className="eyebrow">{tr('FRONT VIEW · ILLUSTRATIVE ONLY','ATUBANGAN · HULAGWAY LAMANG')}</p><h3 id="building-entry-heading">{building.name}</h3></div><span className="building-count">{floorCountLabel(totalRoomCount)}</span></div>
       <div className="building-entry-scene">
         <figure className="building-facade">
-          <BuildingFacade building={building} language={language} />
-          <figcaption>{tr('Illustrative lodging-house facade. Door symbols are decorative and do not indicate a room count or surveyed layout.','Pananglitan nga atubangan sa balay-abangan. Dekorasyon lamang ang mga pultahan ug dili sukod sa ihap sa kwarto o plano sa yuta.')}</figcaption>
+          <BuildingFacade building={building} selectedRoom={room} language={language} />
+          <figcaption>{tr('Drawn from the room counts entered for each floor: one door per space, shaded when an example tenant is assigned. Positions and sizes are illustrative, not surveyed.','Gihimo gikan sa ihap sa kwarto matag andana: usa ka pultahan matag lugar, may kolor kon adunay sample nga nag-abang. Pananglitan lamang ang puwesto ug gidak-on, dili sukod.')}</figcaption>
         </figure>
         <div className="floor-count-overview" aria-label={tr('Rentable room counts by floor','Ihap sa mga kwarto nga paabangan matag andana')}>{building.floors.map((item, floorNumber) => <article key={item.label} className="floor-count-card"><span>{item.label}</span><strong>{floorCountLabel(item.count)}</strong><small>{tr('Floor','Andana')} {floorNumber + 1}</small></article>)}</div>
       </div>

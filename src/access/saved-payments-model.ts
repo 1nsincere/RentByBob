@@ -65,7 +65,7 @@ function validAllocation(value: unknown): value is StatementAllocation {
   return record(value) && validDate(value.month) && value.month.endsWith('-01') && minorUnits(value.amount, false)
 }
 
-function validAcknowledgment(value: unknown): value is CashAcknowledgmentData {
+export function validAcknowledgment(value: unknown): value is CashAcknowledgmentData {
   return record(value) &&
     requiredString(value.number) &&
     requiredString(value.tenant) &&

@@ -9,6 +9,7 @@
     "dev:local": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/start-local-ui.ps1",
     "setup:local": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/setup-local-owner.ps1",
     "test:browser": "playwright test",
+    "test:offline": "node scripts/run-offline-browser-checks.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test tests/*.test.ts",

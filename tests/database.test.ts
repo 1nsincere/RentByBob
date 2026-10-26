@@ -142,7 +142,8 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
       from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname in ('public','private') and p.prosecdef
     `)
-    assert.equal(result.rows.length, 32)
+    // 33 includes read_renter_account (202610260001); update only after reviewing any new definer function.
+    assert.equal(result.rows.length, 33)
     for (const fn of result.rows) {
       assert.ok(fn.proconfig.some(value => value === 'search_path=""'), fn.proname)
       assert.equal(fn.anon_execute, false, fn.proname)

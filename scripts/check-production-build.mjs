@@ -21,13 +21,20 @@ assert.ok(stylesheetFiles.some(file => html.includes(`/assets/${file}`)),
 
 const javascript = await Promise.all(javascriptFiles.map(file => readFile(path.join(assetDirectory, file), 'utf8')))
 const bundle = javascript.join('\n')
+for (const deferredScreen of ['SavedPayments', 'PropertyDirectory', 'ManageAccess', 'AccessAudit', 'InvitationReconciliation']) {
+  assert.ok(javascriptFiles.some(file => file.startsWith(`${deferredScreen}-`)),
+    `production build must keep ${deferredScreen} in a deferred screen chunk`)
+}
 for (const developmentOnlyMarker of [
   'Rooms shown as available',
   'PublicAvailabilityPreview',
+  'Sample screen loaded',
+  'Fictional renter preview',
+  'RenterPortalPreview',
   'availability=preview',
 ]) {
   assert.ok(!bundle.includes(developmentOnlyMarker),
-    `production JavaScript must not include development-only public preview marker: ${developmentOnlyMarker}`)
+    `production JavaScript must not include development-only preview or test marker: ${developmentOnlyMarker}`)
 }
 
 console.log(`Production artifact verified: ${javascriptFiles.length} JavaScript chunk(s), ${stylesheetFiles.length} stylesheet(s); no public availability preview code.`)

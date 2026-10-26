@@ -70,7 +70,7 @@ export function PaymentsPreview({ language = 'en' }: { language?: Language }) {
  useEffect(() => {
   if (!tenant) return
   const current = terms[tenant.id] ? formatRentAmount(terms[tenant.id].cents) : ''
-  if (!editingRent || rentChangeReview) {
+  if (!editingRent) {
    setRentAmountInput(current)
   }
  }, [tenant, terms, editingRent, rentChangeReview])

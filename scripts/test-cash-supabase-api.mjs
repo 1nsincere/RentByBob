@@ -153,6 +153,9 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
   const browser = await chromium.launch({ channel: 'msedge', headless: true })
   const page = await browser.newPage()
   const cashRecordRequests = []
+  const browserErrors = []
+  page.on('pageerror', error => browserErrors.push(`page: ${error.message}`))
+  page.on('console', message => { if (message.type() === 'error') browserErrors.push(`console: ${message.text().slice(0, 300)}`) })
   page.on('request', request => {
     if (new URL(request.url()).pathname.endsWith('/rpc/record_rent_cash')) cashRecordRequests.push(request.url())
   })
@@ -165,6 +168,16 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await page.getByLabel('Six-digit authenticator code').fill(totp(ownerSecret))
     await page.getByRole('button', { name: 'Verify code', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Owner workspace' })).toBeVisible()
+    // Dashboard collection figures load from the live staff snapshot and keep unconfirmed money out of "paid".
+    const collections = page.locator('.collections-overview')
+    await collections.waitFor({ timeout: 30000 })
+    assert.deepEqual(await collections.locator('.stat-label').allTextContents(), ['Confirmed cash received', 'Waiting for confirmation', 'Rent still due this month', 'Rent left in 2+ months'])
+    await collections.getByText('Not counted as paid.', { exact: false }).waitFor()
+    assert.equal(await page.locator('.collections-unavailable').count(), 0, 'Collection figures must load for MFA staff')
+    pass('Owner dashboard shows live collection figures with unconfirmed money kept separate')
+    await page.getByRole('link', { name: 'Tenant directory', exact: true }).first().click()
+    await expect(page.locator('.tenant-record').filter({ hasText: 'Sample API test renter' }).locator('.renter-link--linked')).toHaveText(/Renter can sign in/)
+    pass('Staff directory shows which tenants have an active renter login')
 
     await page.getByRole('link', { name: 'Payments and balances', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Saved rent and cash' })).toBeVisible()
@@ -179,8 +192,12 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(balance).toHaveText('₱6,000.25')
     const cashRowCount = await page.locator('.cash-row').count()
     await page.getByLabel('Amount (PHP)').fill('6000.26')
+    // Returning to the window, and the 10-second background access re-check, must not discard the unsaved entry.
+    await page.evaluate(() => { window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')) })
+    await page.waitForTimeout(11000)
+    assert.equal(await page.getByLabel('Amount (PHP)').inputValue(), '6000.26', 'Access re-checks must not discard an unsaved cash entry')
     await page.getByLabel('Actual payment date').fill('2024-04-02')
-    await page.getByLabel('Received by').selectOption('Bob')
+    await page.getByLabel('Received by', { exact: true }).selectOption('Bob')
     await page.getByRole('button', { name: 'Save pending cash', exact: true }).click()
     await expect(page.getByRole('alert').filter({ hasText: 'no cash report was saved' })).toBeVisible()
     assert.equal(await page.locator('.cash-row').count(), cashRowCount, 'Over-balance input must not create a pending cash record')
@@ -270,6 +287,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
       .toContainText('No rent charges are recorded for this month. Missing setup does not mean rent is unpaid.')
     pass('Saved Paid rent report uses receipt month, excludes pending cash/checks, and separates recorded outstanding rent')
 
+    await page.getByRole('button', { name: 'Rent and cash records', exact: true }).click()
     const checkSection = page.locator('section.card:has(#checks-heading)')
     await checkSection.getByLabel('Tenant / room', { exact: true }).selectOption(agreementId)
     await checkSection.getByLabel('Amount (PHP)', { exact: true }).fill('200.00')
@@ -280,7 +298,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(page.getByRole('status').filter({ hasText: 'Saved to the database.' })).toBeVisible()
     const uiCheck = checkSection.locator('.cash-queue-row').filter({ hasText: 'CHK-0004' })
     await expect(uiCheck).toContainText('Received — not settled')
-    await expect(page.locator('.simple-balance strong')).toHaveText('â‚±5,900.25')
+    await expect(page.locator('.simple-balance strong')).toHaveText('₱5,900.25')
     pass('Clerk UI records a short-reference check without changing rent balance')
 
     await page.getByRole('button', { name: 'Sign out', exact: true }).click()
@@ -294,14 +312,16 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(page.getByRole('heading', { name: 'Owner workspace' })).toBeVisible()
     await page.getByRole('link', { name: 'Payments and balances', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Saved rent and cash' })).toBeVisible()
+    await page.getByLabel('Tenant / room agreement', { exact: true }).selectOption(agreementId)
     const ownerCheckSection = page.locator('section.card:has(#checks-heading)')
     const ownerUiCheck = ownerCheckSection.locator('.cash-queue-row').filter({ hasText: 'CHK-0004' })
     await ownerUiCheck.getByLabel('Owner note (reason required for reversal)').fill('')
     await ownerUiCheck.getByRole('button', { name: 'Record deposit', exact: true }).click()
     await expect(ownerUiCheck).toContainText('Deposited — awaiting clearance')
+    await expect(page.locator('.simple-balance strong')).toHaveText('₱5,900.25')
     await ownerUiCheck.getByRole('button', { name: 'Confirm bank clearance', exact: true }).click()
     await expect(ownerUiCheck).toContainText('Cleared')
-    await expect(page.locator('.simple-balance strong')).toHaveText('â‚±5,700.25')
+    await expect(page.locator('.simple-balance strong')).toHaveText('₱5,700.25')
     pass('Owner UI records deposit and bank clearance; only clearance reduces rent')
 
     const handoverSection = page.locator('section.card:has(#handover-heading)')
@@ -313,7 +333,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await handoverSection.getByLabel('Checks actually received by owner (PHP)').fill('200.00')
     await handoverSection.getByRole('button', { name: 'Save handover', exact: true }).click()
     await expect(handoverSection.getByRole('status').filter({ hasText: 'Handover recorded.' })).toBeVisible()
-    await expect(page.locator('.simple-balance strong')).toHaveText('â‚±5,700.25')
+    await expect(page.locator('.simple-balance strong')).toHaveText('₱5,700.25')
     pass('Owner UI logs a matching collection handover without changing renter balances')
 
     for (const width of [390, 320, 160, 768]) {
@@ -343,6 +363,15 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     assert.ok(await page.locator('button:visible').evaluateAll(buttons => buttons.every(button => button.getBoundingClientRect().height >= 44)), 'Visible button is smaller than 44px at 200% text size')
     pass('Statement and cash queue reflow at narrow widths and 200% text size with 44px buttons')
     pass('Confirmed balance and immutable acknowledgment persist and reopen after reload')
+  } catch (error) {
+    // Fictional disposable data only; report what the screen showed so a failure is diagnosable after the stack is removed.
+    const screen = await page.evaluate(() => ({
+      alerts: [...document.querySelectorAll('[role="alert"]')].map(element => element.textContent?.trim().slice(0, 300)).filter(Boolean),
+      paidReportSection: Boolean(document.querySelector('.paid-rent-summary')),
+      pressedViews: [...document.querySelectorAll('.segmented-control [aria-pressed="true"]')].map(element => element.textContent?.trim()),
+    })).catch(() => null)
+    console.error(`Browser diagnostics: ${JSON.stringify({ screen, browserErrors: browserErrors.slice(0, 8) })}`)
+    throw error
   } finally {
     await browser.close()
   }
@@ -616,6 +645,69 @@ if (process.argv[2] === 'create-users') {
   const clerkTable = await request('/rest/v1/cash_records?select=id', { token: clerk })
   assert.ok(clerkTable.response.ok, 'Authorized clerk could not read the scoped cash worklist')
   pass('RLS denies anonymous cash reads and permits MFA staff reads')
+
+  // Renter self-service view. The "other" account becomes the tenant's contact only now, after its staff-denial checks.
+  expectDenied(await request('/rest/v1/rpc/read_renter_account', { method: 'POST', body: {} }), 'Anonymous renter account read')
+  const unlinkedRenter = await rpc('read_renter_account', {}, otherSession.access_token)
+  assert.ok(unlinkedRenter.response.ok, 'Signed-in account without a contact link could not call the renter view')
+  assert.deepEqual(unlinkedRenter.data, { tenants: [] })
+  const otherUserId = otherSession.user.id
+  assert.ok((await rpc('assign_account_access', { p_property_id: property, p_user_id: otherUserId, p_expected_email: otherEmail, p_kind: 'contact', p_tenant_id: tenantId, p_role: null, p_enabled: true, p_reason: 'Fictional renter view test' }, owner)).response.ok,
+    'Owner could not link the fictional renter account')
+  const renterView = await rpc('read_renter_account', {}, otherSession.access_token)
+  assert.ok(renterView.response.ok, 'Linked renter (no MFA) could not read their own account')
+  const staffBalance = (await rpc('read_rent_workspace', { p_property_id: property }, owner)).data.agreements.find(row => row.id === agreementId).balance
+  const renterAgreement = renterView.data.tenants[0].agreements.find(row => row.id === agreementId)
+  assert.equal(renterAgreement.balance, staffBalance, 'Renter and staff balances must match')
+  assert.ok(renterAgreement.payments.every(payment => payment.confirmed_at), 'Only confirmed payments may appear as payments')
+  const renterPayload = JSON.stringify(renterView.data)
+  for (const hidden of [ownerSessions.initial.user.id, process.env.CASH_TEST_CLERK_ID, 'verified_by', 'recorded_by', 'received_by', 'handover']) {
+    assert.equal(renterPayload.includes(hidden), false, `Renter view leaked ${hidden}`)
+  }
+  const renterBrowser = await chromium.launch({ channel: 'msedge', headless: true })
+  try {
+    const renterPage = await renterBrowser.newPage()
+    await renterPage.goto(uiUrl)
+    await renterPage.getByLabel('Email address', { exact: true }).fill(otherEmail)
+    await renterPage.getByLabel('Password', { exact: true }).fill(password)
+    await renterPage.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await renterPage.getByRole('heading', { name: /^Hello, / }).waitFor({ timeout: 30000 })
+    const [whole, fraction] = staffBalance.split('.')
+    await expect(renterPage.locator('.renter-balance-card strong')).toHaveText(`₱${BigInt(whole).toLocaleString('en-PH')}.${fraction}`)
+    assert.equal(await renterPage.getByRole('heading', { name: 'Staff security check' }).count(), 0, 'Renters must not be asked for staff MFA')
+    assert.ok(await renterPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
+
+    // Password change requires the current password; a wrong one changes nothing.
+    const newRenterPassword = `${password}-Renter2`
+    await renterPage.getByRole('button', { name: 'Change password', exact: true }).click()
+    await renterPage.getByLabel('Current password', { exact: true }).fill('not-the-current-password')
+    await renterPage.getByLabel('New password (at least 12 characters)', { exact: true }).fill(newRenterPassword)
+    await renterPage.getByLabel('Confirm new password', { exact: true }).fill(newRenterPassword)
+    await renterPage.getByRole('button', { name: 'Save new password', exact: true }).click()
+    await renterPage.getByRole('alert').filter({ hasText: 'Your current password is not correct. Nothing was changed.' }).waitFor()
+    await renterPage.getByLabel('Current password', { exact: true }).fill(password)
+    await renterPage.getByRole('button', { name: 'Save new password', exact: true }).click()
+    await renterPage.getByRole('status').filter({ hasText: 'Password changed.' }).waitFor()
+    await renterPage.getByRole('button', { name: 'Sign out', exact: true }).click()
+    await renterPage.getByLabel('Password', { exact: true }).fill(password)
+    await renterPage.getByLabel('Email address', { exact: true }).fill(otherEmail)
+    await renterPage.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await renterPage.getByRole('alert').waitFor()
+    assert.equal(await renterPage.getByRole('heading', { name: /^Hello, / }).count(), 0, 'Old renter password must stop working')
+    await renterPage.getByLabel('Password', { exact: true }).fill(newRenterPassword)
+    await renterPage.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await renterPage.getByRole('heading', { name: /^Hello, / }).waitFor({ timeout: 30000 })
+  } finally {
+    await renterBrowser.close()
+  }
+  const renterDirectRead = await request('/rest/v1/rent_charges?select=id', { token: otherSession.access_token })
+  assert.ok(renterDirectRead.response.ok && Array.isArray(renterDirectRead.data) && renterDirectRead.data.length === 0, 'Renter direct charge table read must return no rows')
+  assert.ok((await rpc('assign_account_access', { p_property_id: property, p_user_id: otherUserId, p_expected_email: otherEmail, p_kind: 'contact', p_tenant_id: tenantId, p_role: null, p_enabled: false, p_reason: 'End fictional renter view test' }, owner)).response.ok)
+  assert.deepEqual((await rpc('read_renter_account', {}, otherSession.access_token)).data, { tenants: [] })
+  // Re-link (re-enabling a revoked link) so the owner's browser session can see the renter-login status.
+  assert.ok((await rpc('assign_account_access', { p_property_id: property, p_user_id: otherUserId, p_expected_email: otherEmail, p_kind: 'contact', p_tenant_id: tenantId, p_role: null, p_enabled: true, p_reason: 'Re-link for directory status check' }, owner)).response.ok, 'Owner could not re-enable a revoked renter link')
+  assert.equal((await rpc('read_renter_account', {}, otherSession.access_token)).data.tenants.length, 1, 'Re-enabled renter link restores access')
+  pass('Renter view returns only the linked renter\'s own balance and confirmed payments; renter signs in without staff MFA and sees the same balance; revoking the link removes access')
 
   await verifySavedCashBrowserFlow(ownerSessions.secret, clerkSessions.secret, agreementId)
 } else {

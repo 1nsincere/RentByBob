@@ -14,7 +14,7 @@ function currentPhilippineMonth() {
 }
 
 function formatMonth(value: string) {
-  return new Intl.DateTimeFormat('en-PH', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value}-01T00:00:00Z`))
+  return new Intl.DateTimeFormat('en-PH', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value.slice(0, 7)}-01T00:00:00Z`))
 }
 
 function formatDate(value: string) {

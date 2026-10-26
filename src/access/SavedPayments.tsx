@@ -17,6 +17,9 @@ export function SavedPayments({ propertyId, tenants, owner, userId, language = '
  const bisayaHelp = language === 'ceb'
  const languageRef = useRef(language)
  useEffect(()=>{languageRef.current=language},[language])
+ // The parent rebuilds the tenant list on every access re-check; read the latest list without resetting unsaved entries.
+ const tenantsRef = useRef(tenants)
+ useEffect(()=>{tenantsRef.current=tenants},[tenants])
  const [review,setReview] = useState<SavedCashRecord|null>(null), [busy,setBusy] = useState(false)
  const verifierSetup = useRef<HTMLDetailsElement>(null)
  const request = useRef<{key:string;id:string}|null>(null), sending = useRef(false)
@@ -29,13 +32,13 @@ export function SavedPayments({ propertyId, tenants, owner, userId, language = '
   }
   if(result.error) { setData(null); setError(text(languageRef.current,'Saved rent records are unavailable. The cash migration must be applied and your staff MFA session must be active. Nothing has been saved by this screen.','Dili makita ang mga rekord sa abang. Kinahanglan ma-apply ang cash migration ug aktibo ang MFA session sa staff. Walay na-save niini nga screen.')); return }
   try {
-   setData(parseRentWorkspaceSnapshot(result.data, tenants))
+   setData(parseRentWorkspaceSnapshot(result.data, tenantsRef.current))
    setError('')
   } catch {
    setData(null)
    setError(text(languageRef.current,'Saved rent records could not be validated, so financial details are hidden. Contact the system administrator; nothing was changed.','Wala makapasa sa pagsusi ang mga rekord sa abang, busa gitago ang detalye sa kwarta. Kontaka ang administrator; walay nausab.'))
   }
- },[propertyId,tenants])
+ },[propertyId])
  useEffect(()=>{setData(null);setSelected('');setReview(null);setReceipt(null);setError('');void refresh()},[refresh])
  async function mutate(name:string, args:Record<string,unknown>, idempotent=true) {
   if(sending.current) return false
