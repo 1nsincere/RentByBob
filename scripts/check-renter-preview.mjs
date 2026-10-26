@@ -41,6 +41,7 @@ try {
   await page.screenshot({ path: `${screenshotDir}/renter-acknowledgment.png` })
   await dialog.getByRole('button', { name: 'Close receipt' }).click()
   assert.equal(await page.getByRole('dialog').count(), 0)
+  assert.equal(await page.getByRole('button', { name: 'View acknowledgment' }).first().evaluate(element => element === document.activeElement), true, 'focus returns to the acknowledgment button')
   await page.getByText('payments are not made on this website', { exact: false }).waitFor()
   await page.screenshot({ path: `${screenshotDir}/renter-view-desktop.png`, fullPage: true })
 

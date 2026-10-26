@@ -10,8 +10,15 @@ const publicAvailabilityPreview = import.meta.env.DEV &&
   !params.has('preview')
 
 const renterPreview = import.meta.env.DEV && params.get('preview') === 'renter' && !params.has('auth')
+// Public, sign-in-free room listing (production route). Reads only listed rooms; inquiries are write-only.
+const publicRoomsPage = /^\/rooms\/?$/.test(location.pathname)
 
 async function startApp() {
+  if (publicRoomsPage && !publicAvailabilityPreview) {
+    const { PublicRoomsPage } = await import('./access/PublicRooms')
+    root.render(<React.StrictMode><PublicRoomsPage /></React.StrictMode>)
+    return
+  }
   if (renterPreview) {
     const { RenterPortalPreview } = await import('./access/RenterPortalPreview')
     root.render(<React.StrictMode><RenterPortalPreview /></React.StrictMode>)

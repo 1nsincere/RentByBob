@@ -10,6 +10,7 @@ const password = process.env.CASH_TEST_PASSWORD
 const propertyId = process.env.CASH_TEST_PROPERTY_ID
 const tenantId = process.env.CASH_TEST_TENANT_ID
 const unitId = process.env.CASH_TEST_UNIT_ID
+const freeUnitId = process.env.CASH_TEST_FREE_UNIT_ID
 const auditCashId = process.env.CASH_TEST_AUDIT_CASH_ID
 const auditCheckId = process.env.CASH_TEST_AUDIT_CHECK_ID
 const ownerEmail = process.env.CASH_TEST_OWNER_EMAIL
@@ -406,6 +407,24 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await batch.getByLabel('Rent month', { exact: true }).fill(nextMonth)
     await expect(batch.locator('.monthly-rent-list li').filter({ hasText: 'Sample API test renter' })).toHaveCount(0)
     pass('Owner UI records move-out; the move-out month stays a full month, later months are not offered, and the balance stays owed')
+
+    // A visitor sends an inquiry from the real public page; the owner sees it and marks it handled.
+    const visitor = await browser.newPage({ viewport: { width: 390, height: 844 } })
+    await visitor.goto(`${uiUrl}/rooms`)
+    await visitor.getByRole('heading', { name: 'Rooms for rent', exact: true }).waitFor()
+    await visitor.locator('.public-room-card').filter({ hasText: 'Test free room' }).getByRole('button', { name: 'Ask about this room', exact: true }).click()
+    await visitor.getByLabel('Your name', { exact: true }).fill('Sample Browser Visitor')
+    await visitor.getByLabel('Phone number or Messenger name', { exact: true }).fill('0917 000 0002')
+    await visitor.getByRole('button', { name: 'Send message', exact: true }).click()
+    await visitor.getByText('Message sent. Thank you!', { exact: true }).waitFor()
+    assert.equal(await visitor.locator('.public-room-card').filter({ hasText: 'Test room' }).count(), 0, 'Occupied room is not shown publicly')
+    await visitor.close()
+    await page.getByRole('link', { name: 'Room listings & inquiries', exact: true }).first().click()
+    await page.getByRole('button', { name: /^Inquiries/ }).click()
+    const browserInquiry = page.locator('.inquiry-item').filter({ hasText: 'Sample Browser Visitor' })
+    await browserInquiry.getByRole('button', { name: 'Mark handled', exact: true }).click()
+    await expect(browserInquiry.locator('.status')).toHaveText('Handled')
+    pass('Visitor inquiry from the public /rooms page reaches staff, who mark it handled')
   } catch (error) {
     // Fictional disposable data only; report what the screen showed so a failure is diagnosable after the stack is removed.
     const screen = await page.evaluate(() => ({
@@ -751,6 +770,27 @@ if (process.argv[2] === 'create-users') {
   // Re-link (re-enabling a revoked link) so the owner's browser session can see the renter-login status.
   assert.ok((await rpc('assign_account_access', { p_property_id: property, p_user_id: otherUserId, p_expected_email: otherEmail, p_kind: 'contact', p_tenant_id: tenantId, p_role: null, p_enabled: true, p_reason: 'Re-link for directory status check' }, owner)).response.ok, 'Owner could not re-enable a revoked renter link')
   assert.equal((await rpc('read_renter_account', {}, otherSession.access_token)).data.tenants.length, 1, 'Re-enabled renter link restores access')
+  // Public room listings: anonymous visitors read only listed, unoccupied rooms and may leave write-only inquiries.
+  assert.deepEqual((await request('/rest/v1/rpc/read_public_listings', { method: 'POST', body: {} })).data, { properties: [] })
+  expectDenied(await rpc('set_room_listing', { p_property_id: property, p_unit_id: freeUnitId, p_listed: true, p_asking_rent: '3500.00', p_description: 'Fictional listing' }), 'Anonymous listing change')
+  for (const unit of [freeUnitId, unitId]) {
+    assert.ok((await rpc('set_room_listing', { p_property_id: property, p_unit_id: unit, p_listed: true, p_asking_rent: '3500.00', p_description: 'Fictional listing' }, clerk)).response.ok, 'MFA clerk could not list a room')
+  }
+  const publicListing = await request('/rest/v1/rpc/read_public_listings', { method: 'POST', body: {} })
+  assert.ok(publicListing.response.ok, 'Anonymous visitors could not read public listings')
+  assert.deepEqual(publicListing.data.properties[0].buildings[0].rooms, [{ unit_id: freeUnitId, room: 'Test free room', asking_rent: '3500.00', description: 'Fictional listing' }], 'Only the unoccupied listed room, with only public fields')
+  expectDenied(await request('/rest/v1/room_listings?select=*'), 'Anonymous listing table read')
+  const inquiryId = randomUUID()
+  const inquiry = { p_id: inquiryId, p_unit_id: freeUnitId, p_name: 'Sample API Visitor', p_contact: '0917 000 0001', p_message: 'Fictional inquiry' }
+  assert.ok((await request('/rest/v1/rpc/submit_rental_inquiry', { method: 'POST', body: inquiry })).response.ok, 'Anonymous inquiry was not accepted')
+  assert.ok((await request('/rest/v1/rpc/submit_rental_inquiry', { method: 'POST', body: inquiry })).response.ok, 'Inquiry retry with the same ID must be safe')
+  expectDenied(await request('/rest/v1/rpc/submit_rental_inquiry', { method: 'POST', body: { ...inquiry, p_id: randomUUID(), p_unit_id: unitId } }), 'Inquiry for an occupied room')
+  expectDenied(await request('/rest/v1/rpc/read_rental_inquiries', { method: 'POST', body: { p_property_id: property } }), 'Anonymous inquiry read')
+  expectDenied(await request('/rest/v1/rental_inquiries?select=*'), 'Anonymous inquiry table read')
+  const staffInbox = await rpc('read_rental_inquiries', { p_property_id: property }, owner)
+  assert.equal(staffInbox.data.inquiries.filter(item => item.id === inquiryId).length, 1, 'Staff see the inquiry once')
+  pass('Public listings show only listed unoccupied rooms to anonymous visitors; inquiries are write-only and reach staff once')
+
   pass('Renter view returns only the linked renter\'s own balance and confirmed payments; renter signs in without staff MFA and sees the same balance; revoking the link removes access')
 
   await verifySavedCashBrowserFlow(ownerSessions.secret, clerkSessions.secret, agreementId)

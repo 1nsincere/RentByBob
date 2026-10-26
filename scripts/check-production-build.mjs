@@ -30,6 +30,7 @@ for (const developmentOnlyMarker of [
   'PublicAvailabilityPreview',
   'Sample screen loaded',
   'Fictional renter preview',
+  'Fictional sample boarding houses',
   'RenterPortalPreview',
   'availability=preview',
 ]) {

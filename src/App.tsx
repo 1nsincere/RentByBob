@@ -15,6 +15,7 @@ const PropertyDirectory = deferredScreen(() => import('./access/PropertyDirector
 const AccessAudit = deferredScreen(() => import('./access/AccessAudit').then(module => module.AccessAudit))
 const InvitationReconciliation = deferredScreen(() => import('./access/InvitationReconciliation').then(module => module.InvitationReconciliation))
 const CollectionsOverview = deferredScreen(() => import('./access/CollectionsOverview').then(module => module.CollectionsOverview))
+const RoomListingsManager = deferredScreen(() => import('./access/RoomListingsManager').then(module => module.RoomListingsManager))
 const RenterPortal = deferredScreen(() => import('./access/RenterPortal').then(module => module.RenterPortal))
 
 // renterLinks: tenant IDs with an active (unrevoked) renter login link, readable by staff under existing RLS.
@@ -212,6 +213,7 @@ export function App() {
     { id: 'property-locations', label: translate('Buildings and units', 'Mga bilding ug kwarto') },
     { id: 'create-tenant', label: translate('Add tenant record', 'Idugang ang nag-abang') },
     { id: 'payment-records', label: translate('Payments and balances', 'Mga bayad ug balanse') },
+    { id: 'room-listings', label: translate('Room listings & inquiries', 'Lista sa kwarto ug pangutana') },
     { id: 'invite-account', label: translate('Invite account', 'Pagdapit og account') },
     ...(role === 'owner' ? [
       { id: 'manage-access', label: translate('Assign or disable access', 'Ihatag o tangtangon ang access') },
@@ -445,6 +447,7 @@ export function App() {
                               : visitedSections.includes('payment-records') && <DeferredBoundary loadingLabel={translate('Loading payment records…', 'Gikarga ang mga rekord sa bayad…')} rows={3} language={language} reset={SavedPayments.reset}>
                                 <SavedPayments.Screen key={propertyId} propertyId={propertyId} tenants={tenantList} owner={role === 'owner'} userId={session.user.id} language={language} />
                               </DeferredBoundary>}</div>
+                              <div id="room-listings" hidden={activeSection !== 'room-listings'} tabIndex={-1} className="workspace-section">{visitedSections.includes('room-listings') && <DeferredBoundary loadingLabel={translate('Loading room listings…', 'Gikarga ang lista sa kwarto…')} rows={3} language={language} reset={RoomListingsManager.reset}><RoomListingsManager.Screen key={`listings:${propertyId}`} propertyId={propertyId} language={language} /></DeferredBoundary>}</div>
                               <div id="invite-account" hidden={activeSection !== 'invite-account'} tabIndex={-1} className="workspace-section">{visitedSections.includes('invite-account') && <DeferredBoundary loadingLabel={translate('Loading invitations…', 'Gikarga ang mga imbitasyon…')} rows={2} language={language} reset={Invitations.reset}><Invitations.Screen key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} /></DeferredBoundary>}</div>
                             {role === 'owner' && <>
                               <div id="manage-access" hidden={activeSection !== 'manage-access'} tabIndex={-1} className="workspace-section">{visitedSections.includes('manage-access') && <DeferredBoundary loadingLabel={translate('Loading account access…', 'Gikarga ang access sa account…')} rows={3} language={language} reset={ManageAccess.reset}><ManageAccess.Screen key={`access:${propertyId}`} propertyId={propertyId} tenants={tenantList} changed={() => void refresh()} language={language} /></DeferredBoundary>}</div>

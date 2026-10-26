@@ -70,6 +70,7 @@ try {
   $env:CASH_TEST_TENANT_ID = [guid]::NewGuid().ToString()
   $env:CASH_TEST_BUILDING_ID = [guid]::NewGuid().ToString()
   $env:CASH_TEST_UNIT_ID = [guid]::NewGuid().ToString()
+  $env:CASH_TEST_FREE_UNIT_ID = [guid]::NewGuid().ToString()
   $env:CASH_TEST_AUDIT_CASH_ID = [guid]::NewGuid().ToString()
   $env:CASH_TEST_AUDIT_TRIGGER = "fail_cash_audit_$projectId"
   $env:CASH_TEST_AUDIT_CHECK_ID = [guid]::NewGuid().ToString()
@@ -105,7 +106,7 @@ try {
     "insert into public.properties(id,name) values ('$($env:CASH_TEST_PROPERTY_ID)','Disposable cash API test property')",
     "insert into public.tenants(id,property_id,display_name,kind) values ('$($env:CASH_TEST_TENANT_ID)','$($env:CASH_TEST_PROPERTY_ID)','Sample API test renter','individual')",
     "insert into public.buildings(id,property_id,label) values ('$($env:CASH_TEST_BUILDING_ID)','$($env:CASH_TEST_PROPERTY_ID)','Test building')",
-    "insert into public.units(id,property_id,building_id,label) values ('$($env:CASH_TEST_UNIT_ID)','$($env:CASH_TEST_PROPERTY_ID)','$($env:CASH_TEST_BUILDING_ID)','Test room')",
+    "insert into public.units(id,property_id,building_id,label) values ('$($env:CASH_TEST_UNIT_ID)','$($env:CASH_TEST_PROPERTY_ID)','$($env:CASH_TEST_BUILDING_ID)','Test room'),('$($env:CASH_TEST_FREE_UNIT_ID)','$($env:CASH_TEST_PROPERTY_ID)','$($env:CASH_TEST_BUILDING_ID)','Test free room')",
     "insert into public.staff_memberships(property_id,user_id,role) values ('$($env:CASH_TEST_PROPERTY_ID)','$($users.owner)','owner'),('$($env:CASH_TEST_PROPERTY_ID)','$($users.clerk)','clerk')",
     @"
 create function public.$($env:CASH_TEST_AUDIT_TRIGGER)() returns trigger language plpgsql as `$`$ begin

@@ -1,49 +1,30 @@
-const sampleAvailability = [
-  { building: 'Building A', rooms: ['Room 01', 'Room 03'] },
-  { building: 'Building B', rooms: ['Unit 02'] },
-]
+import { useState } from 'react'
+import { PublicRoomsFrame, PublicRoomsView, type InquiryInput, type InquiryResult } from './PublicRooms'
+import { parsePublicListings } from './public-listings-model.ts'
+import type { Language } from '../i18n'
+
+// Development-only sample of the public rooms page (?availability=preview). Fictional rooms, no Supabase client,
+// no network calls; "sending" a message is simulated. Excluded from production builds by the artifact check.
+const id = (n: number) => `60000000-0000-4000-8000-${String(n).padStart(12, '0')}`
+const sampleListings = parsePublicListings({ properties: [{ name: 'Fictional sample boarding houses', buildings: [
+  { label: 'Building 1', rooms: [
+    { unit_id: id(1), room: 'Room 03', asking_rent: '3500.00', description: 'Ground floor, good for 2 persons, shared bathroom.' },
+    { unit_id: id(2), room: 'Room 06', asking_rent: '3500.00', description: 'Second floor, window facing the road.' },
+  ] },
+  { label: 'Building 2', rooms: [
+    { unit_id: id(3), room: 'Room 02', asking_rent: '3800.00', description: 'Second floor, near the shared gym.' },
+  ] },
+  { label: "Bob's house", rooms: [
+    { unit_id: id(4), room: 'Room 04', asking_rent: '2800.00', description: 'Quiet room for 1 to 2 persons.' },
+    { unit_id: id(5), room: 'Room 05', asking_rent: '2800.00', description: '' },
+  ] },
+] }] })
 
 export function PublicAvailabilityPreview() {
-  return <>
-    <a className="skip-link" href="#available-rooms">Skip to available rooms</a>
-    <div className="availability-preview-notice" role="status">
-      Development preview · Fictional sample data · Not connected to rental records
-    </div>
-    <header className="availability-preview-header">
-      <a className="brand" href="#available-rooms" aria-label="RentByBob sample room listings">
-        <span className="brand-mark" aria-hidden="true">R</span>
-        <span>RentByBob</span>
-      </a>
-      <span className="availability-preview-mode">View-only sample</span>
-    </header>
-    <main id="available-rooms" className="availability-preview-main" tabIndex={-1}>
-      <section className="availability-preview-intro" aria-labelledby="availability-heading">
-        <p className="eyebrow">ROOM LISTINGS</p>
-        <h1 id="availability-heading">Rooms shown as available</h1>
-        <p>Browse the sample listings by building. This page is for viewing only.</p>
-      </section>
-      <div className="availability-preview-caution" role="note">
-        <strong>Sample only</strong>
-        <p>These fictional listings demonstrate a possible public page. They do not show real rooms or current availability.</p>
-      </div>
-      <section className="availability-buildings" aria-label="Sample rooms grouped by building">
-        {sampleAvailability.map(({ building, rooms }) => (
-          <article className="availability-building card" key={building}>
-            <h2>{building}</h2>
-            <p>{rooms.length} sample rooms listed</p>
-            <ul className="availability-room-list">
-              {rooms.map(room => (
-                <li className="availability-room" key={room}>
-                  <strong>{room}</strong>
-                  <span className="status status--ready">Sample listing · Available</span>
-                </li>
-              ))}
-            </ul>
-          </article>
-        ))}
-      </section>
-      <p className="availability-preview-footnote">A future public page should show only owner-approved listing details. It should never show renter names, account information, payment history, or private records.</p>
-    </main>
-    <footer className="availability-preview-footer">RentByBob · Public listing concept</footer>
-  </>
+  const [language, setLanguage] = useState<Language>('en')
+  const submit = async (_input: InquiryInput): Promise<InquiryResult> => 'sent'
+  return <PublicRoomsFrame propertyName="Fictional sample boarding houses" language={language} setLanguage={setLanguage}
+    notice="Development sample · Fictional rooms · Messages are not sent or saved">
+    <PublicRoomsView listings={sampleListings} language={language} submit={submit} />
+  </PublicRoomsFrame>
 }

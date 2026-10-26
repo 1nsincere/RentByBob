@@ -16,9 +16,12 @@ export function decimalPesos(value: string) {
 export function CashAcknowledgment({ data, close, preview=false, language='en' }: { data: CashAcknowledgmentData; close: () => void; preview?: boolean; language?: Language }) {
  const tr=(english:string,bisaya:string)=>text(language,english,bisaya)
  const dialog = useRef<HTMLDialogElement>(null)
- useEffect(() => { const previous = document.activeElement as HTMLElement | null; dialog.current?.showModal(); return () => { previous?.focus() } }, [])
- return createPortal(<dialog ref={dialog} className="ack-dialog" onCancel={e => { e.preventDefault(); close() }} aria-labelledby="ack-heading">
-   <div className="ack-actions"><Button className="primary" onClick={() => window.print()}>{tr('Print / Save PDF','I-print / I-save isip PDF')}</Button><Button onClick={close}>{tr('Close receipt','Sirad-i ang resibo')}</Button></div>
+ const opener = useRef<HTMLElement | null>(null)
+ useEffect(() => { opener.current = document.activeElement as HTMLElement | null; dialog.current?.showModal() }, [])
+ // Close the modal before unmounting so focus reliably returns to the button that opened it.
+ const finish = () => { dialog.current?.close(); opener.current?.focus(); close() }
+ return createPortal(<dialog ref={dialog} className="ack-dialog" onCancel={e => { e.preventDefault(); finish() }} aria-labelledby="ack-heading">
+   <div className="ack-actions"><Button className="primary" onClick={() => window.print()}>{tr('Print / Save PDF','I-print / I-save isip PDF')}</Button><Button onClick={finish}>{tr('Close receipt','Sirad-i ang resibo')}</Button></div>
    <article className="ack-document pos-receipt">
      <header className="pos-header"><p className="pos-brand">RentByBob</p><p>{data.property}</p>
      <h2 id="ack-heading">{tr('Cash Payment Acknowledgment','Pagpamatuod sa Nadawat nga Kwarta')}</h2><p>{tr('RENT PAYMENT · CASH','BAYAD SA ABANG · KWARTA')}</p></header>

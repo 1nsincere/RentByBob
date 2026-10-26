@@ -1,3 +1,7 @@
+## Public room listings and inquiries - 26 Oct 2026
+
+Supersedes the open questions of 22 Oct. User decisions: staff explicitly mark a room "listed" (owner or clerk with MFA); the public sees only building, room, asking monthly rent and a short description (no photos in this slice); visitors leave an inquiry (name, phone or Messenger, message) that staff read later. Implementation rules: a listed room is hidden automatically while it has any current or upcoming agreement (never inferred available from missing data); visitors cannot read inquiries back; spam limits of 3 inquiries per contact per 24 hours and 20 per property per hour; inquiries older than 90 days are deleted (retention period adjustable by the owner). The public page is served at `/rooms`; a QR code should point to that address once a real public site exists. Public deployment still needs explicit owner authorization.
+
 ## Production-prep rules chosen by the user - 26 Oct 2026
 
 - **Reversal of confirmed cash:** owner only (with MFA), written reason required. The cash record and acknowledgment are kept unchanged; the payment is marked reversed, its rent-month allocations move into an append-only reversal record, and the rent it paid becomes owed again. Renters no longer see a reversed payment as paid.

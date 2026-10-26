@@ -52,8 +52,8 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
 
   await t.test('every application table has RLS and anonymous access is denied', async () => {
     const rows = (await db.query<{ relrowsecurity: boolean }>("select relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'")).rows
-    // 19 includes cash_reversals (202610270001); every table must still have RLS (next assertion).
-    assert.equal(rows.length, 19)
+    // 21 includes cash_reversals (202610270001), room_listings and rental_inquiries (202610270002); every table must still have RLS.
+    assert.equal(rows.length, 21)
     assert.ok(rows.every(r => r.relrowsecurity))
     await db.exec('set role anon')
     await denied('select * from public.tenants')
@@ -143,12 +143,14 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
       from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname in ('public','private') and p.prosecdef
     `)
-    // 35 adds read_renter_account (202610260001), reverse_rent_cash and end_rental_agreement (202610270001).
-    // Update only after reviewing any new definer function.
-    assert.equal(result.rows.length, 35)
+    // 41 adds read_renter_account (202610260001), reverse_rent_cash and end_rental_agreement (202610270001), and six
+    // public-listing functions (202610270002). Update only after reviewing any new definer function.
+    assert.equal(result.rows.length, 41)
+    // The only reviewed anonymous entry points: read listed rooms and leave an inquiry (202610270002).
+    const anonymousAllowed = new Set(['read_public_listings', 'submit_rental_inquiry'])
     for (const fn of result.rows) {
       assert.ok(fn.proconfig.some(value => value === 'search_path=""'), fn.proname)
-      assert.equal(fn.anon_execute, false, fn.proname)
+      assert.equal(fn.anon_execute, anonymousAllowed.has(fn.proname), fn.proname)
     }
   })
   await t.test('archival audit failure leaves record and access unchanged', async () => {

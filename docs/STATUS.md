@@ -1,5 +1,17 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Public room listings, inquiry inbox and payments workspace redesign - 26 Oct 2026
+
+**Public rooms (user request):** migration `202610270002_public_room_listings.sql` (see SECURITY.md). Public page `/rooms` (`PublicRooms.tsx`, `public-listings-model.ts`): building tabs with room counts, room cards (room, rent per month, description), and an "Ask about this room" dialog (bottom sheet on phones) with a hidden anti-bot field and a stable request ID per dialog. `public/_redirects` serves `/rooms` on Cloudflare Pages. The dev sample `/?availability=preview` now shows the same page with fictional Building 1, Building 2 and Bob's house rooms and a simulated send (excluded from production). Staff screen "Room listings & inquiries" (`RoomListingsManager.tsx`): Listings and Inquiries tabs, building tabs, per-room "Show on public page", rent and description, status text (visible / listed but hidden by an agreement / not listed), and "Mark handled" for inquiries.
+
+**Payments workspace (user feedback: too much scrolling):** on wide screens the renter worklist sits beside the selected account; the account header shows three figures (rent left, waiting for confirmation, monthly rent); the pending report is a compact banner; "Rent by month", "Payment history" and "Room rent setup" are tabs (arrow-key navigation, one panel at a time) instead of three stacked expandable boxes. No payment logic changed.
+
+**Accessibility fixes found by new checks:** both dialogs (inquiry and cash acknowledgment) now close before unmounting, so keyboard focus returns to the button that opened them (verified in browser checks).
+
+**Validation (26 Oct 2026):** PGlite `tests/public-listings-database.test.ts` (anonymous view limited to listed unoccupied rooms and public fields, no anonymous table or inquiry reads, MFA staff listing, validation, retry safety, per-contact rate limit, handled ordering, move-out returning a room, an upcoming agreement hiding it, 90-day pruning); a deliberate mutation exposing occupied rooms fails it. `tests/public-listings-model.test.ts` rejects extra fields and malformed rent. `npm run verify:release` 80/80. Offline browser checks 10/10, including the rewritten public sample check and accessibility scan. Live disposable `npm.cmd run test:cash:supabase` passed (exit 0, 36 checks), including anonymous API isolation and a real `/rooms` inquiry reaching staff who mark it handled.
+
+**Not done:** no photos; no CAPTCHA; no public hosting or QR code (needs owner authorization and a public site); the real Payments screen (`SavedPayments.tsx`) has not yet received the same tabbed layout as the preview.
+
 ## Production prep: reversals, move-out, monthly rent, export, backups, staging guard, accessibility and speed - 26 Oct 2026
 
 **Source control:** work committed in two commits on `feature/renter-view-and-production-prep` and pushed to the private GitHub remote (`main` unchanged; a secret-pattern scan of the commits found nothing). The rest of this entry was committed and pushed to the same branch afterwards.

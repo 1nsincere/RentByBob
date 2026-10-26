@@ -22,6 +22,10 @@ PaymentsPreview is exported only through the development preview module. Entries
 
 # Security plan
 
+## Anonymous entry points - 26 Oct 2026
+
+Migration `202610270002_public_room_listings.sql` adds the app's only anonymous entry points: `read_public_listings()` (returns only listed rooms with no current or upcoming agreement: building label, room label, asking rent, description, unit ID) and `submit_rental_inquiry(...)` (write-only; validates the room is still listed; idempotent request ID; rate limits; 90-day pruning). Tables `room_listings` and `rental_inquiries` have RLS, staff-only reads and no anonymous grants. The definer-function inventory test now asserts that exactly these two functions are anonymously executable. PGlite tests (with a mutation check that removing the occupied-room filter fails the test) and the live disposable suite verify isolation. Remaining risks before public hosting: no CAPTCHA (consider Cloudflare Turnstile), inquiry contact details are personal data held for 90 days, and the hidden anti-bot field only stops simple bots.
+
 ## Renter read model and client session handling - 26 Oct 2026
 
 `public.read_renter_account()` (migration `202610260001`) is a SECURITY DEFINER function with an empty search path, executable by `authenticated` only. It takes no parameters and derives scope from `auth.uid()`: unarchived tenants with an unrevoked contact link. It returns no staff or verifier IDs, handovers or other tenants, and its balance rule matches staff. PGlite isolation tests (with mutation checks) and a live disposable run verify this. The definer-function inventory test now expects 33.

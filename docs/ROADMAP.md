@@ -17,7 +17,7 @@ Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISION
 | Day/night and language preference | Browser-persisted preference; shared dark-theme tokens; mounted app copy has broad English/Bisaya coverage; this milestone fixes environment/workspace labels and report/check fallbacks and adds offline browser assertions | Review rendered authenticated admin, security/MFA, report and check/handover screens with a fluent Bisaya speaker; some provider/technical terms remain English; no complete translation or accessibility claim |
 | Paid rent report follow-up | Read-only saved report is implemented and passed isolated Supabase browser checks with fictional fixtures | Staff review of terminology on the running app before adding report features or exports |
 | Backup and recovery readiness | Authenticator backup-factor path is implemented; provider database backup/restore coverage and all-factors-lost process are not evidenced | Owner chooses RPO/RTO, retention and recovery ownership; rehearse backup/restore only between separately identified disposable local stacks with fictional data |
-| Public available-room listing for prospective renters | User requested a view-only public page, reachable by website URL or QR code, that groups available rooms by building; a separate fictional development preview is now implemented | Must first define how availability is known and kept current, which fields/buildings/rooms the owner explicitly publishes, privacy boundaries, and inquiry/contact handling. Existing saved data has no occupancy lifecycle; do not infer vacancy from the absence of an agreement or charge. Keep the preview fictional and do not generate a real QR or deploy a public listing until authorized |
+| Public available-room listing for prospective renters | Implemented 26 Oct 2026: staff-listed rooms only, hidden automatically while a current or upcoming agreement exists; public `/rooms` page with building tabs and an inquiry form; staff inquiry inbox; verified in PGlite and live disposable checks | Must first define how availability is known and kept current, which fields/buildings/rooms the owner explicitly publishes, privacy boundaries, and inquiry/contact handling. Existing saved data has no occupancy lifecycle; do not infer vacancy from the absence of an agreement or charge. Keep the preview fictional and do not generate a real QR or deploy a public listing until authorized |
 
 ## Waiting on owner decisions - 26 Oct 2026
 
@@ -29,7 +29,7 @@ Development can continue without these, but each blocks the item it names:
 4. **Returned checks:** decide whether and how renters are told about a returned check. Currently it is omitted from the renter view.
 5. **Staging:** create a separate staging Supabase project before any hosted deployment work. Consider raising its minimum password length to match the app's 12.
 6. **Backups:** daily with 30-day retention was chosen and the restore rehearsal passes; schedule the daily task (command in OPERATIONS.md) and keep a second off-machine copy.
-7. **Public room listing:** answer the publication and privacy questions below before any real listing.
+7. **Public room listing:** built and tested; before going public, authorize hosting, decide on a CAPTCHA, confirm the 90-day inquiry retention, and create the QR code for the final address.
 
 ## New feature request: public room availability
 
