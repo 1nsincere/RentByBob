@@ -145,6 +145,22 @@ function expectDenied(result, description) {
 // only with UPDATE_SCREENSHOTS=1. Issues are collected and asserted at the end of the browser flow.
 const axeSource = await readFile(new URL('../node_modules/axe-core/axe.min.js', import.meta.url), 'utf8')
 const accessibilityIssues = []
+// Phone widths and 200% text: no sideways scrolling and visible buttons at least 44px tall; restores the desktop view.
+async function assertReflow(target, name) {
+  for (const [width, size] of [[390, ''], [320, ''], [320, '200%']]) {
+    await target.setViewportSize({ width, height: 900 })
+    await target.evaluate(value => { document.documentElement.style.fontSize = value }, size)
+    const result = await target.evaluate(() => ({
+      overflow: document.documentElement.scrollWidth - window.innerWidth,
+      small: [...document.querySelectorAll('button')].filter(button => button.getClientRects().length && button.getBoundingClientRect().height < 44).map(button => button.textContent?.trim().slice(0, 40)),
+    }))
+    assert.ok(result.overflow <= 0, `${name} scrolls sideways by ${result.overflow}px at ${width}px ${size || '100%'}`)
+    assert.deepEqual(result.small, [], `${name} has buttons under 44px at ${width}px ${size || '100%'}`)
+  }
+  await target.evaluate(() => { document.documentElement.style.fontSize = '' })
+  await target.setViewportSize({ width: 1280, height: 900 })
+}
+
 async function axeScan(target, name) {
   await target.waitForTimeout(400)
   await target.addScriptTag({ content: axeSource })
@@ -277,6 +293,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(map.getByRole('status')).toContainText('Room renamed to Room 6A.')
     await expect(map.locator('#selected-space-heading')).toHaveText("Bob's house · Room 6A")
     await axeScan(page, 'building room details')
+    await assertReflow(page, 'building room details')
     pass('Owner renames a room from the map with a required reason')
 
     // A tenant added without a room is given one later from the directory; an archive needs no current room.
@@ -297,6 +314,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(page.locator('.tenant-record').filter({ hasText: 'Sample Later Renter' })).toHaveCount(1)
     await expect(page.locator('.tenant-record').filter({ hasText: 'Sample One-Step Renter' })).toHaveCount(0)
     await axeScan(page, 'tenant directory filters')
+    await assertReflow(page, 'tenant directory')
     await page.getByRole('button', { name: 'Assign a room to Sample Later Renter', exact: true }).click()
     await expect(addTenant.getByRole('heading', { name: 'Assign a room', exact: true })).toBeVisible()
     await addTenant.getByRole('button', { name: 'Review tenant record', exact: true }).click()
@@ -309,6 +327,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await addTenant.getByRole('button', { name: 'Room 02, Room, Vacant', exact: true }).click()
     await expect(addTenant.getByRole('button', { name: 'Room 02, Room, Vacant', exact: true })).toHaveAttribute('aria-pressed', 'true')
     await axeScan(page, 'visual room picker')
+    await assertReflow(page, 'visual room picker')
     await addTenant.getByLabel('Monthly rent (PHP)').fill('2800.50')
     await addTenant.getByRole('button', { name: 'Review tenant record', exact: true }).click()
     await addTenant.getByRole('button', { name: 'Confirm and assign room', exact: true }).click()
