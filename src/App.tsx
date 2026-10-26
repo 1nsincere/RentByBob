@@ -26,6 +26,9 @@ type Snapshot = { access: AccessState; mfa: boolean; properties: Property[]; mem
 type NavigationItem = { id: string; label: string }
 const translateText = (language: Language, english: string, bisaya: string) => language === 'ceb' ? bisaya : english
 
+// While the session loads, use the sign-in layout unless a saved session exists, so the first screen does not jump.
+const savedSessionAtBoot = (() => { try { return Object.keys(localStorage).some(key => /^sb-.+-auth-token$/.test(key)) } catch { return false } })()
+
 export function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [booting, setBooting] = useState(true)
@@ -271,7 +274,7 @@ export function App() {
 
   signOutRef.current = signOut
   const staffWorkspaceOpen = Boolean(session && role && snapshot && !snapshot.mfa && !setup && !dashboardPreview && !preview)
-  return <div className={`app-shell ${route === 'sign-in' ? 'sign-in-shell' : ''} ${dashboardPreview ? 'focused-preview' : ''}`}>
+  return <div className={`app-shell ${route === 'sign-in' || (route === 'loading' && !dashboardPreview && !savedSessionAtBoot) || !supabase ? 'sign-in-shell' : ''} ${dashboardPreview ? 'focused-preview' : ''}`}>
     <a className="skip-link" href="#main">{t.skipContent}</a>
     <div className="environment-note">{environmentLabel}</div>
     <header className="site-header">
