@@ -1,3 +1,8 @@
+## Building drawings follow the owner's sketch - 27 Oct 2026
+
+- **Building 1 (owner sketch):** upstairs rooms on a balcony walkway, numbered from the stairs end, windows beside every other door; apartment with its own arched street door; Rooms 01-03 inside the gate along the hallway with the stairs. Used on the landing page and on every staff front view and room picker.
+- **Other buildings (assistant assumption until sketched):** Building 2 like Building 1 with the gym in place of the apartment; Bob's house rooms drawn as windows; House 1 a single door and window.
+
 ## Renter payment reports and private commercial spaces - 27 Oct 2026
 
 - **Report a payment (owner request):** renters may tell the property they paid in person. A report is only a notice: it never reduces a balance and is not pending cash. Staff either record the cash through the normal flow (pending until the designated verifier confirms) and link it, or mark the report not received with a reason the renter sees. Collector choices: Bob, James, someone else. No online payment or GCash (assistant default: unchanged "pay your collector in person" rule). Limits chosen by the assistant: date within the last 90 days and not in the future; 5 waiting reports per room; 10 per person per day; reports older than 180 days drop off the renter list.

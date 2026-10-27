@@ -516,6 +516,19 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .facade-unset text { fill: var(--text-secondary); font-family: inherit; font-size: 16px; font-weight: 600; }
 .facade-foundation { fill: var(--facade-ground); }
 .facade-ground-line { fill: none; stroke: var(--facade-ground); stroke-width: 2; opacity: .6; }
+/* Owner's Building 1 sketch (27 Oct 2026): tin-roof ribs, balcony walkway, windows beside doors, the cut-away hallway
+   behind the gate with the stairs. Decoration only: rooms remain the .facade-room-door groups. */
+.facade-roof-rib { stroke: rgb(255 255 255 / 18%); stroke-width: 2; }
+.facade-walkway rect { fill: var(--facade-wall-top); stroke: var(--facade-line); stroke-width: 2; }
+.facade-window rect { fill: var(--facade-door); stroke: var(--facade-door-frame); stroke-width: 3; }
+.facade-window path { fill: none; stroke: var(--facade-door-frame); stroke-width: 2.5; }
+.facade-inside rect { fill: var(--facade-wall-bottom); stroke: var(--facade-line); stroke-width: 2; stroke-dasharray: 9 6; filter: brightness(.93); }
+.facade-inside text { fill: var(--text-secondary); font-family: inherit; font-size: 13px; font-weight: 650; }
+.facade-stairs path:first-child { fill: var(--facade-door); stroke: var(--facade-door-frame); stroke-width: 2; }
+.facade-stairs .facade-stairs-rail { fill: none; stroke: var(--facade-door-frame); stroke-width: 3; stroke-linecap: round; }
+.facade-gate rect { fill: var(--facade-door-frame); }
+.facade-gate-bar { stroke: var(--facade-door); stroke-width: 2.5; opacity: .55; }
+.facade-gate-split { stroke: var(--facade-door); stroke-width: 3; }
 .building-art-roof { fill: var(--facade-roof-bottom); }
 .building-art-wall { fill: var(--facade-wall-bottom); stroke: var(--facade-line); stroke-width: 1.5; }
 .building-art-window { fill: var(--brand); opacity: .85; }
