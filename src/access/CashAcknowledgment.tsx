@@ -7,6 +7,8 @@ export type CashAcknowledgmentData = {
  number: string; tenant: string; building: string; room: string; property: string;
  amount: string; received_on: string; collector: string; issued_at: string;
  balance_at_issuance: string; allocations: { month: string; amount: string }[];
+ // Part of the payment kept as advance credit at confirmation (202610270010); absent on older acknowledgments.
+ advance_credit?: string;
 }
 export function decimalPesos(value: string) {
  if (!/^\d+(\.\d{1,2})?$/.test(value)) return 'Amount unavailable'
@@ -29,6 +31,7 @@ export function CashAcknowledgment({ data, close, preview=false, language='en' }
      {preview && <p className="notice">{tr('SAMPLE ONLY — not proof of payment.','SAMPLE LANG — dili pamatuod sa bayad.')}</p>}
      <dl><dt>{tr('Tenant','Nag-abang')}</dt><dd>{data.tenant}</dd><dt>{tr('Rental space','Lugar nga giabangan')}</dt><dd>{data.building} / {data.room}</dd><dt>{tr('Cash received','Kwarta nga nadawat')}</dt><dd><strong>{decimalPesos(data.amount)}</strong></dd><dt>{tr('Payment date','Petsa sa bayad')}</dt><dd>{data.received_on}</dd><dt>{tr('Received by','Gidawat ni')}</dt><dd>{data.collector}</dd><dt>{tr('Verification','Kumpirmasyon')}</dt><dd>{tr('Confirmed by designated cash verifier','Gikumpirma sa gi-assign nga tigkumpirma sa kwarta')}</dd><dt>{tr('Issued (Philippine time)','Gi-isyu (oras sa Pilipinas)')}</dt><dd>{new Intl.DateTimeFormat('en-PH',{ dateStyle:'medium', timeStyle:'short', timeZone:'Asia/Manila' }).format(new Date(data.issued_at))}</dd></dl>
      <h3>{tr('Rent covered','Mga bulan sa abang nga gibayran')}</h3><ul className="pos-items">{data.allocations.map(a => <li key={a.month}><span>{a.month.slice(0,7)}</span><strong>{decimalPesos(a.amount)}</strong></li>)}</ul>
+     {data.advance_credit && data.advance_credit !== '0.00' && <ul className="pos-items"><li><span>{tr('Advance credit','Abante nga bayad')}</span><strong>{decimalPesos(data.advance_credit)}</strong></li></ul>}
      <div className="pos-total"><span>{tr('CASH RECEIVED','KWARTA NGA NADAWAT')}</span><strong>{decimalPesos(data.amount)}</strong></div>
      <p className="pos-balance">{tr('Remaining rent at issuance','Nabilin nga abang sa pag-isyu')}<br /><strong>{decimalPesos(data.balance_at_issuance)}</strong></p>
      <p>{tr('This acknowledges the cash amount listed above. A partial payment does not mean all rent is fully paid. Later payments may change the current balance.','Nagpamatuod kini sa kantidad sa kwarta nga gilista sa taas. Ang bahin nga bayad wala magpasabot nga nahuman na ang tanang abang. Mahimong mausab ang kasamtangang balanse tungod sa sunod nga bayad.')}</p>

@@ -61,7 +61,7 @@ test('saved rent and cash acknowledgment boundaries', async t => {
  assert.equal((await db.query('select * from public.cash_allocations')).rows.length,2)
  await assert.rejects(db.query('update public.cash_records set acknowledgment=null'))
  await db.query('select public.record_rent_cash($1,$2,$3,$4,$5,$6)',[prop,id(20),agreement,'4000.01','2024-04-03','James'])
- await assert.rejects(db.query('select public.confirm_rent_cash($1,$2)',[prop,id(20)]),/exceeds unpaid/)
+ // Overpayment is now kept as advance credit when confirmed (202610270010; see advance-credit-database.test.ts); this one stays pending.
  assert.equal((await db.query('select * from public.cash_allocations')).rows.length,2)
  const view=(await db.query<{read_rent_workspace:any}>('select public.read_rent_workspace($1)',[prop])).rows[0].read_rent_workspace
  assert.equal(view.agreements[0].balance,'4000.00')

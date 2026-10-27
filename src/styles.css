@@ -1367,3 +1367,112 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
 .auto-listing h3 { margin: 0 0 .3rem; font-size: 1.05rem; }
 .auto-listing p { margin: 0; }
 .remember-device label { cursor: pointer; font-weight: 600; margin: 0; }
+
+/* Grouped workspace menu: Add tenant action, "Daily work" heading, and a collapsible "More" group. */
+.nav-group-label { margin: 1rem .75rem .35rem; color: var(--text-secondary); font-size: .74rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.nav-group-toggle { display: flex; width: 100%; min-height: 2.75rem; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .9rem; padding: .55rem .75rem; border: 1px dashed var(--border); border-radius: .85rem; background: transparent; color: var(--text-secondary); font: inherit; font-size: .9rem; font-weight: 600; text-align: left; cursor: pointer; }
+.nav-group-toggle:hover { color: var(--brand); border-style: solid; }
+.nav-group-chevron { transition: transform 200ms ease; }
+.nav-group-toggle[aria-expanded="true"] .nav-group-chevron { transform: rotate(180deg); }
+.nav-group-more { margin-top: .35rem; }
+.nav-group-more:not([hidden]) { animation: rise-in 260ms cubic-bezier(.2,.7,.2,1) both; }
+.workspace-links a.nav-add-tenant { gap: .5rem; margin-top: .35rem; border: 1px solid var(--border); font-weight: 650; }
+.nav-add-mark { display: inline-grid; width: 1.5rem; height: 1.5rem; place-items: center; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 800; line-height: 1; }
+.workspace-sidebar .nav-group-label { color: var(--nav-label); }
+.workspace-sidebar .nav-group-toggle { border-color: rgb(255 255 255 / 22%); color: var(--nav-text); }
+.workspace-sidebar .nav-group-toggle:hover { border-color: rgb(255 255 255 / 45%); color: #fff; background: var(--nav-hover); }
+.workspace-sidebar .nav-group-toggle:focus-visible { outline-color: #fff; }
+.workspace-sidebar .workspace-links a.nav-add-tenant { border-color: rgb(255 255 255 / 22%); }
+.workspace-sidebar .workspace-links a.nav-add-tenant[aria-current="location"] { border-color: transparent; }
+.workspace-sidebar .nav-add-mark { background: #fff; color: var(--brand-hover, #1d4ed8); }
+.mobile-workspace-navigation .nav-group-toggle, .mobile-workspace-navigation .nav-group-label { grid-column: 1 / -1; }
+/* Map room tiles: responsible renter and monthly rent for occupied rooms. */
+.room-renter { display: grid; gap: .1rem; margin-top: .2rem; padding-top: .35rem; border-top: 1px solid var(--border); width: 100%; min-width: 0; }
+.room-renter b { font-weight: 650; font-size: .9rem; overflow-wrap: anywhere; }
+.room-renter span { color: var(--text-secondary); font-size: .82rem; font-variant-numeric: tabular-nums; }
+
+/* Paid rent report PDF ("Save as PDF"). Hidden on screen; shown alone while printing this report.
+   Font pairing: a classic serif for headings and figures' labels, a clean system sans for body text, tabular numbers. */
+.print-document { display: none; }
+@media print {
+  html.print-paid-report body > :not(.print-document) { display: none !important; }
+  html.print-paid-report body { background: #fff !important; }
+  html.print-paid-report .paid-rent-document { display: block; }
+  @page { size: A4; margin: 16mm 15mm 18mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Segoe UI", system-ui, sans-serif; color: #6b7280; } }
+}
+.paid-rent-document { --doc-ink: #111827; --doc-muted: #5b6472; --doc-line: #d9dee7; --doc-accent: #1e3a8a; --doc-tint: #f3f6fb;
+  color: var(--doc-ink); background: #fff; font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; font-size: 9.5pt; line-height: 1.45; }
+.paid-rent-document h1, .paid-rent-document h2, .paid-rent-document .doc-figure strong, .paid-rent-document .doc-property { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif; }
+.doc-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 6mm; border-bottom: 2px solid var(--doc-accent); }
+.doc-brand { display: flex; align-items: center; gap: 2.5mm; font-weight: 700; font-size: 11pt; letter-spacing: .02em; color: var(--doc-accent); }
+.doc-mark { display: inline-grid; width: 7mm; height: 7mm; place-items: center; border-radius: 1.6mm; background: var(--doc-accent); color: #fff; font-size: 10pt; }
+.doc-confidential { font-size: 7.5pt; letter-spacing: .12em; text-transform: uppercase; color: var(--doc-muted); }
+.doc-title { padding: 8mm 0 6mm; }
+.doc-kicker { margin: 0 0 1.5mm; font-size: 7.5pt; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--doc-accent); }
+.paid-rent-document h1 { margin: 0; font-size: 26pt; font-weight: 600; line-height: 1.1; letter-spacing: -.01em; }
+.doc-property { margin: 2mm 0 5mm; font-size: 13pt; font-style: italic; color: var(--doc-muted); }
+.doc-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin: 0; padding: 3.5mm 4mm; border: 1px solid var(--doc-line); border-radius: 2mm; background: var(--doc-tint); }
+.doc-meta dt { font-size: 7pt; letter-spacing: .1em; text-transform: uppercase; color: var(--doc-muted); }
+.doc-meta dd { margin: .8mm 0 0; font-weight: 600; }
+.doc-summary { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 4mm; margin-bottom: 8mm; }
+.doc-figure { display: grid; gap: 1mm; padding: 4mm; border: 1px solid var(--doc-line); border-radius: 2mm; break-inside: avoid; }
+.doc-figure--lead { border-color: var(--doc-accent); border-width: 1.5px; }
+.doc-figure span { font-size: 7.5pt; letter-spacing: .08em; text-transform: uppercase; color: var(--doc-muted); }
+.doc-figure strong { font-size: 18pt; font-weight: 600; font-variant-numeric: tabular-nums; }
+.doc-figure small { color: var(--doc-muted); font-size: 8pt; }
+.doc-section { margin-bottom: 8mm; }
+.paid-rent-document h2 { display: flex; align-items: baseline; gap: 3mm; margin: 0 0 1.5mm; font-size: 14pt; font-weight: 600; break-after: avoid; }
+.doc-number { display: inline-grid; width: 6mm; height: 6mm; place-items: center; border-radius: 50%; background: var(--doc-accent); color: #fff; font: 700 8pt "Segoe UI", system-ui, sans-serif; }
+.doc-note { margin: 0 0 3mm; color: var(--doc-muted); font-size: 8.5pt; }
+.doc-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.doc-table thead { display: table-header-group; }
+.doc-table th, .doc-table td { padding: 2.2mm 2.5mm; text-align: left; vertical-align: top; }
+.doc-table thead th { font-size: 7pt; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--doc-muted); border-bottom: 1.5px solid var(--doc-ink); }
+.doc-table tbody tr { break-inside: avoid; }
+.doc-table tbody td { border-bottom: 1px solid var(--doc-line); }
+.doc-table tbody tr:nth-child(even) td { background: var(--doc-tint); }
+.doc-table tfoot th, .doc-table tfoot td { padding-top: 3mm; font-weight: 700; border-top: 1.5px solid var(--doc-ink); }
+.doc-money { text-align: right !important; white-space: nowrap; }
+.doc-code { font-family: ui-monospace, Consolas, monospace; font-size: 8pt; color: var(--doc-muted); }
+.doc-empty { margin: 0; padding: 4mm; border: 1px dashed var(--doc-line); border-radius: 2mm; color: var(--doc-muted); font-style: italic; }
+.doc-footer { display: flex; justify-content: space-between; gap: 6mm; margin-top: 10mm; padding-top: 3mm; border-top: 1px solid var(--doc-line); font-size: 7.5pt; color: var(--doc-muted); }
+@media print { .paid-rent-document * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+/* App bar (27 Oct 2026): sticky, frosted surface; icon theme toggle, EN/CEB switch, account chip with avatar, Sign out. */
+.site-header { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--border); box-shadow: 0 1px 0 rgb(15 29 51 / 3%), 0 6px 18px rgb(15 29 51 / 6%); }
+.site-header .header-inner { min-height: 4.25rem; }
+.site-header .session-tools { display: flex; align-items: center; gap: .75rem; }
+.site-header .session-actions { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+.site-header .appbar-icon { display: inline-grid; place-items: center; width: 2.75rem; height: 2.75rem; min-height: 2.75rem; padding: 0; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); color: var(--text); }
+.site-header .appbar-icon svg, .site-header .appbar-signout svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.site-header .appbar-icon:hover { border-color: var(--brand); color: var(--brand); }
+.site-header .appbar-language { display: inline-flex; align-items: center; gap: .15rem; min-height: 2.75rem; padding: .25rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font-size: .8rem; font-weight: 700; letter-spacing: .04em; }
+.site-header .appbar-language span { padding: .35rem .6rem; border-radius: 999px; color: var(--text-secondary); }
+.site-header .appbar-language span.is-on { background: var(--text); color: var(--surface); }
+.site-header .appbar-dev { min-height: 2.75rem; padding: .3rem .8rem; border: 1px dashed var(--border); border-radius: 999px; background: transparent; color: var(--text-secondary); font-size: .82rem; }
+.site-header .appbar-account { display: flex; align-items: center; gap: .6rem; min-width: 0; padding-left: .85rem; border-left: 1px solid var(--border); }
+.site-header .appbar-avatar { display: inline-grid; flex: 0 0 auto; width: 2.5rem; height: 2.5rem; place-items: center; border-radius: 50%; background: var(--action-gradient, var(--brand)); color: #fff; font-weight: 750; box-shadow: 0 4px 10px rgb(37 99 235 / 28%); }
+.site-header .session-identity { min-width: 0; }
+.site-header .signed-in-label { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--brand); }
+.site-header .account-email { max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; font-size: .9rem; font-weight: 600; }
+.site-header .appbar-signout { display: inline-flex; align-items: center; gap: .4rem; min-height: 2.75rem; padding: .4rem .85rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font-weight: 600; }
+.site-header .appbar-signout:hover { border-color: var(--danger, #b42318); color: var(--danger, #b42318); }
+.environment-note { letter-spacing: .02em; }
+@media (max-width: 48rem) {
+  .site-header .header-inner { flex-wrap: wrap; row-gap: .4rem; }
+  .site-header .session-tools { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
+  .site-header .appbar-account { order: -1; padding-left: 0; border-left: 0; flex: 1 1 100%; }
+  .site-header .account-email { max-width: 100%; }
+  .site-header .appbar-signout { margin-left: auto; }
+}
+@media (max-width: 22rem) { .site-header .appbar-signout svg { display: none; } }
+/* Phones: the app bar keeps avatar + role, Sign out and the display controls; the long email and the dev-only chip
+   are hidden so nothing scrolls sideways (the email is still in Account security). */
+@media (max-width: 40rem) {
+  .site-header .header-inner { min-width: 0; }
+  .site-header .session-tools, .site-header .session-actions, .site-header .appbar-account { min-width: 0; max-width: 100%; }
+  .site-header .account-email, .site-header .appbar-dev { display: none; }
+  .site-header .appbar-account { flex: 1 1 auto; }
+  .site-header .appbar-signout { padding-inline: .75rem; white-space: nowrap; }
+}
+.site-header .header-inner { max-width: 100%; overflow-x: clip; } /* sub-pixel rounding at 320px + 200% text */

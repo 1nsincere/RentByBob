@@ -3,15 +3,16 @@ import assert from 'node:assert/strict'
 import { filterWorklist, fromCents, planOldestFirst, toCents, worklistRows } from '../src/access/simple-payments-model.ts'
 import type { RentWorkspaceSnapshot } from '../src/access/saved-payments-model.ts'
 
-test('cash plan covers the oldest unpaid month first in exact centavos and refuses advance payment', () => {
+test('cash plan covers the oldest unpaid month first in exact centavos and keeps any extra as advance credit', () => {
   const charges = [
     { id: 'b', rental_month: '2026-10-01', due_date: '2026-10-05', remaining: '3500.00' },
     { id: 'a', rental_month: '2026-09-01', due_date: '2026-09-05', remaining: '0.10' },
     { id: 'c', rental_month: '2026-08-01', due_date: '2026-08-05', remaining: '0.00' },
   ]
-  assert.deepEqual(planOldestFirst(charges, '0.30'), [{ month: '2026-09', amount: '0.10', settles: true }, { month: '2026-10', amount: '0.20', settles: false }])
-  assert.deepEqual(planOldestFirst(charges, '3500.10'), [{ month: '2026-09', amount: '0.10', settles: true }, { month: '2026-10', amount: '3500.00', settles: true }])
-  assert.throws(() => planOldestFirst(charges, '3500.11'), /Advance payments/)
+  assert.deepEqual(planOldestFirst(charges, '0.30'), { covered: [{ month: '2026-09', amount: '0.10', settles: true }, { month: '2026-10', amount: '0.20', settles: false }], credit: '0.00' })
+  assert.deepEqual(planOldestFirst(charges, '3500.10').credit, '0.00')
+  assert.deepEqual(planOldestFirst(charges, '7000.10'), { covered: [{ month: '2026-09', amount: '0.10', settles: true }, { month: '2026-10', amount: '3500.00', settles: true }], credit: '3500.00' })
+  assert.deepEqual(planOldestFirst([], '3500'), { covered: [], credit: '3500.00' }, 'paying before any rent is added is all advance credit')
   assert.throws(() => planOldestFirst(charges, '0'), /greater than zero/)
   assert.throws(() => planOldestFirst(charges, '1.234'), /like 2500/)
   assert.equal(fromCents(toCents('1234567.8')), '1234567.80')

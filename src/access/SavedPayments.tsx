@@ -3,7 +3,7 @@ import { Button, LoadingSkeleton } from '../components/atoms'
 import { supabase, type Tenant } from './client'
 import { CashAcknowledgment, decimalPesos, type CashAcknowledgmentData } from './CashAcknowledgment'
 import { AccountStatement } from './AccountStatement'
-import { hasPositiveSavedBalance, parseRentWorkspaceSnapshot, savedCashFitsBalance, type RentWorkspaceSnapshot, type SavedCashRecord } from './saved-payments-model'
+import { hasPositiveSavedBalance, parseRentWorkspaceSnapshot, type RentWorkspaceSnapshot, type SavedCashRecord } from './saved-payments-model'
 import { filterWorklist, planOldestFirst, toCents, worklistRows, type WorklistFilter } from './simple-payments-model'
 import { philippineToday, validBusinessDate } from './payment-preview-model'
 import { SavedPaidRentReport } from './SavedPaidRentReport'
@@ -18,7 +18,7 @@ const monthText = (month: string) => new Intl.DateTimeFormat('en-PH', { month: '
 // Same flow as the preview: pick an account (or open one from "What needs attention?"), record cash, check which
 // months it covers, save it as pending; the designated verifier confirms it. Less frequent work lives in More tools.
 // Every write still goes through the reviewed RPCs; pending cash and uncleared checks never lower a balance.
-export function SavedPayments({ propertyId, tenants, owner, userId, focusTenant = null, language = 'en' }: { propertyId:string; tenants:Tenant[]; owner:boolean; userId:string; focusTenant?: { tenantId:string; nonce:number } | null; language?:Language }) {
+export function SavedPayments({ propertyId, propertyName, tenants, owner, userId, focusTenant = null, active = true, language = 'en' }: { propertyId:string; propertyName?:string; active?:boolean; tenants:Tenant[]; owner:boolean; userId:string; focusTenant?: { tenantId:string; nonce:number; tab?:'months'|'history'|'setup' } | null; language?:Language }) {
  const t = copy[language]
  const tr = (english:string,bisaya:string) => text(language,english,bisaya)
  const [data,setData] = useState<RentWorkspaceSnapshot|null>(null), [error,setError] = useState(''), [message,setMessage] = useState('')
@@ -36,9 +36,15 @@ export function SavedPayments({ propertyId, tenants, owner, userId, focusTenant 
  const [review,setReview] = useState<SavedCashRecord|null>(null), [busy,setBusy] = useState(false)
  const verifierSetup = useRef<HTMLDetailsElement>(null), accountCard = useRef<HTMLElement>(null), stepHeading = useRef<HTMLHeadingElement>(null)
  const request = useRef<{key:string;id:string}|null>(null), sending = useRef(false)
+ const [autoRent,setAutoRent] = useState<boolean|null>(null)
+ // Unused advance credit per agreement (202610270010); empty when none or before the update is applied.
+ const [credits,setCredits] = useState<Record<string,string>>({})
  const refresh = useCallback(async () => {
   let result
   try {
+   await supabase!.rpc('post_due_rent_now',{p_property_id:propertyId}).then(()=>undefined,()=>undefined)
+   void supabase!.from('properties').select('auto_rent').eq('id',propertyId).maybeSingle().then(({data:row,error:rowError})=>setAutoRent(rowError||!row?null:Boolean((row as {auto_rent:boolean}).auto_rent)))
+   void supabase!.rpc('read_agreement_credits',{p_property_id:propertyId}).then(({data:credit,error:creditError})=>setCredits(creditError||!credit?{}:credit as Record<string,string>))
    result = await supabase!.rpc('read_rent_workspace',{p_property_id:propertyId})
   } catch {
    setData(null); setError(text(languageRef.current,'Saved rent records could not be loaded. Check your connection and refresh; nothing was changed.','Wala makarga ang mga rekord sa abang. Susiha ang koneksyon ug i-refresh; walay nausab.')); return
@@ -87,13 +93,19 @@ export function SavedPayments({ propertyId, tenants, owner, userId, focusTenant 
  }
  function resetCash() { setEntry(null); setDraft(null); setReview(null); setDuplicateAccepted(false); setError('') }
  function openAccount(id:string) { setSelected(id); resetCash(); setMessage(''); setView('records'); requestAnimationFrame(()=>{ accountCard.current?.focus(); accountCard.current?.scrollIntoView({block:'start'}) }) }
- // Opened from a tenant card: show that tenant's current agreement (or latest one).
+ // Opened from a tenant card: reload (the room may have just been assigned), then show that tenant's current
+ // agreement (or latest one), on the requested tab.
+ const pendingFocus = useRef<typeof focusTenant>(null)
+ useEffect(()=>{ if(!focusTenant) return; pendingFocus.current=focusTenant; void refresh() },[focusTenant,refresh])
  useEffect(()=>{
-  if(!focusTenant||!data) return
-  const mine=data.agreements.filter(a=>a.tenant_id===focusTenant.tenantId)
+  const focus=pendingFocus.current
+  if(!focus||!data) return
+  const mine=data.agreements.filter(a=>a.tenant_id===focus.tenantId)
   const pick=mine.find(a=>!a.ended_on)??mine[mine.length-1]
-  if(pick) openAccount(pick.id)
- },[focusTenant,data===null])
+  if(pick) { pendingFocus.current=null; openAccount(pick.id); if(focus.tab) setAccountTab(focus.tab) }
+ },[data])
+ // Reload whenever Payments is opened, so tenants and rooms added elsewhere appear without pressing Refresh.
+ useEffect(()=>{ if(active) void refresh() },[active,refresh])
  useEffect(()=>{ if(entry||draft||review) stepHeading.current?.focus() },[entry===null,draft===null,review===null])
 
  const agreement=data?.agreements.find(a=>a.id===selected)
@@ -109,7 +121,7 @@ export function SavedPayments({ propertyId, tenants, owner, userId, focusTenant 
  const moneyText=(items:{amount:string}[])=>items.reduce((sum,item)=>sum+toCents(item.amount),0n)
  const pesosOf=(items:{amount:string}[])=>{const total=moneyText(items);return decimalPesos(`${total/100n}.${(total%100n).toString().padStart(2,'0')}`)}
  const today=philippineToday()
- let plan:ReturnType<typeof planOldestFirst>=[], planError=''
+ let plan:ReturnType<typeof planOldestFirst>={covered:[],credit:'0.00'}, planError=''
  if(draft) { try { plan=planOldestFirst(accountCharges,draft.amount) } catch(e) { planError=(e as Error).message } }
  const possibleDuplicate=!!draft&&!!agreement&&data!.cash.some(c=>c.agreement_id===agreement.id&&c.received_on===draft.date&&toCents(c.amount)===toCents(draft.amount))
  const rows=data?worklistRows(data,tenants):[]
@@ -150,21 +162,23 @@ export function SavedPayments({ propertyId, tenants, owner, userId, focusTenant 
   <div className="account-summary"><div className="simple-balance"><span>{tr('Rent left to pay','Nabilin nga abang')}</span><strong>{decimalPesos(agreement.balance)}</strong><span>{accountCharges.length?tr('After confirmed payments only','Human sa kumpirmadong bayad lang'):tr('No rent months added yet','Wala pay bulan sa abang')}</span></div>
    <div className="account-summary__stat"><span>{tr('Waiting for confirmation','Naghulat og kumpirmasyon')}</span><strong>{pesosOf(accountPending)}</strong><span>{accountPending.length} {tr('cash report(s) · not counted yet','ka report · wala pa maihap')}</span></div>
    <div className="account-summary__stat"><span>{tr('Monthly room rent','Binulan nga abang sa kwarto')}</span><strong>{decimalPesos(agreement.rent)}</strong><span>{tr('Moved in','Misulod')} {dateText(agreement.move_in)}</span></div>
+   {credits[agreement.id]&&<div className="account-summary__stat advance-credit"><span>{tr('Advance credit','Abante nga bayad')}</span><strong>{decimalPesos(credits[agreement.id])}</strong><span>{tr('Pays the next rent months automatically','Awtomatikong ibayad sa sunod nga mga bulan')}</span></div>}
   </div>
   {agreement.ended_on&&<p className="notice" role="note"><strong>{tr('Moved out','Nibalhin na')} {agreement.ended_on}.</strong> {agreement.end_reason} · {tr('No rent can be added for later months. Any unpaid rent above is still owed.','Wala nay abang nga madugang sa sunod nga mga bulan. Utang gihapon ang bisan unsang wala mabayri sa taas.')}</p>}
-  {!working&&(hasPositiveSavedBalance(agreement.balance)
-   ?<Button className="primary" onClick={()=>{resetCash();setMessage('');setEntry({amount:'',date:today,collector:'Bob'})}}>{tr('Record cash payment','Irekord ang bayad nga kwarta')}</Button>
-   :<p className="field-help">{accountCharges.length?tr('Nothing is owed right now. Advance payments are not configured.','Walay utang karon. Wala pa ma-set up ang advance nga bayad.'):tr('Add this month\'s rent in "Rent by month" before recording cash.','Idugang ang abang niining bulana sa "Abang kada bulan" una magrekord og kwarta.')}</p>)}
+  {!working&&(!agreement.ended_on||hasPositiveSavedBalance(agreement.balance))&&<>
+   {!hasPositiveSavedBalance(agreement.balance)&&<p className="field-help">{tr('Nothing is owed right now. A payment now is kept as advance credit for the next months.','Walay utang karon. Ang bayad karon itipig isip abante para sa sunod nga mga bulan.')}</p>}
+   <Button className="primary" onClick={()=>{resetCash();setMessage('');setEntry({amount:(hasPositiveSavedBalance(agreement.balance)&&toCents(agreement.balance)<toCents(agreement.rent)?agreement.balance:agreement.rent),date:today,collector:'Bob'})}}>{tr('Record cash payment','Irekord ang bayad nga kwarta')}</Button>
+  </>}
   </>:<p className="field-help">{tr('Choose a tenant here or open one from the list to see their balance and record cash.','Pagpili og nag-abang dinhi o ablihi gikan sa lista aron makita ang balanse ug makarekord og kwarta.')}</p>}
  </section>
 
  {agreement&&entry&&!draft&&<section className="card payment-entry" aria-labelledby="cash-entry-heading"><h3 id="cash-entry-heading" ref={stepHeading} tabIndex={-1}>{tr('Enter cash received','Isulod ang nadawat nga kwarta')}</h3>
   <form className="rent-setup" onSubmit={e=>{e.preventDefault()
-   if(!savedCashFitsBalance(entry.amount.trim(),agreement.balance)){setError(tr('Enter a positive amount no greater than the recorded rent balance. Advance payments are not configured, so no cash report was saved.','Isulod ang kantidad nga labaw sa sero ug dili molapas sa narekord nga balanse sa abang. Wala pa ma-set up ang advance nga bayad, busa walay report nga na-save.'));return}
+   if(!/^\d{1,12}(\.\d{1,2})?$/.test(entry.amount.trim())||toCents(entry.amount)<=0n){setError(tr('Enter a positive amount like 3500 or 3500.50. No cash report was saved.','Isulod ang kantidad nga labaw sa sero, pananglitan 3500 o 3500.50. Walay report nga na-save.'));return}
    if(!validBusinessDate(entry.date)||entry.date>today){setError(tr('Choose the actual date the cash was received, no later than today.','Pilia ang tinuod nga petsa nga nadawat ang kwarta, dili lapas karon.'));return}
    setError('');setDuplicateAccepted(false);setDraft({...entry,amount:entry.amount.trim()})}}>
    <label htmlFor="saved-amount">{tr('Amount (PHP)','Kantidad (PHP)')}</label><input id="saved-amount" inputMode="decimal" value={entry.amount} onChange={e=>setEntry({...entry,amount:e.target.value})} aria-describedby="saved-amount-help" placeholder="2500.00" required />
-   <p id="saved-amount-help" className="field-help">{tr('Up to the rent still owed:','Hangtod sa nabilin nga abang:')} {decimalPesos(agreement.balance)}. {tr('Advance payments are not configured.','Wala pa ma-set up ang advance nga bayad.')}</p>
+   <p id="saved-amount-help" className="field-help">{tr('Rent still owed:','Nabilin nga abang:')} {decimalPesos(agreement.balance)}. {tr('Filled in with the agreed monthly rent; change it to what was actually paid. If more is paid, the extra is kept as advance credit and pays the next months automatically.','Gisudlan sa gikasabutang abang; usba sumala sa tinuod nga nabayad. Kon sobra, itipig ang sobra isip abante ug awtomatikong ibayad sa sunod nga mga bulan.')}</p>
    <label htmlFor="saved-date">{tr('Actual payment date','Tinuod nga petsa sa bayad')}</label><input id="saved-date" type="date" value={entry.date} max={today} onChange={e=>setEntry({...entry,date:e.target.value})} required />
    <label htmlFor="saved-collector">{tr('Received by','Gidawat ni')}</label><select id="saved-collector" value={entry.collector} onChange={e=>setEntry({...entry,collector:e.target.value})}><option>Bob</option><option>James</option></select>
    <div className="person-actions"><Button className="primary">{tr('Review payment','Susiha ang bayad')}</Button><Button type="button" onClick={resetCash}>{tr('Cancel','Kanselahon')}</Button></div>
@@ -172,7 +186,7 @@ export function SavedPayments({ propertyId, tenants, owner, userId, focusTenant 
 
  {agreement&&draft&&<section className="card payment-review" aria-labelledby="cash-review-heading"><h3 id="cash-review-heading" ref={stepHeading} tabIndex={-1}>{tr('Check the payment','Susiha ang bayad')}</h3>
   <p><strong>{decimalPesos(draft.amount)}</strong> {tr('received by','gidawat ni')} {draft.collector} {tr('on','niadtong')} {dateText(draft.date)}</p>
-  {planError?<p role="alert" className="notice notice--error">{planError}</p>:<><p>{tr('When confirmed, it pays the oldest unpaid rent first:','Kon makumpirma, bayran una ang pinakadaan nga wala mabayring abang:')}</p><ul className="cash-plan">{plan.map(p=><li key={p.month}>{monthText(p.month)}: <strong>{decimalPesos(p.amount)}</strong> {p.settles?tr('(fully paid)','(bayad na tanan)'):tr('(part)','(bahin)')}</li>)}</ul>{accountPending.length>0&&<p className="field-help">{tr('Other cash for this tenant is still waiting. If it is confirmed first, the months covered move later.','Naay laing kwarta nga naghulat pa. Kon kini mauna makumpirma, mausab ang mga bulan nga matabonan.')}</p>}</>}
+  {planError?<p role="alert" className="notice notice--error">{planError}</p>:<><p>{tr('When confirmed, it pays the oldest unpaid rent first:','Kon makumpirma, bayran una ang pinakadaan nga wala mabayring abang:')}</p><ul className="cash-plan">{plan.covered.map(p=><li key={p.month}>{monthText(p.month)}: <strong>{decimalPesos(p.amount)}</strong> {p.settles?tr('(fully paid)','(bayad na tanan)'):tr('(part)','(bahin)')}</li>)}{toCents(plan.credit)>0n&&<li className="cash-plan-credit">{tr('Advance credit for the next months','Abante para sa sunod nga mga bulan')}: <strong>{decimalPesos(plan.credit)}</strong></li>}</ul>{accountPending.length>0&&<p className="field-help">{tr('Other cash for this tenant is still waiting. If it is confirmed first, the months covered move later.','Naay laing kwarta nga naghulat pa. Kon kini mauna makumpirma, mausab ang mga bulan nga matabonan.')}</p>}</>}
   <p>{tr('This is saved as pending. The balance does not change until the cash verifier confirms it.','I-save kini isip pending. Dili mausab ang balanse hangtod kumpirmahon sa tigkumpirma.')}</p>
   {possibleDuplicate&&<label className="duplicate-warning"><input type="checkbox" checked={duplicateAccepted} onChange={e=>setDuplicateAccepted(e.target.checked)} /> {tr('A payment with the same amount and date already exists for this tenant. I checked that this is a separate payment.','Adunay bayad nga pareho og kantidad ug petsa niini nga nag-abang. Gisusi nako nga lahi kini nga bayad.')}</label>}
   <div className="person-actions"><Button className="primary" disabled={busy||!!planError||(possibleDuplicate&&!duplicateAccepted)} onClick={async()=>{const saved=await mutate('record_rent_cash',{p_agreement_id:agreement.id,p_amount:draft.amount,p_received_on:draft.date,p_collector:draft.collector});if(saved){resetCash();setMessage(tr('Saved to the database. Cash recorded and waiting for confirmation; the balance is unchanged.','Na-save sa database. Narekord ang kwarta ug naghulat og kumpirmasyon; wala mausab ang balanse.'))}}}>{busy?tr('Saving…','Gi-save…'):tr('Save pending cash','I-save isip pending nga kwarta')}</Button><Button disabled={busy} onClick={()=>{setEntry(draft);setDraft(null);setError('')}}>{tr('Edit payment','Usba ang bayad')}</Button></div>
@@ -198,6 +212,7 @@ export function SavedPayments({ propertyId, tenants, owner, userId, focusTenant 
  <section className="card room-rent-setup-card account-panel" role="tabpanel" id="account-panel-setup" aria-labelledby="account-tab-setup" hidden={accountTab!=='setup'}>
   <div className="current-room-rent"><div><span>{tr('Monthly room rent','Binulan nga abang sa kwarto')}</span><strong>{decimalPesos(agreement.rent)}</strong></div><p>{tr('Moved in','Misulod')} {dateText(agreement.move_in)}. {tr('Rent is due on that day each month (the last day in shorter months).','Bayran ang abang niana nga adlaw matag bulan (kataposang adlaw sa mubo nga bulan).')}</p></div>
   <p className="field-help">{tr('The move-in date and rent are fixed once saved. Changing a saved rent is not available yet; it needs an owner rule for which month the new rent starts.','Dili na mausab ang petsa sa pagsulod ug abang kon na-save na. Dili pa mahimo ang pag-usab sa abang; kinahanglan og lagda sa tag-iya kon unsang bulana magsugod.')}</p>
+  {!agreement.ended_on&&<details className="card change-room"><summary>{tr('Change room (still renting)','Usba ang kwarto (nag-abang gihapon)')}</summary><p>{tr('Moves this tenant to another vacant room from the date you choose. The same account, monthly rent, due day and balance continue; the room history is kept.','Ibalhin kini nga nag-abang sa laing bakante nga kwarto sugod sa petsa nga imong pilion. Pareho gihapon ang account, binulan nga abang, adlaw sa bayranan ug balanse; gitipigan ang kasaysayan sa kwarto.')}</p><form className="rent-setup" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);void mutate('change_agreement_room',{p_agreement_id:agreement.id,p_unit_id:String(f.get('unit')),p_effective:String(f.get('date')),p_reason:String(f.get('reason')).trim()}).then(saved=>{if(saved)setMessage(tr('Room changed. Rent and balance continue on the same account.','Nausab ang kwarto. Padayon ang abang ug balanse sa parehas nga account.'))})}}><label htmlFor="change-room-unit">{tr('New room','Bag-ong kwarto')}</label><select id="change-room-unit" name="unit" required><option value="">{tr('Choose a vacant room','Pagpili og bakante nga kwarto')}</option>{data.units.filter(u=>u.id!==agreement.unit_id&&!data.agreements.some(a=>a.unit_id===u.id&&(!a.ended_on||a.ended_on>=today))).map(u=><option key={u.id} value={u.id}>{data.buildings.find(b=>b.id===u.building_id)?.label} / {u.label}</option>)}</select><label htmlFor="change-room-date">{tr('Moved on','Petsa sa pagbalhin')}</label><input id="change-room-date" name="date" type="date" defaultValue={today} min={agreement.move_in} max={today} required /><label htmlFor="change-room-reason">{tr('Reason (required)','Rason (kinahanglan)')}</label><input id="change-room-reason" name="reason" required maxLength={500} pattern=".*\S.*" placeholder={tr('Example: moved to a bigger room','Pananglitan: nibalhin sa mas dako nga kwarto')} /><Button disabled={busy} className="primary">{tr('Save room change','I-save ang pagbalhin og kwarto')}</Button></form></details>}
   {!agreement.ended_on&&owner&&<details className="card move-out"><summary>{tr('Record move-out','Irekord ang pagbalhin')}</summary><p>{tr('Full months only: the move-out month is charged in full and no rent is added after it. Unpaid rent stays owed. The room becomes free for a new agreement starting the day after.','Tibuok bulan lamang: bayran sa tibuok ang bulan sa pagbalhin ug walay abang nga madugang human niini. Utang gihapon ang wala mabayri. Mahimong bag-ong kasabotan ang kwarto sugod sa sunod nga adlaw.')}</p><form className="rent-setup" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);void mutate('end_rental_agreement',{p_agreement_id:agreement.id,p_end_date:String(f.get('end')),p_reason:String(f.get('reason')).trim()})}}><label htmlFor="move-out-date">{tr('Move-out date','Petsa sa pagbalhin')}</label><input id="move-out-date" name="end" type="date" min={agreement.move_in} required /><label htmlFor="move-out-reason">{tr('Reason (required)','Rason (kinahanglan)')}</label><input id="move-out-reason" name="reason" required maxLength={500} pattern=".*\S.*" /><Button disabled={busy} className="primary">{tr('Save move-out','I-save ang pagbalhin')}</Button></form></details>}
  </section>
  </>}
@@ -225,6 +240,7 @@ export function SavedPayments({ propertyId, tenants, owner, userId, focusTenant 
  <CheckHandoverRegister data={data} tenants={tenants.filter(tenant=>tenant.property_id===propertyId)} owner={owner} canRecordCheck={data.clerks.some(clerk=>clerk.user_id===userId)} busy={busy} mutate={mutate} language={language} />
  </div>
  <div role="tabpanel" id="pay-panel-monthly" aria-labelledby="pay-tab-monthly" className="pay-panel" hidden={tool!=='monthly'}>
+ <section className={`auto-listing auto-rent ${autoRent?'auto-listing--on':''}`} aria-labelledby="auto-rent-heading"><div><h3 id="auto-rent-heading">{tr('Add monthly rent automatically','Awtomatikong idugang ang binulan nga abang')}</h3><p>{autoRent?tr('On: on the 1st of each month (Philippine time), every current tenant gets that month\'s rent at their agreed amount, due on their usual day. Nothing is added after a move-out, and a month is never added twice.','On: matag 1 sa bulan, ang matag nag-abang makadawat sa abang niana nga bulan sa gikasabutang kantidad, bayran sa naandan nga adlaw. Walay madugang human sa pagbalhin, ug dili madoble.'):autoRent===false?tr('Off: rent is added only when staff add it below. When turned on, this month\'s rent is added now for every current tenant who does not have it yet.','Off: madugang lang ang abang kon idugang sa staff sa ubos. Kon i-on, idugang karon ang abang niining bulana sa matag nag-abang nga wala pa.'):tr('Automatic rent needs the latest database update.','Kinahanglan ang bag-ong database update alang sa awtomatikong abang.')}</p></div>{owner&&autoRent!==null?<Button className={autoRent?'secondary-button':'primary'} disabled={busy} aria-pressed={autoRent} onClick={async()=>{const result=await mutate('set_auto_rent',{p_enabled:!autoRent},false);if(result!==false){setAutoRent(!autoRent);setMessage(autoRent?tr('Automatic monthly rent is off.','Off na ang awtomatikong abang.'):tr(`Automatic monthly rent is on. ${typeof result==='number'?result:0} charge(s) added for this month.`,`On na ang awtomatikong abang. ${typeof result==='number'?result:0} ka bayranan ang nadugang karong bulana.`))}}}>{autoRent?tr('Turn off','I-off'):tr('Turn on','I-on')}</Button>:<span className={`status ${autoRent?'status--ready':''}`}>{autoRent?tr('On','On'):tr('Off','Off')}</span>}</section>
  <MonthlyRentBatch data={data} tenants={tenants} busy={busy} addMonth={(agreementId,month)=>mutate('add_rent_month',{p_agreement_id:agreementId,p_month:`${month}-01`})} language={language} />
  </div>
  <div role="tabpanel" id="pay-panel-setup" aria-labelledby="pay-tab-setup" className="pay-panel" hidden={tool!=='setup'}>
@@ -252,7 +268,7 @@ export function SavedPayments({ propertyId, tenants, owner, userId, focusTenant 
  </details>
  </div>
  </>}
- {view==='report'&&<SavedPaidRentReport data={data} tenants={tenants.filter(tenant=>tenant.property_id===propertyId)} openAcknowledgment={setReceipt} language={language} />}
+ {view==='report'&&<SavedPaidRentReport data={data} tenants={tenants.filter(tenant=>tenant.property_id===propertyId)} openAcknowledgment={setReceipt} propertyName={propertyName} language={language} />}
  </>}
  {receipt&&<CashAcknowledgment data={receipt} close={()=>setReceipt(null)} language={language} />}
  </section>

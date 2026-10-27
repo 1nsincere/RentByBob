@@ -4,7 +4,7 @@ import type { Tenant } from './client'
 import { decimalPesos, type CashAcknowledgmentData } from './CashAcknowledgment'
 import type { RentWorkspaceSnapshot } from './saved-payments-model'
 import { buildSavedPaidRentReport, moneyFromMinor } from './saved-paid-rent-report-model'
-import { paidRentCsv } from './paid-rent-csv.ts'
+import { PaidRentDocument, type PaidRentDocumentData } from './PaidRentDocument'
 import { text, type Language } from '../i18n'
 
 function currentPhilippineMonth() {
@@ -22,7 +22,7 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('en-PH', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`))
 }
 
-export function SavedPaidRentReport({ data, tenants, openAcknowledgment, language = 'en' }: { data: RentWorkspaceSnapshot; tenants: Tenant[]; openAcknowledgment: (acknowledgment: CashAcknowledgmentData) => void; language?: Language }) {
+export function SavedPaidRentReport({ data, tenants, openAcknowledgment, propertyName = 'RentByBob property', language = 'en' }: { data: RentWorkspaceSnapshot; tenants: Tenant[]; openAcknowledgment: (acknowledgment: CashAcknowledgmentData) => void; propertyName?: string; language?: Language }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [receiptMonth, setReceiptMonth] = useState(currentPhilippineMonth)
   const [rentMonth, setRentMonth] = useState(currentPhilippineMonth)
@@ -32,40 +32,39 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, languag
     roomUnavailable: tr('Room unavailable', 'Walay rekord sa kwarto'),
   }), [data, tenants, receiptMonth, rentMonth, language])
 
-  function downloadCsv() {
-    const location = (unitId: string | undefined) => {
-      const unit = unitId ? report.unitById.get(unitId) : undefined
-      const building = unit && report.buildingById.get(unit.building_id)
-      return `${building?.label ?? 'Building unavailable'} / ${unit?.label ?? 'Room unavailable'}`
-    }
-    const csv = paidRentCsv({
-      receiptMonth, rentMonth,
-      confirmed: report.confirmed.map(payment => {
-        const agreement = report.agreementById.get(payment.agreement_id)
-        return {
-          renter: (agreement && report.tenantById.get(agreement.tenant_id)?.display_name) ?? 'Tenant unavailable',
-          space: location(agreement?.unit_id),
-          receivedOn: payment.received_on,
-          amount: payment.amount,
-          months: [...new Set(payment.acknowledgment?.allocations.map(allocation => allocation.month.slice(0, 7)) ?? [])].sort(),
-          receipt: payment.acknowledgment?.number ?? '',
-        }
-      }),
-      confirmedTotal: moneyFromMinor(report.cashTotal),
-      outstanding: report.outstanding.map(({ charge, tenant, location: space }) => ({ renter: tenant, space, month: charge.rental_month.slice(0, 7), dueDate: charge.due_date, charged: charge.amount, remaining: charge.remaining })),
-      outstandingTotal: moneyFromMinor(report.outstandingTotal),
-    })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
-    link.download = `rentbybob-paid-rent-${receiptMonth}-rent-${rentMonth}.csv`
-    document.body.append(link)
-    link.click()
-    link.remove()
-    setTimeout(() => URL.revokeObjectURL(link.href), 1000)
+  const location = (unitId: string | undefined) => {
+    const unit = unitId ? report.unitById.get(unitId) : undefined
+    const building = unit && report.buildingById.get(unit.building_id)
+    return `${building?.label ?? tr('Building unavailable', 'Walay rekord sa bilding')} · ${unit?.label ?? tr('Room unavailable', 'Walay rekord sa kwarto')}`
+  }
+  // The PDF document gets exactly the figures shown on screen.
+  const documentData: PaidRentDocumentData = {
+    propertyName,
+    receiptMonth: formatMonth(receiptMonth),
+    rentMonth: formatMonth(rentMonth),
+    preparedAt: new Intl.DateTimeFormat('en-PH', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Manila' }).format(new Date()),
+    summary: { confirmedTotal: decimalPesos(moneyFromMinor(report.cashTotal)), payments: report.confirmed.length, renters: report.paidTenantIds.size, outstandingTotal: decimalPesos(moneyFromMinor(report.outstandingTotal)), outstandingCount: report.outstanding.length, arrearsCount: report.arrears.length },
+    confirmed: report.confirmed.map(payment => {
+      const agreement = report.agreementById.get(payment.agreement_id)
+      const months = [...new Set(payment.acknowledgment?.allocations.map(allocation => allocation.month) ?? [])].sort()
+      return { id: payment.id, renter: (agreement && report.tenantById.get(agreement.tenant_id)?.display_name) ?? tr('Tenant unavailable', 'Walay rekord sa nag-abang'), space: location(agreement?.unit_id), received: formatDate(payment.received_on), amount: decimalPesos(payment.amount), months: months.length ? months.map(formatMonth).join(', ') : '—', receipt: payment.acknowledgment?.number ?? '—' }
+    }),
+    outstanding: report.outstanding.map(({ charge, tenant, location: space }) => ({ id: charge.id, renter: tenant, space: space.replace(' / ', ' · '), due: formatDate(charge.due_date), charged: decimalPesos(charge.amount), remaining: decimalPesos(charge.remaining) })),
+    arrears: report.arrears.map(row => ({ id: row.id, renter: row.tenant, space: row.location.replace(' / ', ' · '), months: row.periods.map(formatMonth).join(', '), total: decimalPesos(moneyFromMinor(row.total)) })),
+  }
+  // Show only the report document while printing; the browser's "Save as PDF" names the file from the title.
+  function savePdf() {
+    const root = document.documentElement, title = document.title
+    root.classList.add('print-paid-report')
+    document.title = `RentByBob paid rent ${receiptMonth} (rent ${rentMonth})`
+    const restore = () => { root.classList.remove('print-paid-report'); document.title = title; window.removeEventListener('afterprint', restore) }
+    window.addEventListener('afterprint', restore)
+    window.print()
   }
 
   return <section className="paid-rent-summary" aria-labelledby="saved-paid-rent-heading">
-    <div className="report-export"><Button className="secondary-button" onClick={downloadCsv}>{tr('Download for Excel (.csv)', 'I-download para sa Excel (.csv)')}</Button><span className="field-help">{tr('Exports both tables below for the selected months. Contains renter names; store it privately.', 'Ma-export ang duha ka lamesa sa ubos para sa gipiling mga bulan. Naay ngalan sa mga nag-abang; tipigi kini nga pribado.')}</span></div>
+    <div className="report-export"><Button className="primary" onClick={savePdf}>{tr('Save as PDF', 'I-save isip PDF')}</Button><span className="field-help">{tr('Creates a formatted report of the tables below for the selected months. In the print window, choose "Save as PDF" as the printer. Contains renter names; store it privately.', 'Mohimo og hapsay nga report sa mga lamesa sa ubos. Sa print window, pilia ang "Save as PDF". Naay ngalan sa mga nag-abang; tipigi kini nga pribado.')}</span></div>
+    <PaidRentDocument data={documentData} language={language} />
     <div className="paid-report-heading"><div><p className="eyebrow">{tr('SAVED COLLECTION REPORT', 'GITIPIG NGA REPORT SA KOLEKSIYON')}</p><h3 id="saved-paid-rent-heading">{tr('Paid rent', 'Bayad sa abang')}</h3><p>{tr('Saved records only. Pending cash is not confirmed income.', 'Mga natipig nga rekord lang. Dili pa kumpirmadong kita ang pending nga kwarta.')}</p></div><span className="status status--ready">{tr('Live database report', 'Report gikan sa database')}</span></div>
     <section className="card paid-report-sheet" aria-label={tr('Confirmed rent payments report', 'Report sa kumpirmadong bayad sa abang')}>
       <div className="paid-report-toolbar"><div><label htmlFor="saved-receipt-month">{tr('Cash received during', 'Kwarta nga nadawat niadtong')}</label><input id="saved-receipt-month" type="month" value={receiptMonth} onChange={event => setReceiptMonth(event.target.value)} /></div><span className="paid-report-period">{formatMonth(receiptMonth)}</span></div>

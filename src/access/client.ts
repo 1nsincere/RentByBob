@@ -21,7 +21,7 @@ export const stateLabels: Record<string, string> = {
 export type AccessState = { state: string; staff_mfa_required: boolean }
 export type Property = { id: string; name: string }
 export type Membership = { property_id: string; role: 'owner' | 'clerk'; user_id: string; revoked_at: string | null }
-export type Tenant = { id: string; property_id: string; display_name: string; kind: string; archived_at: string | null }
+export type Tenant = { id: string; property_id: string; display_name: string; kind: string; archived_at: string | null; removed_at?: string | null }
 export type Account = { id: string; email: string; accepted: boolean; state: string; staff_role: string | null; contacts: { tenant_id: string; name: string; enabled: boolean }[] }
 
 export async function initializeAuth() {

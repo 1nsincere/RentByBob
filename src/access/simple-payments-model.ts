@@ -13,7 +13,8 @@ export function fromCents(cents: bigint): string {
   return `${cents / 100n}.${(cents % 100n).toString().padStart(2, '0')}`
 }
 
-// Which rent months a cash amount would cover if confirmed now: oldest due date first, never beyond what is owed.
+// Which rent months a cash amount would cover if confirmed now (oldest due date first) and how much is left over as
+// advance credit for the next months (202610270010).
 export function planOldestFirst(charges: readonly Pick<SavedCharge, 'id' | 'rental_month' | 'due_date' | 'remaining'>[], amount: string) {
   let left = toCents(amount)
   if (left <= 0n) throw new Error('Enter an amount greater than zero.')
@@ -25,8 +26,7 @@ export function planOldestFirst(charges: readonly Pick<SavedCharge, 'id' | 'rent
     covered.push({ month: charge.rental_month.slice(0, 7), amount: fromCents(part), settles: part === owed })
     left -= part
   }
-  if (left > 0n) throw new Error('The amount is more than the rent still owed. Advance payments are not configured.')
-  return covered
+  return { covered, credit: fromCents(left) }
 }
 
 export type WorklistRow = { agreementId: string; tenant: string; location: string; balance: string; pending: number; charges: number; ended: boolean }

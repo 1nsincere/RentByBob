@@ -80,7 +80,9 @@ export function validAcknowledgment(value: unknown): value is CashAcknowledgment
     minorUnits(value.balance_at_issuance, true) &&
     Array.isArray(value.allocations) &&
     value.allocations.every(validAllocation) &&
-    value.allocations.reduce((total, allocation) => total + checkedMinorUnits(allocation.amount), 0n) === checkedMinorUnits(value.amount)
+    (value.advance_credit === undefined || minorUnits(value.advance_credit, true)) &&
+    // Months paid plus any advance credit kept must equal the cash received.
+    value.allocations.reduce((total, allocation) => total + checkedMinorUnits(allocation.amount), 0n) + (value.advance_credit === undefined ? 0n : checkedMinorUnits(value.advance_credit as string)) === checkedMinorUnits(value.amount)
 }
 
 export function parseRentWorkspaceSnapshot(value: unknown, tenants?: readonly RentWorkspaceTenant[]): RentWorkspaceSnapshot {

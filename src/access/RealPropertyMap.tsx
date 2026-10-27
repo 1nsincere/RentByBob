@@ -5,10 +5,12 @@ import { sketchPositions } from './property-sketch.ts'
 import { drawnKind, toDrawn, type DbBuilding, type DbUnit } from './property-drawn'
 import { philippineToday } from './payment-preview-model.ts'
 import { supabase } from './client'
+import { decimalPesos } from './CashAcknowledgment'
 import { text, type Language } from '../i18n'
 
 // Real property map: fixed sketch positions, building front views, Occupied/Vacant from current agreements only.
-// Selecting a room shows its details and actions (add tenant, open payments, owner rename). No renter names are shown.
+// Selecting a room shows its details and actions (add tenant, open payments, owner rename). Occupied rooms show the
+// responsible renter's name and monthly rent (staff-only screen; user request 27 Oct 2026). Other occupants are never stored or shown.
 export function RealPropertyMap({ propertyId, owner, startAgreement, locate = null, openPaymentsForUnit, language = 'en' }: {
   propertyId: string; owner: boolean; startAgreement?: (unitId: string) => void; language?: Language
   locate?: { unitId: string; nonce: number } | null; openPaymentsForUnit?: (tenantId: string) => void
@@ -25,6 +27,7 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null)
   const [selected, setSelected] = useState('')
   const [tenantByUnit, setTenantByUnit] = useState<Record<string, string>>({})
+  const [renterByUnit, setRenterByUnit] = useState<Record<string, { name: string; rent: string }>>({})
   const [renaming, setRenaming] = useState(false), [newLabel, setNewLabel] = useState(''), [renameReason, setRenameReason] = useState('')
   const panelHeading = useRef<HTMLHeadingElement>(null)
   const located = useRef(0)
@@ -45,6 +48,9 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
           .filter(agreement => agreement.move_in <= today && (!agreement.ended_on || agreement.ended_on >= today))
         setOccupied(new Set(current.map(agreement => agreement.unit_id)))
         setTenantByUnit(Object.fromEntries(current.map(agreement => [agreement.unit_id, agreement.tenant_id])))
+        const names = await supabase!.from('tenants').select('id,display_name').eq('property_id', propertyId)
+        const nameOf = new Map((names.data ?? []).map(row => [row.id as string, row.display_name as string]))
+        setRenterByUnit(Object.fromEntries((current as unknown as { unit_id: string; tenant_id: string; rent: string }[]).map(agreement => [agreement.unit_id, { name: nameOf.get(agreement.tenant_id) ?? tr('Tenant', 'Nag-abang'), rent: agreement.rent }])))
       }
       setState('ready')
     } catch { setState('failed') }
@@ -98,7 +104,7 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
 
   return <section className="property-visual real-property-map" aria-labelledby="real-map-heading">
     <div className="section-heading"><div><p className="eyebrow">{tr('YOUR PROPERTY, AT A GLANCE', 'IMONG PROPIEDAD, SA USA KA TAN-AW')}</p><h2 id="real-map-heading">{tr('Property map', 'Mapa sa propiedad')}</h2>
-      <p>{tr('Rooms show Occupied when they have a current agreement. No renter names appear on the map.', 'Ang kwarto nga naay kasabotan karon makita nga Giokupahan. Walay ngalan sa nag-abang sa mapa.')}</p></div></div>
+      <p>{tr('Rooms show Occupied, with the renter and monthly rent, when they have a current agreement.', 'Ang kwarto nga naay kasabotan karon makita nga Giokupahan, uban ang nag-abang ug binulan nga abang.')}</p></div></div>
     {message && <p className={`notice ${message.error ? 'notice--error' : 'notice--success'}`} role={message.error ? 'alert' : 'status'}>{message.text}</p>}
     {occupied === null && <p className="notice" role="note">{tr('Occupancy could not be loaded, so rooms are shown without Occupied/Vacant status.', 'Wala ma-load ang kahimtang sa kwarto, busa walay Giokupahan/Bakante.')}</p>}
 
@@ -123,13 +129,13 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
           {drawn.floors.length > 1 && <div className="floor-tabs" role="group" aria-label={tr('Choose floor', 'Pilia ang andana')}>{drawn.floors.map((item, index) => <Button key={item.label} aria-pressed={item === floor} onClick={() => { setFloorIndex(index); setSelected('') }}>{item.label}</Button>)}</div>}
           {drawn.floors.length > 1 && <p className="field-help">{tr('Choose a floor, then select a room to see its details.', 'Pilia ang andana, dayon pilia ang kwarto aron makita ang detalye.')}</p>}
           <div className="room-grid">{floor.rooms.map(room => { const unit = units.find(item => item.id === room.id)!
-            return <button type="button" key={room.id} aria-pressed={selected === room.id} aria-label={`${room.label}, ${tr(drawnKind[unit.kind], drawnKind[unit.kind])}, ${statusFor(unit)}`} onClick={() => selectRoom(room.id)} className={`room-tile ${isOccupied(room.id) ? 'occupied' : ''} ${unit.kind === 'shared' ? 'shared' : ''} ${selected === room.id ? 'selected' : ''}`}><strong>{room.label}</strong><span>{tr(drawnKind[unit.kind], drawnKind[unit.kind])}</span><span className={`status ${unit.kind === 'shared' ? '' : isOccupied(room.id) ? 'status--pending' : 'status--ready'}`}>{statusFor(unit)}</span></button> })}</div>
+            return <button type="button" key={room.id} aria-pressed={selected === room.id} aria-label={`${room.label}, ${tr(drawnKind[unit.kind], drawnKind[unit.kind])}, ${statusFor(unit)}${renterByUnit[room.id] ? `, ${renterByUnit[room.id].name}, ${decimalPesos(renterByUnit[room.id].rent)} ${tr('per month', 'matag bulan')}` : ''}`} onClick={() => selectRoom(room.id)} className={`room-tile ${isOccupied(room.id) ? 'occupied' : ''} ${unit.kind === 'shared' ? 'shared' : ''} ${selected === room.id ? 'selected' : ''}`}><strong>{room.label}</strong><span>{tr(drawnKind[unit.kind], drawnKind[unit.kind])}</span><span className={`status ${unit.kind === 'shared' ? '' : isOccupied(room.id) ? 'status--pending' : 'status--ready'}`}>{statusFor(unit)}</span>{renterByUnit[room.id] && <span className="room-renter"><b>{renterByUnit[room.id].name}</b><span>{decimalPesos(renterByUnit[room.id].rent)} / {tr('month', 'bulan')}</span></span>}</button> })}</div>
           {(() => { const unit = units.find(item => item.id === selected && item.building_id === current.id); if (!unit) return <p className="field-help selected-space-empty">{tr('Select a space above to view its details.', 'Pilia ang lugar sa ibabaw aron makita ang detalye.')}</p>
             const taken = isOccupied(unit.id), tenantId = tenantByUnit[unit.id]
             return <section className="card selected-space" aria-labelledby="selected-space-heading"><p className="eyebrow">{tr('SELECTED SPACE', 'NAPILING LUGAR')}</p><h4 id="selected-space-heading" ref={panelHeading} tabIndex={-1}>{current.label} · {unit.label}</h4>
-              <dl className="selected-space-facts"><div><dt>{tr('Type', 'Klase')}</dt><dd>{tr(drawnKind[unit.kind], drawnKind[unit.kind])}</dd></div><div><dt>{tr('Floor', 'Andana')}</dt><dd>{unit.floor_label ?? tr('Not set', 'Wala pa')}</dd></div><div><dt>{tr('Status', 'Kahimtang')}</dt><dd>{statusFor(unit)}</dd></div></dl>
+              <dl className="selected-space-facts"><div><dt>{tr('Type', 'Klase')}</dt><dd>{tr(drawnKind[unit.kind], drawnKind[unit.kind])}</dd></div><div><dt>{tr('Floor', 'Andana')}</dt><dd>{unit.floor_label ?? tr('Not set', 'Wala pa')}</dd></div><div><dt>{tr('Status', 'Kahimtang')}</dt><dd>{statusFor(unit)}</dd></div>{renterByUnit[unit.id] && <><div><dt>{tr('Renter', 'Nag-abang')}</dt><dd>{renterByUnit[unit.id].name}</dd></div><div><dt>{tr('Monthly rent', 'Binulan nga abang')}</dt><dd>{decimalPesos(renterByUnit[unit.id].rent)}</dd></div></>}</dl>
               {unit.kind === 'shared' ? <p className="field-help">{tr('Shared space for everyone; it cannot be rented or listed.', 'Gipaambit nga lugar; dili kini paabangan o i-lista.')}</p>
-                : taken ? <p className="field-help">{tr('Occupied. Tenant names are not shown on the map; open the payments account to see who rents it.', 'Giokupahan. Walay ngalan sa nag-abang sa mapa; ablihi ang account sa bayad aron makita kinsa.')}</p>
+                : taken ? <p className="field-help">{tr('Occupied. Open the payments account to see the balance and payments.', 'Giokupahan. Ablihi ang account sa bayad aron makita ang balanse ug bayad.')}</p>
                 : occupied !== null && <p className="field-help">{tr('Vacant: no current agreement. An upcoming move-in may still be saved.', 'Bakante: walay kasabotan karon. Basin naay umaabot nga pagsulod nga na-save.')}</p>}
               <div className="person-actions">
                 {startAgreement && unit.kind !== 'shared' && occupied !== null && !taken && <Button className="primary" aria-label={`${tr('Add tenant to', 'Idugang og nag-abang sa')} ${current.label} ${unit.label}`} onClick={() => startAgreement(unit.id)}>{tr('Add tenant to this space', 'Idugang og nag-abang niini nga lugar')}</Button>}

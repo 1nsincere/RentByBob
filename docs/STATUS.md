@@ -1,5 +1,17 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Billing automation, advance credit, room change, remove, map renters, PDF report, menu and app bar - 27 Oct 2026
+
+**Owner decisions** (DECISIONS.md): automatic monthly rent on the 1st (owner switch; hourly pg_cron where available plus catch-up when Payments opens); advance payments kept as credit that pays the next months automatically (reversal reopens them); room change keeps the same agreement, rent, due day and balance; Remove hides a tenant after move-out while records stay; occupied map rooms show the renter and monthly rent; the paid rent report saves as a formatted PDF instead of CSV.
+
+**Migrations:** `202610270009_auto_rent_room_change_remove_tenant.sql` and `202610270010_advance_credit.sql` (confirmation no longer refuses overpayment; `apply_credit` runs after manual and automatic rent and after reversals; `read_agreement_credits` / `read_renter_credits`).
+
+**UI:** Payments: owner switch "Add monthly rent automatically", "Change room (still renting)" form, Record cash pre-filled with the agreed rent, review shows advance credit, "Advance credit" figure; Payments reloads when opened and from tenant cards. Directory: Change room and Remove. Renter view: Advance credit card; no "Refresh access" for signed-in renters. Grouped sidebar; standard app bar (sticky, theme icon, EN/CEB, account chip, Sign out; compact on phones). Receipt shows the advance portion; its validator checks months + credit = cash.
+
+**Validation:** `npm test` 93/93 (new PGlite: automatic rent/room change/remove; advance credit with a mutation check; validator test). Live disposable suite exit 0, 50 checks. Offline 10/10.
+
+**Owner next step:** `npx.cmd supabase db push --local` (applies 202610270004–0010; stop the app first), then turn on automatic rent and automatic listing only after every current tenant and rent is entered.
+
 ## Remember this device; automatic room listings - 27 Oct 2026
 
 **Remember this device (owner decision: 30 days, owner and clerks):** after a real authenticator code, staff may tick "Remember this device for 30 days". On that browser, password sign-in then skips the code. Migration `202610270007_trusted_devices.sql`: only a SHA-256 hash of the device secret is stored (private table); the browser sends the secret in `x-rentbybob-device` on database requests only (never to Auth); `private.staff_role` accepts it in place of the authenticator for that user only, until it expires, is removed, or staff access is revoked; a remembered device cannot remember itself again without a real code; at most 5 devices per person; added/removed devices are audited. Account security lists your devices with Remove and "Forget this device". The password is always required.

@@ -44,7 +44,8 @@ export function App() {
   const [visitedSections, setVisitedSections] = useState<string[]>(['home'])
   // Set when staff click "Start agreement" on a vacant room in the property map.
   const [tenantRoom, setTenantRoom] = useState<{ unitId: string; nonce: number } | null>(null)
-  const [paymentTenant, setPaymentTenant] = useState<{ tenantId: string; nonce: number } | null>(null)
+  const [paymentTenant, setPaymentTenant] = useState<{ tenantId: string; nonce: number; tab?: 'months' | 'history' | 'setup' } | null>(null)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [locateUnit, setLocateUnit] = useState<{ unitId: string; nonce: number } | null>(null)
   const [assignTenant, setAssignTenant] = useState<{ id: string; name: string; kind: 'individual' | 'business'; nonce: number } | null>(null)
   // Current room per tenant (open agreements only), shown on directory cards; 'unavailable' if the rent data cannot load.
@@ -154,7 +155,7 @@ export function App() {
         const [p, m, t, c] = await Promise.all([
           supabase.from('properties').select('id,name').order('name'),
           supabase.from('staff_memberships').select('property_id,user_id,role,revoked_at').eq('user_id', session.user.id).is('revoked_at', null),
-          supabase.from('tenants').select('id,property_id,display_name,kind,archived_at').order('display_name'),
+          supabase.from('tenants').select('*').order('display_name'),
           supabase.from('tenant_contacts').select('tenant_id').is('revoked_at', null),
         ])
         if (p.error || m.error || t.error || c.error) throw p.error || m.error || t.error || c.error
@@ -269,15 +270,29 @@ export function App() {
     })
   }
 
+  // Grouped menu (user feedback: one long list was confusing): Dashboard and an Add tenant action, the daily work
+  // pages under a heading, and account/security pages folded under "More" (open while one of them is shown).
   function staffNavigation() {
+    const byId = (id: string) => navigationItems.find(item => item.id === id)
+    const link = (item: NavigationItem, className = '') => <li key={item.id}>
+      <a href={`#${item.id}`} className={className} aria-current={activeSection === item.id ? 'location' : undefined}
+        onClick={event => { event.preventDefault(); selectSection(item.id) }}>
+        {dashboardPreview && <WorkspaceIcon kind={item.id === 'home' ? 'home' : item.id === 'tenant-records' ? 'people' : item.id === 'property-locations' ? 'building' : item.id === 'payment-records' ? 'payments' : 'add'} />}
+        {item.id === 'create-tenant' && !dashboardPreview && <span className="nav-add-mark" aria-hidden="true">+</span>}{item.label}
+      </a>
+    </li>
+    const daily = ['tenant-records', 'payment-records', 'property-locations', 'room-listings'].map(byId).filter(Boolean) as NavigationItem[]
+    const more = ['invite-account', 'manage-access', 'invitation-review', 'access-history', 'account-security'].map(byId).filter(Boolean) as NavigationItem[]
+    const moreShown = moreOpen || more.some(item => item.id === activeSection)
     return <nav aria-label={translateText(language, 'Property workspace', 'Workspace sa propiedad')}>
-      <ul className="workspace-links">{navigationItems.map(item =>
-        <li key={item.id}>
-          <a href={`#${item.id}`} aria-current={activeSection === item.id ? 'location' : undefined}
-            onClick={event => { event.preventDefault(); selectSection(item.id) }}>
-            {dashboardPreview && <WorkspaceIcon kind={item.id === 'home' ? 'home' : item.id === 'tenant-records' ? 'people' : item.id === 'property-locations' ? 'building' : item.id === 'payment-records' ? 'payments' : 'add'} />}{item.label}
-          </a>
-        </li>)}</ul>
+      <ul className="workspace-links">{[byId('home'), byId('create-tenant')].filter(Boolean).map(item => link(item!, item!.id === 'create-tenant' ? 'nav-add-tenant' : ''))}</ul>
+      {daily.length > 0 && <><p className="nav-group-label">{translate('Daily work', 'Adlaw-adlaw nga trabaho')}</p><ul className="workspace-links">{daily.map(item => link(item))}</ul></>}
+      {more.length > 0 && <>
+        <button type="button" className="nav-group-toggle" aria-expanded={moreShown} onClick={() => setMoreOpen(!moreShown)}>
+          <span>{translate('Accounts & security', 'Account ug kaluwasan')}</span><span className="nav-group-chevron" aria-hidden="true">▾</span>
+        </button>
+        <ul className="workspace-links nav-group-more" hidden={!moreShown}>{more.map(item => link(item))}</ul>
+      </>}
     </nav>
   }
 
@@ -289,19 +304,29 @@ export function App() {
     <header className="site-header">
       <div className="shell header-inner">
         <a className="brand" href="/" aria-label={translateText(language, 'RentByBob home', 'Panimalay sa RentByBob')}><span className="brand-mark" aria-hidden="true">R</span><span>Rent<span className="brand-accent">ByBob</span></span></a>
+        {/* App bar: display controls, then the signed-in account and Sign out (same accessible names as before). */}
         <div className="session-tools">
-          {session && <div className="session-identity">
-            <span className="signed-in-label">{dashboardPreview ? translateText(language, 'Workspace mode', 'Lugar sa trabaho') : translateText(language, 'Signed in as', 'Nakasulod isip')}</span>
-            <span className="account-email">{dashboardPreview ? translateText(language, 'Fictional sample account', 'Hinimo-himong sample nga account') : session.user.email}</span>
-          </div>}
           <div className="session-actions">
-            <Button className="quiet-button" aria-label={`${translateText(language, 'Use', 'Gamita ang')} ${theme === 'dark' ? t.dayMode : t.nightMode}`} aria-pressed={theme === 'dark'} onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? t.dayMode : t.nightMode}</Button>
-            <Button className="quiet-button" aria-label={language === 'en' ? t.showBisaya : t.showEnglish} aria-pressed={language === 'ceb'} onClick={() => setLanguage(current => current === 'en' ? 'ceb' : 'en')}>{language === 'en' ? `${t.english} · ${t.bisaya}` : `${t.bisaya} · ${t.english}`}</Button>
-            {session && !dashboardPreview && <Button className="quiet-button" onClick={() => void signOut()}>{t.signOut}</Button>}
-            {import.meta.env.DEV && (!session || role) && <Button className="quiet-button" onClick={() => { location.href = dashboardPreview ? '/?auth=1' : '/?preview=1' }}>
+            {import.meta.env.DEV && (!session || role) && <Button className="appbar-dev" onClick={() => { location.href = dashboardPreview ? '/?auth=1' : '/?preview=1' }}>
               {dashboardPreview ? t.returnAccount : t.openPreview}
             </Button>}
+            <Button className="appbar-icon" title={theme === 'dark' ? t.dayMode : t.nightMode} aria-label={`${translateText(language, 'Use', 'Gamita ang')} ${theme === 'dark' ? t.dayMode : t.nightMode}`} aria-pressed={theme === 'dark'} onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}>
+              {theme === 'dark'
+                ? <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" /></svg>
+                : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1Z" /></svg>}
+            </Button>
+            <Button className="appbar-language" aria-label={language === 'en' ? t.showBisaya : t.showEnglish} aria-pressed={language === 'ceb'} onClick={() => setLanguage(current => current === 'en' ? 'ceb' : 'en')}>
+              <span aria-hidden="true" className={language === 'en' ? 'is-on' : ''}>EN</span><span aria-hidden="true" className={language === 'ceb' ? 'is-on' : ''}>CEB</span>
+            </Button>
           </div>
+          {session && <div className="appbar-account">
+            <span className="appbar-avatar" aria-hidden="true">{(dashboardPreview ? 'S' : session.user.email ?? '?').trim().slice(0, 1).toLocaleUpperCase()}</span>
+            <div className="session-identity">
+              <span className="signed-in-label">{dashboardPreview ? translateText(language, 'Workspace mode', 'Lugar sa trabaho') : role ? (role === 'owner' ? translateText(language, 'Owner', 'Tag-iya') : translateText(language, 'Clerk', 'Clerk')) : translateText(language, 'Signed in as', 'Nakasulod isip')}</span>
+              <span className="account-email">{dashboardPreview ? translateText(language, 'Fictional sample account', 'Hinimo-himong sample nga account') : session.user.email}</span>
+            </div>
+            {!dashboardPreview && <Button className="appbar-signout" onClick={() => void signOut()}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10" /></svg>{t.signOut}</Button>}
+          </div>}
         </div>
       </div>
     </header>
@@ -333,7 +358,7 @@ export function App() {
             : !session ? <>{idleNotice && <p className="notice" role="status">{translate('You were signed out after 30 minutes without activity. Sign in again to continue.', 'Na-sign out ka human sa 30 minutos nga walay lihok. Sulod pag-usab aron magpadayon.')}</p>}<SignIn language={language} /></>
               : <>
                 <Feedback message={appError(language, error)} error />
-                {!dashboardPreview && snapshot && !snapshot.mfa && !setup && !role && <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>{translate('Refresh access', 'I-refresh ang access')}</Button>}
+                {!dashboardPreview && snapshot && !snapshot.mfa && !setup && !role && snapshot.access.state !== 'ready' && <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>{translate('Refresh access', 'I-refresh ang access')}</Button>}
                 {!snapshot ? error ? <p role="status" className="loading-state">{t.recordsUnavailable}</p> : <LoadingSkeleton label={t.checkingPermissions} rows={4} />
                   : snapshot.mfa ? <Mfa done={() => void refresh()} language={language} />
                     : setup ? <PasswordSetup language={language} done={() => { sessionStorage.removeItem(`password-setup:${session.user.id}`); setSetup(false); void refresh() }} />
@@ -404,7 +429,7 @@ export function App() {
                             {!preview && <div id="tenant-records" hidden={activeSection !== 'tenant-records'} tabIndex={-1} className="workspace-section">{visitedSections.includes('tenant-records') && <DeferredBoundary loadingLabel={translate('Loading tenants…', 'Gikarga ang mga nag-abang…')} rows={3} language={language} reset={TenantDirectory.reset}>
                               <TenantDirectory.Screen key={`directory:${propertyId}`} propertyId={propertyId} tenants={tenantList} renterLinks={snapshot.renterLinks} owner={role === 'owner'} active={activeSection === 'tenant-records'} language={language}
                                 addTenant={() => selectSection('create-tenant')}
-                                openPayments={tenantId => { setPaymentTenant({ tenantId, nonce: Date.now() }); selectSection('payment-records') }}
+                                openPayments={(tenantId, tab) => { setPaymentTenant({ tenantId, nonce: Date.now(), tab }); selectSection('payment-records') }}
                                 locateRoom={unitId => { setLocateUnit({ unitId, nonce: Date.now() }); selectSection('property-locations') }}
                                 assignRoom={tenant => { setAssignTenant({ id: tenant.id, name: tenant.display_name, kind: tenant.kind === 'business' ? 'business' : 'individual', nonce: Date.now() }); selectSection('create-tenant') }}
                                 refresh={() => refresh()} />
@@ -418,7 +443,7 @@ export function App() {
                             <div id="payment-records" hidden={activeSection !== 'payment-records'} tabIndex={-1} className="workspace-section">{preview
                               ? <preview.PaymentsPreview language={language} />
                               : visitedSections.includes('payment-records') && <DeferredBoundary loadingLabel={translate('Loading payment records…', 'Gikarga ang mga rekord sa bayad…')} rows={3} language={language} reset={SavedPayments.reset}>
-                                <SavedPayments.Screen key={propertyId} propertyId={propertyId} tenants={tenantList} owner={role === 'owner'} userId={session.user.id} focusTenant={paymentTenant} language={language} />
+                                <SavedPayments.Screen key={propertyId} propertyId={propertyId} propertyName={snapshot.properties.find(property => property.id === propertyId)?.name} tenants={tenantList} owner={role === 'owner'} userId={session.user.id} focusTenant={paymentTenant} active={activeSection === 'payment-records'} language={language} />
                               </DeferredBoundary>}</div>
                               <div id="room-listings" hidden={activeSection !== 'room-listings'} tabIndex={-1} className="workspace-section">{visitedSections.includes('room-listings') && <DeferredBoundary loadingLabel={translate('Loading room listings…', 'Gikarga ang lista sa kwarto…')} rows={3} language={language} reset={RoomListingsManager.reset}><RoomListingsManager.Screen key={`listings:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} /></DeferredBoundary>}</div>
                               <div id="invite-account" hidden={activeSection !== 'invite-account'} tabIndex={-1} className="workspace-section">{visitedSections.includes('invite-account') && <DeferredBoundary loadingLabel={translate('Loading invitations…', 'Gikarga ang mga imbitasyon…')} rows={2} language={language} reset={Invitations.reset}><Invitations.Screen key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} /></DeferredBoundary>}</div>

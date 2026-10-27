@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { createHmac, randomUUID } from 'node:crypto'
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import os from 'node:os'
 import path from 'node:path'
@@ -240,9 +240,11 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(map.locator('.selected-space')).toContainText('Occupied')
     await expect(map.locator('.selected-space').getByRole('button', { name: 'View rent and payments', exact: true })).toBeVisible()
     assert.equal(await map.locator('.selected-space').getByRole('button', { name: /Add tenant/ }).count(), 0, 'Occupied rooms offer no new tenant')
-    assert.equal(await map.getByText('Sample API test renter').count(), 0, 'No renter names on the property map')
+    await expect(map.locator('.room-tile').filter({ hasText: 'Test room' }).locator('.room-renter')).toContainText('Sample API test renter')
+    await expect(map.locator('.room-tile').filter({ hasText: 'Test room' }).locator('.room-renter')).toContainText('₱5,000.25 / month')
+    await expect(map.locator('.selected-space-facts')).toContainText('Sample API test renter')
     await axeScan(page, 'building view')
-    pass('Owner creates the sketch layout once; the map shows Occupied/Vacant from agreements with no renter names')
+    pass('Owner creates the sketch layout once; the map shows Occupied/Vacant from agreements with the renter and rent on occupied rooms')
     // One-step add tenant from a vacant map room: details, review, one save creates tenant + room agreement.
     await map.getByRole('button', { name: 'Back to property map', exact: true }).click()
     await map.getByRole('button', { name: /^Explore Bob's house/ }).click()
@@ -269,8 +271,9 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await page.getByRole('button', { name: 'View rent and payments for Sample One-Step Renter', exact: true }).click()
     await expect(page.locator('.account-header')).toContainText("Bob's house / Room 01")
     await expect(page.locator('.account-header')).toContainText('No rent months added yet')
-    await expect(page.getByRole('button', { name: 'Record cash payment', exact: true })).toHaveCount(0)
-    pass("Tenant card opens that tenant's payments account; nothing can be recorded before rent is added")
+    await expect(page.locator('.account-header')).toContainText('A payment now is kept as advance credit')
+    await expect(page.getByRole('button', { name: 'Record cash payment', exact: true })).toBeVisible()
+    pass("Tenant card opens that tenant's payments account; paying before rent is added is offered as advance credit")
 
     const directory = page.locator('#tenant-records')
     // Directory "Locate room" opens the map on that building with the room selected; still no names on the map.
@@ -279,8 +282,9 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(map.locator('#selected-space-heading')).toHaveText("Bob's house · Room 01")
     await expect(map.locator('#selected-space-heading')).toBeFocused()
     await expect(map.locator('.room-tile[aria-pressed="true"] .status')).toHaveText('Occupied')
-    assert.equal(await map.getByText('Sample One-Step Renter').count(), 0, 'No renter names on the map')
-    pass('Locate room from the directory opens the map with that room selected and no renter name shown')
+    await expect(map.locator('.room-tile[aria-pressed="true"] .room-renter')).toContainText('Sample One-Step Renter')
+    await expect(map.locator('.room-tile[aria-pressed="true"] .room-renter')).toContainText('₱3,500.00 / month')
+    pass('Locate room from the directory opens the map with that room selected, showing its renter and rent')
 
     // Owner renames a room from the map (reason required, audited by the existing rename function).
     await map.getByRole('button', { name: 'Room 06, Room, Vacant', exact: true }).click()
@@ -356,8 +360,28 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(page.locator('.tenant-record').filter({ hasText: 'Sample Archive Renter' })).toHaveCount(0, { timeout: 20000 })
     await directory.getByLabel('Tenant status', { exact: true }).selectOption('archived')
     await expect(page.locator('.tenant-record').filter({ hasText: 'Sample Archive Renter' }).locator('.status')).toHaveText('Archived')
+    // Remove: the archived tenant disappears from every list (records stay for reports).
+    await page.getByRole('button', { name: 'Remove Sample Archive Renter', exact: true }).click()
+    await directory.getByLabel('Reason for removing (required)', { exact: true }).fill('Fictional test: typed by mistake')
+    await page.getByRole('button', { name: 'Remove tenant', exact: true }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Sample Archive Renter was removed from the lists.' })).toBeVisible()
+    await expect(page.locator('.tenant-record').filter({ hasText: 'Sample Archive Renter' })).toHaveCount(0, { timeout: 20000 })
     await directory.getByLabel('Tenant status', { exact: true }).selectOption('active')
-    pass('Owner archives a roomless tenant with a reason; archived tenants are hidden from the active list')
+    pass('Owner archives a roomless tenant with a reason; archived tenants are hidden from the active list; Remove hides them everywhere')
+    // Change room while still renting: same account and rent, new room.
+    await page.getByRole('button', { name: 'Change room for Sample Later Renter', exact: true }).click()
+    await expect(page.getByRole('tab', { name: 'Room rent setup', exact: true })).toHaveAttribute('aria-selected', 'true')
+    const changeRoom = page.locator('details.change-room')
+    await changeRoom.locator('summary').click()
+    await changeRoom.getByLabel('New room', { exact: true }).selectOption({ label: "Bob's house / Room 04" })
+    await changeRoom.getByLabel('Reason (required)', { exact: true }).fill('Fictional test: moved to a bigger room')
+    await changeRoom.getByRole('button', { name: 'Save room change', exact: true }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Room changed.' })).toBeVisible()
+    await expect(page.locator('.account-header')).toContainText("Bob's house / Room 04")
+    await expect(page.locator('.account-header .account-summary__stat').nth(1)).toContainText('₱2,800.50')
+    await page.getByRole('link', { name: 'Tenant directory', exact: true }).first().click()
+    await expect(page.locator('.tenant-record').filter({ hasText: 'Sample Later Renter' }).locator('.tenant-room')).toHaveText("Bob's house · Room 04", { timeout: 20000 })
+    pass('Change room keeps the same account and rent and moves the tenant to the new room')
 
     await page.getByRole('link', { name: 'Payments and balances', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Payments and balances', exact: true })).toBeVisible()
@@ -391,12 +415,19 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     assert.equal(await page.getByLabel('Amount (PHP)').inputValue(), '6000.26', 'Access re-checks must not discard an unsaved cash entry')
     await page.getByLabel('Actual payment date').fill('2024-04-02')
     await page.getByLabel('Received by', { exact: true }).selectOption('Bob')
+    // Above the balance is allowed now: the review shows the extra as advance credit (nothing is saved yet).
     await page.getByRole('button', { name: 'Review payment', exact: true }).click()
-    await expect(page.getByRole('alert').filter({ hasText: 'no cash report was saved' })).toBeVisible()
-    assert.equal(await pendingTotal.textContent(), pendingBefore, 'Over-balance input must not create a pending cash record')
-    assert.equal(cashRecordRequests.length, 0, 'Over-balance input must not call the cash-record RPC')
+    await expect(page.locator('.cash-plan-credit')).toContainText('₱0.01')
+    assert.equal(cashRecordRequests.length, 0, 'Reviewing does not save')
+    await page.getByRole('button', { name: 'Edit payment', exact: true }).click()
+    // Zero or malformed amounts are refused before any RPC or pending record.
+    await page.getByLabel('Amount (PHP)').fill('0')
+    await page.getByRole('button', { name: 'Review payment', exact: true }).click()
+    await expect(page.getByRole('alert').filter({ hasText: 'No cash report was saved.' })).toBeVisible()
+    assert.equal(await pendingTotal.textContent(), pendingBefore, 'Invalid input must not create a pending cash record')
+    assert.equal(cashRecordRequests.length, 0, 'Invalid input must not call the cash-record RPC')
     await expect(balance).toHaveText('₱6,000.25')
-    pass('Cash entry above the exact remaining balance is rejected before any RPC or pending record')
+    pass('Cash above the balance is previewed as advance credit; zero is rejected before any RPC or pending record')
 
     await page.getByLabel('Amount (PHP)').fill('100.00')
     await page.getByRole('button', { name: 'Review payment', exact: true }).click()
@@ -484,8 +515,8 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await page.getByLabel('Cash received during', { exact: true }).fill('2024-04')
     await expect(paidReport.locator('.paid-report-metrics article').nth(0).locator('strong')).toHaveText('₱9,100.50')
     await expect(paidReport.locator('.paid-report-metrics article').nth(1).locator('strong')).toHaveText('1')
-    await expect(paidReport.locator('.paid-report-metrics article').nth(2).locator('strong')).toHaveText('3')
-    await expect(paidReport.locator('.paid-report-table').first().locator('tbody tr')).toHaveCount(3)
+    await expect(paidReport.locator('.paid-report-metrics article').nth(2).locator('strong')).toHaveText('4')
+    await expect(paidReport.locator('.paid-report-table').first().locator('tbody tr')).toHaveCount(4)
     await page.getByLabel('Rent month', { exact: true }).fill('2024-04')
     await expect(paidReport.locator('.unpaid-report-total strong')).toHaveText('₱5,000.25')
     await expect(paidReport.locator('.unpaid-report-table tbody tr')).toHaveCount(1)
@@ -495,13 +526,27 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     pass('Saved Paid rent report uses receipt month, excludes pending cash/checks, and separates recorded outstanding rent')
     await page.getByLabel('Cash received during', { exact: true }).fill('2024-04')
     await page.getByLabel('Rent month', { exact: true }).fill('2024-04')
-    const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download for Excel (.csv)', exact: true }).click()])
-    const csv = (await readFile(await download.path())).toString('utf8')
-    assert.ok(csv.startsWith('﻿'), 'Export starts with a UTF-8 BOM for Excel')
-    assert.ok(csv.includes('Total confirmed cash,,,9100.50,'), 'Export confirmed-cash total matches the screen')
-    assert.ok(csv.includes('Total still due,,,,,5000.25'), 'Export outstanding total matches the screen')
-    assert.equal(download.suggestedFilename(), 'rentbybob-paid-rent-2024-04-rent-2024-04.csv')
-    pass('Paid rent report exports to a CSV with the same totals as the screen')
+    // "Save as PDF": the print window is stubbed; the print view must show only the report document, same totals.
+    const screenTitle = await page.title()
+    await page.evaluate(() => { window.__printCalls = 0; window.print = () => { window.__printCalls++ } })
+    await page.getByRole('button', { name: 'Save as PDF', exact: true }).click()
+    assert.equal(await page.evaluate(() => window.__printCalls), 1, 'Save as PDF opens the print window once')
+    assert.equal(await page.title(), 'RentByBob paid rent 2024-04 (rent 2024-04)', 'the PDF file name comes from the report months')
+    await page.emulateMedia({ media: 'print' })
+    const reportDocument = page.locator('.paid-rent-document')
+    await expect(reportDocument).toBeVisible()
+    await expect(page.locator('#root')).toBeHidden()
+    await expect(reportDocument.locator('.doc-property')).toHaveText('Disposable cash API test property')
+    await expect(reportDocument.locator('.doc-figure--lead strong')).toHaveText('₱9,100.50')
+    await expect(reportDocument.locator('.doc-table').first().locator('tbody tr')).toHaveCount(4)
+    await expect(reportDocument.locator('.doc-table').nth(1).locator('tfoot')).toContainText('₱5,000.25')
+    const pdf = await page.pdf({ format: 'A4', printBackground: true }).catch(() => null)
+    if (pdf) { assert.ok(pdf.length > 5000, 'the report renders to a real PDF'); if (process.env.UPDATE_SCREENSHOTS) await writeFile(fileURLToPath(new URL('../docs/screenshots/live-paid-rent-report.pdf', import.meta.url)), pdf) }
+    await page.emulateMedia({ media: 'screen' })
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')))
+    assert.equal(await page.title(), screenTitle, 'the page title is restored after printing')
+    await expect(page.locator('#root')).toBeVisible()
+    pass('Paid rent report saves as a formatted PDF document with the same totals as the screen')
     await axeScan(page, 'paid rent report')
 
     await page.getByRole('button', { name: 'More tools', exact: true }).click()
@@ -624,6 +669,16 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await batch.getByLabel('Rent month', { exact: true }).fill(nextMonth)
     await expect(batch.locator('.monthly-rent-list li').filter({ hasText: 'Sample API test renter' })).toHaveCount(0)
     pass('Owner UI records move-out; the move-out month stays a full month, later months are not offered, and the balance stays owed')
+    // Automatic monthly rent: the owner turns it on; this month's rent is added for current tenants at once.
+    await page.locator('.auto-rent').getByRole('button', { name: 'Turn on', exact: true }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Automatic monthly rent is on.' })).toBeVisible()
+    await page.getByRole('button', { name: 'Record and confirm', exact: true }).click()
+    await page.locator('.payment-overview .worklist-row').filter({ hasText: 'Sample One-Step Renter' }).getByRole('button', { name: /^Open account for Sample One-Step Renter/ }).click()
+    await expect(page.locator('.simple-balance strong')).toHaveText('₱3,500.00')
+    await page.getByRole('button', { name: 'Record cash payment', exact: true }).click()
+    await expect(page.getByLabel('Amount (PHP)')).toHaveValue('3500.00')
+    await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+    pass('Automatic monthly rent adds this month for current tenants; Record cash starts with the agreed rent')
 
     // A visitor sends an inquiry from the real public page; the owner sees it and marks it handled.
     const visitor = await browser.newPage({ viewport: { width: 390, height: 844 } })
@@ -672,6 +727,12 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     // Remember this device: after the authenticator once, the same browser signs in with the password only;
     // "Forget this device" brings the authenticator back. (Also proves the device header passes CORS.)
     const devicePage = await browser.newPage()
+    // Account security sits in the sidebar's collapsible 'More' group.
+    const openAccountSecurity = async () => {
+      const toggle = devicePage.locator('.workspace-sidebar').getByRole('button', { name: 'Accounts & security', exact: true })
+      if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click()
+      await devicePage.locator('.workspace-sidebar').getByRole('link', { name: 'Account security', exact: true }).click()
+    }
     const signInOwner = async () => {
       await devicePage.getByLabel('Email address', { exact: true }).fill(ownerEmail)
       await devicePage.getByLabel('Password', { exact: true }).fill(password)
@@ -685,7 +746,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await axeScan(devicePage, 'authenticator with remember device')
     await devicePage.getByRole('button', { name: 'Verify code', exact: true }).click()
     await expect(devicePage.getByRole('heading', { name: 'Owner workspace' })).toBeVisible()
-    await devicePage.getByRole('link', { name: 'Account security', exact: true }).first().click()
+    await openAccountSecurity()
     await expect(devicePage.locator('.trusted-device-list li').filter({ hasText: 'This device' })).toHaveCount(1)
     await axeScan(devicePage, 'remembered devices')
     await devicePage.getByRole('button', { name: 'Sign out', exact: true }).click()
@@ -696,7 +757,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await devicePage.getByRole('link', { name: 'Payments and balances', exact: true }).click()
     await expect(devicePage.getByRole('heading', { name: 'Payments and balances', exact: true })).toBeVisible()
     await expect(devicePage.locator('.payment-overview')).toBeVisible({ timeout: 20000 })
-    await devicePage.getByRole('link', { name: 'Account security', exact: true }).first().click()
+    await openAccountSecurity()
     await devicePage.getByRole('button', { name: 'Forget this device', exact: true }).click()
     await expect(devicePage.getByRole('status').filter({ hasText: 'This device is forgotten.' })).toBeVisible()
     await devicePage.getByRole('button', { name: 'Sign out', exact: true }).click()
@@ -772,7 +833,7 @@ if (process.argv[2] === 'create-users') {
   const februaryChargeId = randomUUID()
   const marchChargeId = randomUUID()
   const primaryCashId = randomUUID()
-  const concurrentCashIds = [randomUUID(), randomUUID()]
+  const concurrentCashIds = [randomUUID(), randomUUID()], pendingFixtureCash = randomUUID()
   const auditCash = auditCashId
   const requestDate = '2024-04-02'
 
@@ -888,12 +949,14 @@ if (process.argv[2] === 'create-users') {
   }, clerk)).data, confirmed.data)
   pass('Designated MFA clerk confirms cash once, oldest-first, and retry returns the same acknowledgment')
 
-  for (const cashId of concurrentCashIds) {
+  // Overpayment becomes advance credit (202610270010), so both concurrent confirmations succeed; they must
+  // serialize so the 4000.00 owed is allocated exactly once (1000.00 left, no credit). A third 3000.00 stays pending.
+  for (const [index, cashId] of [...concurrentCashIds, pendingFixtureCash].entries()) {
     const result = await rpc('record_rent_cash', {
       p_property_id: property,
       p_id: cashId,
       p_agreement_id: agreementId,
-      p_amount: '3000.00',
+      p_amount: index < 2 ? '1500.00' : '3000.00',
       p_received_on: requestDate,
       p_collector: 'James',
     }, owner)
@@ -902,11 +965,11 @@ if (process.argv[2] === 'create-users') {
   const concurrentResults = await Promise.all(concurrentCashIds.map(cashId => rpc('confirm_rent_cash', {
     p_property_id: property, p_cash_id: cashId,
   }, clerk)))
-  assert.equal(concurrentResults.filter(result => result.response.ok).length, 1)
-  assert.equal(concurrentResults.filter(result => !result.response.ok).length, 1)
+  assert.equal(concurrentResults.filter(result => result.response.ok).length, 2)
   const afterConcurrent = await rpc('read_rent_workspace', { p_property_id: property }, owner)
   assert.equal(afterConcurrent.data.agreements.find(row => row.id === agreementId).balance, '1000.00')
   assert.equal(totalCentavos(afterConcurrent.data.charges.map(row => row.remaining)), 100000n)
+  assert.deepEqual((await rpc('read_agreement_credits', { p_property_id: property }, owner)).data, {}, 'no credit appears from a race')
   pass('Concurrent independent API confirmations serialize without over-allocation')
 
   assert.ok((await rpc('record_rent_cash', {

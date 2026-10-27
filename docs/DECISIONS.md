@@ -1,3 +1,13 @@
+## Billing automation, advance payments, room changes, removal - 27 Oct 2026 (owner decisions)
+
+- **Automatic monthly rent:** on the 1st of each month (Philippine time) every current agreement gets that month's rent at its agreed amount, due on its usual anniversary day; never twice; nothing after a move-out month. Owner switch per property (off until turned on; turning it on posts the current month at once). Hourly `pg_cron` job where available, plus a catch-up whenever staff open Payments. Charges are audited under the owner who turned it on.
+- **Advance payments:** confirmed cash above what is owed is kept as advance credit on the same agreement and pays the next rent months automatically (oldest month first, oldest payment first) when they are added, manually or automatically. Reversing a payment also reopens months its credit paid. Credit is never paid out by the app; refunds stay outside it. The acknowledgment records the advance portion. Record cash starts with the agreed monthly rent and can be changed.
+- **Room change while still renting:** same agreement, monthly rent, due day and balance; the room changes from a chosen date (not in the future); history kept in `agreement_room_changes`. Historical charges show the agreement's current room.
+- **Remove tenant:** owner, with a reason, after move-out: hidden from every list; payment history stays in reports and the audit log (no physical deletion).
+- **Map shows renter and rent:** occupied room tiles show the responsible renter's name and monthly rent (staff-only screen). Other occupants are still never stored or shown.
+- **Paid rent report export:** Excel/CSV removed at the owner's request; replaced by a formatted PDF (browser "Save as PDF") with the same figures as the screen.
+- **Navigation and app bar:** grouped menu (Daily work; Accounts & security folded under a toggle) and a standard app bar (theme icon, EN/CEB switch, account chip, Sign out).
+
 ## Security defaults chosen by the assistant (user delegated: "tighten its security") - 27 Oct 2026
 
 Staff are signed out after 30 minutes without activity (2-minute warning with Stay signed in); server sessions end after 12 hours or 2 hours idle; passwords need 12+ characters at the Auth server. These are adjustable defaults, not business rules: change `IDLE_WARN_MS`/`IDLE_GRACE_MS` in `src/access/idle-model.ts` and `[auth.sessions]` in `supabase/config.toml` if the office finds them too strict.
