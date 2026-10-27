@@ -1,5 +1,9 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Final polish for 27 Oct 2026
+
+Tenant picker (search, short list, chip) replaces long tenant dropdowns in Assign access and "Give an existing tenant a room"; rooms are always named with their building in lists ("Building 2 · Room 01"); Payments reloads on open, after saves and every 30 s (no manual Refresh buttons); worklist rows stack in the narrow column; Room listings use compact cards with an instant show/hide switch and folded price/description; the PDF report has no grey page fill and dates do not wrap; the cash verifier is chosen by the clerk's email (no account ID to copy). Validation: unit 93/93, offline 10/10, live disposable suite exit 0 (50 checks), production build and artifact check pass.
+
 ## Billing automation, advance credit, room change, remove, map renters, PDF report, menu and app bar - 27 Oct 2026
 
 **Owner decisions** (DECISIONS.md): automatic monthly rent on the 1st (owner switch; hourly pg_cron where available plus catch-up when Payments opens); advance payments kept as credit that pays the next months automatically (reversal reopens them); room change keeps the same agreement, rent, due day and balance; Remove hides a tenant after move-out while records stay; occupied map rooms show the renter and monthly rent; the paid rent report saves as a formatted PDF instead of CSV.

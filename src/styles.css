@@ -1505,3 +1505,4 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
 @media print { html.print-paid-report, html.print-paid-report body { background: #fff !important; background-image: none !important; } }
 .doc-date { white-space: nowrap; }
 .doc-code { overflow-wrap: anywhere; }
+.room-listings .listing-row { border: 1px solid var(--border); border-radius: .9rem; background: var(--surface); box-shadow: var(--shadow-card); }
