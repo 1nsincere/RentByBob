@@ -77,31 +77,94 @@
 .lp-board-facts dt { font-family: var(--mono); font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 .lp-board-facts dd { margin: .1rem 0 0; font-weight: 750; font-size: 1.15rem; }
 .lp-note { margin: 1rem 0 0; color: var(--muted); font-size: .92rem; }
-.lp-plan-paper { padding: .9rem .9rem .6rem; background-color: var(--blue); border: 2px solid var(--ink); box-shadow: 8px 8px 0 var(--ink); color: #eef3ff;
-  background-image: linear-gradient(rgb(255 255 255 / 7%) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 7%) 1px, transparent 1px); background-size: 22px 22px; }
-.lp-plan { position: relative; aspect-ratio: 16 / 10; overflow: hidden; }
-.lp-plan-road { position: absolute; background: rgb(255 255 255 / 13%); }
-.lp-plan-road--main { left: 0; right: 0; top: 52%; height: 12%; border-block: 1.5px solid rgb(255 255 255 / 55%); overflow: hidden; }
-.lp-plan-road--main::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px dashed rgb(255 255 255 / 55%); }
-.lp-plan-road--main b { position: absolute; right: 1.2rem; top: 50%; z-index: 1; transform: translateY(-50%); padding: 0 .45rem; background: var(--blue-2); font: 700 .7rem var(--mono); letter-spacing: .18em; }
-.lp-plan-road--side { left: 14%; width: 8%; top: 64%; bottom: 0; border-inline: 1.5px solid rgb(255 255 255 / 55%); }
-.lp-car { position: absolute; top: 18%; left: -8%; width: 5%; height: 26%; border-radius: 3px; background: #f6efe0; animation: lp-drive 16s linear infinite; }
-.lp-car--two { top: 58%; left: auto; right: -8%; background: var(--amber); animation: lp-drive-back 21s linear 3s infinite; }
-@keyframes lp-drive { to { left: 108%; } }
-@keyframes lp-drive-back { to { right: 108%; } }
-.lp-compass { position: absolute; right: .3rem; bottom: .3rem; display: grid; place-items: center; width: 2.3rem; height: 2.3rem; border: 1.5px solid rgb(255 255 255 / 70%); border-radius: 50%; font: 700 .8rem var(--mono); }
-.lp-plot { position: absolute; display: grid; grid-template-rows: 1fr auto auto; gap: .2rem; padding: .55rem .6rem .45rem; border: 1.5px solid rgb(255 255 255 / 75%); border-radius: 2px; background: rgb(255 255 255 / 6%); color: #fff; text-decoration: none; transition: transform 220ms cubic-bezier(.2,.8,.2,1), background-color 220ms ease, box-shadow 220ms ease; }
-.lp-plot--house { background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 9%) 0 2px, transparent 2px 9px); }
-.lp-plot:hover, .lp-plot.is-active, .lp-plot:focus-visible { transform: translateY(-4px); background-color: rgb(255 255 255 / 15%); box-shadow: 0 10px 18px -10px rgb(0 0 0 / 70%); }
-.lp-plot:focus-visible { outline-color: var(--amber); }
-.lp-plot.has-open { border-color: var(--amber); }
-.lp-plot-windows { display: grid; align-content: start; gap: 4px; }
-.lp-plot-windows i { aspect-ratio: 1.35; max-height: 1.3rem; border-radius: 2px; background: rgb(255 255 255 / 20%); transition: background-color 500ms ease, box-shadow 500ms ease; }
-.lp-plot-windows i.is-lit { background: var(--amber); box-shadow: 0 0 10px var(--amber-glow); animation: lp-glow 3.2s ease-in-out infinite; }
-@keyframes lp-glow { 0%, 100% { opacity: 1; } 50% { opacity: .82; } }
-.lp-plot-name { font-weight: 800; font-size: clamp(.7rem, 1.4vw, .95rem); line-height: 1.1; }
-.lp-plot-status { font: 600 clamp(.6rem, 1.1vw, .75rem) var(--mono); color: rgb(238 243 255 / 90%); }
+/* Live board: an evening street on B. Zubiri St and Mariano Abella St. Homes are drawn front-on (tin roofs, yellow
+   walls, one window per rentable space); roads, trees and traffic are seen from above. */
+.lp-plan-paper { padding: .9rem .9rem .6rem; border: 2px solid var(--ink); box-shadow: 8px 8px 0 var(--ink); color: #eef6f0;
+  background: radial-gradient(120% 80% at 30% 0%, #2a6a50 0%, #1d4d3b 55%, #163d2e 100%); }
+.lp-plan { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 4px;
+  background-image: radial-gradient(rgb(255 255 255 / 6%) 1px, transparent 1.4px); background-size: 14px 14px; }
+.lp-plan-road { position: absolute; z-index: 1; background: #1f2b25; }
+.lp-plan-road--main { left: 0; right: 0; top: 52%; height: 12%; box-shadow: 0 -5px 0 #557465, 0 5px 0 #557465; }
+.lp-plan-road--main::after { content: ""; position: absolute; left: 0; right: 0; top: calc(50% - 1px); border-top: 2px dashed rgb(242 194 48 / 70%); }
+.lp-plan-road--side { left: 14%; width: 8%; top: 64%; bottom: 0; box-shadow: -5px 0 0 #557465, 5px 0 0 #557465; }
+.lp-plan-road--side::after { content: ""; position: absolute; top: 14%; bottom: 0; left: calc(50% - 1px); border-left: 2px dashed rgb(242 194 48 / 60%); }
+.lp-plan-road--side::before { content: ""; position: absolute; left: 8%; right: 8%; top: 2%; height: 9%; background: repeating-linear-gradient(90deg, rgb(238 244 238 / 80%) 0 4px, transparent 4px 8px); }
+.lp-plan-road b { position: absolute; z-index: 1; padding: 0 .4rem; background: #1f2b25; color: rgb(238 246 240 / 72%); font: 700 clamp(.5rem, 1.05vw, .68rem) var(--mono); letter-spacing: .16em; white-space: nowrap; }
+.lp-plan-road--main b { right: 4%; top: 50%; transform: translateY(-50%); }
+.lp-plan-road--side b { left: 50%; bottom: 3%; letter-spacing: .08em; transform: translateX(-50%) rotate(180deg); writing-mode: vertical-rl; padding: .3rem 0; }
+.lp-road-short { display: none; }
+.lp-lamp { position: absolute; z-index: 2; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: #fff4c7; box-shadow: 0 0 0 3px rgb(255 228 140 / 25%), 0 0 16px 6px rgb(255 214 102 / 35%); }
+.lp-lamp--top { top: calc(52% - 9px); }
+.lp-lamp--bottom { top: calc(64% + 3px); }
+.lp-tree { position: absolute; z-index: 2; aspect-ratio: 1; overflow: visible; }
+.lp-tree-shadow { fill: rgb(0 0 0 / 28%); }
+.lp-tree-crown { fill: #2f7d5b; }
+.lp-tree-leaf { fill: #3f9a70; }
+.lp-compass { position: absolute; z-index: 4; right: .3rem; bottom: .3rem; display: grid; place-items: center; width: 2.3rem; height: 2.3rem; border: 1.5px solid rgb(255 255 255 / 70%); border-radius: 50%; background: rgb(22 61 46 / 70%); font: 700 .8rem var(--mono); }
+
+/* Traffic. Each lane wrapper spans its road; the vehicle rides at its leading edge. Reduced motion parks them at --rest. */
+.lp-lane { position: absolute; z-index: 2; pointer-events: none; }
+.lp-lane svg { display: block; overflow: visible; filter: drop-shadow(0 2px 2px rgb(0 0 0 / 45%)); }
+.lp-lane--e, .lp-lane--w { left: 0; width: 100%; height: 4.6%; transform: translateX(var(--rest)); }
+.lp-lane--e svg, .lp-lane--w svg { height: 100%; width: auto; }
+.lp-lane--e { top: 59%; animation: lp-east var(--dur) linear var(--delay) infinite; }
+.lp-lane--w { top: 52.6%; animation: lp-west var(--dur) linear var(--delay) infinite; }
+.lp-lane--n, .lp-lane--s { top: 64%; height: 36%; width: 2.9%; transform: translateY(var(--rest)); }
+.lp-lane--n svg, .lp-lane--s svg { width: 100%; height: auto; }
+.lp-lane--n { left: 18.5%; animation: lp-north var(--dur) linear var(--delay) infinite; }
+.lp-lane--s { left: 14.6%; animation: lp-south var(--dur) linear var(--delay) infinite; }
+@keyframes lp-east { from { transform: translateX(-12%); } to { transform: translateX(108%); } }
+@keyframes lp-west { from { transform: translateX(108%); } to { transform: translateX(-12%); } }
+@keyframes lp-north { 0% { transform: translateY(105%); opacity: 1; } 82% { transform: translateY(2%); opacity: 1; } 100% { transform: translateY(-16%); opacity: 0; } }
+@keyframes lp-south { 0% { transform: translateY(-16%); opacity: 0; } 16% { transform: translateY(2%); opacity: 1; } 100% { transform: translateY(105%); opacity: 1; } }
+.v-roof { fill: rgb(255 255 255 / 22%); }
+.v-glass { fill: #1d3a30; }
+.v-light { fill: #fff6c9; }
+.v-tail { fill: #e24b3b; }
+.v-tyre { fill: #141c18; }
+.v-bar { stroke: #1c2a23; stroke-width: 1.6; stroke-linecap: round; }
+.v-rider { fill: #2d5d8a; }
+.v-hood { fill: #c9d0cc; }
+.v-stripe-a { fill: #1f6b4f; } .v-stripe-b { fill: #f2c230; } .v-stripe-c { fill: #e2725b; }
+
+/* Homes */
+.lp-plot { position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: .3rem; color: #fff; text-decoration: none; transition: transform 260ms cubic-bezier(.2,.8,.2,1); }
+.lp-plot-tag { flex: none; display: grid; justify-items: center; max-width: 100%; padding: .2rem .6rem; border: 1.5px solid rgb(255 255 255 / 30%); border-radius: .6rem; background: rgb(12 32 24 / 78%); line-height: 1.15; transition: border-color 220ms ease, background-color 220ms ease; }
+.lp-plot-name { font-weight: 800; font-size: clamp(.62rem, 1.35vw, .92rem); white-space: nowrap; }
+.lp-plot-status { font: 600 clamp(.55rem, 1.05vw, .72rem) var(--mono); color: rgb(238 246 240 / 88%); white-space: nowrap; }
 .lp-plot-status.is-open { color: var(--amber); }
+.lp-plot.has-open .lp-plot-tag { border-color: var(--amber); }
+.lp-plot:hover, .lp-plot.is-active, .lp-plot:focus-visible { transform: translateY(-4px); }
+.lp-plot:hover .lp-plot-tag, .lp-plot.is-active .lp-plot-tag { background: rgb(12 32 24 / 94%); }
+.lp-plot:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; border-radius: .4rem; }
+.lp-facade { flex: 0 1 auto; height: auto; max-height: 100%; min-height: 0; overflow: visible; filter: drop-shadow(0 6px 6px rgb(0 0 0 / 32%)); transition: filter 260ms ease; }
+.lp-plot:hover .lp-facade, .lp-plot.is-active .lp-facade { filter: drop-shadow(0 12px 10px rgb(0 0 0 / 42%)) brightness(1.06); }
+.fx-shadow { fill: rgb(0 0 0 / 30%); }
+.fx-wall { fill: #f1d885; }
+.fx-wall-shade { fill: #dcbd62; }
+.fx-gable { fill: #e6c86c; }
+.fx-vent { fill: #2a5a45; }
+.fx-trim { fill: #fff6dc; }
+.fx-roof { fill: #2f7d5b; }
+.fx-ridge { stroke: rgb(255 255 255 / 16%); stroke-width: 1; }
+.fx-eave { fill: #245f46; }
+.fx-roof-line { fill: none; stroke: #2f7d5b; stroke-width: 6; stroke-linejoin: round; stroke-linecap: round; }
+.fx-rail { stroke: #fff6dc; stroke-width: 1.6; stroke-linecap: round; }
+.fx-baluster { stroke: rgb(255 246 220 / 80%); stroke-width: 1; }
+.fx-stair { fill: #cfd8d2; stroke: #8fa59a; stroke-width: .8; }
+.fx-door { fill: #7a4b2a; }
+.fx-knob { fill: #f2c230; }
+.fx-awning { fill: #2f7d5b; }
+.fx-frame { fill: #24503f; }
+.fx-glass { fill: #12302a; transition: fill 600ms ease; }
+.fx-glass.is-lit { fill: #ffbf1f; filter: drop-shadow(0 0 2px #ffd54a) drop-shadow(0 0 5px rgb(255 160 20 / 75%)); animation: lp-glow 3.2s ease-in-out infinite; }
+@keyframes lp-glow { 0%, 100% { opacity: 1; } 50% { opacity: .84; } }
+.fx-curtain { fill: rgb(255 250 225 / 55%); }
+.fx-glint { stroke: rgb(255 255 255 / 22%); stroke-width: 1.4; }
+.fx-mullion { stroke: #24503f; stroke-width: 1.2; }
+.fx-sill { fill: #e9dfc2; }
+.fx-bush { fill: #3f9a70; }
+.fx-ground { fill: #557465; }
 .lp-plan-note { margin: .55rem 0 0; font: .78rem var(--mono); color: rgb(238 243 255 / 90%); }
 
 /* Flyer with tear-off tabs */
@@ -146,6 +209,7 @@
 .lp-sketch-x { fill: none; stroke: var(--red); stroke-width: 3; }
 .lp-sketch-label { position: absolute; font-family: var(--hand); font-size: 1rem; }
 .lp-sketch-label--street { left: 4%; top: 52%; transform: rotate(-2deg); }
+.lp-sketch-label--side { left: 37.5%; top: 6%; writing-mode: vertical-rl; font-size: .9rem; }
 .lp-sketch-label--here { left: 54%; top: 46%; color: var(--red); transform: rotate(-4deg); }
 
 .lp-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; padding: 1.6rem clamp(1rem, 4vw, 3rem); border-top: 2px solid var(--ink); font-family: var(--mono); font-size: .85rem; color: var(--muted); }
@@ -163,8 +227,11 @@
 @media (max-width: 40rem) {
   .lp-nav nav { display: none; }
   .lp-plan-paper { box-shadow: 5px 5px 0 var(--ink); }
-  .lp-plot { padding: .3rem .3rem .25rem; gap: .1rem; }
-  .lp-plot-windows { gap: 2px; }
+  .lp-plot-tag { padding: .1rem .3rem; border-radius: .4rem; }
+  .lp-plot-status { display: none; }
+  .lp-road-long { display: none; }
+  .lp-road-short { display: inline; }
+  .lp-lamp { width: 5px; height: 5px; }
   .lp-tab a { font-size: .68rem; }
   .lp-cta .lp-stamp { flex: 1 1 auto; }
   .lp-stamp { white-space: normal; }

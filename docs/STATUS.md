@@ -1,5 +1,11 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Landing street scene - 27 Oct 2026
+
+The landing page's live board is now an evening street (user request: buildings were "too boxy"): homes drawn front-on (green tin roofs, yellow walls; Buildings 1 and 2 as two-storey boarding houses with balcony rail and outside stair; House 1 a gable cottage; Bob's house two storeys), all at one scale, one window per rentable space that glows when the public listing shows it open. B. Zubiri St has two lanes, sidewalks and lamps; the side road beside Bob's house is labelled **Mariano Abella St** (also on the "Find us" sketch) with a crosswalk. Cars, motorcycles and a jeepney drive both ways, keeping right; on Mariano Abella a motorcycle and a car come and go at the junction. Reduced motion parks every vehicle. Screenshot: `docs/screenshots/landing-street.png` (fictional vacancies).
+
+**Validation:** offline 10/10 (landing axe-clean in light and dark), unit 98/98, performance LCP 1.8 s / CLS 0 / 168 KB on a slow phone, CSP and artifact checks pass, no sideways scroll at 390 px.
+
 ## Late rent follow-up on the dashboard - 27 Oct 2026
 
 Dashboard now lists **Late rent**: each renter with recorded months whose due date has passed and that confirmed payments have not fully covered, with amount, months, days late (oldest month), any pending cash shown beside it (never subtracted), "Copy reminder" (polite EN/CEB text with only that renter's own figures, for SMS/Messenger; if the browser blocks copying, the text is shown to select) and "Open account" (opens Payments on that tenant). **Due in the next 7 days** lists upcoming unpaid months. An alert appears when renters have reported payments. No fees, grace periods or automatic messages: staff send reminders themselves. `docs/ADMIN_CAPABILITIES.md` rewritten to match the current app.

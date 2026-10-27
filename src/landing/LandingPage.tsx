@@ -15,16 +15,129 @@ export const CONTACT = {
   mapsHref: 'https://www.google.com/maps/search/?api=1&query=100A+B.+Zubiri+St,+Cebu+City,+6000+Cebu',
 }
 
-// Site plan of the rentable homes, placed as on the owner's sketch (access road with a side road). Stores and the
-// Yamaha space are private negotiations and are never shown publicly (owner decision 27 Oct 2026). Each home has
-// one window per rentable space; windows glow for spaces open right now (public listing data only).
-type Site = { label: string; kind: 'block' | 'house'; spaces: number; cols: number; x: number; y: number; w: number; h: number }
+// Site plan of the rentable homes, placed as on the owner's sketch: B. Zubiri St in front, Mariano Abella St beside
+// Bob's house. Stores and the Yamaha space are private negotiations and are never shown publicly (owner decision
+// 27 Oct 2026). Each home has one window per rentable space; windows glow for spaces open right now (public listing
+// data only). fw is the drawing's width in its plot, so every home is drawn at the same scale.
+type Site = { label: string; kind: 'block' | 'house'; spaces: number; x: number; y: number; w: number; h: number; fw: number }
 const SITE: Site[] = [
-  { label: 'Building 1', kind: 'block', spaces: 10, cols: 5, x: 4, y: 7, w: 30, h: 40 },
-  { label: 'Building 2', kind: 'block', spaces: 8, cols: 4, x: 37, y: 7, w: 28, h: 40 },
-  { label: 'House 1', kind: 'house', spaces: 1, cols: 1, x: 68, y: 7, w: 28, h: 40 },
-  { label: "Bob's house", kind: 'house', spaces: 6, cols: 6, x: 27, y: 69, w: 38, h: 27 },
+  { label: 'Building 1', kind: 'block', spaces: 10, x: 3, y: 3, w: 32, h: 47, fw: 100 },
+  { label: 'Building 2', kind: 'block', spaces: 8, x: 37, y: 3, w: 28, h: 47, fw: 100 },
+  { label: 'House 1', kind: 'house', spaces: 1, x: 69, y: 3, w: 26, h: 47, fw: 54 },
+  { label: "Bob's house", kind: 'house', spaces: 6, x: 27, y: 66.5, w: 40, h: 31, fw: 60 },
 ]
+
+// Street-front drawing of one home: tin roof, yellow walls, a window per rentable space (lit = open now).
+// Boarding blocks get a balcony rail and an outside stair; houses get a front door and a gable.
+function Facade({ site, lit }: { site: Site; lit: number }) {
+  const block = site.kind === 'block'
+  const floors = block || site.spaces > 2 ? 2 : 1
+  const per = Math.ceil(site.spaces / floors)
+  const cell = 22, floorH = 30, x0 = 5
+  const door = block ? 0 : 1
+  const wallW = (per + door) * cell + 10
+  const roofH = block ? 15 : 24
+  const groundY = roofH + floors * floorH
+  const stairW = block ? 24 : 0
+  const W = x0 + wallW + stairW + 5, H = groundY + 7
+  const doorSlot = Math.floor(per / 2)
+  const windows: { x: number; y: number }[] = []
+  for (let f = 0; f < floors; f++) {
+    const ground = f === floors - 1
+    const count = Math.min(per, site.spaces - windows.length)
+    for (let s = 0; s < count; s++) {
+      const slot = ground && door ? (s >= doorSlot ? s + 1 : s) : s
+      const shift = !ground && door ? cell / 2 : 0
+      windows.push({ x: x0 + 9 + slot * cell + shift, y: roofH + f * floorH + 7 })
+    }
+  }
+  const rightEdge = x0 + wallW
+  const ridges = Array.from({ length: Math.floor((wallW + 6) / 6) }, (_, i) => x0 - 1 + i * 6)
+  // Top of the hip roof at x, so the corrugation lines stay inside the sloped ends.
+  const roofTop = (x: number) => roofH + 2 - (roofH - 2) * Math.min(1, Math.min(x - (x0 - 5), rightEdge + 5 - x) / 13)
+  return <svg className="lp-facade" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax meet" style={{ width: `${site.fw}%` } as CSSProperties} aria-hidden="true" focusable="false">
+    <ellipse className="fx-shadow" cx={W / 2} cy={H - 3} rx={W / 2} ry={3.5} />
+    <rect className="fx-wall" x={x0} y={roofH} width={wallW} height={groundY - roofH} />
+    <rect className="fx-wall-shade" x={rightEdge - 7} y={roofH} width={7} height={groundY - roofH} />
+    {floors === 2 && <rect className="fx-trim" x={x0 - 2} y={roofH + floorH - 2} width={wallW + 4} height={3} />}
+    {block ? <>
+      <polygon className="fx-roof" points={`${x0 - 5},${roofH + 1} ${rightEdge + 5},${roofH + 1} ${rightEdge - 8},3 ${x0 + 8},3`} />
+      {ridges.filter(x => roofTop(x) < roofH - 3).map(x => <line key={x} className="fx-ridge" x1={x} y1={roofTop(x)} x2={x} y2={roofH - 1} />)}
+      <rect className="fx-eave" x={x0 - 5} y={roofH - 1} width={wallW + 10} height={3} />
+      <line className="fx-rail" x1={x0} y1={roofH + floorH - 9} x2={rightEdge} y2={roofH + floorH - 9} />
+      {Array.from({ length: Math.floor(wallW / 5) }, (_, i) => <line key={i} className="fx-baluster" x1={x0 + 2 + i * 5} y1={roofH + floorH - 9} x2={x0 + 2 + i * 5} y2={roofH + floorH - 2} />)}
+      <path className="fx-stair" d={`M${rightEdge + stairW} ${groundY} ${Array.from({ length: 6 }, () => `v-${floorH / 6} h-${stairW / 6}`).join(' ')} L${rightEdge} ${groundY} Z`} />
+      <line className="fx-rail" x1={rightEdge + stairW} y1={groundY - 9} x2={rightEdge + 2} y2={roofH + floorH - 9} />
+    </> : <>
+      <polygon className="fx-gable" points={`${x0},${roofH + 1} ${x0 + wallW / 2},6 ${rightEdge},${roofH + 1}`} />
+      <circle className="fx-vent" cx={x0 + wallW / 2} cy={roofH - 6} r={2.6} />
+      <polyline className="fx-roof-line" points={`${x0 - 5},${roofH + 3} ${x0 + wallW / 2},2 ${rightEdge + 5},${roofH + 3}`} />
+      <rect className="fx-door" x={x0 + 9 + doorSlot * cell} y={groundY - 22} width={14} height={22} rx={1} />
+      <circle className="fx-knob" cx={x0 + 20 + doorSlot * cell} cy={groundY - 11} r={1} />
+      <polygon className="fx-awning" points={`${x0 + 6 + doorSlot * cell},${groundY - 23} ${x0 + 26 + doorSlot * cell},${groundY - 23} ${x0 + 23 + doorSlot * cell},${groundY - 28} ${x0 + 9 + doorSlot * cell},${groundY - 28}`} />
+    </>}
+    {windows.map((spot, index) => <g key={index}>
+      <rect className="fx-frame" x={spot.x - 1.5} y={spot.y - 1.5} width={17} height={18} rx={1} />
+      <rect className={`fx-glass${index < lit ? ' is-lit' : ''}`} x={spot.x} y={spot.y} width={14} height={15} style={{ animationDelay: `${(index % 4) * 0.45}s` } as CSSProperties} />
+      {index < lit ? <rect className="fx-curtain" x={spot.x} y={spot.y} width={5} height={15} /> : <line className="fx-glint" x1={spot.x + 3} y1={spot.y + 12} x2={spot.x + 10} y2={spot.y + 3} />}
+      <line className="fx-mullion" x1={spot.x + 7} y1={spot.y} x2={spot.x + 7} y2={spot.y + 15} />
+      <rect className="fx-sill" x={spot.x - 2.5} y={spot.y + 15.5} width={19} height={2} />
+    </g>)}
+    <circle className="fx-bush" cx={x0 + 3} cy={groundY - 2} r={4.5} />
+    <circle className="fx-bush" cx={rightEdge - 4} cy={groundY - 2} r={4} />
+    <rect className="fx-ground" x={0} y={groundY} width={W} height={2.5} />
+  </svg>
+}
+
+// Top-view vehicles (drawn facing east in an L×20 box, then turned for their lane). Philippine traffic keeps right.
+type Heading = 'e' | 'w' | 'n' | 's'
+type Ride = { kind: 'car' | 'moto' | 'jeep'; heading: Heading; color: string; duration: number; delay: number; rest: number }
+const LENGTH = { car: 40, moto: 30, jeep: 60 }
+const TRAFFIC: Ride[] = [
+  { kind: 'car', heading: 'e', color: '#f4efe2', duration: 18, delay: -2, rest: 8 },
+  { kind: 'moto', heading: 'e', color: '#e2725b', duration: 18, delay: -8, rest: 40 },
+  { kind: 'car', heading: 'e', color: '#6cc3b0', duration: 18, delay: -14, rest: 74 },
+  { kind: 'jeep', heading: 'w', color: '#dfe5e1', duration: 24, delay: -5, rest: 55 },
+  { kind: 'moto', heading: 'w', color: '#f2c230', duration: 24, delay: -16, rest: 22 },
+  { kind: 'moto', heading: 'n', color: '#6cc3b0', duration: 10, delay: -3, rest: 45 },
+  { kind: 'car', heading: 's', color: '#f2c230', duration: 12, delay: -7, rest: 20 },
+]
+function Vehicle({ ride }: { ride: Ride }) {
+  const L = LENGTH[ride.kind]
+  const vertical = ride.heading === 'n' || ride.heading === 's'
+  const turn = { e: undefined, w: `translate(${L},0) scale(-1,1)`, n: `translate(0,${L}) rotate(-90)`, s: `translate(20,0) rotate(90)` }[ride.heading]
+  return <span className={`lp-lane lp-lane--${ride.heading}`} style={{ '--dur': `${ride.duration}s`, '--delay': `${ride.delay}s`, '--rest': `${ride.rest}%` } as CSSProperties}>
+    <svg viewBox={vertical ? `0 0 20 ${L}` : `0 0 ${L} 20`} aria-hidden="true" focusable="false"><g transform={turn}>
+      {ride.kind === 'car' && <>
+        <rect x="1" y="2" width="38" height="16" rx="6" fill={ride.color} />
+        <rect className="v-roof" x="12" y="4" width="12" height="12" rx="2" />
+        <rect className="v-glass" x="25" y="3.5" width="7" height="13" rx="2.5" />
+        <rect className="v-glass" x="6" y="4.5" width="5" height="11" rx="2" />
+        <circle className="v-light" cx="38" cy="5" r="1.4" /><circle className="v-light" cx="38" cy="15" r="1.4" />
+        <rect className="v-tail" x="0.8" y="3.5" width="1.6" height="3" /><rect className="v-tail" x="0.8" y="13.5" width="1.6" height="3" />
+      </>}
+      {ride.kind === 'moto' && <>
+        <rect className="v-tyre" x="2" y="8.5" width="8" height="3" rx="1.5" /><rect className="v-tyre" x="20" y="8.5" width="8" height="3" rx="1.5" />
+        <rect x="7" y="7" width="15" height="6" rx="3" fill={ride.color} />
+        <line className="v-bar" x1="21" y1="4.5" x2="21" y2="15.5" />
+        <ellipse className="v-rider" cx="13" cy="10" rx="4.5" ry="5.5" />
+        <circle cx="14.5" cy="10" r="3.2" fill={ride.color} stroke="#1c2a23" strokeWidth="0.8" />
+        <circle className="v-light" cx="29" cy="10" r="1.3" />
+      </>}
+      {ride.kind === 'jeep' && <>
+        <rect x="1" y="2" width="58" height="16" rx="3" fill={ride.color} />
+        <rect className="v-stripe-a" x="6" y="4" width="40" height="3" /><rect className="v-stripe-b" x="6" y="8.5" width="40" height="3" /><rect className="v-stripe-c" x="6" y="13" width="40" height="3" />
+        <rect className="v-hood" x="47" y="3" width="11" height="14" rx="2" />
+        <rect className="v-glass" x="47" y="4" width="3.5" height="12" rx="1" />
+        <circle className="v-light" cx="58" cy="5" r="1.4" /><circle className="v-light" cx="58" cy="15" r="1.4" />
+        <rect className="v-tail" x="0.8" y="3.5" width="1.6" height="3" /><rect className="v-tail" x="0.8" y="13.5" width="1.6" height="3" />
+      </>}
+    </g></svg>
+  </span>
+}
+
+const TREES = [[1, 71, 9], [6, 86, 6], [70, 70, 7], [79, 79, 10], [90, 68, 7], [89, 87, 7], [71, 87, 5]]
+const LAMPS = [[9, 'top'], [33, 'top'], [66, 'top'], [96, 'top'], [25, 'bottom'], [52, 'bottom'], [78, 'bottom']] as const
 
 const reduceMotion = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false } }
 
@@ -54,11 +167,8 @@ function PlanBuilding({ site, open, active, known, language, onFocus }: { site: 
   return <a className={`lp-plot lp-plot--${site.kind}${active ? ' is-active' : ''}${lit ? ' has-open' : ''}`} href="/rooms"
     aria-label={`${site.label}: ${status}`} onMouseEnter={onFocus} onFocus={onFocus}
     style={{ left: `${site.x}%`, top: `${site.y}%`, width: `${site.w}%`, height: `${site.h}%` } as CSSProperties}>
-    <span className="lp-plot-windows" aria-hidden="true" style={{ gridTemplateColumns: `repeat(${site.cols}, 1fr)` } as CSSProperties}>
-      {Array.from({ length: site.spaces }, (_, index) => <i key={index} className={index < lit ? 'is-lit' : ''} style={{ animationDelay: `${(index % 4) * 0.4}s` } as CSSProperties} />)}
-    </span>
-    <span className="lp-plot-name">{site.label}</span>
-    <span className={`lp-plot-status${lit ? ' is-open' : ''}`}>{status}</span>
+    <span className="lp-plot-tag" aria-hidden="true"><span className="lp-plot-name">{site.label}</span><span className={`lp-plot-status${lit ? ' is-open' : ''}`}>{status}</span></span>
+    <Facade site={site} lit={lit} />
   </a>
 }
 
@@ -163,9 +273,15 @@ export function LandingPage() {
           {unavailable && <p className="lp-note">{tr('The live board is not connected right now. Message us and we will tell you what is open.', 'Dili konektado karon ang live nga board. Mensahe mi ug among isulti kung unsay bakante.')}</p>}
         </div>
         <div className="lp-plan-paper">
-          <div className="lp-plan" role="group" aria-label={tr('Site plan on B. Zubiri St. Glowing windows are spaces open now. Choose a home to see rooms.', 'Plano sa B. Zubiri St. Ang nagsiga nga bintana bakante karon.')}>
-            <span className="lp-plan-road lp-plan-road--main" aria-hidden="true"><b>B. ZUBIRI ST.</b><em className="lp-car" /><em className="lp-car lp-car--two" /></span>
-            <span className="lp-plan-road lp-plan-road--side" aria-hidden="true" />
+          <div className="lp-plan" role="group" aria-label={tr('Site plan on B. Zubiri St and Mariano Abella St. Glowing windows are spaces open now. Choose a home to see rooms.', 'Plano sa B. Zubiri St ug Mariano Abella St. Ang nagsiga nga bintana bakante karon. Pilia ang balay aron makita ang kwarto.')}>
+            <span className="lp-plan-road lp-plan-road--main" aria-hidden="true"><b>B. ZUBIRI ST.</b></span>
+            <span className="lp-plan-road lp-plan-road--side" aria-hidden="true"><b><span className="lp-road-long">MARIANO ABELLA ST.</span><span className="lp-road-short">M. ABELLA ST.</span></b></span>
+            {LAMPS.map(([left, side]) => <span key={`${left}${side}`} className={`lp-lamp lp-lamp--${side}`} style={{ left: `${left}%` } as CSSProperties} aria-hidden="true" />)}
+            {TREES.map(([left, top, size]) => <svg key={`${left}:${top}`} className="lp-tree" viewBox="0 0 40 40" style={{ left: `${left}%`, top: `${top}%`, width: `${size}%` } as CSSProperties} aria-hidden="true" focusable="false">
+              <circle className="lp-tree-shadow" cx="23" cy="24" r="16" /><circle className="lp-tree-crown" cx="20" cy="20" r="16" />
+              <circle className="lp-tree-leaf" cx="14" cy="15" r="7" /><circle className="lp-tree-leaf" cx="25" cy="23" r="6" /><circle className="lp-tree-leaf" cx="15" cy="26" r="5" />
+            </svg>)}
+            {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} />)}
             <span className="lp-compass" aria-hidden="true">N</span>
             {SITE.map(site => <PlanBuilding key={site.label} site={site} open={openByBuilding.get(site.label) ?? 0} known={Boolean(listings)} active={active === site.label} language={language} onFocus={() => setActive(site.label)} />)}
           </div>
@@ -216,6 +332,7 @@ export function LandingPage() {
             <circle className="lp-sketch-x" cx="214" cy="186" r="15" />
           </svg>
           <span className="lp-sketch-label lp-sketch-label--street">B. Zubiri St</span>
+          <span className="lp-sketch-label lp-sketch-label--side">Mariano Abella St</span>
           <span className="lp-sketch-label lp-sketch-label--here">{tr('we are here', 'ari mi')}</span>
         </div>
         <div>
