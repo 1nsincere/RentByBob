@@ -63,7 +63,7 @@ export function TenantDirectory({ propertyId, tenants: allTenants, renterLinks, 
   return <section className="card directory-card" aria-labelledby="tenant-records-heading">
     <div className="section-heading">
       <div><p className="eyebrow">{tr('PEOPLE AND BUSINESSES', 'MGA TAWO UG NEGOSYO')}</p><h2 id="tenant-records-heading">{t.tenantDirectory}</h2></div>
-      <div className="directory-heading-actions"><span className="record-count">{tenants.length} {tr('records', 'ka rekord')}</span><Button className="primary" onClick={addTenant}>{tr('Add tenant', 'Idugang ang nag-abang')}</Button></div>
+      <div className="directory-heading-actions"><span className="record-count">{tenants.length} {tr(tenants.length === 1 ? 'record' : 'records', 'ka rekord')}</span><Button className="primary" onClick={addTenant}>{tr('Add tenant', 'Idugang ang nag-abang')}</Button></div>
     </div>
     <p>{tr('Find tenants, see their room, and open their payments.', 'Pangitaa ang nag-abang, tan-awa ang ilang kwarto, ug ablihi ang ilang bayad.')}</p>
     <div ref={noticeRef} tabIndex={-1}>{notice && <p role={notice.error ? 'alert' : 'status'} className={`notice${notice.error ? ' notice--error' : ''}`}>{notice.text}</p>}</div>
@@ -81,7 +81,7 @@ export function TenantDirectory({ propertyId, tenants: allTenants, renterLinks, 
         <div><label htmlFor="tenant-sort">{tr('Sort by', 'Han-ay pinaagi sa')}</label>
           <select id="tenant-sort" value={sort} onChange={event => setSort(event.target.value === 'room' ? 'room' : 'name')}><option value="name">{tr('Name A–Z', 'Ngalan A–Z')}</option><option value="room">{tr('Building and room', 'Bilding ug kwarto')}</option></select></div>
       </div>
-      <p className="field-help" aria-live="polite">{tr('Showing', 'Nagpakita og')} {visible.length} {tr('of', 'gikan sa')} {tenants.length} {tr('records', 'ka rekord')}.</p>
+      <p className="field-help" aria-live="polite">{tr('Showing', 'Nagpakita og')} {visible.length} {tr('of', 'gikan sa')} {tenants.length} {tr(tenants.length === 1 ? 'record' : 'records', 'ka rekord')}.</p>
     </>}
     {visible.length > 0 && <ul className="records tenant-records tenant-records--cards">
       {visible.map(tenant => {

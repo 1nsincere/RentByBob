@@ -1149,7 +1149,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
 .inquiry-alert p { margin: 0; }
 .renter-link { display: block; margin-top: 0.15rem; color: var(--text-secondary); }
 .renter-link--linked { color: var(--success); font-weight: 650; }
-.renter-link--linked::before { content: "¹3  "; }
+.renter-link--linked::before { content: "✓ "; }
 .renter-security { max-width: 40rem; margin-top: 1.25rem; }
 .renter-security h2 { margin-bottom: 0.25rem; }
 .renter-security-actions { justify-content: flex-start; margin-top: 1rem; }
@@ -1506,3 +1506,7 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
 .doc-date { white-space: nowrap; }
 .doc-code { overflow-wrap: anywhere; }
 .room-listings .listing-row { border: 1px solid var(--border); border-radius: .9rem; background: var(--surface); box-shadow: var(--shadow-card); }
+/* Tenant cards: a little wider so actions sit neatly; action labels stay on one line. */
+.tenant-records--cards { grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); }
+.tenant-card-actions .tenant-card-action { white-space: nowrap; padding-inline: .9rem; font-size: .92rem; }
+@media (max-width: 40rem) { .tenant-card-actions .tenant-card-action { white-space: normal; } }

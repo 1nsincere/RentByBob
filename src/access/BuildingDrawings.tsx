@@ -3,7 +3,11 @@ import { type Language } from '../i18n'
 
 // Building drawings shared by the fictional preview and the real property map. No preview data is imported here.
 export const isRentalRoom = (room: Room) => room.kind === 'Room'
-const spaceShort = (room: Room) => room.kind === 'Room' ? room.label.replace(/^Room\s*/i, '') : room.label.length > 9 ? `${room.label.slice(0, 8)}…` : room.label
+// Door labels must fit under one door: drop a leading "Room" and shorten long names (full names are on the room cards).
+const spaceShort = (room: Room) => {
+  const label = room.kind === 'Room' ? room.label.replace(/^Room\s*/i, '') : room.label
+  return label.length > 7 ? `${label.slice(0, 6)}…` : label
+}
 
 // Map/list thumbnail: one band per floor (up to 4) with a window per space, so the icon tracks the entered layout.
 export function BuildingArt({ building }: { building: Building }) {
