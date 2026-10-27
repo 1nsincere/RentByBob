@@ -1,3 +1,7 @@
+## Renter payment reports - 27 Oct 2026
+
+Migration `202610270012_renter_payment_reports.sql` adds `public.renter_payment_reports` (id, property_id, agreement_id, reported_by, amount `numeric(14,2)`, paid_on date, paid_to `Bob|James|Other`, note ≤300, status `new|recorded|dismissed`, handled_by/at, handled_note, cash_id → `cash_records`, created_at). Checks: handled fields set exactly when not `new`; `recorded` needs `cash_id`; `dismissed` needs a note. Functions: `report_rent_payment`, `read_my_payment_reports`, `read_payment_reports`, `resolve_payment_report`. Reports are excluded from every balance; only confirmed cash allocations change balances. Evidence: `tests/renter-payment-reports-database.test.ts`.
+
 ## One-step tenant registration - 26 Oct 2026
 
 Migration `202610270004_register_tenant.sql` adds `public.register_tenant(property, tenant_id, name, kind, agreement_id, unit_id, move_in, rent)`, a SECURITY DEFINER wrapper with an empty search path, executable by `authenticated` only. It calls `create_tenant` and, when a unit is given, `create_rental_agreement` in the same transaction. All existing checks apply unchanged: staff MFA, an active rentable room (not the shared gym), no overlapping agreement, positive exact rent, and idempotent IDs (a retry with the same IDs returns without duplicates). A unit without move-in date, rent or agreement ID is refused. No new tables; no occupant data. Evidence: `tests/register-tenant-database.test.ts`.

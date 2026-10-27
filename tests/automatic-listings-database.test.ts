@@ -51,8 +51,8 @@ test('automatic listing shows vacant rooms, hides occupied or staff-hidden ones,
   await as(owner)
   await db.query('select public.set_auto_listing($1,true)', [prop])
   const all = await names()
-  assert.equal(all.length, 29, 'every rentable room is shown automatically (30 spaces minus the shared gym)')
-  assert.ok(all.includes("Bob's house Room 01") && !all.some((n: string) => n.includes('Gym')))
+  assert.equal(all.length, 25, 'every rentable room is shown automatically (30 spaces minus the shared gym and the 4 private commercial spaces)')
+  assert.ok(all.includes("Bob's house Room 01") && !all.some((n: string) => n.includes('Gym') || n.startsWith('Store') || n.startsWith('Yamaha')))
   assert.equal((await publicRooms()).find((r: any) => r.id === room1).rent, null, 'no asking rent: shown as "Ask for the price"')
 
   // Assigning a tenant (now or for a future move-in) hides the room at once.
@@ -80,6 +80,10 @@ test('automatic listing shows vacant rooms, hides occupied or staff-hidden ones,
   await as(clerk)
   await assert.rejects(db.query('select public.set_room_listing($1,$2,true,0,null)', [prop, room1]), /positive monthly rent/)
   await assert.rejects(db.query('select public.set_room_listing($1,$2,true,null,null)', [prop, gym]), /rentable room/)
+  // Stores and the Yamaha space are private negotiations: they can never be listed publicly (202610270011).
+  const store = await unit('Store 1', 'Store 1').catch(() => null) ?? (await db.query<any>("select u.id from public.units u where u.kind = 'commercial' limit 1")).rows[0].id
+  await as(clerk)
+  await assert.rejects(db.query('select public.set_room_listing($1,$2,true,3000,null)', [prop, store]), /rentable room/)
 
   // Turning automatic listing off leaves only rooms staff listed explicitly.
   await as(owner)

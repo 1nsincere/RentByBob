@@ -52,8 +52,8 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
 
   await t.test('every application table has RLS and anonymous access is denied', async () => {
     const rows = (await db.query<{ relrowsecurity: boolean }>("select relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'")).rows
-    // 21 includes cash_reversals (202610270001), room_listings and rental_inquiries (202610270002); 22 adds agreement_room_changes (202610270009); every table must still have RLS.
-    assert.equal(rows.length, 22)
+    // 21 includes cash_reversals (202610270001), room_listings and rental_inquiries (202610270002); 22 adds agreement_room_changes (202610270009); 23 adds renter_payment_reports (202610270012); every table must still have RLS.
+    assert.equal(rows.length, 23)
     assert.ok(rows.every(r => r.relrowsecurity))
     await db.exec('set role anon')
     await denied('select * from public.tenants')
@@ -145,8 +145,8 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     `)
     // 42 adds read_renter_account (202610260001), reverse_rent_cash and end_rental_agreement (202610270001), six
     // public-listing functions (202610270002) and setup_property_from_sketch (202610270003). Update only after review.
-    // 43 adds register_tenant (202610270004); 48 adds the five trusted-device functions (202610270007); 49 adds set_auto_listing (202610270008); 55 adds automatic rent, room change and remove tenant (202610270009); 59 adds advance credit (202610270010).
-    assert.equal(result.rows.length, 59)
+    // 43 adds register_tenant (202610270004); 48 adds the five trusted-device functions (202610270007); 49 adds set_auto_listing (202610270008); 55 adds automatic rent, room change and remove tenant (202610270009); 59 adds advance credit (202610270010); 64 adds renter payment reports (202610270012).
+    assert.equal(result.rows.length, 64)
     // The only reviewed anonymous entry points: read listed rooms and leave an inquiry (202610270002).
     const anonymousAllowed = new Set(['read_public_listings', 'submit_rental_inquiry'])
     for (const fn of result.rows) {

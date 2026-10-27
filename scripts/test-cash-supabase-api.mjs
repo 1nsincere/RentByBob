@@ -1116,6 +1116,30 @@ if (process.argv[2] === 'create-users') {
     assert.equal(await renterPage.getByRole('heading', { name: 'Staff security check' }).count(), 0, 'Renters must not be asked for staff MFA')
     assert.ok(await renterPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
 
+    // Report a payment (202610270012): saved as a notice only; the balance stays the same until staff record and confirm cash.
+    const reportCard = renterPage.locator('.renter-report').first()
+    await reportCard.getByRole('button', { name: 'Report a payment', exact: true }).click()
+    await reportCard.getByLabel('Amount paid (PHP)', { exact: true }).fill('123.45')
+    await reportCard.getByLabel('Who received it?', { exact: true }).selectOption('James')
+    await reportCard.getByLabel('Note (optional)', { exact: true }).fill('Fictional live report')
+    await reportCard.getByRole('button', { name: 'Review report', exact: true }).click()
+    await expect(reportCard.locator('.renter-report-review')).toContainText('₱123.45 paid to James')
+    await reportCard.getByRole('button', { name: 'Send report', exact: true }).click()
+    await reportCard.getByRole('status').filter({ hasText: 'Report sent.' }).waitFor()
+    await expect(reportCard.locator('.renter-report-list li').first()).toContainText('Waiting for the property to check')
+    await expect(renterPage.locator('.renter-balance-card strong')).toHaveText(`₱${BigInt(whole).toLocaleString('en-PH')}.${fraction}`)
+    const liveReports = await rpc('read_payment_reports', { p_property_id: property }, clerk)
+    const liveReport = liveReports.data.find(row => row.note === 'Fictional live report')
+    assert.ok(liveReport && liveReport.amount === '123.45' && liveReport.paid_to === 'James' && liveReport.status === 'new', 'Staff must see the renter report')
+    assert.equal((await rpc('read_rent_workspace', { p_property_id: property }, owner)).data.agreements.find(row => row.id === agreementId).balance, staffBalance, 'A renter report must not change the balance')
+    assert.equal((await rpc('read_payment_reports', { p_property_id: property }, otherSession.access_token)).response.ok, false, 'Renters must not read the staff report list')
+    assert.equal((await rpc('resolve_payment_report', { p_property_id: property, p_report_id: liveReport.id, p_action: 'dismissed', p_cash_id: null, p_note: 'Fictional' }, otherSession.access_token)).response.ok, false, 'Renters must not handle reports')
+    assert.ok((await rpc('resolve_payment_report', { p_property_id: property, p_report_id: liveReport.id, p_action: 'dismissed', p_cash_id: null, p_note: 'Fictional: no cash received' }, clerk)).response.ok, 'Clerk could not mark the report not received')
+    await renterPage.reload()
+    await renterPage.getByRole('heading', { name: /^Hello, / }).waitFor({ timeout: 30000 })
+    await expect(renterPage.locator('.renter-report-list li').first()).toContainText('Not received: Fictional: no cash received')
+    pass('Renter reports a payment in the browser without MFA; it is a notice only (balance unchanged), staff see and handle it, and the renter sees the outcome')
+
     // Password change requires the current password; a wrong one changes nothing.
     const newRenterPassword = `${password}-Renter2`
     await renterPage.getByRole('button', { name: 'Change password', exact: true }).click()

@@ -38,7 +38,10 @@ export function RoomListingsManager({ propertyId, owner = false, language = 'en'
       setBuildings(b.data); setUnits(u.data)
       setListings(data.data.listings as Listing[]); setInquiries(data.data.inquiries as Inquiry[])
       setRooms((data.data.rooms ?? []) as RoomState[]); setAutoList(Boolean(data.data.auto_list_vacant))
-      setActiveBuilding(previous => b.data.some(item => item.id === previous) ? previous : b.data[0]?.id ?? '')
+      // Default to the first building that has listable spaces (commercial spaces are private and never listed).
+      const listable = (data.data.rooms ?? []) as RoomState[]
+      const firstListable = b.data.find(item => listable.some(room => (u.data as Unit[]).find(unit => unit.id === room.unit_id)?.building_id === item.id))?.id ?? b.data[0]?.id ?? ''
+      setActiveBuilding(previous => listable.some(room => (u.data as Unit[]).find(unit => unit.id === room.unit_id)?.building_id === previous) ? previous : firstListable)
       setState('ready')
     } catch { setState('failed') }
   }, [propertyId])
@@ -74,7 +77,7 @@ export function RoomListingsManager({ propertyId, owner = false, language = 'en'
             : <span className={`status ${autoList ? 'status--ready' : ''}`}>{autoList ? tr('On', 'On') : tr('Off', 'Off')}</span>}
         </section>
         <div className="public-building-tabs staff-building-tabs" role="group" aria-label={tr('Buildings', 'Mga bilding')}>
-          {buildings.map(item => { const count = rooms.filter(room => units.find(unit => unit.id === room.unit_id)?.building_id === item.id && room.publicly_available).length
+          {buildings.filter(item => rooms.some(room => units.find(unit => unit.id === room.unit_id)?.building_id === item.id)).map(item => { const count = rooms.filter(room => units.find(unit => unit.id === room.unit_id)?.building_id === item.id && room.publicly_available).length
             return <button key={item.id} type="button" className="public-building-tab" aria-pressed={item.id === activeBuilding} onClick={() => setActiveBuilding(item.id)}><strong>{item.label}</strong><span>{count} {tr('shown to the public', 'makita sa publiko')}</span></button> })}
         </div>
         <ul className="listing-rows">{units.filter(unit => unit.building_id === activeBuilding && rooms.some(room => room.unit_id === unit.id)).map(unit => {

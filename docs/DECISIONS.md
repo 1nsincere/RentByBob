@@ -1,3 +1,8 @@
+## Renter payment reports and private commercial spaces - 27 Oct 2026
+
+- **Report a payment (owner request):** renters may tell the property they paid in person. A report is only a notice: it never reduces a balance and is not pending cash. Staff either record the cash through the normal flow (pending until the designated verifier confirms) and link it, or mark the report not received with a reason the renter sees. Collector choices: Bob, James, someone else. No online payment or GCash (assistant default: unchanged "pay your collector in person" rule). Limits chosen by the assistant: date within the last 90 days and not in the future; 5 waiting reports per room; 10 per person per day; reports older than 180 days drop off the renter list.
+- **Stores and Yamaha are never public (owner decision):** commercial spaces cannot be listed, inquired about or auto-listed.
+
 ## Billing automation, advance payments, room changes, removal - 27 Oct 2026 (owner decisions)
 
 - **Automatic monthly rent:** on the 1st of each month (Philippine time) every current agreement gets that month's rent at its agreed amount, due on its usual anniversary day; never twice; nothing after a move-out month. Owner switch per property (off until turned on; turning it on posts the current month at once). Hourly `pg_cron` job where available, plus a catch-up whenever staff open Payments. Charges are audited under the owner who turned it on.

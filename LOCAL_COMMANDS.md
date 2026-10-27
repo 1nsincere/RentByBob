@@ -58,7 +58,7 @@ Stop the app first (Ctrl + C), then:
 npx.cmd supabase db push --local
 ```
 
-This applies any new files in `supabase/migrations`. To see which ones are applied:
+This applies any new files in `supabase/migrations` (as of 27 Oct 2026 the newest is `202610270012_renter_payment_reports.sql`). To see which ones are applied:
 
 ```powershell
 npx.cmd supabase migration list --local

@@ -1,3 +1,7 @@
+## Renter payment reports - 27 Oct 2026
+
+`renter_payment_reports` has RLS with a staff-only read policy; renters reach only their own rows through `read_my_payment_reports()`, which re-checks an active, unrevoked contact link and an unarchived tenant. `report_rent_payment` is SECURITY DEFINER (`search_path=''`), allowed only for the agreement's linked renter, idempotent by request id, rate-limited (5 waiting per room, 10 per person per day), date-bounded, and audited. Staff functions go through `private.cash_lock` (staff MFA or a trusted device); recording requires an existing cash record of the same agreement and property, so a report can never create or settle money on its own. Grants: `authenticated` only; anonymous calls are denied (PGlite and live tests).
+
 ## Sign-in and privilege hardening - 27 Oct 2026
 
 User request: tighten security so attackers cannot get in easily.

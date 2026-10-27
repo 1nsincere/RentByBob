@@ -1,5 +1,19 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Renter "Report a payment", stores kept private, boarding-house palette, landing redesign - 27 Oct 2026
+
+**Report a payment (user request):** migration `202610270012_renter_payment_reports.sql`. A linked renter (no staff MFA) tells the property they paid Bob, James or someone else: amount, date paid (today or the last 90 days), optional note, then a review step. A report is a **notice only**: it never changes a balance and is not pending cash. Staff see "Renters say they paid" in What needs attention and on the account; "Record this cash" pre-fills the normal cash entry and links the saved (still pending, verifier-confirmed) cash to the report; "Not received" needs a reason the renter sees. Retries reuse one request id; at most 5 waiting reports per room and 10 per person per day; revoked renter links lose access; every report and outcome is audited. The renter footnote now mentions reporting.
+
+**Stores and Yamaha private (user request):** `202610270011_commercial_spaces_private.sql` excludes commercial spaces from public listings, inquiries and automatic listing, and removes existing commercial listings. Landing address: 100A B. Zubiri St, Cebu City, 6000 Cebu.
+
+**Look:** palette matched to the buildings (leaf green, warm yellow, sky-green tints, cream page; green sidebar) across staff, renter, landing and PDF; yellow house favicon. Landing redesigned as a hand-made notice-board style page (hanging sign, live blueprint site plan with lit available rooms refreshed every 30 s, flyer with tear-off tabs, sketch map).
+
+**Validation:** `npm test` 96/96 (new PGlite renter report test with a mutation check: removing the ownership guard fails it; new model test). Offline 10/10 (axe: 10 screens, light and dark). Live disposable suite exit 0, 51 checks (new: renter reports in the browser, balance unchanged, staff see and dismiss it, renter sees the reason; renter cannot read or handle the staff list). Performance LCP ~1.8 s, CLS 0; CSP and artifact checks pass.
+
+**Limitations:** no photo/receipt upload and no GCash or online payment (the rule is still "pay your collector in person"); a "recorded" report shows the cash as recorded, and the balance changes only when the verifier confirms it.
+
+**Owner next step:** stop the app, `npx.cmd supabase db push --local` (applies everything up to 202610270012), then `npx.cmd supabase stop` and `npx.cmd supabase start`. Replace the CONTACT placeholders in `src/landing/LandingPage.tsx` before going public.
+
 ## Landing page and Philippine time - 27 Oct 2026
 
 Public landing page at `/` for visitors without an open session (`src/landing/`): editorial hero, interactive street of the property whose lit windows are rooms open now (from the public listing function only), live counts, how it works, tenant panel, location (B. Zubiri St., Brgy. Labangon, Cebu City) with Google Maps link, EN/CEB, night mode, reduced-motion support. Contact phone and Messenger are placeholders in `CONTACT` (replace before going public). Sign-in moved to `/sign-in` (served on Pages via `_redirects`); `robots.txt` allows `/` and `/rooms`. Dashboard shows a live Philippine clock and a month calendar marking days with unpaid rent due. Validation: unit 93/93, offline 10/10 (landing scanned in light and dark), live suite exit 0, CSP and artifact checks pass; landing loads in ~1.5 s LCP with CLS 0 on a simulated slow phone.
