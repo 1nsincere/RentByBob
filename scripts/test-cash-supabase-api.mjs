@@ -209,6 +209,19 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await collections.getByText('Not counted as paid.', { exact: false }).waitFor()
     assert.equal(await page.locator('.collections-unavailable').count(), 0, 'Collection figures must load for MFA staff')
     pass('Owner dashboard shows live collection figures with unconfirmed money kept separate')
+    // Late rent follow-up: list (or empty state) from the same snapshot; a reminder can be copied or shown for selection.
+    const followUp = page.locator('.followup-card')
+    await expect(followUp.getByRole('heading', { name: /^Late rent \(\d+\)$/ })).toBeVisible()
+    await expect(followUp.getByRole('heading', { name: /^Due in the next 7 days \(\d+\)$/ })).toBeVisible()
+    const lateRows = followUp.locator('.followup-list > li')
+    if (await lateRows.count()) {
+      await lateRows.first().getByRole('button', { name: /^Copy reminder for / }).click()
+      await expect(lateRows.first().locator('.followup-copied')).toContainText(/Reminder copied|Copying is blocked/)
+      if (await lateRows.first().locator('textarea').count()) await expect(lateRows.first().locator('textarea')).toHaveValue(/^Hi .*RentByBob/)
+    } else {
+      await expect(followUp.locator('.empty-state')).toContainText('No late rent.')
+    }
+    pass('Dashboard late-rent follow-up loads for MFA staff with a copyable reminder or an empty state')
     await expect(page.locator('.inquiry-alert')).toContainText('1 new inquiry')
     pass('Dashboard shows unanswered public inquiries')
     await axeScan(page, 'dashboard')

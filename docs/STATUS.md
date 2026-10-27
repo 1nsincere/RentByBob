@@ -1,5 +1,13 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Late rent follow-up on the dashboard - 27 Oct 2026
+
+Dashboard now lists **Late rent**: each renter with recorded months whose due date has passed and that confirmed payments have not fully covered, with amount, months, days late (oldest month), any pending cash shown beside it (never subtracted), "Copy reminder" (polite EN/CEB text with only that renter's own figures, for SMS/Messenger; if the browser blocks copying, the text is shown to select) and "Open account" (opens Payments on that tenant). **Due in the next 7 days** lists upcoming unpaid months. An alert appears when renters have reported payments. No fees, grace periods or automatic messages: staff send reminders themselves. `docs/ADMIN_CAPABILITIES.md` rewritten to match the current app.
+
+**Validation:** `npm test` 98/98 (new `rent-followup-model` test: past-due only, partial remaining, pending kept separate, moved-out still listed, 7-day boundary inclusive, reminder contains no other renter's data). Live disposable suite exit 0, 52 checks (late row found, reminder copied; dashboard axe scan clean). Release build and artifact check pass.
+
+**Next:** owner applies the pending migrations and enters current tenants; then a one-month parallel run against the paper record.
+
 ## Renter "Report a payment", stores kept private, boarding-house palette, landing redesign - 27 Oct 2026
 
 **Report a payment (user request):** migration `202610270012_renter_payment_reports.sql`. A linked renter (no staff MFA) tells the property they paid Bob, James or someone else: amount, date paid (today or the last 90 days), optional note, then a review step. A report is a **notice only**: it never changes a balance and is not pending cash. Staff see "Renters say they paid" in What needs attention and on the account; "Record this cash" pre-fills the normal cash entry and links the saved (still pending, verifier-confirmed) cash to the report; "Not received" needs a reason the renter sees. Retries reuse one request id; at most 5 waiting reports per room and 10 per person per day; revoked renter links lose access; every report and outcome is audited. The renter footnote now mentions reporting.
