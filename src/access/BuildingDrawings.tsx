@@ -35,19 +35,30 @@ export function BuildingArt({ building }: { building: Building }) {
 // One door per space, wrapping into rows; width grows with the busiest floor.
 // Occupancy is supplied by the caller: the fictional preview store, or current agreements on the real map.
 // With onPick, vacant doors are clickable for mouse/touch; pickers must also offer room buttons for keyboard users.
-type FacadeItem = { type: 'door'; room: Room; window: boolean; inside: boolean } | { type: 'stairs'; inside: boolean } | { type: 'gate' }
-const DOOR_W = 60, WINDOW_W = 64, GAP = 26, STAIRS_W = 96, GATE_W = 150
-const itemWidth = (item: FacadeItem) => item.type === 'door' ? DOOR_W + (item.window ? WINDOW_W + 14 : 0) : item.type === 'stairs' ? STAIRS_W : GATE_W
+// Building 2 follows the owner's second sketch: a window just left of every upstairs door, the last room (Room 08) in
+// a wing on the left with its window there, and downstairs the shared space, a door to the stairs, and a hall door
+// leading to the rooms inside (no gate). Other buildings use the Building 1 pattern.
+type Sketch = { windows: 'alternate' | 'all'; windowSide: 'left' | 'right'; ground: 'gate' | 'doors'; wing: boolean }
+const BUILDING_1_SKETCH: Sketch = { windows: 'alternate', windowSide: 'right', ground: 'gate', wing: false }
+const SKETCHES: Record<string, Sketch> = { 'Building 2': { windows: 'all', windowSide: 'left', ground: 'doors', wing: true } }
+const sketchFor = (building: Building) => SKETCHES[building.name] ?? BUILDING_1_SKETCH
+type FacadeItem = { type: 'door'; room: Room; window: boolean; inside: boolean } | { type: 'stairs'; inside: boolean } | { type: 'gate' } | { type: 'entry'; label: 'stairs' | 'hall' }
+const DOOR_W = 60, WINDOW_W = 64, GAP = 26, STAIRS_W = 96, GATE_W = 150, WING_W = 170
+const itemWidth = (item: FacadeItem) => item.type === 'door' ? DOOR_W + (item.window ? WINDOW_W + 14 : 0) : item.type === 'stairs' ? STAIRS_W : item.type === 'gate' ? GATE_W : DOOR_W
 function facadeRows(building: Building, floor: Floor, index: number, perRow: number): FacadeItem[][] {
+  const sketch = sketchFor(building)
   const multi = building.floors.length > 1
   const door = (room: Room, window = false, inside = false): FacadeItem => ({ type: 'door', room, window, inside })
   const hallway = index === 0 && multi && floor.rooms.some(isRentalRoom)
-  const items = index > 0 ? floor.rooms.map((room, i) => door(room, i % 2 === 0)).reverse()
-    : hallway ? [...floor.rooms.filter(room => !isRentalRoom(room)).map(room => door(room)), ...floor.rooms.filter(isRentalRoom).map(room => door(room, false, true))]
-      : floor.rooms.map(room => door(room))
+  const wingRoom = sketch.wing && multi && index === building.floors.length - 1 ? floor.rooms[floor.rooms.length - 1] : undefined
+  const outside = floor.rooms.filter(room => !isRentalRoom(room)).map(room => door(room)), inside = floor.rooms.filter(isRentalRoom).map(room => door(room, false, true))
+  const items: FacadeItem[] = index > 0 ? floor.rooms.map((room, i) => door(room, room !== wingRoom && (sketch.windows === 'all' || i % 2 === 0))).reverse()
+    : hallway && sketch.ground === 'doors' ? [...outside, { type: 'entry', label: 'stairs' }, { type: 'stairs', inside: true }, { type: 'entry', label: 'hall' }, ...inside]
+      : hallway ? [...outside, ...inside]
+        : floor.rooms.map(room => door(room))
   const rows: FacadeItem[][] = []
   for (let i = 0; i < items.length; i += perRow) rows.push(items.slice(i, i + perRow))
-  if (index === 0 && multi && rows.length) rows[rows.length - 1].push({ type: 'stairs', inside: hallway }, { type: 'gate' })
+  if (index === 0 && multi && rows.length && !(hallway && sketch.ground === 'doors')) rows[rows.length - 1].push({ type: 'stairs', inside: hallway }, { type: 'gate' })
   return rows
 }
 const rowWidth = (row: FacadeItem[]) => row.reduce((sum, item) => sum + itemWidth(item), 0) + GAP * Math.max(0, row.length - 1)
@@ -60,7 +71,9 @@ export function BuildingFacade({ building, selectedRoom, language = 'en', isOccu
   const layout = building.floors.map((floor, index) => facadeRows(building, floor, index, perRow))
   const rowsFor = (index: number) => Math.max(1, layout[index].length)
   const wallWidth = Math.max(520, ...layout.flat().map(row => rowWidth(row) + 140))
-  const width = wallWidth + 120, left = 60, right = left + wallWidth, centre = width / 2
+  const sketch = sketchFor(building)
+  const wingW = sketch.wing && building.floors.length > 1 ? WING_W : 0
+  const width = wallWidth + 120 + wingW, left = 60 + wingW, right = left + wallWidth, centre = left + wallWidth / 2
   const roofPeak = 14, wallTop = 104
   let cursor = wallTop
   // Upper floors are drawn above lower ones; the first listed floor sits at ground level.
@@ -80,9 +93,18 @@ export function BuildingFacade({ building, selectedRoom, language = 'en', isOccu
       <linearGradient id={`${uid}-wall`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" className="facade-wall-stop-top" /><stop offset="1" className="facade-wall-stop-bottom" /></linearGradient>
       <linearGradient id={`${uid}-roof`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" className="facade-roof-stop-top" /><stop offset="1" className="facade-roof-stop-bottom" /></linearGradient>
     </defs>
-    <path className="facade-roof-shape" fill={`url(#${uid}-roof)`} d={`M${left - 30} ${wallTop + 10} ${left + 70} ${roofPeak + 18} ${right - 70} ${roofPeak + 18} ${right + 30} ${wallTop + 10}Z`} />
-    {Array.from({ length: Math.floor((wallWidth - 120) / 26) }, (_, i) => <path key={i} className="facade-roof-rib" d={`M${left + 80 + i * 26} ${roofPeak + 22}V${wallTop + 4}`} />)}
+    <path className="facade-roof-shape" fill={`url(#${uid}-roof)`} d={`M${left - wingW - 30} ${wallTop + 10} ${left - wingW + 70} ${roofPeak + 18} ${right - 70} ${roofPeak + 18} ${right + 30} ${wallTop + 10}Z`} />
+    {Array.from({ length: Math.floor((wallWidth + wingW - 120) / 26) }, (_, i) => <path key={i} className="facade-roof-rib" d={`M${left - wingW + 80 + i * 26} ${roofPeak + 22}V${wallTop + 4}`} />)}
     <path className="facade-wall" fill={`url(#${uid}-wall)`} d={`M${left} ${wallTop + 10}H${right}V${wallBottom}H${left}Z`} />
+    {wingW > 0 && (() => {
+      const story = placed.find(item => item.index === building.floors.length - 1)!
+      const wingRoom = story.floor.rooms[story.floor.rooms.length - 1]
+      return <g className="facade-wing">
+        <path className="facade-wall" fill={`url(#${uid}-wall)`} d={`M${left - wingW} ${wallTop + 10}H${left}V${story.top + story.height}H${left - wingW}Z`} />
+        <g className="facade-window" transform={`translate(${left - wingW / 2 - WINDOW_W / 2} ${story.top + storyTop + 10})`}><rect width={WINDOW_W} height={48} rx="4" /><path d={`M${WINDOW_W / 2} 4V44M4 24H${WINDOW_W - 4}`} /></g>
+        {wingRoom && <text className="facade-door-label" x={left - wingW / 2} y={story.top + storyTop + 88} textAnchor="middle">{spaceShort(wingRoom)}</text>}
+      </g>
+    })()}
     {placed.map(({ floor, top, height, index }) => {
       const spaces = floor.rooms
       const upper = index > 0
@@ -96,17 +118,31 @@ export function BuildingFacade({ building, selectedRoom, language = 'en', isOccu
           const y = top + storyTop + rowIndex * rowHeight
           let x = centre - rowWidth(row) / 2
           const placedItems = row.map(item => { const at = x; x += itemWidth(item) + GAP; return { item, x: at } })
-          const inside = placedItems.filter(({ item }) => item.type !== 'gate' && item.inside)
+          // Cut-away sections: each run of neighbouring items that are inside the building.
+          const runs: { x: number; end: number; rooms: boolean }[] = []
+          placedItems.forEach(({ item, x: ix }, i) => {
+            if (!('inside' in item) || !item.inside) return
+            const prev = placedItems[i - 1]?.item, last = runs[runs.length - 1]
+            if (last && prev && 'inside' in prev && prev.inside) { last.end = ix + itemWidth(item); last.rooms ||= item.type === 'door' } else runs.push({ x: ix, end: ix + itemWidth(item), rooms: item.type === 'door' })
+          })
           return <g key={rowIndex}>
-            {inside.length > 0 && <g className="facade-inside">
-              <rect x={inside[0].x - 16} y={y - 22} width={inside[inside.length - 1].x + itemWidth(inside[inside.length - 1].item) - inside[0].x + 26} height={doorHeight + 50} rx="8" />
-              <text x={inside[0].x - 6} y={y - 6}>{tr('Inside, past the gate', 'Sa sulod, lapas sa ganghaan')}</text>
-            </g>}
+            {runs.map(run => <g key={run.x} className="facade-inside">
+              <rect x={run.x - 16} y={y - 22} width={run.end - run.x + 32} height={doorHeight + 50} rx="8" />
+              <text x={run.x - 6} y={y - 6}>{run.rooms ? sketch.ground === 'gate' ? tr('Inside, past the gate', 'Sa sulod, lapas sa ganghaan') : tr('Inside, past the hall door', 'Sa sulod, lapas sa pultahan') : tr('Inside', 'Sa sulod')}</text>
+            </g>)}
             {placedItems.map(({ item, x: ix }) => {
-              if (item.type === 'stairs') return <g key="stairs" className="facade-stairs" transform={`translate(${ix} ${y})`}>
-                <path d={`M${STAIRS_W} ${doorHeight} ${Array.from({ length: 8 }, () => `v-${(doorHeight + 40) / 8} h-${STAIRS_W / 8}`).join(' ')} V${doorHeight} Z`} />
-                <path className="facade-stairs-rail" d={`M${STAIRS_W} ${doorHeight - 28} L6 -62`} />
-                <text className="facade-door-label" x={STAIRS_W / 2} y={doorHeight + 24} textAnchor="middle">{tr('Stairs', 'Hagdan')}</text>
+              // Building 1's stairs rise to the left (towards the gate side rooms); Building 2's rise to the right.
+              if (item.type === 'stairs') return <g key="stairs" className="facade-stairs">
+                <g transform={sketch.ground === 'doors' ? `translate(${ix + STAIRS_W} ${y}) scale(-1 1)` : `translate(${ix} ${y})`}>
+                  <path d={`M${STAIRS_W} ${doorHeight} ${Array.from({ length: 8 }, () => `v-${(doorHeight + 40) / 8} h-${STAIRS_W / 8}`).join(' ')} V${doorHeight} Z`} />
+                  <path className="facade-stairs-rail" d={`M${STAIRS_W} ${doorHeight - 28} L6 -62`} />
+                </g>
+                <text className="facade-door-label" x={ix + STAIRS_W / 2} y={y + doorHeight + 24} textAnchor="middle">{tr('Stairs', 'Hagdan')}</text>
+              </g>
+              if (item.type === 'entry') return <g key={`entry-${item.label}`} className="facade-entry" transform={`translate(${ix} ${y})`}>
+                <rect width={doorWidth} height={doorHeight} rx="9" />
+                <circle cx={doorWidth - 15} cy={doorHeight * 0.58} r="3" />
+                <text className="facade-door-label" x={doorWidth / 2} y={doorHeight + 24} textAnchor="middle">{item.label === 'stairs' ? tr('Door', 'Pultahan') : tr('Hall', 'Pasilyo')}</text>
               </g>
               if (item.type === 'gate') return <g key="gate" className="facade-gate" transform={`translate(${ix} ${y})`}>
                 <rect y={doorHeight - 120} width={GATE_W} height={120} rx="6" />
@@ -118,8 +154,10 @@ export function BuildingFacade({ building, selectedRoom, language = 'en', isOccu
               const kind = isRentalRoom(room) ? 'room' : room.kind === 'Shared space' ? 'shared' : 'unit'
               // Clickable: any door when onPick is given (unless pickable says no). Glowing (is-pickable): only doors a picker offers.
               const canPick = Boolean(onPick && (pickable ? pickable(room.id) : true)), glow = Boolean(onPick && pickable?.(room.id))
+              const windowFirst = item.window && sketch.windowSide === 'left'
+              const doorX = windowFirst ? ix + WINDOW_W + 14 : ix
               return <g key={room.id}>
-                <g transform={`translate(${ix} ${y})`} onClick={canPick ? () => onPick!(room.id) : undefined}
+                <g transform={`translate(${doorX} ${y})`} onClick={canPick ? () => onPick!(room.id) : undefined}
                   className={`facade-room-door facade-space--${kind} ${isOccupied(room.id) ? 'is-occupied' : ''} ${room.id === selectedRoom ? 'is-selected' : ''} ${canPick ? 'is-clickable' : ''} ${glow ? 'is-pickable' : ''}`}>
                   {kind === 'unit' ? <path className="facade-door-frame" d={`M0 ${doorHeight}V${doorWidth / 2}A${doorWidth / 2} ${doorWidth / 2} 0 0 1 ${doorWidth} ${doorWidth / 2}V${doorHeight}Z`} />
                     : <rect className="facade-door-frame" width={doorWidth} height={doorHeight} rx="9" />}
@@ -133,7 +171,7 @@ export function BuildingFacade({ building, selectedRoom, language = 'en', isOccu
                   </>}
                   <text className="facade-door-label" x={doorWidth / 2} y={doorHeight + 24} textAnchor="middle">{spaceShort(room)}</text>
                 </g>
-                {item.window && <g className="facade-window" transform={`translate(${ix + doorWidth + 14} ${y + 10})`}>
+                {item.window && <g className="facade-window" transform={`translate(${windowFirst ? ix : ix + doorWidth + 14} ${y + 10})`}>
                   <rect width={WINDOW_W} height={48} rx="4" />
                   <path d={`M${WINDOW_W / 2} 4V44M4 24H${WINDOW_W - 4}`} />
                 </g>}

@@ -35,3 +35,7 @@
 .fx-gate-bar { stroke: #6f7f77; stroke-width: .8; }
 .fx-gate-split { stroke: #1c2621; stroke-width: 1.2; }
 .fx-divider { stroke: #c9ab52; stroke-width: 1; }
+/* Building 2 sketch: the gym's double doors; rooms a page lets you pick (pointer) and the room under focus. */
+.fx-door-double { fill: #2f5a48; stroke: #24503f; stroke-width: .8; }
+.fx-pick { cursor: pointer; }
+.fx-pick:hover .fx-door-room.is-lit, .fx-pick:hover .fx-glass.is-lit, .fx-door-room.is-focus, .fx-glass.is-focus { fill: #fff2b0; filter: drop-shadow(0 0 3px #fff2b0) drop-shadow(0 0 9px rgb(255 191 31 / 95%)); }

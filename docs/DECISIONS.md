@@ -1,7 +1,8 @@
 ## Building drawings follow the owner's sketch - 27 Oct 2026
 
 - **Building 1 (owner sketch):** upstairs rooms on a balcony walkway, numbered from the stairs end, windows beside every other door; apartment with its own arched street door; Rooms 01-03 inside the gate along the hallway with the stairs. Used on the landing page and on every staff front view and room picker.
-- **Other buildings (assistant assumption until sketched):** Building 2 like Building 1 with the gym in place of the apartment; Bob's house rooms drawn as windows; House 1 a single door and window.
+- **Building 2 (owner sketch, 27 Oct 2026):** windows left of upstairs doors; Room 08 in a left wing; gym double doors, a door to the stairs, and a hall door to Rooms 01-03 inside.
+- **Other buildings (assistant assumption until sketched):** Bob's house rooms drawn as windows; House 1 a single door and window.
 
 ## Renter payment reports and private commercial spaces - 27 Oct 2026
 

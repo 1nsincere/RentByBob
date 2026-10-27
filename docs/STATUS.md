@@ -1,5 +1,15 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Building 2 sketch, landing "at a glance" strip, /rooms redesign - 27 Oct 2026
+
+**Building 2 (owner sketch):** upstairs Rooms 04-07 each have a window just left of the door; Room 08 sits in a wing on the left (window in the wing, door at the end of the walkway); downstairs the gym's double doors, a door to the stairs (stairs shown inside), and a hall door leading to Rooms 01-03 inside. Drawn that way on the landing page, the /rooms page and the staff front view (`SKETCHES` in `BuildingDrawings.tsx`; Building 1 stays the default pattern).
+
+**Landing:** the scrolling yellow ticker is replaced (owner request) by an "at a glance" strip: 4 homes, 25 rooms and spaces, live "open tonight", 2 languages; numbers count up once when seen (real value always available to screen readers; still under reduced motion).
+
+**/rooms (owner request: new UI and interaction):** landing-style night hero with a live "spaces open right now" count; building tabs drawn with their open rooms lit; the selected building shown large where clicking a lit door or window jumps to and focuses that room's card, and pointing at a card lights its room; cards say where the room is (upstairs on the balcony walk, in the wing, inside past the door, own street door, inside the house); calmer inquiry dialog with a confirmation mark. Keyboard path: tabs (arrow keys) and each card's button. Styles moved to `src/access/public-rooms.css`.
+
+**Validation:** offline 10/10 (public rooms sample: tabs, arrow keys, inquiry, reflow), unit 99/99, live suite exit 0 with 52 checks (visitor inquiry from /rooms, axe on public rooms), performance LCP 2.1 s / CLS 0, CSP and artifact checks pass.
+
 ## Renter view redesign; Payments count in the staff menu - 27 Oct 2026
 
 **Renter view:** a rent statement card first: rent left to pay (large), the oldest unpaid month as "Next due ... in N days" or "... was due ... N days ago" (descriptive only, no fees), a "Report a payment" button that opens and scrolls to the form, and the renter's building drawn with their own room lit. Then monthly rent / advance credit / oldest month facts, the pending-confirmation notice, rent by month with a paid-share bar, confirmed payments as receipt cards, and the Report a payment card beside them (first on narrow screens). The report form has a Details → Review → Sent tracker, quick amounts (rent left, monthly rent), large Bob / James / Someone else choices (radio buttons) and each report shows Sent → Checked → Recorded / Not received. The fictional renter preview now includes the report flow (sample only, kept on screen, nothing sent). New `dueStatus` and `paidPercent` helpers are unit-tested.

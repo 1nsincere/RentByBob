@@ -112,6 +112,27 @@ function Words({ children, start = 0 }: { children: string; start?: number }) {
   return <>{children.split(' ').map((word, index) => <Fragment key={index}>{index > 0 && ' '}<span className="lp-word"><span style={{ '--i': start + index } as CSSProperties}>{word}</span></span></Fragment>)}</>
 }
 
+// A number that counts up once when it scrolls into view (shown at once with reduced motion).
+function CountUp({ value }: { value: number }) {
+  const element = useRef<HTMLSpanElement>(null)
+  const [shown, setShown] = useState(() => matches('(prefers-reduced-motion: reduce)') ? value : 0)
+  useEffect(() => {
+    const node = element.current
+    if (!node || matches('(prefers-reduced-motion: reduce)') || !('IntersectionObserver' in window)) { setShown(value); return }
+    let frame = 0
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return
+      observer.disconnect()
+      const start = performance.now()
+      const step = (now: number) => { const t = Math.min(1, (now - start) / 900); setShown(Math.round(value * (1 - (1 - t) ** 3))); if (t < 1) frame = requestAnimationFrame(step) }
+      frame = requestAnimationFrame(step)
+    }, { threshold: 0.6 })
+    observer.observe(node)
+    return () => { observer.disconnect(); cancelAnimationFrame(frame) }
+  }, [value])
+  return <span ref={element}><span aria-hidden="true">{shown}</span><span className="lp-visually-hidden">{value}</span></span>
+}
+
 // Two split-flap digits (like an old terminal board); a digit flips when the live number changes.
 function SplitFlap({ value, label }: { value: number | null; label: string }) {
   const digits = value === null ? ['–', '–'] : String(Math.min(value, 99)).padStart(2, '0').split('')
@@ -181,11 +202,16 @@ export function LandingPage() {
   }
   const homeFacts: Record<string, [string, string]> = {
     'Building 1': [tr('10 rooms · 2 floors', '10 ka kwarto · 2 ka andana'), tr('Six rooms upstairs on a balcony walk; the apartment, and three rooms inside past the gate.', 'Unom ka kwarto sa taas sa balkonahe; ang apartment, ug tulo ka kwarto sa sulod lapas sa ganghaan.')],
-    'Building 2': [tr('8 rooms · 2 floors', '8 ka kwarto · 2 ka andana'), tr('Built like Building 1, with the gym downstairs.', 'Sama sa Building 1, ug ang gym sa ubos.')],
+    'Building 2': [tr('8 rooms · 2 floors', '8 ka kwarto · 2 ka andana'), tr('Five rooms upstairs, one in its own wing; the gym and three rooms below.', 'Lima ka kwarto sa taas, usa sa kaugalingong pako; ang gym ug tulo ka kwarto sa ubos.')],
     'House 1': [tr('1 whole house', '1 ka tibuok balay'), tr('A house of its own, rented as one.', 'Usa ka balay, abangan isip usa.')],
     "Bob's house": [tr('6 rooms · 2 floors', '6 ka kwarto · 2 ka andana'), tr('Across the road, beside Mariano Abella St.', 'Tabok sa dalan, tupad sa Mariano Abella St.')],
   }
-  const ticker = [tr('Rooms for rent', 'Kwarto nga paabangan'), 'B. Zubiri St', tr('Labangon · Cebu City', 'Labangon · Dakbayan sa Sugbo'), tr('Live vacancy', 'Live nga bakante'), tr('Pay your collector in person', 'Bayad diretso sa kolektor'), 'English · Bisaya']
+  const facts: [number | null, string, string][] = [
+    [SITE.length, tr('homes on one corner', 'ka balay sa usa ka kanto'), tr('B. Zubiri St and Mariano Abella St', 'B. Zubiri St ug Mariano Abella St')],
+    [TOTAL_SPACES, tr('rooms and spaces', 'ka kwarto ug luna'), tr('Boarding rooms, an apartment and a house', 'Boarding nga kwarto, apartment ug balay')],
+    [listings ? totalOpen : null, tr('open tonight', 'bakante karong gabii'), tr('Live from the property records', 'Live gikan sa rekord sa propiedad')],
+    [2, tr('languages', 'ka pinulongan'), tr('English and Bisaya, on every page', 'English ug Bisaya, sa matag panid')],
+  ]
 
   return <div className="lp" ref={root}>
     <div className="lp-progress" aria-hidden="true" />
@@ -229,7 +255,13 @@ export function LandingPage() {
         <a className="lp-scroll-cue" href="#street"><span>{tr('Walk down the street', 'Lakaw sa dalan')}</span><i aria-hidden="true" /></a>
       </section>
 
-      <div className="lp-marquee" aria-hidden="true"><div className="lp-marquee-track">{[0, 1].map(copy => <span key={copy}>{ticker.map(item => <span key={item}>{item}<b>✦</b></span>)}</span>)}</div></div>
+      <section className="lp-facts" aria-label={tr('At a glance', 'Sa usa ka tan-aw')}>
+        <ul>{facts.map(([value, label, line], index) => <li key={index} className="lp-reveal" style={{ '--i': index } as CSSProperties}>
+          <strong>{value === null ? '–' : <CountUp value={value} />}</strong>
+          <span className="lp-facts-label">{label}</span>
+          <span className="lp-facts-line">{line}</span>
+        </li>)}</ul>
+      </section>
 
       <section className="lp-street" id="street" data-scene data-steps="3" aria-labelledby="lp-street-title">
         <div className="lp-street-pin">

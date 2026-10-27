@@ -113,14 +113,16 @@
 .lp-scroll-cue i::after { content: ""; position: absolute; inset: 0; background: var(--amber); animation: lp-drip 2s var(--ease) infinite; }
 @keyframes lp-drip { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
 
-/* Marquee */
-.lp-marquee { position: relative; z-index: 3; overflow: hidden; margin: -.4rem 0; padding: 1.05rem 0; background: var(--amber); color: var(--ink); transform: rotate(-1.2deg) scale(1.02); }
-.lp-marquee-track { display: flex; width: max-content; animation: lp-marquee 38s linear infinite; }
-.lp-marquee-track > span { display: flex; }
-.lp-marquee-track > span > span { display: inline-flex; align-items: center; gap: 1.6rem; padding-right: 1.6rem; font-weight: 900; font-size: clamp(1.3rem, 2.6vw, 2.2rem); letter-spacing: -.03em; text-transform: uppercase; white-space: nowrap; }
-.lp-marquee-track b { font-size: .7em; color: var(--leaf); }
-.lp-marquee:hover .lp-marquee-track { animation-play-state: paused; }
-@keyframes lp-marquee { to { transform: translateX(-50%); } }
+/* At a glance: four facts under the hero (replaced the scrolling ticker band, owner request 27 Oct 2026). */
+.lp-facts { position: relative; z-index: 3; padding: 0 var(--pad); background: #10201a; border-block: 1px solid var(--line-night); }
+.lp-facts ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+.lp-facts li { position: relative; display: grid; align-content: start; gap: .15rem; padding: clamp(1.4rem, 3vw, 2.2rem) clamp(.8rem, 2vw, 1.6rem); border-left: 1px solid var(--line-night); transition-delay: calc(var(--i) * 90ms); }
+.lp-facts li:first-child { border-left: 0; padding-left: 0; }
+.lp-facts li::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--amber); transform: scaleX(0); transform-origin: 0 50%; transition: transform 600ms var(--ease); }
+.lp-facts li:hover::before { transform: scaleX(1); }
+.lp-facts strong { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(2.6rem, 5vw, 4.2rem); line-height: 1; letter-spacing: -.03em; color: var(--amber); font-variant-numeric: tabular-nums; }
+.lp-facts-label { font-weight: 800; font-size: 1.05rem; letter-spacing: -.01em; }
+.lp-facts-line { color: var(--muted-night); font-size: .95rem; }
 
 /* The street (pinned story on wide screens) */
 .lp-street { position: relative; padding: clamp(4rem, 9vw, 7rem) var(--pad); background: radial-gradient(70% 60% at 70% 50%, #163a2b 0%, var(--night) 70%); }
@@ -202,7 +204,7 @@
 
 .lp-skyline .fx-door-room, .lp-skyline .fx-gate, .lp-skyline .fx-inside { fill: #0f1d17; stroke: #22382d; }
 .lp-skyline .fx-door-room.is-lit { fill: #ffbf1f; }
-.lp-skyline .fx-glassdoor { fill: #15251e; }
+.lp-skyline .fx-glassdoor, .lp-skyline .fx-door-double { fill: #15251e; stroke: #22382d; }
 .lp-skyline .fx-gate-bar, .lp-skyline .fx-divider { stroke: #22382d; }
 
 /* Homes gallery (horizontal on wide screens) */
@@ -319,6 +321,9 @@
 }
 
 @media (max-width: 60rem) {
+  .lp-facts ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lp-facts li:nth-child(3) { border-left: 0; padding-left: 0; }
+  .lp-facts li:nth-child(n + 3) { border-top: 1px solid var(--line-night); }
   .lp-hero-foot { grid-template-columns: minmax(0, 1fr); align-items: start; }
   .lp-street-pin, .lp-tenant, .lp-visit-grid { grid-template-columns: minmax(0, 1fr); }
   .lp-street-stage { order: -1; }

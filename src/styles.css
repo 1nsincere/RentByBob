@@ -527,6 +527,8 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .facade-stairs path:first-child { fill: var(--facade-door); stroke: var(--facade-door-frame); stroke-width: 2; }
 .facade-stairs .facade-stairs-rail { fill: none; stroke: var(--facade-door-frame); stroke-width: 3; stroke-linecap: round; }
 .facade-gate rect { fill: var(--facade-door-frame); }
+.facade-entry rect { fill: var(--facade-door); stroke: var(--facade-door-frame); stroke-width: 2.5; stroke-dasharray: 6 4; }
+.facade-entry circle { fill: var(--facade-door-frame); }
 .facade-gate-bar { stroke: var(--facade-door); stroke-width: 2.5; opacity: .55; }
 .facade-gate-split { stroke: var(--facade-door); stroke-width: 3; }
 .building-art-roof { fill: var(--facade-roof-bottom); }
@@ -1321,7 +1323,6 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
 @media (min-width: 72rem) {
   .payment-record-view--with-worklist .payment-worklist-filters { grid-template-columns: minmax(0, 1fr); }
 }
-.public-rooms-shell { min-height: 100vh; }
 .room-listings .segmented-control { margin: 0.5rem 0 1rem; }
 .staff-building-tabs { margin-bottom: 0.85rem; }
 .listing-rows, .inquiry-list { display: grid; gap: 0.7rem; margin: 0; padding: 0; list-style: none; }
@@ -1337,48 +1338,6 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
 /* Handled items are marked by a muted background and the status word, never by transparency (keeps text contrast). */
 .inquiry-item--handled { background: var(--support); }
 @media (max-width: 40rem) { .listing-fields { grid-template-columns: minmax(0, 1fr); } }
-.public-rooms-main { padding-block: 1.5rem 2.5rem; }
-.public-rooms-hero { margin-bottom: 1.25rem; }
-.public-rooms-hero h1 { margin: 0.2rem 0 0.4rem; color: #fff; font-size: clamp(2rem, 5vw, 2.8rem); }
-.public-rooms { display: grid; gap: 1rem; }
-.public-building-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: 0.75rem; }
-.public-building-tab { display: grid; gap: 0.15rem; min-height: 4.25rem; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); color: var(--text); text-align: left; cursor: pointer; box-shadow: var(--shadow-card); transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
-.public-building-tab strong { font-size: 1.1rem; }
-.public-building-tab span { color: var(--text-secondary); font-size: 0.9rem; }
-.public-building-tab:hover { border-color: var(--brand); transform: translateY(-1px); }
-.public-building-tab[aria-selected="true"], .public-building-tab[aria-pressed="true"] { border-color: transparent; background: var(--action-gradient); color: #fff; box-shadow: 0 8px 20px rgb(31 107 79 / 28%); }
-.public-building-tab[aria-selected="true"] span, .public-building-tab[aria-pressed="true"] span { color: #eef3ff; }
-.public-building-tab:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
-.public-room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 0.85rem; }
-.public-room-card { display: flex; flex-direction: column; gap: 0.5rem; padding: 1.15rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); box-shadow: var(--shadow-card); }
-.public-room-card__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.public-room-card h3 { margin: 0; font-size: 1.25rem; }
-.public-room-rent { margin: 0; }
-.public-room-rent strong { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
-.public-room-rent span, .public-room-description { color: var(--text-secondary); }
-.public-room-description { margin: 0; }
-.public-room-card .button { margin-top: auto; }
-.public-rooms-footnote { margin-top: 1.25rem; }
-.inquiry-dialog { width: min(100% - 2rem, 34rem); max-height: calc(100vh - 2rem); padding: 1.25rem; border: 0; border-radius: 1.1rem; background: var(--surface); color: var(--text); box-shadow: var(--shadow-raised); }
-/* Tailwind preflight removes the default dialog centring; restore it, and use a bottom sheet on phones. */
-.inquiry-dialog[open] { margin: auto; }
-@media (max-width: 32rem) { .inquiry-dialog[open] { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 1.1rem 1.1rem 0 0; } }
-.inquiry-dialog::backdrop { background: rgb(8 17 32 / 55%); }
-.inquiry-dialog__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-.inquiry-dialog__head h2 { margin: 0; }
-.inquiry-rent { margin: 0.2rem 0 0; color: var(--text-secondary); }
-.inquiry-dialog textarea { min-height: 6rem; }
-.inquiry-dialog form > .button { width: 100%; margin-top: 0.5rem; }
-.inquiry-trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
-.inquiry-dialog__head .button { flex: 0 0 auto; width: auto; }
-/* Phones: building tabs become one swipeable row so rooms stay on the first screen. */
-@media (max-width: 40rem) {
-  .public-building-tabs { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: minmax(9.5rem, 70%); overflow-x: auto; padding-bottom: 0.35rem; scroll-snap-type: x mandatory; }
-  .public-building-tab { scroll-snap-align: start; min-height: 3.75rem; padding: 0.7rem 0.9rem; }
-  .public-rooms-hero { padding: 1.1rem; }
-  .public-rooms-hero h1 { font-size: 1.8rem; }
-}
-@media (prefers-reduced-motion: reduce) { .public-building-tab:hover { transform: none; } }
 
 /* Simple live Payments (mirrors the preview): selected worklist row, cash plan and tenant card action. */
 .payment-overview .worklist-row[aria-current="true"] { background: var(--brand-tint); box-shadow: inset 4px 0 0 var(--brand); padding-inline-start: .9rem; }

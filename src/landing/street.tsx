@@ -14,42 +14,58 @@ export const SITE: Site[] = [
 ]
 export const TOTAL_SPACES = SITE.reduce((sum, site) => sum + site.spaces, 0)
 
-// Front of each home, floor by floor (top floor first, cells left to right), following the owner's sketch of
-// Building 1 (27 Oct 2026): second-floor rooms open onto a balcony walkway, numbered from the stairs end, every
-// other one with a window beside its door; on the ground floor the apartment has its own arched door, and Rooms
-// 01-03 are inside, along the hallway behind the gate where the stairs go up (drawn cut away). Building 2 follows the
-// same pattern (gym in place of the apartment). Bob's house rooms are inside the house, so they show as windows.
-// room = the unit label in the records; "*" matches any open space in that home.
-type Cell = { kind: 'door' | 'apartment' | 'shared' | 'stairs' | 'gate' | 'window' | 'front'; room?: string; window?: boolean; inside?: boolean }
-type Plan = { roof: 'hip' | 'gable'; walkway: boolean; floors: Cell[][] }
-const door = (room: string, window = false): Cell => ({ kind: 'door', room, window })
+// Front of each home, floor by floor (top floor first, cells left to right), following the owner's sketches
+// (27 Oct 2026). Building 1: second-floor rooms open onto a balcony walkway, numbered from the stairs end, every other
+// one with a window beside its door; the apartment has its own arched door; Rooms 01-03 are inside, along the hallway
+// behind the gate where the stairs go up (drawn cut away). Building 2: Rooms 04-07 each have a window just left of the
+// door; Room 08 sits in a wing on the left (its window in the wing, its door at the end of the walkway); downstairs the
+// gym's double doors, a door to the stairs, and a door leading to Rooms 01-03 inside. Bob's house rooms are inside the
+// house, so they show as windows. room = the unit label in the records; "*" matches any open space in that home.
+type Cell = { kind: 'door' | 'apartment' | 'shared' | 'stairs' | 'gate' | 'window' | 'front' | 'entry'; room?: string; window?: 'left' | 'right'; inside?: boolean; rise?: 'left' | 'right' }
+type Plan = { roof: 'hip' | 'gable'; walkway: boolean; wing?: string; floors: Cell[][] }
+const door = (room: string, window?: 'left' | 'right'): Cell => ({ kind: 'door', room, window })
 const inner = (room: string): Cell => ({ kind: 'door', room, inside: true })
 const PLANS: Record<string, Plan> = {
   'Building 1': { roof: 'hip', walkway: true, floors: [
-    [door('Room 09'), door('Room 08', true), door('Room 07'), door('Room 06', true), door('Room 05'), door('Room 04', true)],
-    [{ kind: 'apartment', room: 'Apartment' }, inner('Room 01'), inner('Room 02'), inner('Room 03'), { kind: 'stairs', inside: true }, { kind: 'gate' }],
+    [door('Room 09'), door('Room 08', 'right'), door('Room 07'), door('Room 06', 'right'), door('Room 05'), door('Room 04', 'right')],
+    [{ kind: 'apartment', room: 'Apartment' }, inner('Room 01'), inner('Room 02'), inner('Room 03'), { kind: 'stairs', inside: true, rise: 'left' }, { kind: 'gate' }],
   ] },
-  'Building 2': { roof: 'hip', walkway: true, floors: [
-    [door('Room 08', true), door('Room 07'), door('Room 06', true), door('Room 05'), door('Room 04', true)],
-    [{ kind: 'shared' }, inner('Room 01'), inner('Room 02'), inner('Room 03'), { kind: 'stairs', inside: true }, { kind: 'gate' }],
+  'Building 2': { roof: 'hip', walkway: true, wing: 'Room 08', floors: [
+    [door('Room 08'), door('Room 07', 'left'), door('Room 06', 'left'), door('Room 05', 'left'), door('Room 04', 'left')],
+    [{ kind: 'shared' }, { kind: 'entry' }, { kind: 'stairs', inside: true, rise: 'right' }, { kind: 'entry' }, inner('Room 01'), inner('Room 02'), inner('Room 03')],
   ] },
-  'House 1': { roof: 'gable', walkway: false, floors: [[door('*', true)]] },
+  'House 1': { roof: 'gable', walkway: false, floors: [[door('*', 'right')]] },
   "Bob's house": { roof: 'gable', walkway: false, floors: [
     [{ kind: 'window', room: 'Room 04' }, { kind: 'window', room: 'Room 05' }, { kind: 'window', room: 'Room 06' }],
     [{ kind: 'window', room: 'Room 01' }, { kind: 'front' }, { kind: 'window', room: 'Room 02' }, { kind: 'window', room: 'Room 03' }],
   ] },
 }
-const CELL = { door: 25, window: 28, apartment: 30, shared: 34, stairs: 26, gate: 38, front: 26 }
+const CELL = { door: 25, window: 28, apartment: 30, shared: 38, stairs: 26, gate: 38, front: 26, entry: 24 }
 const cellWidth = (cell: Cell) => cell.kind === 'door' && cell.window ? 42 : CELL[cell.kind]
-const FLOOR = 34, PARAPET = 5
+const FLOOR = 34, PARAPET = 5, WING = 34
 function measure(plan: Plan) {
   const wallW = Math.max(...plan.floors.map(row => row.reduce((sum, cell) => sum + cellWidth(cell), 0))) + 10
   const roofH = plan.roof === 'hip' ? 15 : 24
-  return { wallW, roofH, W: wallW + 20, H: roofH + plan.floors.length * FLOOR + 7 }
+  const wing = plan.wing ? WING : 0
+  return { wallW, roofH, wing, W: wallW + wing + 20, H: roofH + plan.floors.length * FLOOR + 7 }
 }
 // The same drawing scale for every home: Building 1 fills its plot; the others take their share of its width.
 const UNIT = measure(PLANS['Building 1']).W / SITE[0].w
 export const facadeWidth = (site: Site) => Math.min(100, measure(PLANS[site.label]).W / UNIT / site.w * 100)
+
+// Where a listed room is, in words for the public rooms page (null when the drawing does not place it).
+export type RoomPlace = 'upstairs' | 'wing' | 'inside' | 'street' | 'house'
+export function roomPlace(building: string, room: string): RoomPlace | null {
+  const plan = PLANS[building]
+  if (!plan) return null
+  if (plan.wing === room) return 'wing'
+  for (const [f, row] of plan.floors.entries()) for (const cell of row) if (cell.room === room) {
+    if (cell.kind === 'window') return 'house'
+    if (cell.inside) return 'inside'
+    return plan.walkway && f < plan.floors.length - 1 ? 'upstairs' : 'street'
+  }
+  return null
+}
 
 // Which spaces glow: the open rooms by their record label; any open space whose label is not drawn still lights
 // the next unlit space, so the count always matches the live listing.
@@ -61,24 +77,40 @@ function litRooms(plan: Plan, open: string[]) {
   return lit
 }
 
-export function Facade({ site, open, width = facadeWidth(site) }: { site: Site; open: string[]; width?: number }) {
+// onPick makes glowing rooms clickable (pointer convenience only: pages must also offer buttons for each room);
+// focus marks one room (for example the card under the pointer).
+export function Facade({ site, open, width = facadeWidth(site), onPick, focus }: { site: Site; open: string[]; width?: number; onPick?: (room: string) => void; focus?: string }) {
   const plan = PLANS[site.label]
-  const { wallW, roofH, W, H } = measure(plan)
-  const x0 = 10, right = x0 + wallW, groundY = roofH + plan.floors.length * FLOOR
+  const { wallW, roofH, wing, W, H } = measure(plan)
+  const x0 = 10 + wing, right = x0 + wallW, groundY = roofH + plan.floors.length * FLOOR
   const lit = litRooms(plan, open)
-  const glow = (room?: string) => room && lit.has(room) ? ' is-lit' : ''
-  const ridges = Array.from({ length: Math.floor((wallW + 6) / 6) }, (_, i) => x0 - 1 + i * 6)
+  const glow = (room?: string) => room && lit.has(room) ? ` is-lit${room === focus ? ' is-focus' : ''}` : ''
+  const pick = (room?: string) => onPick && room && lit.has(room) ? { onClick: () => onPick(room), className: 'fx-pick' } : {}
+  const roofLeft = x0 - wing
+  const ridges = Array.from({ length: Math.floor((wallW + wing + 6) / 6) }, (_, i) => roofLeft - 1 + i * 6)
   // Top of the hip roof at x, so the corrugation lines stay inside the sloped ends.
-  const roofTop = (x: number) => roofH + 2 - (roofH - 2) * Math.min(1, Math.min(x - (x0 - 6), right + 6 - x) / 14)
+  const roofTop = (x: number) => roofH + 2 - (roofH - 2) * Math.min(1, Math.min(x - (roofLeft - 6), right + 6 - x) / 14)
   let delay = 0
+  const windowAt = (x: number, y: number, room: string | undefined, d: number) => <g>
+    <rect className="fx-frame" x={x - 1.5} y={y - 1.5} width={16} height={12} rx={0.8} />
+    <rect className={`fx-glass${glow(room)}`} x={x} y={y} width={13} height={9} style={{ transitionDelay: `${d}ms` } as CSSProperties} />
+    {glow(room) ? <rect className="fx-curtain" x={x} y={y} width={4} height={9} /> : <line className="fx-glint" x1={x + 2} y1={y + 7} x2={x + 7} y2={y + 2} />}
+    <line className="fx-mullion" x1={x + 6.5} y1={y} x2={x + 6.5} y2={y + 9} />
+  </g>
   return <svg className="lp-facade" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax meet" style={{ width: `${width}%` } as CSSProperties} aria-hidden="true" focusable="false">
     <ellipse className="fx-shadow" cx={W / 2} cy={H - 3} rx={W / 2} ry={3.5} />
     <rect className="fx-wall" x={x0} y={roofH} width={wallW} height={groundY - roofH} />
     <rect className="fx-wall-shade" x={right - 6} y={roofH} width={6} height={groundY - roofH} />
+    {plan.wing && <g {...pick(plan.wing)}>
+      <rect className="fx-wall" x={x0 - wing} y={roofH} width={wing} height={FLOOR} />
+      <rect className="fx-wall-shade" x={x0 - wing} y={roofH + FLOOR - 3} width={wing} height={3} />
+      <line className="fx-divider" x1={x0} y1={roofH} x2={x0} y2={roofH + FLOOR} />
+      {windowAt(x0 - wing / 2 - 6.5, roofH + 11, plan.wing, delay++ * 70)}
+    </g>}
     {plan.roof === 'hip' ? <>
-      <polygon className="fx-roof" points={`${x0 - 6},${roofH + 1} ${right + 6},${roofH + 1} ${right - 8},3 ${x0 + 8},3`} />
+      <polygon className="fx-roof" points={`${roofLeft - 6},${roofH + 1} ${right + 6},${roofH + 1} ${right - 8},3 ${roofLeft + 8},3`} />
       {ridges.filter(x => roofTop(x) < roofH - 3).map(x => <line key={x} className="fx-ridge" x1={x} y1={roofTop(x)} x2={x} y2={roofH - 1} />)}
-      <rect className="fx-eave" x={x0 - 6} y={roofH - 1} width={wallW + 12} height={3} />
+      <rect className="fx-eave" x={roofLeft - 6} y={roofH - 1} width={wallW + wing + 12} height={3} />
     </> : <>
       <polygon className="fx-gable" points={`${x0},${roofH + 1} ${x0 + wallW / 2},6 ${right},${roofH + 1}`} />
       <circle className="fx-vent" cx={x0 + wallW / 2} cy={roofH - 6} r={2.6} />
@@ -91,40 +123,47 @@ export function Facade({ site, open, width = facadeWidth(site) }: { site: Site; 
       const stretch = (wallW - 10) / natural
       let x = x0 + 5
       const cells = row.map(cell => { const w = cellWidth(cell) * stretch, at = x; x += w; return { cell, x: at, w } })
-      const inside = cells.filter(({ cell }) => cell.inside)
+      // Cut-away sections: each run of neighbouring cells that are inside the building.
+      const runs: { x: number; w: number }[] = []
+      cells.forEach(({ cell, x: cx, w }, i) => { if (!cell.inside) return; const last = runs[runs.length - 1]; if (last && cells[i - 1]?.cell.inside) last.w = cx + w - last.x; else runs.push({ x: cx, w }) })
       return <g key={f}>
-        {inside.length > 0 && <rect className="fx-inside" x={inside[0].x} y={top + 3} width={inside[inside.length - 1].x + inside[inside.length - 1].w - inside[0].x} height={bottom - top - 3} />}
+        {runs.map(run => <rect key={run.x} className="fx-inside" x={run.x} y={top + 3} width={run.w} height={bottom - top - 3} />)}
         {cells.map(({ cell, x: cx, w }, i) => {
           const mid = cx + w / 2
           if (cell.kind === 'door') {
-            const total = 11 + (cell.window ? 17 : 0), dx = mid - total / 2, dy = floorLine - 19
+            const total = 11 + (cell.window ? 17 : 0), start = mid - total / 2, dy = floorLine - 19
+            const dx = cell.window === 'left' ? start + 17 : start
             const d = delay++ * 70
-            return <g key={i}>
+            return <g key={i} {...pick(cell.room)}>
               {upper && i > 0 && <line className="fx-divider" x1={cx} y1={top + 2} x2={cx} y2={floorLine} />}
               <rect className={`fx-door-room${glow(cell.room)}`} x={dx} y={dy} width={11} height={19} rx={0.8} style={{ transitionDelay: `${d}ms` } as CSSProperties} />
               <circle className="fx-knob" cx={dx + 8.5} cy={dy + 10.5} r={0.9} />
-              {cell.window && <g>
-                <rect className="fx-frame" x={dx + 15.5} y={dy + 1.5} width={16} height={12} rx={0.8} />
-                <rect className={`fx-glass${glow(cell.room)}`} x={dx + 17} y={dy + 3} width={13} height={9} style={{ transitionDelay: `${d}ms` } as CSSProperties} />
-                {glow(cell.room) ? <rect className="fx-curtain" x={dx + 17} y={dy + 3} width={4} height={9} /> : <line className="fx-glint" x1={dx + 19} y1={dy + 10} x2={dx + 24} y2={dy + 5} />}
-                <line className="fx-mullion" x1={dx + 23.5} y1={dy + 3} x2={dx + 23.5} y2={dy + 12} />
-              </g>}
+              {cell.window && windowAt(cell.window === 'left' ? start + 1.5 : dx + 17, dy + 3, cell.room, d)}
             </g>
           }
-          if (cell.kind === 'apartment') return <g key={i}>
+          if (cell.kind === 'apartment') return <g key={i} {...pick(cell.room)}>
             <path className={`fx-door-room fx-arch${glow(cell.room)}`} d={`M${mid - 7} ${bottom} V${bottom - 15} A7 7 0 0 1 ${mid + 7} ${bottom - 15} V${bottom} Z`} />
             <circle className="fx-knob" cx={mid + 4} cy={bottom - 9} r={0.9} />
           </g>
           if (cell.kind === 'shared') return <g key={i}>
-            <rect className="fx-frame" x={mid - 10} y={bottom - 21} width={20} height={21} rx={0.8} />
-            <rect className="fx-glassdoor" x={mid - 8.5} y={bottom - 19.5} width={17} height={19.5} />
-            <line className="fx-mullion" x1={mid} y1={bottom - 19.5} x2={mid} y2={bottom} />
+            <rect className="fx-frame" x={mid - 13} y={bottom - 22} width={26} height={22} rx={0.8} />
+            <rect className="fx-door-double" x={mid - 11.5} y={bottom - 20.5} width={11} height={20.5} />
+            <rect className="fx-door-double" x={mid + 0.5} y={bottom - 20.5} width={11} height={20.5} />
+            <circle className="fx-knob" cx={mid - 2} cy={bottom - 10} r={0.9} /><circle className="fx-knob" cx={mid + 2} cy={bottom - 10} r={0.9} />
+          </g>
+          if (cell.kind === 'entry') return <g key={i}>
+            <rect className="fx-door" x={mid - 6} y={bottom - 21} width={12} height={21} rx={0.8} />
+            <circle className="fx-knob" cx={mid + 3.5} cy={bottom - 10} r={1} />
           </g>
           if (cell.kind === 'stairs') {
             const steps = 7, rise = (bottom - top) / steps, run = (w - 6) / steps
+            const leftward = cell.rise !== 'right'
+            const d = leftward
+              ? `M${cx + w - 2} ${bottom} ${Array.from({ length: steps }, () => `v-${rise.toFixed(2)} h-${run.toFixed(2)}`).join(' ')} V${bottom} Z`
+              : `M${cx + 2} ${bottom} ${Array.from({ length: steps }, () => `v-${rise.toFixed(2)} h${run.toFixed(2)}`).join(' ')} V${bottom} Z`
             return <g key={i}>
-              <path className="fx-stair" d={`M${cx + w - 2} ${bottom} ${Array.from({ length: steps }, () => `v-${rise.toFixed(2)} h-${run.toFixed(2)}`).join(' ')} V${bottom} Z`} />
-              <line className="fx-rail" x1={cx + w - 2} y1={bottom - 9} x2={cx + 4} y2={top - 9} />
+              <path className="fx-stair" d={d} />
+              <line className="fx-rail" x1={leftward ? cx + w - 2 : cx + 2} y1={bottom - 9} x2={leftward ? cx + 4 : cx + w - 4} y2={top - 9} />
             </g>
           }
           if (cell.kind === 'gate') return <g key={i}>
@@ -138,7 +177,7 @@ export function Facade({ site, open, width = facadeWidth(site) }: { site: Site; 
             <polygon className="fx-awning" points={`${mid - 9},${bottom - 22} ${mid + 9},${bottom - 22} ${mid + 6},${bottom - 26} ${mid - 6},${bottom - 26}`} />
           </g>
           const d = delay++ * 70
-          return <g key={i}>
+          return <g key={i} {...pick(cell.room)}>
             <rect className="fx-frame" x={mid - 8.5} y={top + 7.5} width={17} height={18} rx={1} />
             <rect className={`fx-glass${glow(cell.room)}`} x={mid - 7} y={top + 9} width={14} height={15} style={{ transitionDelay: `${d}ms` } as CSSProperties} />
             {glow(cell.room) ? <rect className="fx-curtain" x={mid - 7} y={top + 9} width={5} height={15} /> : <line className="fx-glint" x1={mid - 4} y1={top + 21} x2={mid + 3} y2={top + 12} />}
