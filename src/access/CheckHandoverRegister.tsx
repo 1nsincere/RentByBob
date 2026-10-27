@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button } from '../components/atoms'
-import type { SavedCheck, SavedHandover } from './saved-payments-model'
+import { roomName, type SavedCheck, type SavedHandover } from './saved-payments-model'
 import { decimalPesos } from './CashAcknowledgment'
 import { text, type Language } from '../i18n'
 
@@ -40,7 +40,7 @@ export function CheckHandoverRegister({data,tenants,owner,canRecordCheck,busy,mu
    <p>{tr('Reference numbers are generated in order. A check does not reduce rent until the owner marks it cleared after bank confirmation.','Sunod-sunod ang mga reference number. Dili moubos ang abang tungod sa tseke hangtod kumpirmahon sa tag-iya ang clearance sa bangko.')}</p>
    {canRecordCheck&&data.agreements.length>0&&<form className="rent-setup" onSubmit={event=>{event.preventDefault();const form=new FormData(event.currentTarget);void mutate('record_rent_check',{p_agreement_id:String(form.get('agreement')),p_amount:String(form.get('amount')),p_received_on:String(form.get('date')),p_check_date:String(form.get('checkDate')),p_collector:String(form.get('collector'))})}}>
     <h4>{tr('Record check received','Irekord ang nadawat nga tseke')}</h4>
-    <label htmlFor="check-agreement">{tr('Tenant / room','Nag-abang / kwarto')}</label><select id="check-agreement" name="agreement" required><option value="">{tr('Choose an agreement','Pagpili og kasabotan')}</option>{data.agreements.map(a=><option key={a.id} value={a.id}>{tenants.find(t=>t.id===a.tenant_id)?.display_name??tr('Tenant unavailable','Wala makita ang rekord sa nag-abang')} / {data.units.find(u=>u.id===a.unit_id)?.label??tr('Room unavailable','Wala makita ang kwarto')}</option>)}</select>
+    <label htmlFor="check-agreement">{tr('Tenant / room','Nag-abang / kwarto')}</label><select id="check-agreement" name="agreement" required><option value="">{tr('Choose an agreement','Pagpili og kasabotan')}</option>{data.agreements.map(a=><option key={a.id} value={a.id}>{tenants.find(t=>t.id===a.tenant_id)?.display_name??tr('Tenant unavailable','Wala makita ang rekord sa nag-abang')} / {roomName(data,a.unit_id,tr('Room unavailable','Wala makita ang kwarto'))}</option>)}</select>
     <label htmlFor="check-amount">{tr('Amount (PHP)','Kantidad (PHP)')}</label><input id="check-amount" name="amount" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" required />
     <label htmlFor="check-date">{tr('Date received','Petsa nga nadawat')}</label><input id="check-date" name="date" type="date" max={today} required />
     <label htmlFor="check-written-date">{tr('Date written on check','Petsa nga nakasulat sa tseke')}</label><input id="check-written-date" name="checkDate" type="date" required />

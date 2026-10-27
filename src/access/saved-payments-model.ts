@@ -292,6 +292,13 @@ export function buildStatementEvents(charges: StatementCharge[], cash: Statement
   )
 }
 
+// "Building · Room": rooms repeat across buildings (Building 1 and 2 both have Room 01), so lists always name both.
+export function roomName(data: Pick<RentWorkspaceSnapshot, 'units' | 'buildings'>, unitId: string, unavailable = 'Room unavailable') {
+  const unit = data.units.find(item => item.id === unitId)
+  const building = unit && data.buildings.find(item => item.id === unit.building_id)
+  return unit ? `${building?.label ?? 'Building'} · ${unit.label}` : unavailable
+}
+
 export function hasPositiveSavedBalance(balance: string): boolean {
   const minorUnits = toMinorUnits(balance)
   return minorUnits !== null && minorUnits > 0n

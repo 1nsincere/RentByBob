@@ -1476,3 +1476,17 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
   .site-header .appbar-signout { padding-inline: .75rem; white-space: nowrap; }
 }
 .site-header .header-inner { max-width: 100%; overflow-x: clip; } /* sub-pixel rounding at 320px + 200% text */
+
+/* Tenant picker: search, short result list, chosen chip (replaces long tenant dropdowns). */
+.tenant-picker { display: grid; gap: .4rem; min-width: 0; }
+.tenant-picker-label { margin: 0; font-weight: 700; }
+.tenant-picker-results { display: grid; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+.tenant-picker-results button, .tenant-picker-chosen { display: flex; align-items: center; gap: .7rem; width: 100%; min-height: 3rem; padding: .5rem .75rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--surface); color: var(--text); font: inherit; text-align: left; }
+.tenant-picker-results button { cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease; }
+.tenant-picker-results button:hover { border-color: var(--brand); background: var(--brand-tint); }
+.tenant-picker-results span:last-child, .tenant-picker-chosen > span:nth-child(2) { display: grid; min-width: 0; flex: 1 1 auto; }
+.tenant-picker strong { overflow-wrap: anywhere; }
+.tenant-picker small { color: var(--text-secondary); font-size: .85rem; }
+.tenant-picker-chosen { border-color: var(--brand); background: var(--brand-tint); }
+.tenant-picker-chosen .button { flex: 0 0 auto; margin: 0; }
+.tenant-picker-avatar { display: inline-grid; flex: 0 0 auto; width: 2.1rem; height: 2.1rem; place-items: center; border-radius: 50%; background: var(--surface-muted, var(--page)); color: var(--brand-hover, var(--brand)); font-weight: 750; }
