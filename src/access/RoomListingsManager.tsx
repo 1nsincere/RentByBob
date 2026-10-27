@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Button, LoadingSkeleton } from '../components/atoms'
 import { supabase } from './client'
+import { decimalPesos } from './CashAcknowledgment'
 import { text, type Language } from '../i18n'
 
 type Listing = { unit_id: string; asking_rent: string | null; description: string; listed_at: string; hidden?: boolean; publicly_available: boolean }
@@ -47,7 +48,7 @@ export function RoomListingsManager({ propertyId, owner = false, language = 'en'
     setBusy(true); setMessage(null)
     const { error } = await supabase!.rpc(name, { p_property_id: propertyId, ...args })
     setBusy(false)
-    if (error) { setMessage({ text: error.code === '42501' ? tr('Your staff session needs the authenticator code again.', 'Kinahanglan na usab ang authenticator code sa imong staff session.') : tr('Not saved. Check the rent (a positive amount) and keep the description under 300 characters.', 'Wala na-save. Susiha ang abang (positibo nga kantidad) ug ipamubo ang deskripsyon ubos sa 300 ka letra.'), error: true }); return }
+    if (error) { setMessage({ text: error.code === '42501' ? tr('Your staff session needs the authenticator code again.', 'Kinahanglan na usab ang authenticator code sa imong staff session.') : tr('Not saved. Check the rent (a positive amount) and keep the description under 300 characters.', 'Wala na-save. Susiha ang abang (positibo nga kantidad) ug ipamubo ang deskripsyon ubos sa 300 ka letra.'), error: true }); await load(); return }
     setMessage({ text: success, error: false }); await load()
   }
 
@@ -84,17 +85,22 @@ export function RoomListingsManager({ propertyId, owner = false, language = 'en'
             : listing?.hidden ? [tr('Hidden by staff', 'Gitago sa staff'), '']
             : room.publicly_available ? [listing ? tr('Shown on the public page', 'Makita sa publiko') : tr('Shown automatically', 'Awtomatikong makita'), 'status--ready']
             : [tr('Not listed', 'Wala nalista'), '']
+          const saved = (listed: boolean) => listed ? tr(`${unit.label} will be shown on the public page whenever it is vacant.`, `Makita ang ${unit.label} sa publiko kon bakante.`) : tr(`${unit.label} is hidden from the public page.`, `Natago ang ${unit.label} sa publiko.`)
+          // Compact row: status and an instant show/hide switch; price and description are tucked into "details".
           return <li key={unit.id} className="listing-row">
-            <form onSubmit={e => { e.preventDefault(); const f = new FormData(e.currentTarget); const listed = f.get('listed') === 'on'; const rent = String(f.get('rent') ?? '').trim()
-              void run('set_room_listing', { p_unit_id: unit.id, p_listed: listed, p_asking_rent: listed && rent ? rent : null, p_description: listed ? String(f.get('description') ?? '') : null }, listed ? tr(`${unit.label} will be shown on the public page whenever it is vacant.`, `Makita ang ${unit.label} sa publiko kon bakante.`) : tr(`${unit.label} is hidden from the public page.`, `Natago ang ${unit.label} sa publiko.`)) }}>
-              <div className="listing-row__head"><strong>{unit.label}</strong><span className={`status ${tone}`}>{status}</span></div>
-              <label className="listing-toggle"><input type="checkbox" name="listed" defaultChecked={wanted} key={`${unit.id}:${wanted}`} /> {tr('Show on public page when vacant', 'Ipakita sa publiko kon bakante')}</label>
-              <div className="listing-fields">
-                <div><label htmlFor={`rent-${unit.id}`}>{tr('Monthly rent (PHP, optional)', 'Binulan nga abang (PHP, opsyonal)')}</label><input id={`rent-${unit.id}`} name="rent" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" defaultValue={listing?.asking_rent ?? ''} placeholder={tr('Empty = "Ask for the price"', 'Walay sulod = "Pangutana sa presyo"')} /></div>
-                <div><label htmlFor={`description-${unit.id}`}>{tr('Short description', 'Mubo nga deskripsyon')}</label><input id={`description-${unit.id}`} name="description" maxLength={300} defaultValue={listing?.description ?? ''} placeholder={tr('e.g. Second floor, good for 2 persons', 'pananglitan: Ikaduhang andana, para sa 2 ka tawo')} /></div>
-              </div>
-              <Button className="primary" disabled={busy}>{tr('Save', 'I-save')}</Button>
-            </form>
+            <div className="listing-row__head"><strong>{unit.label}</strong><span className={`status ${tone}`}>{status}</span></div>
+            <label className="listing-toggle"><input type="checkbox" checked={wanted} disabled={busy} onChange={event => { const listed = event.target.checked; setListings(previous => [...previous.filter(item => item.unit_id !== unit.id), { unit_id: unit.id, asking_rent: listing?.asking_rent ?? null, description: listing?.description ?? '', listed_at: listing?.listed_at ?? new Date().toISOString(), hidden: !listed, publicly_available: listing?.publicly_available ?? false }]); void run('set_room_listing', { p_unit_id: unit.id, p_listed: event.target.checked, p_asking_rent: event.target.checked ? listing?.asking_rent ?? null : null, p_description: event.target.checked ? listing?.description ?? '' : null }, saved(listed)) }} /> {tr('Show on public page when vacant', 'Ipakita sa publiko kon bakante')}</label>
+            {wanted && <details className="listing-edit"><summary>{listing?.asking_rent ? `${decimalPesos(listing.asking_rent)} ${tr('per month', 'matag bulan')}${listing.description ? ` · ${listing.description}` : ''} · ${tr('edit', 'usba')}` : tr('Add price and description', 'Idugang ang presyo ug deskripsyon')}</summary>
+              <form onSubmit={e => { e.preventDefault(); const f = new FormData(e.currentTarget); const rent = String(f.get('rent') ?? '').trim()
+                void run('set_room_listing', { p_unit_id: unit.id, p_listed: true, p_asking_rent: rent || null, p_description: String(f.get('description') ?? '') }, saved(true)) }}>
+                <div className="listing-fields">
+                  <div><label htmlFor={`rent-${unit.id}`}>{tr('Monthly rent (PHP)', 'Binulan nga abang (PHP)')}</label><input id={`rent-${unit.id}`} name="rent" inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" defaultValue={listing?.asking_rent ?? ''} placeholder={tr('Ask for the price', 'Pangutana sa presyo')} /></div>
+                  <div><label htmlFor={`description-${unit.id}`}>{tr('Short description', 'Mubo nga deskripsyon')}</label><input id={`description-${unit.id}`} name="description" maxLength={300} defaultValue={listing?.description ?? ''} placeholder={tr('e.g. Second floor, good for 2 persons', 'pananglitan: Ikaduhang andana, para sa 2 ka tawo')} /></div>
+                </div>
+                <p className="field-help">{tr('Leave the rent empty to show "Ask for the price".', 'Biyai nga walay sulod ang abang aron makita ang "Pangutana sa presyo".')}</p>
+                <Button className="primary" disabled={busy}>{tr('Save', 'I-save')}</Button>
+              </form>
+            </details>}
           </li>
         })}</ul>
       </>}

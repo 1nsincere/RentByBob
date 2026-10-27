@@ -395,7 +395,6 @@ export function App() {
                                   setBackup(false)
                                 }}>{snapshot.properties.map(property => <option key={property.id} value={property.id}>{property.name}</option>)}</select>
                               </div> : <p className="toolbar-property"><span>{t.property}</span> <strong>{snapshot.properties.find(property => property.id === propertyId)?.name}</strong></p>}
-                              <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>{translate('Refresh access', 'I-refresh ang access')}</Button>
                             </div>
                             <section hidden={activeSection !== 'home'} tabIndex={-1} id="dashboard-home" className="dashboard-home" aria-labelledby="dashboard-welcome-heading">
                               <div className="dashboard-welcome">

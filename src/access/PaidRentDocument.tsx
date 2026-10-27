@@ -44,7 +44,7 @@ export function PaidRentDocument({ data, language = 'en' }: { data: PaidRentDocu
       <p className="doc-note">{tr('Cash confirmed by the designated verifier, by the date it was received. Pending cash and uncleared checks are not included.', 'Kwarta nga gikumpirma sa tigkumpirma, sumala sa petsa nga nadawat. Dili apil ang pending nga kwarta ug tseke nga wala pa ma-clear.')}</p>
       {data.confirmed.length ? <table className="doc-table">
         <thead><tr><th>{tr('Renter', 'Nag-abang')}</th><th>{tr('Rental space', 'Lugar')}</th><th>{tr('Received', 'Nadawat')}</th><th>{tr('Rent months', 'Mga bulan')}</th><th>{tr('Receipt no.', 'Resibo')}</th><th className="doc-money">{tr('Amount', 'Kantidad')}</th></tr></thead>
-        <tbody>{data.confirmed.map(row => <tr key={row.id}><td>{row.renter}</td><td>{row.space}</td><td>{row.received}</td><td>{row.months}</td><td className="doc-code">{row.receipt}</td><td className="doc-money">{row.amount}</td></tr>)}</tbody>
+        <tbody>{data.confirmed.map(row => <tr key={row.id}><td>{row.renter}</td><td>{row.space}</td><td className="doc-date">{row.received}</td><td>{row.months}</td><td className="doc-code">{row.receipt}</td><td className="doc-money">{row.amount}</td></tr>)}</tbody>
         <tfoot><tr><th colSpan={5}>{tr('Total confirmed cash received', 'Kinatibuk-ang kumpirmadong kwarta')}</th><td className="doc-money">{data.summary.confirmedTotal}</td></tr></tfoot>
       </table> : <p className="doc-empty">{tr('No confirmed payments were received in this month.', 'Walay kumpirmadong bayad nga nadawat niining bulana.')}</p>}
     </section>
@@ -54,7 +54,7 @@ export function PaidRentDocument({ data, language = 'en' }: { data: PaidRentDocu
       <p className="doc-note">{tr('Recorded rent charges for the rent month that still have a balance. A month without a recorded charge is not listed and is not treated as unpaid.', 'Narekord nga bayranan sa bulan nga naa pay balanse. Ang bulan nga walay narekord nga bayranan dili ilista ug dili isipon nga wala mabayri.')}</p>
       {data.outstanding.length ? <table className="doc-table">
         <thead><tr><th>{tr('Renter', 'Nag-abang')}</th><th>{tr('Rental space', 'Lugar')}</th><th>{tr('Due date', 'Takdang petsa')}</th><th className="doc-money">{tr('Rent charged', 'Gisingil')}</th><th className="doc-money">{tr('Still due', 'Nabilin')}</th></tr></thead>
-        <tbody>{data.outstanding.map(row => <tr key={row.id}><td>{row.renter}</td><td>{row.space}</td><td>{row.due}</td><td className="doc-money">{row.charged}</td><td className="doc-money">{row.remaining}</td></tr>)}</tbody>
+        <tbody>{data.outstanding.map(row => <tr key={row.id}><td>{row.renter}</td><td>{row.space}</td><td className="doc-date">{row.due}</td><td className="doc-money">{row.charged}</td><td className="doc-money">{row.remaining}</td></tr>)}</tbody>
         <tfoot><tr><th colSpan={4}>{tr('Total still due', 'Kinatibuk-ang nabilin')}</th><td className="doc-money">{data.summary.outstandingTotal}</td></tr></tfoot>
       </table> : <p className="doc-empty">{tr('No recorded rent is still due for this month.', 'Walay narekord nga abang nga nabilin niining bulana.')}</p>}
     </section>
