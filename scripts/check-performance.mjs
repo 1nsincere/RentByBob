@@ -26,7 +26,7 @@ try {
       new PerformanceObserver(list => { for (const entry of list.getEntries()) if (!entry.hadRecentInput) window.__vitals.cls += entry.value }).observe({ type: 'layout-shift', buffered: true })
     })
     await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'networkidle' })
-    await page.locator('.auth-card').waitFor()
+    await page.locator('.lp-hero h1').waitFor()
     await page.waitForTimeout(1000)
     const result = await page.evaluate(() => {
       const navigation = performance.getEntriesByType('navigation')[0]

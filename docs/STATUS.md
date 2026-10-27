@@ -1,5 +1,9 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Landing page and Philippine time - 27 Oct 2026
+
+Public landing page at `/` for visitors without an open session (`src/landing/`): editorial hero, interactive street of the property whose lit windows are rooms open now (from the public listing function only), live counts, how it works, tenant panel, location (B. Zubiri St., Brgy. Labangon, Cebu City) with Google Maps link, EN/CEB, night mode, reduced-motion support. Contact phone and Messenger are placeholders in `CONTACT` (replace before going public). Sign-in moved to `/sign-in` (served on Pages via `_redirects`); `robots.txt` allows `/` and `/rooms`. Dashboard shows a live Philippine clock and a month calendar marking days with unpaid rent due. Validation: unit 93/93, offline 10/10 (landing scanned in light and dark), live suite exit 0, CSP and artifact checks pass; landing loads in ~1.5 s LCP with CLS 0 on a simulated slow phone.
+
 ## Final polish for 27 Oct 2026
 
 Tenant picker (search, short list, chip) replaces long tenant dropdowns in Assign access and "Give an existing tenant a room"; rooms are always named with their building in lists ("Building 2 · Room 01"); Payments reloads on open, after saves and every 30 s (no manual Refresh buttons); worklist rows stack in the narrow column; Room listings use compact cards with an instant show/hide switch and folded price/description; the PDF report has no grey page fill and dates do not wrap; the cash verifier is chosen by the clerk's email (no account ID to copy). Validation: unit 93/93, offline 10/10, live disposable suite exit 0 (50 checks), production build and artifact check pass.

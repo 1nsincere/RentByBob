@@ -7,7 +7,8 @@ import { chromium } from '@playwright/test'
 const origin = 'http://127.0.0.1:5173'
 const axePath = path.resolve('node_modules/axe-core/axe.min.js')
 const screens = [
-  { name: 'sign-in (no connection configured)', url: '/', ready: page => page.locator('.auth-card').waitFor() },
+  { name: 'landing page', url: '/', ready: page => page.locator('.lp-hero h1').waitFor() },
+  { name: 'sign-in (no connection configured)', url: '/sign-in', ready: page => page.locator('.auth-card').waitFor() },
   { name: 'staff dashboard', url: '/?preview=1', ready: page => page.getByRole('heading', { name: 'Welcome back', exact: true }).waitFor() },
   { name: 'tenant directory', url: '/?preview=1', open: 'Tenant directory' },
   { name: 'property map', url: '/?preview=1', open: 'Buildings and units' },
@@ -25,7 +26,7 @@ try {
     for (const screen of screens) {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
       await page.addInitScript(value => localStorage.setItem('rentbybob-theme', value), theme)
-      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: theme })
       await page.goto(origin + screen.url)
       if (screen.ready) await screen.ready(page)
       else await page.getByRole('heading', { name: 'Welcome back', exact: true }).waitFor()

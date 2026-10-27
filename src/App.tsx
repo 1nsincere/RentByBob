@@ -6,6 +6,7 @@ import { DeferredBoundary, deferredScreen } from './components/DeferredScreen'
 import { dashboardPreview, hostedDevelopment, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
 import { ChangePassword, Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
 import { IdleSignOut } from './access/IdleSignOut'
+import { PhilippineClock } from './access/PhilippineClock'
 import { TrustedDevices } from './access/TrustedDevices'
 import { clearDevice, readDevice } from './access/trusted-device'
 import { appError, copy, type Language } from './i18n'
@@ -29,7 +30,7 @@ type NavigationItem = { id: string; label: string }
 const translateText = (language: Language, english: string, bisaya: string) => language === 'ceb' ? bisaya : english
 
 // While the session loads, use the sign-in layout unless a saved session exists, so the first screen does not jump.
-const savedSessionAtBoot = (() => { try { return Object.keys(localStorage).some(key => /^sb-.+-auth-token$/.test(key)) } catch { return false } })()
+const savedSessionAtBoot = (() => { try { return Object.keys(sessionStorage).some(key => /^sb-.+-auth-token$/.test(key)) } catch { return false } })()
 
 export function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -222,7 +223,7 @@ export function App() {
     setCallbackError('')
     setBackup(false)
     setError('')
-    history.replaceState(null, '', '/')
+    history.replaceState(null, '', '/sign-in')
   }
 
   const role = snapshot?.memberships.find(membership => membership.property_id === propertyId)?.role
@@ -411,6 +412,7 @@ export function App() {
                               </div>
                             </section>
                             {!preview && activeSection === 'home' && (snapshot?.newInquiries ?? 0) > 0 && <div className="notice inquiry-alert" role="status"><p><strong>{snapshot!.newInquiries} {translate(snapshot!.newInquiries === 1 ? 'new inquiry' : 'new inquiries', 'ka bag-ong pangutana')}</strong> {translate('from people asking about rooms on the public page.', 'gikan sa mga tawo nga nangutana bahin sa kwarto sa publiko nga panid.')}</p><Button className="primary" onClick={() => selectSection('room-listings')}>{translate('Open inquiries', 'Ablihi ang mga pangutana')}</Button></div>}
+                            {activeSection === 'home' && <PhilippineClock propertyId={preview ? undefined : propertyId} language={language} />}
                             {!preview && propertyId && activeSection === 'home' && <DeferredBoundary loadingLabel={translate('Loading collection figures…', 'Gikarga ang mga numero sa koleksiyon…')} rows={2} language={language} reset={CollectionsOverview.reset}>
                               <CollectionsOverview.Screen key={propertyId} propertyId={propertyId} tenants={tenantList} openPayments={() => selectSection('payment-records')} language={language} />
                             </DeferredBoundary>}

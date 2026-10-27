@@ -12,11 +12,19 @@ const publicAvailabilityPreview = import.meta.env.DEV &&
 const renterPreview = import.meta.env.DEV && params.get('preview') === 'renter' && !params.has('auth')
 // Public, sign-in-free room listing (production route). Reads only listed rooms; inquiries are write-only.
 const publicRoomsPage = /^\/rooms\/?$/.test(location.pathname)
+// Public landing page at "/" for visitors without an open session (staff and renters sign in at /sign-in).
+const hasSession = (() => { try { return Object.keys(sessionStorage).some(key => /^sb-.+-auth-token$/.test(key)) } catch { return false } })()
+const landingPage = location.pathname === '/' && !location.search && !hasSession
 
 async function startApp() {
   if (publicRoomsPage && !publicAvailabilityPreview) {
     const { PublicRoomsPage } = await import('./access/PublicRooms')
     root.render(<React.StrictMode><PublicRoomsPage /></React.StrictMode>)
+    return
+  }
+  if (landingPage) {
+    const { LandingPage } = await import('./landing/LandingPage')
+    root.render(<React.StrictMode><LandingPage /></React.StrictMode>)
     return
   }
   if (renterPreview) {

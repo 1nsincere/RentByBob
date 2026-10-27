@@ -22,7 +22,8 @@ Then open in your browser:
 
 | What | Address |
 |---|---|
-| Real app (owner, clerk, renter sign-in) | http://127.0.0.1:5173 |
+| Landing page (what visitors see first) | http://127.0.0.1:5173 |
+| Real app sign-in (owner, clerk, renter) | http://127.0.0.1:5173/sign-in |
 | Public rooms page (what visitors see) | http://127.0.0.1:5173/rooms |
 | Fictional preview (sample data, no sign-in) | http://127.0.0.1:5173/?preview=1 |
 | Fictional renter view | http://127.0.0.1:5173/?preview=renter |

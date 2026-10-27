@@ -21,6 +21,7 @@ Nothing here has been run. Each step that creates accounts, spends money, or tou
 4. After the first deploy: open `/` and `/rooms`, sign in as the owner with MFA, check the browser console for CSP reports, and confirm the response headers (`curl -I`).
 
 ## 3. Before real use (production)
+- Replace the placeholder phone number and Messenger link in `CONTACT` at the top of `src/landing/LandingPage.tsx` (the address is already set to B. Zubiri St., Brgy. Labangon, Cebu City).
 - Separate production Supabase project and Pages project; repeat steps 1–2 with production values. Supabase Pro is recommended (no pausing, backups, session limits, leaked-password check).
 - Owner decisions still open: returned-check communication, rent-change rule, CAPTCHA (Cloudflare Turnstile) for sign-in and `/rooms`, inquiry retention (90 days chosen), QR code for the final `/rooms` address.
 - Run an accessibility session with real staff (older adults, Bisaya readers) and an independent security review.
