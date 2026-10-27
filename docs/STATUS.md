@@ -1,5 +1,13 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Renter view redesign; Payments count in the staff menu - 27 Oct 2026
+
+**Renter view:** a rent statement card first: rent left to pay (large), the oldest unpaid month as "Next due ... in N days" or "... was due ... N days ago" (descriptive only, no fees), a "Report a payment" button that opens and scrolls to the form, and the renter's building drawn with their own room lit. Then monthly rent / advance credit / oldest month facts, the pending-confirmation notice, rent by month with a paid-share bar, confirmed payments as receipt cards, and the Report a payment card beside them (first on narrow screens). The report form has a Details → Review → Sent tracker, quick amounts (rent left, monthly rent), large Bob / James / Someone else choices (radio buttons) and each report shows Sent → Checked → Recorded / Not received. The fictional renter preview now includes the report flow (sample only, kept on screen, nothing sent). New `dueStatus` and `paidPercent` helpers are unit-tested.
+
+**Staff menu:** "Payments and balances" shows a badge with renter reports not yet handled plus cash waiting for confirmation; the link name stays the same and the count is its accessible description.
+
+**Validation:** unit 99/99, offline 10/10 (renter preview reflow fixed at 320 px with 200% text), live suite exit 0 with 52 checks (renter reports through the new collector buttons), performance/CSP/artifact pass, `npm audit` 0 vulnerabilities.
+
 ## Landing page redesign and the owner's Building 1 sketch - 27 Oct 2026
 
 **Landing (user request: "top websites of the year" quality):** "Lights on B. Zubiri", a night street told on scroll. Giant headline with an italic serif line rising word by word, live Cebu clock, split-flap count of open spaces, a silhouette skyline whose open rooms glow; amber marquee; the street scene pins while scrolling (camera eases back, lamps come on, then the open rooms light) with three captions; the four homes slide sideways as you scroll down (keyboard focus scrolls a card into view); editorial "How it works" rows; tenant section with a receipt that prints; giant "Come home to B. Zubiri." close and outlined wordmark. Pointer ring, magnetic buttons, film grain and a progress line. System fonts only (CSP), no new libraries. Below 60rem or with reduced motion everything is ordinary stacked sections with no pinning or animation.

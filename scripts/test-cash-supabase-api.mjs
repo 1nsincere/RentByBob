@@ -1133,7 +1133,7 @@ if (process.argv[2] === 'create-users') {
     const reportCard = renterPage.locator('.renter-report').first()
     await reportCard.getByRole('button', { name: 'Report a payment', exact: true }).click()
     await reportCard.getByLabel('Amount paid (PHP)', { exact: true }).fill('123.45')
-    await reportCard.getByLabel('Who received it?', { exact: true }).selectOption('James')
+    await reportCard.getByRole('group', { name: 'Who received it?' }).getByRole('radio', { name: 'James', exact: true }).check()
     await reportCard.getByLabel('Note (optional)', { exact: true }).fill('Fictional live report')
     await reportCard.getByRole('button', { name: 'Review report', exact: true }).click()
     await expect(reportCard.locator('.renter-report-review')).toContainText('₱123.45 paid to James')

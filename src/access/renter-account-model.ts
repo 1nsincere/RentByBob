@@ -94,6 +94,23 @@ export function chargeStatus(charge: RenterCharge): ChargeStatus {
   return remaining === 0n ? 'paid' : remaining < centavos(charge.amount) ? 'partly-paid' : 'unpaid'
 }
 
+// Share of one month's rent already covered by confirmed payments, as a whole percent (exact centavos, rounded down).
+export function paidPercent(charge: RenterCharge): number {
+  const amount = centavos(charge.amount)
+  return amount > 0n ? Number(((amount - centavos(charge.remaining)) * 100n) / amount) : 0
+}
+
+// Where the renter stands against the oldest unpaid recorded month, in Philippine calendar days. Descriptive only:
+// no grace period, late fee or penalty exists.
+export type DueStatus = { kind: 'clear' } | { kind: 'upcoming' | 'today' | 'passed'; days: number; dueDate: string; remaining: string; month: string }
+export function dueStatus(agreement: RenterAgreement, today: string): DueStatus {
+  const oldest = agreement.charges.filter(charge => centavos(charge.remaining) > 0n).sort((a, b) => a.due_date.localeCompare(b.due_date))[0]
+  if (!oldest) return { kind: 'clear' }
+  const day = (value: string) => Date.UTC(Number(value.slice(0, 4)), Number(value.slice(5, 7)) - 1, Number(value.slice(8, 10))) / 86400000
+  const days = day(oldest.due_date) - day(today)
+  return { kind: days > 0 ? 'upcoming' : days === 0 ? 'today' : 'passed', days: Math.abs(days), dueDate: oldest.due_date, remaining: oldest.remaining, month: oldest.rental_month }
+}
+
 // Descriptive summary only: the oldest recorded charge with money still owed. No overdue or late-fee rule is implied.
 export function summarizeAgreement(agreement: RenterAgreement) {
   const owing = agreement.charges.filter(charge => centavos(charge.remaining) > 0n)

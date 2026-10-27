@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { chargeStatus, parseRenterAccount, summarizeAgreement } from '../src/access/renter-account-model.ts'
+import { chargeStatus, dueStatus, paidPercent, parseRenterAccount, summarizeAgreement } from '../src/access/renter-account-model.ts'
 
 const id = (n: number) => `30000000-0000-4000-8000-${String(n).padStart(12, '0')}`
 const acknowledgment = {
@@ -67,4 +67,16 @@ test('malformed or inconsistent renter data is rejected rather than displayed', 
     mutate(value)
     assert.throws(() => parseRenterAccount(value), /Invalid renter account response/, name)
   }
+})
+
+test('due status and paid share describe the oldest unpaid month in Philippine calendar days, with exact amounts', () => {
+  // Built directly: an earlier test changes the shared acknowledgment sample.
+  const agreement = { id: id(2), building: 'Sample building', room: 'Room A', move_in: '2024-01-15', rent: '5000.00', balance: '3500.00', payments: [], unconfirmed: [],
+    charges: [{ id: id(3), rental_month: '2024-02-01', due_date: '2024-02-15', amount: '5000.00', remaining: '0.00' }, { id: id(4), rental_month: '2024-03-01', due_date: '2024-03-15', amount: '5000.00', remaining: '3500.00' }] }
+  assert.deepEqual(dueStatus(agreement, '2024-03-10'), { kind: 'upcoming', days: 5, dueDate: '2024-03-15', remaining: '3500.00', month: '2024-03-01' })
+  assert.equal(dueStatus(agreement, '2024-03-15').kind, 'today')
+  assert.deepEqual(dueStatus(agreement, '2024-04-14'), { kind: 'passed', days: 30, dueDate: '2024-03-15', remaining: '3500.00', month: '2024-03-01' })
+  assert.deepEqual(dueStatus({ ...agreement, charges: agreement.charges.map(charge => ({ ...charge, remaining: '0.00' })) }, '2024-04-14'), { kind: 'clear' })
+  assert.deepEqual(agreement.charges.map(paidPercent), [100, 30])
+  assert.equal(paidPercent({ ...agreement.charges[0], amount: '3.00', remaining: '2.99' }), 0, 'rounds down so a month never looks more paid than it is')
 })

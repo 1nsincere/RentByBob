@@ -55,7 +55,7 @@ export function RenterPortalPreview() {
         <p className="notice" role="status"><strong>{tr('Renter view preview.', 'Sample nga panid sa nag-abang.')}</strong> {tr('This is what a signed-in renter sees. All names and amounts are fictional and nothing is saved.', 'Mao kini ang makita sa nag-abang human mosulod. Hinimo-himo ang tanang ngalan ug kantidad ug walay ma-save.')}</p>
         <RenterAccountView account={sampleAccount} language={language} preview />
       </main>
-      <footer className="site-footer"><span>RentByBob</span><span>{tr('View only · No online payments', 'Tan-awon lamang · Walay online nga bayad')}</span></footer>
+      <footer className="site-footer"><span>RentByBob</span><span>{tr('No online payments · Sample reports stay on this screen', 'Walay online nga bayad · Ang sample nga report magpabilin dinhi')}</span></footer>
     </div>
   </div>
 }

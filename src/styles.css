@@ -1102,54 +1102,132 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
   .dashboard-welcome, .workspace-overview > .stat-card, .tenant-card-grid > .card, .directory-stats > div { animation: none; }
 }
 
-/* Renter portal - 26 Oct 2026. Read-only rent record for a signed-in renter; same tokens as staff screens. */
-.renter-portal { display: grid; gap: 1.25rem; }
+/* Renter portal - redesigned 27 Oct 2026. A rent statement first (what is left, when it is due, one tap to report a
+   payment, the renter's own room lit in the building drawing), then months and payments beside "Report a payment". */
+.renter-portal { display: grid; gap: 1.5rem; }
 .renter-tenant { display: grid; gap: 1.25rem; }
-.renter-hero h2 { margin: 0.2rem 0 0.35rem; overflow-wrap: anywhere; }
-.renter-hero .dashboard-identity { margin: 0; }
-.renter-agreement { display: grid; gap: 1rem; }
-.renter-room-heading { display: flex; align-items: center; gap: 0.9rem; }
-.renter-room-heading .stat-icon { margin: 0; }
-.renter-room-heading h3 { margin: 0; font-size: 1.3rem; overflow-wrap: anywhere; }
-.renter-room-heading .field-help { margin: 0.15rem 0 0; }
-.renter-overview { margin: 0; }
-.renter-balance-card strong { color: var(--brand); }
-.renter-stat-text { font-size: clamp(1.35rem, 2.2vw, 1.7rem) !important; }
+.renter-hero .eyebrow { margin: 0; }
+.renter-hero h2 { margin: 0.2rem 0 0.35rem; font-size: clamp(1.9rem, 4vw, 2.8rem); line-height: 1.05; letter-spacing: -0.03em; overflow-wrap: anywhere; }
+.renter-hero .dashboard-identity { margin: 0; color: var(--text-secondary); }
+.renter-agreement { display: grid; gap: 1.25rem; }
+.renter-agreement > *, .renter-tenant > * { min-width: 0; }
+.renter-statement { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 1.5rem; padding: clamp(1.25rem, 3vw, 2rem); border-radius: 1.5rem; color: #f3efe2; overflow: hidden;
+  background: radial-gradient(120% 90% at 100% 0%, #2a7a5a 0%, transparent 55%), linear-gradient(150deg, #1d5a43, #123d2d); box-shadow: 0 30px 60px -40px rgb(16 50 36 / 80%); }
+.renter-statement :focus-visible { outline-color: #ffbf1f; }
+.renter-statement-place { margin: 0; font-size: 0.8rem; font-weight: 750; letter-spacing: 0.14em; text-transform: uppercase; color: #ffd76a; }
+.renter-statement h3 { margin: 0.15rem 0 0.2rem; font-size: clamp(1.3rem, 2.4vw, 1.75rem); color: #fff; overflow-wrap: anywhere; }
+.renter-statement-since { margin: 0; color: #c7ddd0; }
+.renter-balance-card { display: grid; gap: 0.15rem; margin: 1.4rem 0 0.9rem; }
+.renter-balance-label { font-size: 0.85rem; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; color: #c7ddd0; }
+.renter-balance-card strong { font-size: clamp(2.6rem, 7vw, 4.2rem); font-weight: 850; line-height: 1; letter-spacing: -0.04em; color: #fff; font-variant-numeric: tabular-nums; }
+.renter-balance-card small { color: #c7ddd0; }
+.renter-due { display: inline-flex; align-items: center; gap: 0.55rem; max-width: 100%; margin: 0 0 1.2rem; padding: 0.45rem 0.95rem; border-radius: 999px; background: rgb(255 255 255 / 11%); font-weight: 650; overflow-wrap: anywhere; }
+.renter-due-dot { flex: none; width: 0.6rem; height: 0.6rem; border-radius: 50%; background: #7ee2ad; }
+.renter-statement--today .renter-due-dot, .renter-statement--passed .renter-due-dot { background: #ffbf1f; box-shadow: 0 0 0 4px rgb(255 191 31 / 25%); }
+.renter-statement-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.renter-cta.button { gap: 0.5rem; border-color: #ffbf1f; background: #ffbf1f; color: #10201a; font-weight: 800; }
+.renter-cta.button:hover { background: #ffe08a; }
+.renter-cta svg { width: 1.2rem; height: 1.2rem; }
+.renter-link-button { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1.1rem; border: 1.5px solid rgb(243 239 226 / 45%); border-radius: 999px; color: #f3efe2; font-weight: 650; text-decoration: none; }
+.renter-link-button:hover { background: rgb(255 255 255 / 10%); }
+.renter-statement-art { display: grid; align-content: end; gap: 0.6rem; margin: 0; padding: 1.4rem 1rem 0.9rem; border-radius: 1.1rem; background: radial-gradient(80% 70% at 50% 100%, #24604a, #0f2a20 75%); }
+.renter-building .lp-facade { display: block; max-width: 100%; height: auto; margin: 0 auto; filter: drop-shadow(0 8px 10px rgb(0 0 0 / 35%)); }
+.renter-statement-art figcaption { font-size: 0.88rem; text-align: center; color: #c7ddd0; }
+.renter-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 0.8rem; }
+.renter-facts > div { display: grid; align-content: start; gap: 0.15rem; padding: 1rem 1.1rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); }
+.renter-facts span { font-size: 0.8rem; font-weight: 750; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary); }
+.renter-facts strong { font-size: 1.45rem; font-variant-numeric: tabular-nums; }
+.renter-facts small { color: var(--text-secondary); }
+.renter-credit-card strong { color: var(--brand); }
+.renter-stat-text { font-size: clamp(1.2rem, 2vw, 1.45rem) !important; }
 .renter-unconfirmed { margin: 0; border-left-color: var(--warning); background: var(--warning-surface); border-color: var(--warning-border); }
 .renter-pending-list, .renter-month-list, .renter-payment-list { display: grid; gap: 0.6rem; margin: 0.75rem 0 0; padding: 0; list-style: none; }
 .renter-pending-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; }
 .renter-pending-list li > span:first-child { flex: 1 1 12rem; }
-.renter-section { margin: 0; }
-.renter-section h4 { margin: 0; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.01em; }
+.renter-columns { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(19rem, 1fr); align-items: start; gap: 1.25rem; }
+.renter-main { display: grid; gap: 1.25rem; min-width: 0; }
+.renter-aside { position: sticky; top: 6rem; min-width: 0; }
+.renter-section { margin: 0; scroll-margin-top: 6rem; }
+.renter-section h4 { margin: 0; font-size: 1.2rem; font-weight: 750; letter-spacing: -0.01em; scroll-margin-top: 6rem; }
 .renter-month { display: grid; grid-template-columns: minmax(8rem, 1.1fr) minmax(0, 2fr) 9.5rem; align-items: center; gap: 0.6rem 1.25rem; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
 .renter-month > div:first-child { display: grid; gap: 0.1rem; }
 .renter-month small { color: var(--text-secondary); }
+.renter-month-bar { display: block; height: 6px; margin-top: 0.45rem; overflow: hidden; border-radius: 999px; background: var(--border); }
+.renter-month-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--brand), #3fb27f); }
 .renter-month dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 1rem; margin: 0; }
 .renter-month dt { color: var(--text-secondary); font-size: 0.82rem; font-weight: 600; }
 .renter-month dd { margin: 0; font-weight: 650; font-variant-numeric: tabular-nums; }
 .renter-month--paid { background: var(--support); }
 .renter-month > .status { justify-self: end; }
-.renter-payment-list li { display: flex; align-items: center; gap: 0.9rem; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
+.renter-payment-list li { display: flex; align-items: center; gap: 0.9rem; padding: 0.85rem 1rem; border: 1px dashed var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
+.renter-payment-stamp { display: grid; flex: none; place-items: center; width: 2.6rem; height: 2.6rem; border: 2px dashed var(--brand); border-radius: 50%; background: var(--support); color: var(--brand); font-weight: 850; transform: rotate(-8deg); }
 .renter-payment-copy { display: grid; flex: 1 1 auto; gap: 0.1rem; min-width: 0; }
 .renter-payment-copy strong { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
 .renter-payment-copy span, .renter-payment-copy small { color: var(--text-secondary); overflow-wrap: anywhere; }
-/* Renter "Report a payment" (202610270012): a notice to the property, never a balance change. */
+/* Staff side of renter reports (Payments). */
 .renter-reports-inbox { display: grid; gap: 0.6rem; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
 .renter-reports-inbox h4 { margin: 0; font-size: 1.1rem; }
 .renter-reports-card .report-dismiss { flex-basis: 100%; }
 .renter-reports-card .report-dismiss summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
-.renter-report { display: grid; gap: 0.75rem; }
-.renter-report h5 { margin: 0.5rem 0 0; font-size: 1.05rem; font-weight: 700; }
-.renter-report > .button { justify-self: start; }
-.renter-report-review { display: grid; gap: 0.5rem; padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
+/* Renter "Report a payment" (202610270012): a notice to the property, never a balance change. */
+.renter-report { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.85rem; border-top: 4px solid #e0a100; }
+.renter-report .button, .renter-statement .button { max-width: 100%; white-space: normal; }
+.renter-report h5 { margin: 0.4rem 0 0; font-size: 1.05rem; font-weight: 750; }
+.renter-report > .button { justify-self: stretch; }
+.renter-report-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.8rem; }
+.renter-report-head > div { flex: 1 1 9rem; min-width: 0; overflow-wrap: anywhere; }
+.renter-report-head p { margin: 0.2rem 0 0; }
+.renter-report-icon { display: grid; flex: none; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 0.9rem; background: #fff1c2; color: #7a5600; }
+.renter-report-icon svg { width: 1.4rem; height: 1.4rem; }
+.renter-sample-note { margin: 0; padding: 0.5rem 0.8rem; border-radius: 0.7rem; background: var(--surface-alt); color: var(--text-secondary); font-size: 0.92rem; }
+.renter-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.renter-steps li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.45rem; min-width: 0; overflow-wrap: anywhere; padding-top: 0.5rem; border-top: 3px solid var(--border); color: var(--text-secondary); font-size: 0.88rem; font-weight: 650; }
+.renter-steps li span { display: grid; flex: none; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--surface-alt); font-size: 0.8rem; }
+.renter-steps li.is-current, .renter-steps li.is-done { border-top-color: var(--brand); color: var(--text); }
+.renter-steps li.is-current span { background: var(--brand); color: #fff; }
+.renter-steps li.is-done span { background: var(--support); color: var(--brand); }
+.renter-report-form { display: grid; gap: 0.45rem; }
+.renter-report-form > label { margin-top: 0.4rem; font-weight: 650; }
+.renter-report-form input { width: 100%; }
+.renter-amount { position: relative; }
+.renter-amount > span { position: absolute; left: 0.95rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-weight: 750; pointer-events: none; }
+.renter-amount input { padding-left: 2.1rem; font-size: 1.35rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.renter-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.renter-chips button { min-height: 44px; padding: 0.4rem 0.95rem; border: 1.5px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 0.92rem; font-weight: 650; cursor: pointer; }
+.renter-chips button:hover { border-color: var(--brand); }
+.renter-chips button.is-on { border-color: var(--brand); background: var(--support); color: var(--brand); }
+.renter-collector { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin: 0.4rem 0 0; padding: 0; border: 0; min-width: 0; }
+.renter-collector legend { margin-bottom: 0.45rem; padding: 0; font-weight: 650; }
+.renter-collector label { position: relative; display: grid; place-items: center; min-height: 48px; padding: 0.4rem; border: 1.5px solid var(--border); border-radius: 0.9rem; background: var(--surface); font-weight: 700; text-align: center; cursor: pointer; overflow-wrap: anywhere; }
+.renter-collector input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.renter-collector label:focus-within { outline: 3px solid var(--brand); outline-offset: 2px; }
+.renter-collector label.is-on { border-color: var(--brand); background: var(--support); color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.renter-report-review { display: grid; gap: 0.5rem; padding: 1rem; border: 1.5px dashed var(--brand); border-radius: 0.9rem; background: var(--support); }
 .renter-report-review p { margin: 0; overflow-wrap: anywhere; }
+.renter-review-amount strong { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
 .renter-report-list { display: grid; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
-.renter-report-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
-.renter-report-list li > div { display: grid; gap: 0.1rem; min-width: 0; flex: 1 1 12rem; }
+.renter-report-list > li { display: grid; gap: 0.7rem; padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
+.renter-report-list > li > div { display: grid; gap: 0.1rem; min-width: 0; }
 .renter-report-list strong { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
-.renter-report-list li > div span, .renter-report-list li > div small { color: var(--text-secondary); overflow-wrap: anywhere; }
-.renter-report-list .status { max-width: 100%; overflow-wrap: anywhere; }
+.renter-report-list > li > div span, .renter-report-list > li > div small { color: var(--text-secondary); overflow-wrap: anywhere; }
+.renter-report-list .status { justify-self: start; max-width: 100%; overflow-wrap: anywhere; }
+.renter-track { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; color: var(--text-secondary); font-size: 0.8rem; font-weight: 650; }
+.renter-track li { position: relative; padding-top: 1.1rem; text-align: center; }
+.renter-track li::before { content: ""; position: absolute; top: 0.3rem; left: 50%; z-index: 1; width: 0.7rem; height: 0.7rem; margin-left: -0.35rem; border-radius: 50%; background: var(--border); }
+.renter-track li::after { content: ""; position: absolute; top: 0.6rem; left: -50%; right: 50%; height: 2px; background: var(--border); }
+.renter-track li:first-child::after { display: none; }
+.renter-track li.is-done, .renter-track li.is-current, .renter-track li.is-stopped { color: var(--text); }
+.renter-track li.is-done::before, .renter-track li.is-done::after { background: var(--brand); }
+.renter-track li.is-current::before { background: #e0a100; box-shadow: 0 0 0 4px rgb(224 161 0 / 25%); }
+.renter-track li.is-stopped::before { background: #b42318; }
 .renter-footnote { margin: 0; }
+@media (max-width: 64rem) {
+  .renter-columns { grid-template-columns: minmax(0, 1fr); }
+  .renter-aside { position: static; order: -1; }
+}
+@media (max-width: 48rem) {
+  .renter-statement { grid-template-columns: minmax(0, 1fr); }
+}
 
 /* Staff dashboard collection figures (saved workspace only). */
 .collections-overview { margin: 0 0 1.25rem; }
@@ -1424,6 +1502,7 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
 .nav-group-more { margin-top: .35rem; }
 .nav-group-more:not([hidden]) { animation: rise-in 260ms cubic-bezier(.2,.7,.2,1) both; }
 .workspace-links a.nav-add-tenant { gap: .5rem; margin-top: .35rem; border: 1px solid var(--border); font-weight: 650; }
+.nav-badge { display: inline-flex; align-items: center; margin-left: 0.45rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: #f2c230; color: #1c2a23; font-size: 0.78rem; font-weight: 800; line-height: 1.4; white-space: nowrap; }
 .nav-add-mark { display: inline-grid; width: 1.5rem; height: 1.5rem; place-items: center; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 800; line-height: 1; }
 .workspace-sidebar .nav-group-label { color: var(--nav-label); }
 .workspace-sidebar .nav-group-toggle { border-color: rgb(255 255 255 / 22%); color: var(--nav-text); }

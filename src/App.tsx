@@ -25,8 +25,10 @@ const RenterPortal = deferredScreen(() => import('./access/RenterPortal').then(m
 
 // renterLinks: tenant IDs with an active (unrevoked) renter login link, readable by staff under existing RLS.
 // newInquiries: unhandled public-page inquiries visible to this staff account (0 when unavailable).
-type Snapshot = { access: AccessState; mfa: boolean; properties: Property[]; memberships: Membership[]; tenants: Tenant[]; renterLinks: string[]; newInquiries: number }
-type NavigationItem = { id: string; label: string }
+// toCheck: renter payment reports not yet handled plus cash waiting for confirmation (0 when unavailable).
+type Snapshot = { access: AccessState; mfa: boolean; properties: Property[]; memberships: Membership[]; tenants: Tenant[]; renterLinks: string[]; newInquiries: number; toCheck?: number }
+// badge: a short count shown beside the label; the link's name stays the label, the count is its description.
+type NavigationItem = { id: string; label: string; badge?: string }
 const translateText = (language: Language, english: string, bisaya: string) => language === 'ceb' ? bisaya : english
 
 // While the session loads, use the sign-in layout unless a saved session exists, so the first screen does not jump.
@@ -151,7 +153,7 @@ export function App() {
         if (!trustError && trusted === true) mfa = false
         else if (!trustError && trusted === false) clearDevice()
       }
-      let properties: Property[] = [], memberships: Membership[] = [], tenants: Tenant[] = [], renterLinks: string[] = [], newInquiries = 0
+      let properties: Property[] = [], memberships: Membership[] = [], tenants: Tenant[] = [], renterLinks: string[] = [], newInquiries = 0, toCheck = 0
       if (access.state === 'ready' && !mfa && !setup) {
         const [p, m, t, c] = await Promise.all([
           supabase.from('properties').select('id,name').order('name'),
@@ -168,11 +170,16 @@ export function App() {
           // Badge only: an unavailable inquiry table must not block the workspace, so a failure shows no count.
           const inquiries = await supabase.from('rental_inquiries').select('id', { count: 'exact', head: true }).is('handled_at', null)
           newInquiries = inquiries.error ? 0 : inquiries.count ?? 0
+          const [reportsWaiting, cashWaiting] = await Promise.all([
+            supabase.from('renter_payment_reports').select('id', { count: 'exact', head: true }).eq('status', 'new'),
+            supabase.from('cash_records').select('id', { count: 'exact', head: true }).is('confirmed_at', null),
+          ])
+          toCheck = (reportsWaiting.error ? 0 : reportsWaiting.count ?? 0) + (cashWaiting.error ? 0 : cashWaiting.count ?? 0)
         }
       }
       if (version !== generation.current) return
       setError('')
-      setSnapshot({ access, mfa, properties, memberships, tenants, renterLinks, newInquiries })
+      setSnapshot({ access, mfa, properties, memberships, tenants, renterLinks, newInquiries, toCheck })
       setPropertyId(previous => properties.some(property => property.id === previous) ? previous : properties[0]?.id ?? '')
     } catch {
       if (version === generation.current) {
@@ -243,7 +250,7 @@ export function App() {
     { id: 'tenant-records', label: translate('Tenant directory', 'Lista sa mga nag-abang') },
     { id: 'property-locations', label: translate('Buildings and units', 'Mga bilding ug kwarto') },
     { id: 'create-tenant', label: translate('Add tenant record', 'Idugang ang nag-abang') },
-    { id: 'payment-records', label: translate('Payments and balances', 'Mga bayad ug balanse') },
+    { id: 'payment-records', label: translate('Payments and balances', 'Mga bayad ug balanse'), badge: snapshot?.toCheck ? `${snapshot.toCheck} ${translate('to check', 'susihon')}` : undefined },
     { id: 'room-listings', label: `${translate('Room listings & inquiries', 'Lista sa kwarto ug pangutana')}${snapshot?.newInquiries ? ` (${snapshot.newInquiries} ${translate('new', 'bag-o')})` : ''}` },
     { id: 'invite-account', label: translate('Invite account', 'Pagdapit og account') },
     ...(role === 'owner' ? [
@@ -276,10 +283,10 @@ export function App() {
   function staffNavigation() {
     const byId = (id: string) => navigationItems.find(item => item.id === id)
     const link = (item: NavigationItem, className = '') => <li key={item.id}>
-      <a href={`#${item.id}`} className={className} aria-current={activeSection === item.id ? 'location' : undefined}
+      <a href={`#${item.id}`} className={className} aria-current={activeSection === item.id ? 'location' : undefined} aria-description={item.badge}
         onClick={event => { event.preventDefault(); selectSection(item.id) }}>
         {dashboardPreview && <WorkspaceIcon kind={item.id === 'home' ? 'home' : item.id === 'tenant-records' ? 'people' : item.id === 'property-locations' ? 'building' : item.id === 'payment-records' ? 'payments' : 'add'} />}
-        {item.id === 'create-tenant' && !dashboardPreview && <span className="nav-add-mark" aria-hidden="true">+</span>}{item.label}
+        {item.id === 'create-tenant' && !dashboardPreview && <span className="nav-add-mark" aria-hidden="true">+</span>}{item.label}{item.badge && <span className="nav-badge" aria-hidden="true">{item.badge}</span>}
       </a>
     </li>
     const daily = ['tenant-records', 'payment-records', 'property-locations', 'room-listings'].map(byId).filter(Boolean) as NavigationItem[]

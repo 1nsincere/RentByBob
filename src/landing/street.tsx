@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import { text, type Language } from '../i18n'
+import './facade.css'
 
 // Site plan of the rentable homes, placed as on the owner's sketch: B. Zubiri St in front, Mariano Abella St beside
 // Bob's house. Stores and the Yamaha space are private negotiations and are never shown publicly (owner decision
