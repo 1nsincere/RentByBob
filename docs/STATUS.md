@@ -1,5 +1,9 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Landing follows the time of day in Cebu - 27 Oct 2026
+
+From 5:00 to 17:59 Cebu time the landing page shows a morning street (dawn sky, sun rising behind the homes, skyline in daylight colours with open rooms still glowing, lamps off, "open today", "The street wakes up"); otherwise the night street. Any hour can be previewed with `/#at=7` (or `#at=07:30`, `#at=19`): a "Simulated Cebu time" tag shows with "Back to live time". Visual only; listings and the "updated" time stay real. Screenshot: `docs/screenshots/landing-7am.png`. Validation: axe 0 violations at 7 AM (1440 and 390 px, no sideways scroll), offline 10/10, unit 99/99, performance LCP 2.2 s / CLS 0, CSP and artifact checks pass.
+
 ## Building 2 sketch, landing "at a glance" strip, /rooms redesign - 27 Oct 2026
 
 **Building 2 (owner sketch):** upstairs Rooms 04-07 each have a window just left of the door; Room 08 sits in a wing on the left (window in the wing, door at the end of the walkway); downstairs the gym's double doors, a door to the stairs (stairs shown inside), and a hall door leading to Rooms 01-03 inside. Drawn that way on the landing page, the /rooms page and the staff front view (`SKETCHES` in `BuildingDrawings.tsx`; Building 1 stays the default pattern).

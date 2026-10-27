@@ -95,19 +95,19 @@
 @keyframes lp-flip { 0% { transform: rotateX(-90deg); opacity: .2; } 60% { transform: rotateX(12deg); opacity: 1; } 100% { transform: rotateX(0); } }
 .lp-skyline { position: relative; display: grid; grid-template-columns: 1.15fr 1fr .5fr .8fr; align-items: end; gap: clamp(.6rem, 2.5vw, 2.5rem); margin: 0 calc(var(--pad) * -.5); padding: 0 calc(var(--pad) * .5); border-bottom: 1px solid var(--line-night); animation: lp-fade 1.2s var(--ease) 300ms both; }
 .lp-skyline-home .lp-facade { display: block; }
-.lp-skyline .fx-wall, .lp-skyline .fx-gable { fill: #1a2d24; }
-.lp-skyline .fx-wall-shade { fill: #15251e; }
-.lp-skyline .fx-roof, .lp-skyline .fx-awning { fill: #0f1d17; }
-.lp-skyline .fx-roof-line { stroke: #0f1d17; }
-.lp-skyline .fx-eave, .lp-skyline .fx-trim, .lp-skyline .fx-sill, .lp-skyline .fx-ground { fill: #22382d; }
-.lp-skyline .fx-frame { fill: #0f1d17; }
-.lp-skyline .fx-glass { fill: #0a1410; }
-.lp-skyline .fx-rail, .lp-skyline .fx-baluster, .lp-skyline .fx-mullion { stroke: #22382d; }
-.lp-skyline .fx-stair { fill: #1a2d24; stroke: #22382d; }
-.lp-skyline .fx-bush, .lp-skyline .fx-door, .lp-skyline .fx-vent { fill: #10201a; }
-.lp-skyline .fx-ridge, .lp-skyline .fx-glint { stroke: rgb(255 255 255 / 4%); }
-.lp-skyline .fx-shadow { fill: none; }
-.lp-skyline .fx-glass.is-lit { fill: #ffbf1f; }
+.lp[data-phase="night"] .lp-skyline .fx-wall, .lp[data-phase="night"] .lp-skyline .fx-gable { fill: #1a2d24; }
+.lp[data-phase="night"] .lp-skyline .fx-wall-shade { fill: #15251e; }
+.lp[data-phase="night"] .lp-skyline .fx-roof, .lp[data-phase="night"] .lp-skyline .fx-awning { fill: #0f1d17; }
+.lp[data-phase="night"] .lp-skyline .fx-roof-line { stroke: #0f1d17; }
+.lp[data-phase="night"] .lp-skyline .fx-eave, .lp[data-phase="night"] .lp-skyline .fx-trim, .lp[data-phase="night"] .lp-skyline .fx-sill, .lp[data-phase="night"] .lp-skyline .fx-ground { fill: #22382d; }
+.lp[data-phase="night"] .lp-skyline .fx-frame { fill: #0f1d17; }
+.lp[data-phase="night"] .lp-skyline .fx-glass { fill: #0a1410; }
+.lp[data-phase="night"] .lp-skyline .fx-rail, .lp[data-phase="night"] .lp-skyline .fx-baluster, .lp[data-phase="night"] .lp-skyline .fx-mullion { stroke: #22382d; }
+.lp[data-phase="night"] .lp-skyline .fx-stair { fill: #1a2d24; stroke: #22382d; }
+.lp[data-phase="night"] .lp-skyline .fx-bush, .lp[data-phase="night"] .lp-skyline .fx-door, .lp[data-phase="night"] .lp-skyline .fx-vent { fill: #10201a; }
+.lp[data-phase="night"] .lp-skyline .fx-ridge, .lp[data-phase="night"] .lp-skyline .fx-glint { stroke: rgb(255 255 255 / 4%); }
+.lp[data-phase="night"] .lp-skyline .fx-shadow { fill: none; }
+.lp[data-phase="night"] .lp-skyline .fx-glass.is-lit { fill: #ffbf1f; }
 .lp-scroll-cue { position: absolute; right: var(--pad); top: 22%; z-index: 2; display: inline-flex; align-items: center; gap: .8rem; min-height: 2.75rem; min-width: 2.75rem; font: 600 .78rem var(--mono); letter-spacing: .12em; text-transform: uppercase; text-decoration: none; color: var(--muted-night); writing-mode: vertical-rl; }
 .lp-scroll-cue i { position: relative; width: 1px; height: 3.5rem; background: var(--line-night); overflow: hidden; }
 .lp-scroll-cue i::after { content: ""; position: absolute; inset: 0; background: var(--amber); animation: lp-drip 2s var(--ease) infinite; }
@@ -202,10 +202,10 @@
 .lp-facade { flex: 0 1 auto; height: auto; max-height: 100%; min-height: 0; overflow: visible; filter: drop-shadow(0 6px 6px rgb(0 0 0 / 32%)); transition: filter 260ms ease; }
 .lp-plot:hover .lp-facade, .lp-plot.is-active .lp-facade { filter: drop-shadow(0 12px 10px rgb(0 0 0 / 42%)) brightness(1.06); }
 
-.lp-skyline .fx-door-room, .lp-skyline .fx-gate, .lp-skyline .fx-inside { fill: #0f1d17; stroke: #22382d; }
-.lp-skyline .fx-door-room.is-lit { fill: #ffbf1f; }
-.lp-skyline .fx-glassdoor, .lp-skyline .fx-door-double { fill: #15251e; stroke: #22382d; }
-.lp-skyline .fx-gate-bar, .lp-skyline .fx-divider { stroke: #22382d; }
+.lp[data-phase="night"] .lp-skyline .fx-door-room, .lp[data-phase="night"] .lp-skyline .fx-gate, .lp[data-phase="night"] .lp-skyline .fx-inside { fill: #0f1d17; stroke: #22382d; }
+.lp[data-phase="night"] .lp-skyline .fx-door-room.is-lit { fill: #ffbf1f; }
+.lp[data-phase="night"] .lp-skyline .fx-glassdoor, .lp[data-phase="night"] .lp-skyline .fx-door-double { fill: #15251e; stroke: #22382d; }
+.lp[data-phase="night"] .lp-skyline .fx-gate-bar, .lp[data-phase="night"] .lp-skyline .fx-divider { stroke: #22382d; }
 
 /* Homes gallery (horizontal on wide screens) */
 .lp-homes { --focus: var(--leaf); position: relative; background: var(--cream); color: var(--ink); }
@@ -356,3 +356,19 @@
   .lp-reveal, .lp-receipt.lp-reveal .lp-receipt-row { opacity: 1; transform: none; }
   .lp-grain { display: none; }
 }
+
+/* Daytime in Cebu (5:00-17:59, or a "#at=7" preview): dawn sky with the sun coming up behind the homes, the skyline in
+   daylight colours (open rooms still glow), brighter street, lamps off. Text keeps its night contrast on the dark upper sky. */
+.lp[data-phase="day"] .lp-hero { background: radial-gradient(60% 45% at 78% 100%, rgb(255 210 122 / 55%), transparent 70%), linear-gradient(180deg, #102c35 0%, #1c4651 46%, #3a5f5c 72%, #b9845a 90%, #eeb06a 100%); }
+.lp[data-phase="day"] .lp-hero-top, .lp[data-phase="day"] .lp-lede, .lp[data-phase="day"] .lp-hero-count p span, .lp[data-phase="day"] .lp-scroll-cue { color: #e6efe9; }
+.lp-sun { position: absolute; right: 14%; bottom: 9%; width: clamp(7rem, 14vw, 12rem); aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, #fff3c4 0%, #ffd27a 45%, rgb(255 191 31 / 0%) 70%); animation: lp-sunrise 2.4s var(--ease) both; }
+@keyframes lp-sunrise { from { transform: translateY(45%); opacity: 0; } }
+.lp[data-phase="day"] .lp-skyline { filter: saturate(.92) brightness(.97); }
+.lp[data-phase="day"] .lp-street { background: radial-gradient(70% 60% at 70% 50%, #2c6a52 0%, #14302a 72%); }
+.lp[data-phase="day"] .lp-plan { background: radial-gradient(120% 80% at 30% 0%, #3f8a66 0%, #2b6b50 55%, #215a42 100%); }
+.lp[data-phase="day"] .lp-lamp { opacity: .25; box-shadow: none; }
+.lp[data-phase="day"] .lp-visit { background: radial-gradient(60% 50% at 20% 0%, rgb(255 210 122 / 16%), transparent 70%), var(--night); }
+.lp-sim { position: fixed; left: 50%; bottom: 1rem; z-index: 75; display: flex; align-items: center; gap: .4rem; max-width: calc(100% - 2rem); margin: 0; padding: 0 1.1rem; border-radius: 999px; background: var(--amber); color: var(--ink); font-weight: 700; box-shadow: 0 10px 30px -10px rgb(0 0 0 / 50%); transform: translateX(-50%); flex-wrap: wrap; justify-content: center; }
+.lp-sim a { display: inline-flex; align-items: center; min-height: 2.75rem; color: var(--ink) !important; text-decoration: underline; text-underline-offset: .2em; }
+.lp-sim a:focus-visible { outline-color: var(--ink); }
