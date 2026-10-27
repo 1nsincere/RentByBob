@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, LoadingSkeleton } from '../components/atoms'
 import { hostedDevelopment, supabase } from './client'
+import { deviceLabel, saveDevice } from './trusted-device'
 import { copy, text, type Language } from '../i18n'
 
 export function Feedback({ message, error = false }: { message: string; error?: boolean }) {
@@ -89,6 +90,7 @@ export function Mfa({ done, backup = false, language = 'en' }: { done: () => voi
   const [factors, setFactors] = useState<{ id: string; friendly_name?: string }[]>([])
   const [factorId, setFactorId] = useState(''); const [secret, setSecret] = useState(''); const [qr, setQr] = useState('')
   const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false); const [loaded, setLoaded] = useState(false)
+  const [rememberDevice, setRememberDevice] = useState(false)
   useEffect(() => { let live = true
     void supabase!.auth.mfa.listFactors().then(({ data, error }) => {
       if (!live) return
@@ -113,10 +115,18 @@ export function Mfa({ done, backup = false, language = 'en' }: { done: () => voi
     {!backup && factors.length > 0 && <><label htmlFor="factor">{t.authenticator}</label><select id="factor" value={factorId} onChange={e => setFactorId(e.target.value)}>{factors.map((f, i) => <option key={f.id} value={f.id}>{f.friendly_name || `${t.authenticator} ${i + 1}`}</option>)}</select></>}
     {factorId && <form onSubmit={async e => {
       e.preventDefault(); const code = String(new FormData(e.currentTarget).get('code')); setBusy(true); setMessage('')
-      try { const { error } = await supabase!.auth.mfa.challengeAndVerify({ factorId, code }); if (error) throw error; setSecret(''); setQr(''); done() }
+      try {
+        const { error } = await supabase!.auth.mfa.challengeAndVerify({ factorId, code }); if (error) throw error
+        // Optional: remember this browser for 30 days (database stores only a hash; failure here never blocks sign-in).
+        if (!backup && rememberDevice) {
+          const [{ data: remembered }, { data: user }] = await Promise.all([supabase!.rpc('remember_device', { p_label: deviceLabel() }), supabase!.auth.getUser()])
+          if (remembered?.secret && user.user) saveDevice({ userId: user.user.id, secret: remembered.secret, expiresAt: remembered.expires_at, id: remembered.id })
+        }
+        setSecret(''); setQr(''); done()
+      }
       catch { setMessage(tr('The code could not be verified. Use the current six-digit code and try again.', 'Wala makumpirma ang code. Gamita ang kasamtangang unom-ka-digit nga code ug sulayi pag-usab.')) }
       finally { setBusy(false) }
-    }}><label htmlFor="code">{t.codeLabel}</label><input id="code" name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required /><Button className="primary" disabled={busy}>{busy ? (language === 'ceb' ? 'Gisusi…' : 'Checking…') : t.verifyCode}</Button></form>}
+    }}><label htmlFor="code">{t.codeLabel}</label><input id="code" name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required />{!backup && <div className="remember-device"><input id="remember-device" type="checkbox" checked={rememberDevice} aria-describedby="remember-device-help" onChange={event => setRememberDevice(event.target.checked)} /><span><label htmlFor="remember-device">{tr('Remember this device for 30 days', 'Hinumdumi kini nga device sulod sa 30 ka adlaw')}</label><small id="remember-device-help">{tr('Only on your own device, not a shared computer. Your password is still needed.', 'Sa imong kaugalingong device lang, dili sa gipaambit nga kompyuter. Kinahanglan gihapon ang password.')}</small></span></div>}<Button className="primary" disabled={busy}>{busy ? (language === 'ceb' ? 'Gisusi…' : 'Checking…') : t.verifyCode}</Button></form>}
     <p className="small">{t.lostAuthenticator}</p>
   </section>
 }

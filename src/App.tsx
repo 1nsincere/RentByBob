@@ -6,6 +6,8 @@ import { DeferredBoundary, deferredScreen } from './components/DeferredScreen'
 import { dashboardPreview, hostedDevelopment, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
 import { ChangePassword, Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
 import { IdleSignOut } from './access/IdleSignOut'
+import { TrustedDevices } from './access/TrustedDevices'
+import { clearDevice, readDevice } from './access/trusted-device'
 import { appError, copy, type Language } from './i18n'
 
 const SavedPayments = deferredScreen(() => import('./access/SavedPayments').then(module => module.SavedPayments))
@@ -139,7 +141,14 @@ export function App() {
       if (accessError || !access) throw accessError
       const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
       if (assuranceError) throw assuranceError
-      const mfa = access.staff_mfa_required && assurance.currentLevel !== 'aal2'
+      let mfa = access.staff_mfa_required && assurance.currentLevel !== 'aal2'
+      // A remembered device skips the authenticator only when the database accepts it for this user.
+      const device = mfa ? readDevice() : null
+      if (device && device.userId === session.user.id) {
+        const { data: trusted, error: trustError } = await supabase.rpc('check_trusted_device')
+        if (!trustError && trusted === true) mfa = false
+        else if (!trustError && trusted === false) clearDevice()
+      }
       let properties: Property[] = [], memberships: Membership[] = [], tenants: Tenant[] = [], renterLinks: string[] = [], newInquiries = 0
       if (access.state === 'ready' && !mfa && !setup) {
         const [p, m, t, c] = await Promise.all([
@@ -411,7 +420,7 @@ export function App() {
                               : visitedSections.includes('payment-records') && <DeferredBoundary loadingLabel={translate('Loading payment records…', 'Gikarga ang mga rekord sa bayad…')} rows={3} language={language} reset={SavedPayments.reset}>
                                 <SavedPayments.Screen key={propertyId} propertyId={propertyId} tenants={tenantList} owner={role === 'owner'} userId={session.user.id} focusTenant={paymentTenant} language={language} />
                               </DeferredBoundary>}</div>
-                              <div id="room-listings" hidden={activeSection !== 'room-listings'} tabIndex={-1} className="workspace-section">{visitedSections.includes('room-listings') && <DeferredBoundary loadingLabel={translate('Loading room listings…', 'Gikarga ang lista sa kwarto…')} rows={3} language={language} reset={RoomListingsManager.reset}><RoomListingsManager.Screen key={`listings:${propertyId}`} propertyId={propertyId} language={language} /></DeferredBoundary>}</div>
+                              <div id="room-listings" hidden={activeSection !== 'room-listings'} tabIndex={-1} className="workspace-section">{visitedSections.includes('room-listings') && <DeferredBoundary loadingLabel={translate('Loading room listings…', 'Gikarga ang lista sa kwarto…')} rows={3} language={language} reset={RoomListingsManager.reset}><RoomListingsManager.Screen key={`listings:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} /></DeferredBoundary>}</div>
                               <div id="invite-account" hidden={activeSection !== 'invite-account'} tabIndex={-1} className="workspace-section">{visitedSections.includes('invite-account') && <DeferredBoundary loadingLabel={translate('Loading invitations…', 'Gikarga ang mga imbitasyon…')} rows={2} language={language} reset={Invitations.reset}><Invitations.Screen key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} /></DeferredBoundary>}</div>
                             {role === 'owner' && <>
                               <div id="manage-access" hidden={activeSection !== 'manage-access'} tabIndex={-1} className="workspace-section">{visitedSections.includes('manage-access') && <DeferredBoundary loadingLabel={translate('Loading account access…', 'Gikarga ang access sa account…')} rows={3} language={language} reset={ManageAccess.reset}><ManageAccess.Screen key={`access:${propertyId}`} propertyId={propertyId} tenants={tenantList} changed={() => void refresh()} language={language} /></DeferredBoundary>}</div>
@@ -424,6 +433,7 @@ export function App() {
                               <p>{translate('Enroll a backup authenticator on a separate device before losing access to your main one. Password recovery does not bypass staff MFA.', 'Idugang ang laing pang-authenticator sa lahi nga device aron naa kay lain magamit. Ang pag-usab sa password dili makatangtang sa security check sa staff.')}</p>
                               <Button disabled={dashboardPreview} className="secondary-button" onClick={() => setBackup(!backup)}>{backup ? t.closeBackup : t.addBackup}</Button>
                               {backup && <Mfa backup language={language} done={() => { setBackup(false); void refresh() }} />}
+                              {!dashboardPreview && activeSection === 'account-security' && <TrustedDevices language={language} />}
                             </section>
                           </div>
                         </div>

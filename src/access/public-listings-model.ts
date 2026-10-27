@@ -1,6 +1,7 @@
 // Public listing view returned by public.read_public_listings(). Only these fields are accepted; anything else
 // (or malformed money) is rejected rather than shown to the public.
-export type PublicRoom = { unit_id: string; room: string; asking_rent: string; description: string }
+// asking_rent is null when staff have not set a price (rooms listed automatically); the page says "Ask for the price".
+export type PublicRoom = { unit_id: string; room: string; asking_rent: string | null; description: string }
 export type PublicBuilding = { label: string; rooms: PublicRoom[] }
 export type PublicListings = { properties: { name: string; buildings: PublicBuilding[] }[] }
 
@@ -11,7 +12,7 @@ const exactKeys = (value: Record<string, unknown>, keys: string[]) => Object.key
 function room(value: unknown): value is PublicRoom {
   return record(value) && exactKeys(value, ['unit_id', 'room', 'asking_rent', 'description']) &&
     typeof value.unit_id === 'string' && /^[0-9a-f-]{36}$/i.test(value.unit_id) && text(value.room, 200) &&
-    typeof value.asking_rent === 'string' && /^\d{1,12}(\.\d{1,2})?$/.test(value.asking_rent) && Number(value.asking_rent) > 0 &&
+    (value.asking_rent === null || (typeof value.asking_rent === 'string' && /^\d{1,12}(\.\d{1,2})?$/.test(value.asking_rent) && Number(value.asking_rent) > 0)) &&
     typeof value.description === 'string' && value.description.length <= 300
 }
 

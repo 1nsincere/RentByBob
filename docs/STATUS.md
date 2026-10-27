@@ -1,5 +1,15 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Remember this device; automatic room listings - 27 Oct 2026
+
+**Remember this device (owner decision: 30 days, owner and clerks):** after a real authenticator code, staff may tick "Remember this device for 30 days". On that browser, password sign-in then skips the code. Migration `202610270007_trusted_devices.sql`: only a SHA-256 hash of the device secret is stored (private table); the browser sends the secret in `x-rentbybob-device` on database requests only (never to Auth); `private.staff_role` accepts it in place of the authenticator for that user only, until it expires, is removed, or staff access is revoked; a remembered device cannot remember itself again without a real code; at most 5 devices per person; added/removed devices are audited. Account security lists your devices with Remove and "Forget this device". The password is always required.
+
+**Automatic room listings (user request):** migration `202610270008_automatic_room_listings.sql` adds an owner switch "List vacant rooms automatically" (off by default). When on, every active rentable room appears on `/rooms` while it has no current or upcoming agreement, disappears as soon as a tenant is assigned, and returns after the move-out date. Staff can hide any room (it stays hidden until shown again). Asking rent is optional ("Ask for the price"). The switch exists because automatic listing infers vacancy from the absence of an agreement (the original brief warned against this): turn it on only after every current tenant has a room in the app.
+
+**Validation:** `npm test` 92/92 (new PGlite tests for trusted devices and automatic listings, each with a mutation check that fails without the key rule). Live disposable suite exit 0 with 47 checks, including remember/skip/forget on a real browser (the device header passes CORS) and automatic listing on the real `/rooms` page.
+
+**Owner next step:** `npx.cmd supabase db push --local` applies 202610270004–0008 (stop the app first).
+
 ## Security tightening, visual room picker, animations, UI fixes - 27 Oct 2026
 
 **Security (user: "tighten its security"):** staff idle sign-out (30 min + 2 min warning, shared across tabs; Escape or "Stay signed in" keeps the session); Auth now enforces 12-character passwords, recent sign-in for password changes, 60 s between reset emails, 15 code verifications per 5 min, and 12 h / 2 h server session limits (`supabase/config.toml`); migration `202610270006_default_privileges.sql` stops new tables/functions from inheriting browser-role rights and removes all direct table writes from browser roles; production builds no longer show developer instructions when unconfigured; `/auth/callback` is served explicitly on Pages. Details in SECURITY.md; runbook in DEPLOYMENT.md.

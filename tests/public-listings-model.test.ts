@@ -26,3 +26,9 @@ test('rejects extra (possibly private) fields, malformed rent and empty building
     assert.throws(() => parsePublicListings(value), /Invalid public listings response/, name)
   }
 })
+
+test('a room listed automatically without a price is accepted (shown as "Ask for the price")', async () => {
+  const { parsePublicListings } = await import('../src/access/public-listings-model.ts')
+  const parsed = parsePublicListings({ properties: [{ name: 'Fictional', buildings: [{ label: "Bob's house", rooms: [{ unit_id: '50000000-0000-4000-8000-000000000010', room: 'Room 05', asking_rent: null, description: '' }] }] }] })
+  assert.equal(parsed.properties[0].buildings[0].rooms[0].asking_rent, null)
+})

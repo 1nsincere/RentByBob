@@ -23,7 +23,7 @@ function InquiryDialog({ building, room, language, submit, close }: { building: 
     : state === 'error' ? tr('Your message could not be sent. Check your connection and try again.', 'Wala mapadala ang imong mensahe. Susiha ang koneksyon ug sulayi pag-usab.') : ''
   return <dialog ref={dialog} className="inquiry-dialog" aria-labelledby="inquiry-heading" onCancel={e => { e.preventDefault(); finish() }}>
     <div className="inquiry-dialog__head">
-      <div><p className="eyebrow">{building}</p><h2 id="inquiry-heading">{tr('Ask about', 'Pangutana bahin sa')} {room.room}</h2><p className="inquiry-rent">{decimalPesos(room.asking_rent)} {tr('per month', 'matag bulan')}</p></div>
+      <div><p className="eyebrow">{building}</p><h2 id="inquiry-heading">{tr('Ask about', 'Pangutana bahin sa')} {room.room}</h2><p className="inquiry-rent">{room.asking_rent ? `${decimalPesos(room.asking_rent)} ${tr('per month', 'matag bulan')}` : tr('Ask for the price', 'Pangutana sa presyo')}</p></div>
       <Button type="button" className="secondary-button" onClick={finish}>{tr('Close', 'Sirado')}</Button>
     </div>
     {state === 'sent' ? <div className="notice notice--success" role="status">
@@ -74,7 +74,7 @@ export function PublicRoomsView({ listings, language, submit }: { listings: Publ
     <section id="building-rooms" role="tabpanel" aria-labelledby={`building-tab-${buildings.indexOf(building)}`} className="public-room-grid">
       {building.rooms.map(room => <article key={room.unit_id} className="public-room-card">
         <div className="public-room-card__top"><h3>{room.room}</h3><span className="status status--ready">{tr('Available', 'Available')}</span></div>
-        <p className="public-room-rent"><strong>{decimalPesos(room.asking_rent)}</strong> <span>{tr('per month', 'matag bulan')}</span></p>
+        <p className="public-room-rent">{room.asking_rent ? <><strong>{decimalPesos(room.asking_rent)}</strong> <span>{tr('per month', 'matag bulan')}</span></> : <strong>{tr('Ask for the price', 'Pangutana sa presyo')}</strong>}</p>
         {room.description && <p className="public-room-description">{room.description}</p>}
         <Button className="primary" onClick={() => setAsking({ building: building.label, room })}>{tr('Ask about this room', 'Pangutana bahin niini')}</Button>
       </article>)}
