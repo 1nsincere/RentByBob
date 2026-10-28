@@ -30,3 +30,16 @@ test('staging connects only to the exact pinned project with an explicit staging
     assert.equal(connectionAllowed(badPin, 'staging', false, badPin), false, `refuses malformed or development pin ${badPin}`)
   }
 })
+
+test('production (client trial) connects only to its exact pinned project with an explicit production target', () => {
+  const live = 'https://abcdefghijklmnopqrst.supabase.co', staging = 'https://zyxwvutsrqponmlkjihg.supabase.co'
+  assert.equal(connectionAllowed(live, 'production', false, null, null), false, 'nothing pinned: the live build cannot connect')
+  assert.equal(connectionAllowed(live, 'production', false, staging, live), true)
+  assert.equal(connectionAllowed(live, undefined, false, null, live), false, 'production target must be explicit')
+  assert.equal(connectionAllowed(live, 'staging', false, null, live), false, 'a staging build cannot reach the live project')
+  assert.equal(connectionAllowed(staging, 'production', false, staging, live), false, 'a production build cannot reach staging')
+  assert.equal(connectionAllowed(live, 'production', false, live, live), false, 'staging and live must be different projects')
+  for (const badPin of ['https://short.supabase.co', live + '/', hostedDevelopmentUrl]) {
+    assert.equal(connectionAllowed(badPin, 'production', false, null, badPin), false, `refuses malformed or development pin ${badPin}`)
+  }
+})

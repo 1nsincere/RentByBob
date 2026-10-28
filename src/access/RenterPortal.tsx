@@ -14,8 +14,10 @@ const dayName = (value: string) => new Intl.DateTimeFormat('en-PH', { day: 'nume
 type ReportInput = { id: string; agreementId: string; draft: ReportDraft }
 // Sends a report; resolves to an error message, or null when saved. The preview passes a local, fictional sender.
 export type ReportSender = (input: ReportInput) => Promise<string | null>
+// Withdraws a report the property has not checked yet (202610270013); resolves to an error message, or null when done.
+export type ReportWithdrawer = (reportId: string) => Promise<string | null>
 
-function AgreementView({ agreement, language, preview, openAcknowledgment, credit, reports, sendReport }: { agreement: RenterAgreement; language: Language; preview: boolean; openAcknowledgment: (data: CashAcknowledgmentData) => void; credit?: string; reports: PaymentReport[] | null; sendReport: ReportSender | null }) {
+function AgreementView({ agreement, language, preview, openAcknowledgment, credit, reports, sendReport, withdrawReport }: { agreement: RenterAgreement; language: Language; preview: boolean; openAcknowledgment: (data: CashAcknowledgmentData) => void; credit?: string; reports: PaymentReport[] | null; sendReport: ReportSender | null; withdrawReport: ReportWithdrawer | null }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const summary = summarizeAgreement(agreement)
   const due = dueStatus(agreement, manilaDate())
@@ -98,7 +100,7 @@ function AgreementView({ agreement, language, preview, openAcknowledgment, credi
         </section>
       </div>
       {reports && sendReport && <aside className="renter-aside">
-        <ReportPayment agreement={agreement} language={language} preview={preview} reports={reports.filter(report => report.agreement_id === agreement.id)} send={sendReport} start={startReport} />
+        <ReportPayment agreement={agreement} language={language} preview={preview} reports={reports.filter(report => report.agreement_id === agreement.id)} send={sendReport} withdraw={withdrawReport} start={startReport} />
       </aside>}
     </div>
   </article>
@@ -106,7 +108,7 @@ function AgreementView({ agreement, language, preview, openAcknowledgment, credi
 
 // Tells the property "I paid my collector". Saved as a notice only: the balance changes only after staff
 // record the cash and the verifier confirms it. The request id stays the same on retries, so nothing is doubled.
-function ReportPayment({ agreement, language, preview, reports, send: sendReport, start }: { agreement: RenterAgreement; language: Language; preview: boolean; reports: PaymentReport[]; send: ReportSender; start: number }) {
+function ReportPayment({ agreement, language, preview, reports, send: sendReport, withdraw, start }: { agreement: RenterAgreement; language: Language; preview: boolean; reports: PaymentReport[]; send: ReportSender; withdraw: ReportWithdrawer | null; start: number }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const today = manilaDate()
   const balance = toCentavos(agreement.balance) ? agreement.balance : null
@@ -119,6 +121,18 @@ function ReportPayment({ agreement, language, preview, reports, send: sendReport
   const requestId = useRef<string | null>(null)
   const heading = useRef<HTMLHeadingElement>(null)
   const card = useRef<HTMLElement>(null)
+  const [confirming, setConfirming] = useState<string | null>(null)
+  async function withdrawNow(reportId: string) {
+    if (!withdraw || busy) return
+    setBusy(true); setError(''); setMessage('')
+    try {
+      const problem = await withdraw(reportId)
+      if (problem) setError(problem)
+      else { setConfirming(null); setMessage(tr('Report withdrawn. The property will not check it.', 'Gibawi ang report. Dili na kini susihon sa propiedad.')) }
+    } catch {
+      setError(tr('Connection interrupted. Try again; withdrawing twice is safe.', 'Naputol ang koneksyon. Sulayi pag-usab; luwas ang pagbawi og kaduha.'))
+    } finally { setBusy(false) }
+  }
   useEffect(() => { if (draft) heading.current?.focus() }, [draft === null, reviewing])
   // The "Report a payment" button at the top opens this form and brings it into view.
   useEffect(() => {
@@ -196,24 +210,31 @@ function ReportPayment({ agreement, language, preview, reports, send: sendReport
     {reports.length > 0 && <>
       <h5>{tr('Your reports', 'Imong mga report')}</h5>
       <ul className="renter-report-list">{reports.map(report => {
-        const checked = report.status !== 'new'
+        const checked = report.status === 'recorded' || report.status === 'dismissed'
         return <li key={report.id} className={`renter-report-item renter-report-item--${report.status}`}>
           <div><strong>{decimalPesos(report.amount)}</strong><span>{tr('Paid to', 'Gibayad kang')} {collector(report.paid_to)} · {dayName(report.paid_on)}</span>{report.note && <small>{report.note}</small>}</div>
           <ol className="renter-track" aria-hidden="true">
             <li className="is-done">{tr('Sent', 'Napadala')}</li>
-            <li className={checked ? 'is-done' : 'is-current'}>{tr('Checked', 'Nasusi')}</li>
-            <li className={report.status === 'recorded' ? 'is-done' : report.status === 'dismissed' ? 'is-stopped' : ''}>{report.status === 'dismissed' ? tr('Not received', 'Wala madawat') : tr('Recorded', 'Narekord')}</li>
+            <li className={checked ? 'is-done' : report.status === 'new' ? 'is-current' : ''}>{tr('Checked', 'Nasusi')}</li>
+            <li className={report.status === 'recorded' ? 'is-done' : report.status === 'dismissed' || report.status === 'withdrawn' ? 'is-stopped' : ''}>{report.status === 'dismissed' ? tr('Not received', 'Wala madawat') : report.status === 'withdrawn' ? tr('Withdrawn', 'Gibawi') : tr('Recorded', 'Narekord')}</li>
           </ol>
           {report.status === 'new' ? <span className="status status--pending">{tr('Waiting for the property to check', 'Naghulat nga susihon sa propiedad')}</span>
             : report.status === 'recorded' ? <span className="status status--ready">{tr('Recorded by the property · counts once confirmed', 'Narekord sa propiedad · maihap kon makumpirma')}</span>
-              : <span className="status status--archived">{tr('Not received', 'Wala madawat')}{report.handled_note ? `: ${report.handled_note}` : ''}</span>}
+              : report.status === 'withdrawn' ? <span className="status status--archived">{tr('Withdrawn by you', 'Gibawi nimo')}</span>
+                : <span className="status status--archived">{tr('Not received', 'Wala madawat')}{report.handled_note ? `: ${report.handled_note}` : ''}</span>}
+          {report.status === 'new' && withdraw && (confirming === report.id
+            ? <div className="renter-withdraw" role="group" aria-label={tr('Withdraw this report?', 'Bawion kini nga report?')}>
+              <p>{tr('Withdraw this report? Do this only if it was a mistake.', 'Bawion kini nga report? Buhata lang kon sayop.')}</p>
+              <div className="person-actions"><Button className="secondary-button" disabled={busy} onClick={() => void withdrawNow(report.id)}>{tr('Yes, withdraw', 'Oo, bawia')}</Button><Button disabled={busy} onClick={() => setConfirming(null)}>{tr('Keep it', 'Ayaw')}</Button></div>
+            </div>
+            : <Button className="renter-withdraw-start" onClick={() => { setConfirming(report.id); setMessage(''); setError('') }}>{tr('Withdraw report', 'Bawia ang report')}</Button>)}
         </li>
       })}</ul>
     </>}
   </section>
 }
 
-function TenantView({ tenant, language, preview, openAcknowledgment, credits, reports, sendReport }: { tenant: RenterTenant; language: Language; preview: boolean; openAcknowledgment: (data: CashAcknowledgmentData) => void; credits: Record<string, string>; reports: PaymentReport[] | null; sendReport: ReportSender | null }) {
+function TenantView({ tenant, language, preview, openAcknowledgment, credits, reports, sendReport, withdrawReport }: { tenant: RenterTenant; language: Language; preview: boolean; openAcknowledgment: (data: CashAcknowledgmentData) => void; credits: Record<string, string>; reports: PaymentReport[] | null; sendReport: ReportSender | null; withdrawReport: ReportWithdrawer | null }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const hour = Number(new Intl.DateTimeFormat('en-PH', { hour: 'numeric', hour12: false, timeZone: 'Asia/Manila' }).format(new Date())) % 24
   const greeting = hour < 12 ? tr('Good morning', 'Maayong buntag') : hour < 18 ? tr('Good afternoon', 'Maayong hapon') : tr('Good evening', 'Maayong gabii')
@@ -224,12 +245,12 @@ function TenantView({ tenant, language, preview, openAcknowledgment, credits, re
       <p className="dashboard-identity">{tenant.kind === 'business' ? tr('Business renter', 'Negosyong nag-abang') : tr('Renter', 'Nag-abang')} · {tr('Here is your rent and payment record.', 'Ania ang rekord sa imong abang ug bayad.')}</p>
     </div>
     {tenant.agreements.length
-      ? tenant.agreements.map(agreement => <AgreementView key={agreement.id} agreement={agreement} language={language} preview={preview} openAcknowledgment={openAcknowledgment} credit={credits[agreement.id]} reports={reports} sendReport={sendReport} />)
+      ? tenant.agreements.map(agreement => <AgreementView key={agreement.id} agreement={agreement} language={language} preview={preview} openAcknowledgment={openAcknowledgment} credit={credits[agreement.id]} reports={reports} sendReport={sendReport} withdrawReport={withdrawReport} />)
       : <div className="card empty-state"><h3>{tr('Your room is not set up yet', 'Wala pa ma-set up ang imong kwarto')}</h3><p>{tr('The property has not recorded a room and rent for you yet. Ask the owner if you expected to see it.', 'Wala pa marekord sa propiedad ang imong kwarto ug abang. Pangutana sa tag-iya kon gilauman nimo kini makita.')}</p></div>}
   </section>
 }
 
-export function RenterAccountView({ account, language = 'en', preview = false, credits = {}, reports, sendReport }: { account: RenterAccount; language?: Language; preview?: boolean; credits?: Record<string, string>; reports?: PaymentReport[] | null; sendReport?: ReportSender }) {
+export function RenterAccountView({ account, language = 'en', preview = false, credits = {}, reports, sendReport, withdrawReport }: { account: RenterAccount; language?: Language; preview?: boolean; credits?: Record<string, string>; reports?: PaymentReport[] | null; sendReport?: ReportSender; withdrawReport?: ReportWithdrawer }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [receipt, setReceipt] = useState<CashAcknowledgmentData | null>(null)
   // The fictional preview keeps sample reports on screen only: nothing is sent anywhere.
@@ -238,11 +259,13 @@ export function RenterAccountView({ account, language = 'en', preview = false, c
     setSampleReports(current => current.some(report => report.id === id) ? current : [{ id, agreement_id: agreementId, amount: draft.amount.trim(), paid_on: draft.paidOn, paid_to: draft.paidTo, note: draft.note.trim(), status: 'new', handled_note: null, created_at: new Date().toISOString() }, ...current])
     return null
   }
+  const sampleWithdraw: ReportWithdrawer = async reportId => { setSampleReports(current => current.map(report => report.id === reportId && report.status === 'new' ? { ...report, status: 'withdrawn' } : report)); return null }
   const shownReports = preview ? sampleReports : reports ?? null
   const sender = preview ? sampleSender : sendReport ?? null
+  const withdrawer = preview ? sampleWithdraw : withdrawReport ?? null
   return <div className="renter-portal">
     {account.tenants.length
-      ? account.tenants.map(tenant => <TenantView key={tenant.id} tenant={tenant} language={language} preview={preview} openAcknowledgment={setReceipt} credits={credits} reports={shownReports} sendReport={sender} />)
+      ? account.tenants.map(tenant => <TenantView key={tenant.id} tenant={tenant} language={language} preview={preview} openAcknowledgment={setReceipt} credits={credits} reports={shownReports} sendReport={sender} withdrawReport={withdrawer} />)
       : <div className="card empty-state"><h3>{tr('No rental record is shared with this account yet', 'Wala pay rekord sa abang nga gi-share niining account')}</h3><p>{tr('Your account works, but the owner has not linked it to your rental yet. Ask the owner to confirm the right renter record.', 'Molihok ang imong account, apan wala pa kini i-link sa tag-iya sa imong abang. Pangayo sa tag-iya nga kumpirmahon ang husto nga rekord.')}</p></div>}
     <p className="field-help renter-footnote">{tr('Pay your collector in person as usual; payments are not made on this website. You can report a payment here so the property knows to check it. Questions about a record? Contact the property owner.', 'Bayri ang imong kolektor sama sa naandan; walay bayad nga himoon sa website. Mahimo nimong ireport ang bayad dinhi aron masusi kini sa propiedad. May pangutana bahin sa rekord? Kontaka ang tag-iya sa propiedad.')}</p>
     {receipt && <CashAcknowledgment data={receipt} close={() => setReceipt(null)} preview={preview} language={language} />}
@@ -281,10 +304,17 @@ export function RenterPortal({ language = 'en' }: { language?: Language }) {
     if (error.code === '22023') return tr('Check the amount and date, then try again. Nothing was sent.', 'Susiha ang kantidad ug petsa, unya sulayi pag-usab. Walay napadala.')
     throw new Error('Report outcome unknown')
   }
+  const withdrawReport: ReportWithdrawer = async reportId => {
+    const { error } = await supabase!.rpc('withdraw_payment_report', { p_report_id: reportId })
+    if (!error) { await loadReports(); return null }
+    if (error.code === '22023') { await loadReports(); return tr('The property already checked this report, so it cannot be withdrawn.', 'Nasusi na sa propiedad kini nga report, busa dili na mabawi.') }
+    if (error.code === '42501' || /Could not find the function/.test(error.message)) return tr('This report cannot be withdrawn from this account. Contact the property.', 'Dili mabawi kini nga report gikan niini nga account. Kontaka ang propiedad.')
+    throw new Error('Withdraw outcome unknown')
+  }
   if (failed) return <div className="notice notice--error" role="alert">
     <p>{tr('Your rent record could not be loaded. Nothing was changed. Check your connection and try again.', 'Wala ma-load ang rekord sa imong abang. Walay nausab. Susiha ang koneksyon ug sulayi pag-usab.')}</p>
     <Button onClick={() => { setAccount(null); void load() }}>{tr('Try again', 'Sulayi pag-usab')}</Button>
   </div>
   if (!account) return <LoadingSkeleton label={tr('Loading your rent record…', 'Gikarga ang rekord sa imong abang…')} rows={4} />
-  return <RenterAccountView account={account} language={language} credits={credits} reports={reports} sendReport={reports ? sendReport : undefined} />
+  return <RenterAccountView account={account} language={language} credits={credits} reports={reports} sendReport={reports ? sendReport : undefined} withdrawReport={reports ? withdrawReport : undefined} />
 }

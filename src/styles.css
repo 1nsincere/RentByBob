@@ -1222,6 +1222,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
 .renter-track li.is-done::before, .renter-track li.is-done::after { background: var(--brand); }
 .renter-track li.is-current::before { background: #e0a100; box-shadow: 0 0 0 4px rgb(224 161 0 / 25%); }
 .renter-track li.is-stopped::before { background: #b42318; }
+.renter-withdraw-start.button { justify-self: start; }
+.renter-withdraw { display: grid; gap: 0.4rem; padding: 0.7rem 0.8rem; border: 1px dashed var(--border); border-radius: 0.7rem; background: var(--surface); }
+.renter-withdraw p { margin: 0; }
+.renter-withdraw .person-actions { margin: 0; }
 .renter-footnote { margin: 0; }
 @media (max-width: 64rem) {
   .renter-columns { grid-template-columns: minmax(0, 1fr); }
@@ -1324,7 +1328,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
   .payment-record-view--with-worklist .payment-worklist-filters { grid-template-columns: minmax(0, 1fr); }
 }
 .room-listings .segmented-control { margin: 0.5rem 0 1rem; }
-.staff-building-tabs { margin-bottom: 0.85rem; }
+.staff-building-tabs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr)); gap: 0.6rem; margin-bottom: 0.85rem; }
+.staff-building-tab { display: grid; justify-items: start; gap: 0.1rem; min-height: 2.75rem; padding: 0.6rem 0.85rem; border: 1.5px solid var(--control-border); border-radius: 0.9rem; background: var(--surface); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.staff-building-tab span { color: var(--text-secondary); font-size: 0.95rem; }
+.staff-building-tab[aria-pressed="true"] { border-color: var(--brand); background: var(--pressed-surface); box-shadow: 0 0 0 2px var(--brand-tint); }
+.staff-building-tab[aria-pressed="true"] span { color: var(--brand); font-weight: 700; }
+.staff-building-tab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .listing-rows, .inquiry-list { display: grid; gap: 0.7rem; margin: 0; padding: 0; list-style: none; }
 .listing-row form, .inquiry-item { padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
 .listing-row__head, .inquiry-item__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.4rem 1rem; }

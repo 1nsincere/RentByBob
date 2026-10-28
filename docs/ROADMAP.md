@@ -23,7 +23,7 @@ Use [STATUS.md](STATUS.md) for verification evidence and [DECISIONS.md](DECISION
 
 Development can continue without these, but each blocks the item it names:
 
-1. **Apply migrations locally:** stop the app, run `npx.cmd supabase db push --local` (applies 202610270004–0012: one-step add tenant, archive guard, default privileges, remembered devices, automatic listings, automatic rent/room change/remove, advance credit, private commercial spaces, renter payment reports), then `npx.cmd supabase stop` and `npx.cmd supabase start` for the stricter sign-in settings. Turn on automatic rent and automatic listing only after every current tenant, room and rent is entered.
+1. **Apply migrations locally:** stop the app, run `npx.cmd supabase db push --local` (applies 202610270004–0014: one-step add tenant, archive guard, default privileges, remembered devices, automatic listings, automatic rent/room change/remove, advance credit, private commercial spaces, renter payment reports, withdraw a report, check bank details), then `npx.cmd supabase stop` and `npx.cmd supabase start` for the stricter sign-in settings. Turn on automatic rent and automatic listing only after every current tenant, room and rent is entered.
 2. **Clerk identity:** confirm James's exact existing account before he is assigned as cash verifier. This blocks the first real saved cash confirmation.
 3. **Real rent terms:** review the actual tenant, room and rent terms before the first saved agreement or charge.
 4. **Returned checks:** decide whether and how renters are told about a returned check. Currently it is omitted from the renter view.

@@ -9,6 +9,8 @@ const query = new URLSearchParams(location.search)
 export const dashboardPreview = import.meta.env.DEV && query.get('preview') === '1' && !query.has('auth')
 export const preview = import.meta.env.DEV && dashboardPreview ? await import('./dashboard-preview') : null
 export const hostedDevelopment = url === hostedDevelopmentUrl
+// Which online project a production-style build was made for (shown in the top note), or null for local development.
+export const liveTarget = env.VITE_SUPABASE_TARGET === 'production' || env.VITE_SUPABASE_TARGET === 'staging' ? env.VITE_SUPABASE_TARGET as 'production' | 'staging' : null
 // Hosted access is explicit, project-bound and unavailable in production builds.
 export const supabase = preview ? preview.previewClient : connectionAllowed(url, env.VITE_SUPABASE_TARGET, env.DEV) && key
   ? createClient(url, key, { auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storage: window.sessionStorage }, global: { fetch: withDeviceHeader((...args) => fetch(...args)) } })

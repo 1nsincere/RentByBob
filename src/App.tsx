@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { Button, LoadingSkeleton } from './components/atoms'
 import { WorkspaceIcon } from './components/WorkspaceIcon'
 import { DeferredBoundary, deferredScreen } from './components/DeferredScreen'
-import { dashboardPreview, hostedDevelopment, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
+import { dashboardPreview, hostedDevelopment, liveTarget, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
 import { ChangePassword, Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
 import { IdleSignOut } from './access/IdleSignOut'
 import { PhilippineClock } from './access/PhilippineClock'
@@ -65,6 +65,10 @@ export function App() {
     ? translateText(language, 'Fictional preview · Offline sample data', 'Sample nga preview · Sample nga datos nga offline')
     : hostedDevelopment
       ? translateText(language, 'Hosted development · Sign-in + MFA', 'Hosted development · Pagsulod + MFA')
+      : supabase && liveTarget === 'production'
+        ? translateText(language, 'RentByBob · Secure sign-in · No online payments', 'RentByBob · Luwas nga pagsulod · Walay online nga bayad')
+      : supabase && liveTarget === 'staging'
+        ? translateText(language, 'Staging · Test data only', 'Staging · Test nga datos lamang')
       : supabase
         ? translateText(language, 'Local development · Sign-in + MFA', 'Local development · Pagsulod + MFA')
         : translateText(language, 'Development · Connection not configured', 'Development · Wala ma-set up ang koneksyon')

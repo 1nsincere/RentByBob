@@ -1,5 +1,15 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Pre-launch verification, withdraw a report, check bank details, Bob on the street - 28 Oct 2026
+
+**New:** renters can withdraw a payment report that staff have not handled yet (`202610270013_withdraw_payment_report.sql`); checks can carry a bank name and check number, fill-in only and audited, never account numbers or photos (`202610270014_check_bank_details.sql`); staff Room listings building buttons restyled (they had inherited public-page styles that were not loaded); the landing street is now ordinary neighbourhood traffic: Move It riders with red helmets, J&T riders with parcels, a slow pandesal cart, no cars, bus or crosswalk, and Bob (bald, with his sungkod) strolls the shoulder and shows a "This is Bob" bubble on hover or keyboard focus (paused while pointed at; parked under reduced motion).
+
+**Validation (28 Oct 2026, all with fictional data, local only):** unit 102/102; offline browser 10/10 (axe: 0 violations on 10 screens, light and dark); live disposable Supabase suite exit 0 with 53 passing checks across migrations through 0014; build, artifact check and production CSP check pass.
+
+**Limitations:** nothing is deployed and no hosted project exists yet; the street animation was checked by screenshot only (no axe run after Bob); Bisaya wording still needs a fluent reviewer; no WCAG compliance claim.
+
+**Exact next steps (owner):** follow `docs/TRIAL_LAUNCH.md` steps 2-6 in order (live Supabase project, pin URL in `connection.ts`, Cloudflare Pages, create owner via `scripts/bootstrap-live-owner.sql`, enter tenants and reconcile with the paper ledger). The push list must now end with `202610270014`. Confirm James's account as cash verifier first.
+
 ## Landing follows the time of day in Cebu - 27 Oct 2026
 
 From 5:00 to 17:59 Cebu time the landing page shows a morning street (dawn sky, sun rising behind the homes, skyline in daylight colours with open rooms still glowing, lamps off, "open today", "The street wakes up"); otherwise the night street. Any hour can be previewed with `/#at=7` (or `#at=07:30`, `#at=19`): a "Simulated Cebu time" tag shows with "Back to live time". Visual only; listings and the "updated" time stay real. Screenshot: `docs/screenshots/landing-7am.png`. Validation: axe 0 violations at 7 AM (1440 and 390 px, no sideways scroll), offline 10/10, unit 99/99, performance LCP 2.2 s / CLS 0, CSP and artifact checks pass.

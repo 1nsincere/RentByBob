@@ -76,9 +76,9 @@ export function RoomListingsManager({ propertyId, owner = false, language = 'en'
           {owner ? <Button className={autoList ? 'secondary-button' : 'primary'} disabled={busy} aria-pressed={autoList} onClick={() => void run('set_auto_listing', { p_enabled: !autoList }, autoList ? tr('Automatic listing is off. Only rooms ticked below are shown.', 'Off na ang awtomatikong paglista.') : tr('Automatic listing is on. Vacant rooms are now shown on the public page.', 'On na ang awtomatikong paglista. Makita na sa publiko ang bakante nga kwarto.'))}>{autoList ? tr('Turn off', 'I-off') : tr('Turn on', 'I-on')}</Button>
             : <span className={`status ${autoList ? 'status--ready' : ''}`}>{autoList ? tr('On', 'On') : tr('Off', 'Off')}</span>}
         </section>
-        <div className="public-building-tabs staff-building-tabs" role="group" aria-label={tr('Buildings', 'Mga bilding')}>
+        <div className="staff-building-tabs" role="group" aria-label={tr('Buildings', 'Mga bilding')}>
           {buildings.filter(item => rooms.some(room => units.find(unit => unit.id === room.unit_id)?.building_id === item.id)).map(item => { const count = rooms.filter(room => units.find(unit => unit.id === room.unit_id)?.building_id === item.id && room.publicly_available).length
-            return <button key={item.id} type="button" className="public-building-tab" aria-pressed={item.id === activeBuilding} onClick={() => setActiveBuilding(item.id)}><strong>{item.label}</strong><span>{count} {tr('shown to the public', 'makita sa publiko')}</span></button> })}
+            return <button key={item.id} type="button" className="staff-building-tab" aria-pressed={item.id === activeBuilding} onClick={() => setActiveBuilding(item.id)}><strong>{item.label}</strong><span>{count} {tr('shown to the public', 'makita sa publiko')}</span></button> })}
         </div>
         <ul className="listing-rows">{units.filter(unit => unit.building_id === activeBuilding && rooms.some(room => room.unit_id === unit.id)).map(unit => {
           const listing = listings.find(item => item.unit_id === unit.id)

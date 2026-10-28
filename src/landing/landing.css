@@ -150,7 +150,6 @@
 .lp-plan-road--main::after { content: ""; position: absolute; left: 0; right: 0; top: calc(50% - 1px); border-top: 2px dashed rgb(242 194 48 / 70%); }
 .lp-plan-road--side { left: 14%; width: 8%; top: 64%; bottom: 0; box-shadow: -5px 0 0 #557465, 5px 0 0 #557465; }
 .lp-plan-road--side::after { content: ""; position: absolute; top: 14%; bottom: 0; left: calc(50% - 1px); border-left: 2px dashed rgb(242 194 48 / 60%); }
-.lp-plan-road--side::before { content: ""; position: absolute; left: 8%; right: 8%; top: 2%; height: 9%; background: repeating-linear-gradient(90deg, rgb(238 244 238 / 80%) 0 4px, transparent 4px 8px); }
 .lp-plan-road b { position: absolute; z-index: 1; padding: 0 .4rem; background: #1f2b25; color: rgb(238 246 240 / 72%); font: 700 clamp(.5rem, 1.05vw, .68rem) var(--mono); letter-spacing: .16em; white-space: nowrap; }
 .lp-plan-road--main b { right: 4%; top: 50%; transform: translateY(-50%); }
 .lp-plan-road--side b { left: 50%; bottom: 3%; letter-spacing: .08em; transform: translateX(-50%) rotate(180deg); writing-mode: vertical-rl; padding: .3rem 0; }
@@ -179,16 +178,55 @@
 @keyframes lp-west { from { transform: translateX(108%); } to { transform: translateX(-12%); } }
 @keyframes lp-north { 0% { transform: translateY(105%); opacity: 1; } 82% { transform: translateY(2%); opacity: 1; } 100% { transform: translateY(-16%); opacity: 0; } }
 @keyframes lp-south { 0% { transform: translateY(-16%); opacity: 0; } 16% { transform: translateY(2%); opacity: 1; } 100% { transform: translateY(105%); opacity: 1; } }
-.v-roof { fill: rgb(255 255 255 / 22%); }
+
 .v-glass { fill: #1d3a30; }
 .v-light { fill: #fff6c9; }
-.v-tail { fill: #e24b3b; }
 .v-tyre { fill: #141c18; }
 .v-bar { stroke: #1c2a23; stroke-width: 1.6; stroke-linecap: round; }
-.v-rider { fill: #2d5d8a; }
-.v-hood { fill: #c9d0cc; }
-.v-stripe-a { fill: #1f6b4f; } .v-stripe-b { fill: #f2c230; } .v-stripe-c { fill: #e2725b; }
+.v-bike { fill: #2a302d; }
+.v-accent { fill: #e53935; }
+.v-shirt { fill: #26332e; }
+.v-helmet { fill: #d62b2b; stroke: #7d1414; stroke-width: 0.7; }
+.v-shine { fill: rgb(255 255 255 / 55%); }
+.v-jt { fill: #d71920; }
+.v-parcel { fill: #d9e2ec; stroke: #9db0c4; stroke-width: 0.6; }
+.v-box { fill: #b8895a; }
+.v-tape { stroke: #e8d3a8; stroke-width: 0.8; }
+.v-pack { fill: #e0352f; stroke: #8f1c18; stroke-width: 0.8; }
+.v-label { fill: #fff; }
+.v-jacket { fill: #5a607c; }
+.v-cap { fill: #2b2f3a; }
+.v-brim { fill: #1c1f28; }
+.v-tank { fill: #d93a2f; stroke: #8f1c18; stroke-width: 0.7; }
+.v-cart { fill: #35b34f; stroke: #1f7a34; stroke-width: 0.9; }
+.v-rib { stroke: #7fd68f; stroke-width: 0.8; }
+.v-banner { fill: #ffd23f; }
+.v-hitch { stroke: #1c2a23; stroke-width: 1.2; }
+.v-vendor { fill: #f4f4ee; }
+.v-hair { fill: #2a1f1a; }
 
+/* Bob strolls the shoulder in front of his house (his figure is a little larger than true scale so he can be seen). */
+.lp-bob { position: absolute; z-index: 5; left: 70%; top: 67.2%; width: 5.4%; transform: translate(-50%, -50%); animation: lp-stroll 46s ease-in-out infinite; cursor: help; }
+.lp-bob svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-turn 46s ease-in-out infinite; }
+.lp-bob:hover, .lp-bob:focus-visible, .lp-bob:hover svg, .lp-bob:focus-visible svg { animation-play-state: paused; }
+.lp-bob:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; border-radius: 50%; }
+.lp-bob-bubble { position: absolute; left: 50%; bottom: calc(100% + .55rem); transform: translate(-50%, 4px); padding: .3rem .7rem; border: 1.5px solid var(--amber); border-radius: .7rem; background: rgb(12 32 24 / 94%); color: #fff; font-weight: 800; font-size: clamp(.65rem, 1.1vw, .9rem); white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 160ms ease, transform 160ms ease; }
+.lp-bob-bubble::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -.35rem; border: .35rem solid transparent; border-top-color: var(--amber); }
+.lp-bob:hover .lp-bob-bubble, .lp-bob:focus-visible .lp-bob-bubble { opacity: 1; transform: translate(-50%, 0); }
+.bob-shadow { fill: rgb(0 0 0 / 30%); }
+.bob-shirt { fill: #4f9fd0; stroke: #2f6f98; stroke-width: 0.6; }
+.bob-arm { fill: #4f9fd0; }
+.bob-head, .bob-hand { fill: #ecbc92; stroke: #b9835a; stroke-width: 0.6; }
+.bob-ear { fill: #d9a37a; }
+.bob-shine { fill: rgb(255 255 255 / 60%); }
+.bob-foot { fill: #2b2420; animation: lp-step .7s ease-in-out infinite alternate; }
+.bob-foot--b { animation-direction: alternate-reverse; }
+.bob-cane line { stroke: #8a5a2b; stroke-width: 1.6; stroke-linecap: round; }
+.bob-cane circle:not(.bob-hand) { fill: #2b2420; }
+@keyframes lp-step { from { transform: translateX(-2.2px); } to { transform: translateX(2.2px); } }
+@keyframes lp-stroll { 0%, 6% { left: 70%; } 38%, 48% { left: 93%; } 88%, 100% { left: 70%; } }
+@keyframes lp-turn { 0%, 38% { transform: rotate(0deg); } 42%, 88% { transform: rotate(180deg); } 92%, 100% { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .lp-bob { left: 82%; } }
 /* Homes on the plan */
 .lp-plot { position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: .3rem; color: #fff; text-decoration: none; transition: transform 260ms var(--ease); }
 .lp-plot-tag { flex: none; display: grid; justify-items: center; max-width: 100%; padding: .2rem .6rem; border: 1.5px solid rgb(255 255 255 / 30%); border-radius: .6rem; background: rgb(12 32 24 / 82%); line-height: 1.15; transition: border-color 220ms ease, background-color 220ms ease; }

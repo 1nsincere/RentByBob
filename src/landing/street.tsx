@@ -196,18 +196,21 @@ export function Facade({ site, open, width = facadeWidth(site), onPick, focus }:
   </svg>
 }
 
-// Top-view vehicles (drawn facing east in an L×20 box, then turned for their lane). Philippine traffic keeps right.
+// Top-view street life (drawn facing east in an L×20 box, then turned for their lane). B. Zubiri St is an ordinary
+// neighbourhood street, so it carries motorbikes only: Move It riders (red helmets), J&T riders loaded with parcels
+// and the pandesal cart (a green sidecar cart behind a motorbike, like the one that passes the houses), crawling.
 type Heading = 'e' | 'w' | 'n' | 's'
-type Ride = { kind: 'car' | 'moto' | 'jeep'; heading: Heading; color: string; duration: number; delay: number; rest: number }
-const LENGTH = { car: 40, moto: 30, jeep: 60 }
+type Ride = { kind: 'moveit' | 'jt' | 'pandesal'; heading: Heading; duration: number; delay: number; rest: number; pillion?: boolean }
+const LENGTH = { moveit: 30, jt: 36, pandesal: 60 }
+// Riders in one lane share a pace so they never drive through each other; the pandesal cart sets the pace of its lane.
 const TRAFFIC: Ride[] = [
-  { kind: 'car', heading: 'e', color: '#f4efe2', duration: 18, delay: -2, rest: 8 },
-  { kind: 'moto', heading: 'e', color: '#e2725b', duration: 18, delay: -8, rest: 40 },
-  { kind: 'car', heading: 'e', color: '#6cc3b0', duration: 18, delay: -14, rest: 74 },
-  { kind: 'jeep', heading: 'w', color: '#dfe5e1', duration: 24, delay: -5, rest: 55 },
-  { kind: 'moto', heading: 'w', color: '#f2c230', duration: 24, delay: -16, rest: 22 },
-  { kind: 'moto', heading: 'n', color: '#6cc3b0', duration: 10, delay: -3, rest: 45 },
-  { kind: 'car', heading: 's', color: '#f2c230', duration: 12, delay: -7, rest: 20 },
+  { kind: 'moveit', heading: 'e', duration: 16, delay: -2, rest: 8, pillion: true },
+  { kind: 'jt', heading: 'e', duration: 16, delay: -8, rest: 40 },
+  { kind: 'moveit', heading: 'e', duration: 16, delay: -13, rest: 74 },
+  { kind: 'pandesal', heading: 'w', duration: 34, delay: -9, rest: 55 },
+  { kind: 'moveit', heading: 'w', duration: 34, delay: -27, rest: 20 },
+  { kind: 'jt', heading: 'n', duration: 10, delay: -3, rest: 45 },
+  { kind: 'moveit', heading: 's', duration: 12, delay: -7, rest: 20 },
 ]
 function Vehicle({ ride }: { ride: Ride }) {
   const L = LENGTH[ride.kind]
@@ -215,31 +218,57 @@ function Vehicle({ ride }: { ride: Ride }) {
   const turn = { e: undefined, w: `translate(${L},0) scale(-1,1)`, n: `translate(0,${L}) rotate(-90)`, s: `translate(20,0) rotate(90)` }[ride.heading]
   return <span className={`lp-lane lp-lane--${ride.heading}`} style={{ '--dur': `${ride.duration}s`, '--delay': `${ride.delay}s`, '--rest': `${ride.rest}%` } as CSSProperties}>
     <svg viewBox={vertical ? `0 0 20 ${L}` : `0 0 ${L} 20`} aria-hidden="true" focusable="false"><g transform={turn}>
-      {ride.kind === 'car' && <>
-        <rect x="1" y="2" width="38" height="16" rx="6" fill={ride.color} />
-        <rect className="v-roof" x="12" y="4" width="12" height="12" rx="2" />
-        <rect className="v-glass" x="25" y="3.5" width="7" height="13" rx="2.5" />
-        <rect className="v-glass" x="6" y="4.5" width="5" height="11" rx="2" />
-        <circle className="v-light" cx="38" cy="5" r="1.4" /><circle className="v-light" cx="38" cy="15" r="1.4" />
-        <rect className="v-tail" x="0.8" y="3.5" width="1.6" height="3" /><rect className="v-tail" x="0.8" y="13.5" width="1.6" height="3" />
-      </>}
-      {ride.kind === 'moto' && <>
+      {ride.kind === 'moveit' && <>
         <rect className="v-tyre" x="2" y="8.5" width="8" height="3" rx="1.5" /><rect className="v-tyre" x="20" y="8.5" width="8" height="3" rx="1.5" />
-        <rect x="7" y="7" width="15" height="6" rx="3" fill={ride.color} />
+        <rect className="v-bike" x="7" y="7" width="15" height="6" rx="3" />
+        <rect className="v-accent" x="9" y="8.6" width="10" height="2.8" rx="1.4" />
+        {ride.pillion && <><ellipse className="v-shirt" cx="9" cy="10" rx="3.2" ry="4.6" /><circle className="v-helmet" cx="9.6" cy="10" r="2.8" /><ellipse className="v-shine" cx="8.8" cy="9" rx="1" ry="0.7" /></>}
         <line className="v-bar" x1="21" y1="4.5" x2="21" y2="15.5" />
-        <ellipse className="v-rider" cx="13" cy="10" rx="4.5" ry="5.5" />
-        <circle cx="14.5" cy="10" r="3.2" fill={ride.color} stroke="#1c2a23" strokeWidth="0.8" />
+        <ellipse className="v-shirt" cx="15" cy="10" rx="3.6" ry="5.2" />
+        <circle className="v-helmet" cx="16.4" cy="10" r="3.3" /><ellipse className="v-shine" cx="15.6" cy="8.7" rx="1.2" ry="0.8" />
         <circle className="v-light" cx="29" cy="10" r="1.3" />
       </>}
-      {ride.kind === 'jeep' && <>
-        <rect x="1" y="2" width="58" height="16" rx="3" fill={ride.color} />
-        <rect className="v-stripe-a" x="6" y="4" width="40" height="3" /><rect className="v-stripe-b" x="6" y="8.5" width="40" height="3" /><rect className="v-stripe-c" x="6" y="13" width="40" height="3" />
-        <rect className="v-hood" x="47" y="3" width="11" height="14" rx="2" />
-        <rect className="v-glass" x="47" y="4" width="3.5" height="12" rx="1" />
-        <circle className="v-light" cx="58" cy="5" r="1.4" /><circle className="v-light" cx="58" cy="15" r="1.4" />
-        <rect className="v-tail" x="0.8" y="3.5" width="1.6" height="3" /><rect className="v-tail" x="0.8" y="13.5" width="1.6" height="3" />
+      {ride.kind === 'jt' && <>
+        <rect className="v-parcel" x="0.5" y="2.5" width="10" height="15" rx="2" />
+        <rect className="v-box" x="2.5" y="4.2" width="6" height="5.5" rx="0.6" /><line className="v-tape" x1="5.5" y1="4.2" x2="5.5" y2="9.7" />
+        <rect className="v-tyre" x="4" y="8.5" width="8" height="3" rx="1.5" /><rect className="v-tyre" x="26" y="8.5" width="8" height="3" rx="1.5" />
+        <rect className="v-jt" x="11" y="7" width="17" height="6" rx="3" />
+        <rect className="v-pack" x="12" y="3" width="7" height="14" rx="2.5" /><rect className="v-label" x="14" y="8.2" width="3" height="3.6" rx="0.4" />
+        <line className="v-bar" x1="27" y1="4.5" x2="27" y2="15.5" />
+        <ellipse className="v-jacket" cx="20.5" cy="10" rx="3.6" ry="5.2" />
+        <circle className="v-cap" cx="22" cy="10" r="3" /><rect className="v-brim" x="23.6" y="8" width="2.6" height="4" rx="1" />
+        <circle className="v-light" cx="35" cy="10" r="1.3" />
+      </>}
+      {ride.kind === 'pandesal' && <>
+        <circle className="v-tank" cx="3.6" cy="5.6" r="3.2" /><circle className="v-tank" cx="3.6" cy="14.4" r="3.2" />
+        <rect className="v-cart" x="7" y="1.5" width="28" height="17" rx="2" />
+        {[11, 15, 19, 23, 27, 31].map(x => <line key={x} className="v-rib" x1={x} y1="2.5" x2={x} y2="17.5" />)}
+        <rect className="v-banner" x="9" y="3" width="24" height="3" rx="0.6" />
+        <line className="v-hitch" x1="35" y1="10" x2="40" y2="10" />
+        <rect className="v-tyre" x="39" y="8.5" width="8" height="3" rx="1.5" /><rect className="v-tyre" x="51" y="8.5" width="8" height="3" rx="1.5" />
+        <rect className="v-bike" x="42" y="7" width="14" height="6" rx="3" />
+        <line className="v-bar" x1="55" y1="4.5" x2="55" y2="15.5" />
+        <ellipse className="v-vendor" cx="49" cy="10" rx="3.6" ry="5.2" /><circle className="v-hair" cx="50.4" cy="10" r="2.9" />
+        <circle className="v-light" cx="59" cy="10" r="1.2" />
       </>}
     </g></svg>
+  </span>
+}
+
+// Bob: short, bald and always with his sungkod (walking stick). Drawn from above, facing east; he strolls the shoulder
+// in front of his house, stopping now and then to look around.
+function Bob({ label }: { label: string }) {
+  return <span className="lp-bob" tabIndex={0} role="img" aria-label={label}>
+    <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
+    <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false">
+      <ellipse className="bob-shadow" cx="12" cy="11" rx="10" ry="8.5" />
+      <ellipse className="bob-foot bob-foot--a" cx="11" cy="6.6" rx="3" ry="1.7" /><ellipse className="bob-foot bob-foot--b" cx="11" cy="13.4" rx="3" ry="1.7" />
+      <ellipse className="bob-shirt" cx="12" cy="10" rx="4.2" ry="7.6" />
+      <ellipse className="bob-arm" cx="12.4" cy="3.6" rx="2.6" ry="1.6" /><ellipse className="bob-arm" cx="12.4" cy="16.4" rx="2.6" ry="1.6" />
+      <g className="bob-cane"><line x1="14" y1="17" x2="25" y2="17" /><circle cx="25" cy="17" r="0.9" /><circle className="bob-hand" cx="14" cy="17" r="1.5" /></g>
+      <circle className="bob-ear" cx="12.6" cy="5.9" r="1.1" /><circle className="bob-ear" cx="12.6" cy="14.1" r="1.1" />
+      <circle className="bob-head" cx="13" cy="10" r="4.4" /><ellipse className="bob-shine" cx="11.8" cy="8.4" rx="1.8" ry="1.1" />
+    </svg>
   </span>
 }
 
@@ -260,6 +289,7 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
       <circle className="lp-tree-leaf" cx="14" cy="15" r="7" /><circle className="lp-tree-leaf" cx="25" cy="23" r="6" /><circle className="lp-tree-leaf" cx="15" cy="26" r="5" />
     </svg>)}
     {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} />)}
+    <Bob label={tr('This is Bob', 'Kini si Bob')} />
     {SITE.map(site => {
       const open = (openByBuilding.get(site.label) ?? []).slice(0, site.spaces)
       const lit = open.length

@@ -2,7 +2,7 @@ import { toCentavos } from './renter-account-model.ts'
 
 // Renter payment reports (202610270012). A report is only a notice that the renter paid their collector:
 // it never changes a balance. Staff record the cash (pending, then verifier-confirmed) or mark it not received.
-export type PaymentReportStatus = 'new' | 'recorded' | 'dismissed'
+export type PaymentReportStatus = 'new' | 'recorded' | 'dismissed' | 'withdrawn'
 export type PaidTo = 'Bob' | 'James' | 'Other'
 export type PaymentReport = {
   id: string; agreement_id: string; amount: string; paid_on: string; paid_to: PaidTo; note: string
@@ -31,7 +31,7 @@ export function parsePaymentReports(value: unknown): PaymentReport[] {
     const amount = typeof row?.amount === 'string' ? toCentavos(row.amount) : null
     if (typeof item !== 'object' || item === null || !uuid(row.id) || !uuid(row.agreement_id) || amount === null || amount <= 0n ||
       !businessDate(row.paid_on) || !['Bob', 'James', 'Other'].includes(row.paid_to as string) || typeof row.note !== 'string' ||
-      !['new', 'recorded', 'dismissed'].includes(row.status as string) || !(row.handled_note === null || typeof row.handled_note === 'string') ||
+      !['new', 'recorded', 'dismissed', 'withdrawn'].includes(row.status as string) || !(row.handled_note === null || typeof row.handled_note === 'string') ||
       typeof row.created_at !== 'string' || !Number.isFinite(Date.parse(row.created_at)) || (row.cash_id !== undefined && row.cash_id !== null && !uuid(row.cash_id))) {
       throw new Error('Payment report is malformed')
     }
