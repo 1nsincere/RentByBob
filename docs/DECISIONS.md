@@ -1,3 +1,7 @@
+## Past months from the notebook need a double check - 28 Oct 2026 (owner decisions)
+
+Existing tenants predate the app and the only record is the paper notebook. Months entered from it are *waiting for a double check*, shown separately and **not counted as owed** (not in balances, the late-rent list or reminders) until a **different** staff member (clerk or owner) confirms them against the notebook; each entry must name the notes it came from. A best-guess move-in date is flagged and double checked the same way. Cash received meanwhile becomes advance credit, which pays the months automatically once they are confirmed.
+
 ## Building drawings follow the owner's sketch - 27 Oct 2026
 
 - **Building 1 (owner sketch):** upstairs rooms on a balcony walkway, numbered from the stairs end, windows beside every other door; apartment with its own arched street door; Rooms 01-03 inside the gate along the hallway with the stairs. Used on the landing page and on every staff front view and room picker.

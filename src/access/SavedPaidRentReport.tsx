@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '../components/atoms'
 import type { Tenant } from './client'
 import { decimalPesos, type CashAcknowledgmentData } from './CashAcknowledgment'
 import type { RentWorkspaceSnapshot } from './saved-payments-model'
 import { buildSavedPaidRentReport, moneyFromMinor } from './saved-paid-rent-report-model'
 import { PaidRentDocument, type PaidRentDocumentData } from './PaidRentDocument'
+import { supabase } from './client'
+import { maintenanceTotal, parseMaintenance, type MaintenanceExpense } from './maintenance-model.ts'
 import { text, type Language } from '../i18n'
 
 function currentPhilippineMonth() {
@@ -22,10 +24,22 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('en-PH', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`))
 }
 
-export function SavedPaidRentReport({ data, tenants, openAcknowledgment, propertyName = 'RentByBob property', language = 'en' }: { data: RentWorkspaceSnapshot; tenants: Tenant[]; openAcknowledgment: (acknowledgment: CashAcknowledgmentData) => void; propertyName?: string; language?: Language }) {
+export function SavedPaidRentReport({ data, tenants, openAcknowledgment, propertyId, propertyName = 'RentByBob property', language = 'en' }: { propertyId?: string; data: RentWorkspaceSnapshot; tenants: Tenant[]; openAcknowledgment: (acknowledgment: CashAcknowledgmentData) => void; propertyName?: string; language?: Language }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [receiptMonth, setReceiptMonth] = useState(currentPhilippineMonth)
   const [rentMonth, setRentMonth] = useState(currentPhilippineMonth)
+  // Maintenance recorded for the receipt month; 'unavailable' (not installed or no access) leaves it out of the PDF.
+  const [maintenance, setMaintenance] = useState<MaintenanceExpense[] | 'loading' | 'unavailable'>('loading')
+  useEffect(() => {
+    let current = true
+    setMaintenance('loading')
+    if (!propertyId) { setMaintenance('unavailable'); return }
+    void supabase!.rpc('read_maintenance_expenses', { p_property_id: propertyId, p_from: receiptMonth + '-01', p_to: receiptMonth + '-01' }).then(({ data: rows, error }) => {
+      if (!current) return
+      try { setMaintenance(error ? 'unavailable' : parseMaintenance(rows)) } catch { setMaintenance('unavailable') }
+    }, () => { if (current) setMaintenance('unavailable') })
+    return () => { current = false }
+  }, [propertyId, receiptMonth])
   const report = useMemo(() => buildSavedPaidRentReport(data, tenants, receiptMonth, rentMonth, {
     tenantUnavailable: tr('Tenant unavailable', 'Walay rekord sa nag-abang'),
     buildingUnavailable: tr('Building unavailable', 'Walay rekord sa bilding'),
@@ -50,6 +64,7 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, propert
       return { id: payment.id, renter: (agreement && report.tenantById.get(agreement.tenant_id)?.display_name) ?? tr('Tenant unavailable', 'Walay rekord sa nag-abang'), space: location(agreement?.unit_id), received: formatDate(payment.received_on), amount: decimalPesos(payment.amount), months: months.length ? months.map(formatMonth).join(', ') : '—', receipt: payment.acknowledgment?.number ?? '—' }
     }),
     outstanding: report.outstanding.map(({ charge, tenant, location: space }) => ({ id: charge.id, renter: tenant, space: space.replace(' / ', ' · '), due: formatDate(charge.due_date), charged: decimalPesos(charge.amount), remaining: decimalPesos(charge.remaining) })),
+    maintenance: Array.isArray(maintenance) ? { items: maintenance.map(item => ({ id: item.id, description: item.description, place: item.place ?? '', amount: decimalPesos(item.amount) })), total: decimalPesos(maintenanceTotal(maintenance)) } : undefined,
     arrears: report.arrears.map(row => ({ id: row.id, renter: row.tenant, space: row.location.replace(' / ', ' · '), months: row.periods.map(formatMonth).join(', '), total: decimalPesos(moneyFromMinor(row.total)) })),
   }
   // Show only the report document while printing; the browser's "Save as PDF" names the file from the title.
@@ -112,6 +127,20 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, propert
         </table>
       </div>}
       <p className="field-help">{tr('This is based only on recorded charges; it cannot identify months without a charge or determine that rent is overdue.', 'Mga narekord nga bayranan lang ang basihan; dili niini makita ang bulan nga walay bayranan o matino nga overdue na ang abang.')}</p>
+    </section>
+    <section className="card maintenance-report-sheet" aria-labelledby="saved-maintenance-heading">
+      <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('UPKEEP', 'UPKEEP')}</p><h4 id="saved-maintenance-heading">{tr('Maintenance spending in', 'Gasto sa maintenance niadtong')} {formatMonth(receiptMonth)}</h4></div></div>
+      {maintenance === 'loading' ? <p role="status">{tr('Loading maintenance…', 'Gikarga ang maintenance…')}</p>
+        : maintenance === 'unavailable' ? <p className="notice notice--warning" role="status">{tr('Maintenance could not be loaded, so the PDF will not include it. Check your connection and staff session, then reopen this report.', 'Wala ma-load ang maintenance, busa dili kini apil sa PDF. Susiha ang koneksyon ug staff session, dayon abri pag-usab kini nga report.')}</p>
+        : !maintenance.length ? <p className="paid-report-empty">{tr('No maintenance was recorded for this month. Add it from Maintenance in the menu.', 'Walay maintenance nga narekord niining bulana. Idugang gikan sa Maintenance sa menu.')}</p>
+        : <div className="paid-table-scroll" role="region" aria-label={tr('Maintenance table', 'Lamesa sa maintenance')} tabIndex={0}>
+          <table className="paid-report-table"><caption>{tr('Maintenance recorded for', 'Maintenance nga narekord para sa')} {formatMonth(receiptMonth)}</caption>
+            <thead><tr><th scope="col">{tr('What it was for', 'Para saan')}</th><th scope="col">{tr('Where', 'Asa')}</th><th scope="col">{tr('Amount', 'Kantidad')}</th></tr></thead>
+            <tbody>{maintenance.map(item => <tr key={item.id}><td data-label={tr('What it was for', 'Para saan')}>{item.description}</td><td data-label={tr('Where', 'Asa')}>{item.place ?? '—'}</td><td data-label={tr('Amount', 'Kantidad')} className="paid-table-amount">{decimalPesos(item.amount)}</td></tr>)}</tbody>
+            <tfoot><tr><th scope="row" colSpan={2}>{tr('Total maintenance', 'Kinatibuk-ang maintenance')}</th><td className="paid-table-amount">{decimalPesos(maintenanceTotal(maintenance))}</td></tr></tfoot>
+          </table>
+        </div>}
+      <p className="field-help">{tr("Expenses only; they do not change any renter's balance. The PDF includes this table.", 'Gasto lang kini; dili mo-usab sa balanse sa nag-abang. Apil kini nga lamesa sa PDF.')}</p>
     </section>
   </section>
 }

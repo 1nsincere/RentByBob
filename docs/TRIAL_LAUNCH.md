@@ -15,7 +15,7 @@ What you will end up with: one live website (Cloudflare Pages) connected to one 
 4. Put the database structure in (from this folder):
    - `npx.cmd supabase login`
    - `npx.cmd supabase link --project-ref <the 20 letters>`
-   - `npx.cmd supabase db push` - review the list: it must end with `202610270014_check_bank_details.sql`.
+   - `npx.cmd supabase db push` - review the list: it must end with `202610280001_notebook_months_double_check.sql`.
    - `npx.cmd supabase functions deploy invite-account`
    - `npx.cmd supabase secrets set APP_ORIGIN=https://<your-site>.pages.dev` (after step 3 gives you the address; you can come back to this)
 5. Authentication > Sign In / Providers: **signups off**, anonymous sign-ins off. Authentication > Settings: minimum password length **12**, secure password change on. Authentication > Multi-Factor: **TOTP on**. On Pro, also turn on leaked-password protection and session limits (timebox 12 h, inactivity 2 h).
@@ -45,7 +45,7 @@ The app refuses to connect to any online database unless its exact address is wr
 1. Buildings and units > **Create layout** (Building 1, Building 2, House 1, Bob's house, stores, Yamaha).
 2. Add tenant record for each current renter: room, move-in date, monthly rent.
 3. Payments > More tools > Setup: assign the cash verifier by James's email (confirm it with him in person).
-4. Rent already owed from before the trial: add those months with "Add agreed monthly rent" for each unpaid month, so balances match the paper record. Check every balance against the paper ledger with James.
+4. Rent already owed from before the trial: on each tenant's account (Payments > Rent by month) use **Months owed from the notebook**: pick the first and last unpaid month and write which notebook notes they come from. They wait outside the balance until a *different* staff member (James or the owner) ticks them and presses "I checked the notebook: make these final". If a move-in date is only a guess, tick that in Add tenant; the other person confirms it too. Then check every balance against the paper ledger with James.
 5. Only then turn on Automatic monthly rent and Automatic room listing.
 6. Renters who want to see their account: create their sign-in (Add user) and link them under Assign or disable access > Renter.
 

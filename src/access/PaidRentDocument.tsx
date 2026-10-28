@@ -10,6 +10,8 @@ export type PaidRentDocumentData = {
   confirmed: { id: string; renter: string; space: string; received: string; amount: string; months: string; receipt: string }[]
   outstanding: { id: string; renter: string; space: string; due: string; charged: string; remaining: string }[]
   arrears: { id: string; renter: string; space: string; months: string; total: string }[]
+  // Maintenance spending recorded for the report month (202610280003); absent when it could not be loaded.
+  maintenance?: { items: { id: string; description: string; place: string; amount: string }[]; total: string }
 }
 
 // Print-only document for "Save as PDF": a formal report layout (serif headings, sans-serif body, tabular figures)
@@ -65,6 +67,16 @@ export function PaidRentDocument({ data, language = 'en' }: { data: PaidRentDocu
         <thead><tr><th>{tr('Renter', 'Nag-abang')}</th><th>{tr('Rental space', 'Lugar')}</th><th>{tr('Rent months', 'Mga bulan')}</th><th className="doc-money">{tr('Total still due', 'Kinatibuk-ang nabilin')}</th></tr></thead>
         <tbody>{data.arrears.map(row => <tr key={row.id}><td>{row.renter}</td><td>{row.space}</td><td>{row.months}</td><td className="doc-money">{row.total}</td></tr>)}</tbody>
       </table>
+    </section>}
+
+    {data.maintenance && <section className="doc-section">
+      <h2><span className="doc-number">{data.arrears.length > 0 ? 4 : 3}</span>{tr('Maintenance spending', 'Gasto sa maintenance')}</h2>
+      <p className="doc-note">{tr('Repairs and upkeep recorded for', 'Mga pag-ayo ug upkeep nga narekord para sa')} {data.receiptMonth}. {tr("These are expenses only and do not change any renter's balance.", 'Gasto lang kini ug dili mo-usab sa balanse sa nag-abang.')}</p>
+      {data.maintenance.items.length ? <table className="doc-table">
+        <thead><tr><th>{tr('What it was for', 'Para saan')}</th><th>{tr('Where', 'Asa')}</th><th className="doc-money">{tr('Amount', 'Kantidad')}</th></tr></thead>
+        <tbody>{data.maintenance.items.map(row => <tr key={row.id}><td>{row.description}</td><td>{row.place || '—'}</td><td className="doc-money">{row.amount}</td></tr>)}</tbody>
+        <tfoot><tr><th colSpan={2}>{tr('Total maintenance', 'Kinatibuk-ang maintenance')}</th><td className="doc-money">{data.maintenance.total}</td></tr></tfoot>
+      </table> : <p className="doc-empty">{tr('No maintenance was recorded for this month.', 'Walay maintenance nga narekord niining bulana.')}</p>}
     </section>}
 
     <footer className="doc-footer">

@@ -1,5 +1,21 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Existing tenants: months from the notebook with a double check; elegant PDF font - 28 Oct 2026
+
+**Why (owner, 28 Oct 2026):** tenants were already living here before the app, the exact move-in date may be unknown, and the only record of what they owe is a disorganised paper notebook. Past months must be enterable, but not final until checked.
+
+**Rules chosen by the owner:** (1) a month entered from the notebook is **waiting for a double check** and is shown separately; it is **not** a rent charge, so it is excluded from balances, the late-rent list and reminders until confirmed; (2) a **different** staff member (clerk or owner, never the one who entered it) confirms; (3) every entry records which notebook notes it came from (required); (4) the move-in date can be marked a **best guess**, also double checked by a different person (descriptive only, changes no rent or due date).
+
+**Built:** migration `202610280001_notebook_months_double_check.sql` (table `rent_month_drafts` with RLS and no browser grants; `draft_rent_months`, `confirm_rent_month_drafts` (all or none, then the normal `add_rent_month` rules and advance credit apply), `remove_rent_month_drafts` (reason required), `flag_move_in_estimate`, `confirm_move_in_date`, `read_rent_review`; every step audited). Screens: Add tenant has "I do not know the exact move-in date (best guess)"; Payments > account > Rent by month has "Months owed from the notebook" (month range, notes, waiting list, "I checked the notebook: make these final", remove with reason; bilingual).
+
+**PDF:** the paid rent report now uses Constantia headings with Corbel body text and lining tabular figures (system fonts, because the CSP allows no web fonts; Palatino/Iowan and Avenir/Gill Sans fallbacks on other systems). The cash receipt keeps its till-receipt style.
+
+**Validation:** unit 105/105 (new PGlite test with a mutation check: removing the "different person" rule fails it; model tests; table and function counters updated to 24 and 74); live disposable suite exit 0 with 54 checks including a browser check of the notebook panel with an axe scan.
+
+**Limitations:** a single-person business cannot confirm its own entries (create a clerk account for the second check); confirming a month that was meanwhile charged another way is refused (remove the entry); the best-guess flag does not change due days (they follow the stored move-in date); the second-person confirmation is tested in the database, not in a two-user browser run; the new PDF font was checked on a sample render, not on a saved PDF.
+
+**Next:** apply 202610280001 with the others (the push list now ends with it), then for each existing tenant: Add tenant (tick best guess if unsure), then enter the unpaid months from the notebook in Payments, and have the other staff member double check them against the notebook.
+
 ## Pre-launch verification, withdraw a report, check bank details, Bob on the street - 28 Oct 2026
 
 **New:** renters can withdraw a payment report that staff have not handled yet (`202610270013_withdraw_payment_report.sql`); checks can carry a bank name and check number, fill-in only and audited, never account numbers or photos (`202610270014_check_bank_details.sql`); staff Room listings building buttons restyled (they had inherited public-page styles that were not loaded); the landing street is now ordinary neighbourhood traffic: Move It riders with red helmets, J&T riders with parcels, a slow pandesal cart, no cars, bus or crosswalk, and Bob (bald, with his sungkod) strolls the shoulder and shows a "This is Bob" bubble on hover or keyboard focus (paused while pointed at; parked under reduced motion).

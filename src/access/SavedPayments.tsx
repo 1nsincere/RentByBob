@@ -8,6 +8,7 @@ import { filterWorklist, planOldestFirst, toCents, worklistRows, type WorklistFi
 import { philippineToday, validBusinessDate } from './payment-preview-model'
 import { SavedPaidRentReport } from './SavedPaidRentReport'
 import { MonthlyRentBatch } from './MonthlyRentBatch'
+import { NotebookMonths } from './NotebookMonths'
 import { CheckHandoverRegister } from './CheckHandoverRegister'
 import { TenantPicker } from './TenantPicker'
 import { parsePaymentReports, type PaymentReport } from './payment-reports-model'
@@ -230,6 +231,7 @@ export function SavedPayments({ propertyId, propertyName, tenants, owner, userId
   <div className="rent-month-list">{[...accountCharges].sort((a,b)=>a.due_date.localeCompare(b.due_date)).map(c=>{const paid=toCents(c.remaining)===0n;return <article className="rent-month-row" key={c.id}><div className="rent-month-date"><strong>{monthText(c.rental_month)}</strong><span>{tr('Due date','Petsa sa bayranan')}: {dateText(c.due_date)}</span></div><div className="rent-month-amounts"><div><span>{tr('Rent charged','Abang nga gisingil')}</span><strong>{decimalPesos(c.amount)}</strong></div><div className={`rent-month-remaining${paid?' rent-month-remaining--paid':''}`}><span>{tr('Still to pay','Nabilin nga bayranan')}</span><strong>{paid?tr('Paid','Bayad na'):decimalPesos(c.remaining)}</strong></div></div></article>})}</div>
   <form className="rent-setup" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);void mutate('add_rent_month',{p_agreement_id:agreement.id,p_month:String(f.get('month'))+'-01'})}}><label htmlFor="saved-month">{tr('Month to add','Bulan nga idugang')}</label><input id="saved-month" name="month" type="month" defaultValue={today.slice(0,7)} required /><p className="field-help">{tr('Adds','Idugang ang')} {decimalPesos(agreement.rent)} {tr('due on the move-in day of that month. Each month is added once.','nga bayran sa adlaw sa pagsulod niana nga bulan. Kausa ra madugang ang matag bulan.')}</p><Button disabled={busy}>{tr('Add agreed monthly rent','Idugang ang gisabotang abang sa bulan')}</Button></form>
   <p className="field-help">{tr('Late payment does not move the next due date. No late fees are added.','Dili mausab ang sunod petsa sa bayad kon maulahi. Walay multa nga idugang.')}</p>
+  <NotebookMonths propertyId={propertyId} agreementId={agreement.id} moveIn={agreement.move_in} endedOn={agreement.ended_on??null} chargedMonths={accountCharges.map(c=>c.rental_month.slice(0,7))} userId={userId} onChanged={()=>void refresh()} language={language} />
  </section>
  <div role="tabpanel" id="account-panel-history" aria-labelledby="account-tab-history" className="account-panel" hidden={accountTab!=='history'}>
   <AccountStatement tenantName={agreementTenant?.display_name??tr('Tenant record unavailable','Wala makita ang rekord sa nag-abang')} rentalSpace={`${agreementBuilding?.label??tr('Building unavailable','Wala makita ang bilding')} / ${agreementUnit?.label??tr('Room unavailable','Wala makita ang kwarto')}`} charges={accountCharges} cash={data.cash.filter(c=>c.agreement_id===agreement.id)} openAcknowledgment={setReceipt} owner={owner} busy={busy} reverse={(cashId,reason)=>mutate('reverse_rent_cash',{p_cash_id:cashId,p_reason:reason})} language={language} />
@@ -299,7 +301,7 @@ export function SavedPayments({ propertyId, propertyName, tenants, owner, userId
  </details>
  </div>
  </>}
- {view==='report'&&<SavedPaidRentReport data={data} tenants={tenants.filter(tenant=>tenant.property_id===propertyId)} openAcknowledgment={setReceipt} propertyName={propertyName} language={language} />}
+ {view==='report'&&<SavedPaidRentReport propertyId={propertyId} data={data} tenants={tenants.filter(tenant=>tenant.property_id===propertyId)} openAcknowledgment={setReceipt} propertyName={propertyName} language={language} />}
  </>}
  {receipt&&<CashAcknowledgment data={receipt} close={()=>setReceipt(null)} language={language} />}
  </section>

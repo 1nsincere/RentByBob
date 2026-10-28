@@ -1486,17 +1486,17 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
 .room-renter span { color: var(--text-secondary); font-size: .82rem; font-variant-numeric: tabular-nums; }
 
 /* Paid rent report PDF ("Save as PDF"). Hidden on screen; shown alone while printing this report.
-   Font pairing: a classic serif for headings and figures' labels, a clean system sans for body text, tabular numbers. */
+   Font pairing: Constantia (elegant serif) for headings and key figures, Corbel (soft humanist sans) for body text, lining tabular numbers; both ship with Windows, with Palatino/Iowan and Avenir/Gill Sans fallbacks (the CSP allows system fonts only). */
 .print-document { display: none; }
 @media print {
   html.print-paid-report body > :not(.print-document) { display: none !important; }
   html.print-paid-report body { background: #fff !important; }
   html.print-paid-report .paid-rent-document { display: block; }
-  @page { size: A4; margin: 16mm 15mm 18mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Segoe UI", system-ui, sans-serif; color: #6b7280; } }
+  @page { size: A4; margin: 16mm 15mm 18mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt Corbel, Candara, "Avenir Next", "Gill Sans", "Segoe UI", sans-serif; color: #6b7280; } }
 }
 .paid-rent-document { --doc-ink: #17221c; --doc-muted: #55625a; --doc-line: #dde3d6; --doc-accent: #1f6b4f; --doc-tint: #f4f7ee;
-  color: var(--doc-ink); background: #fff; font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; font-size: 9.5pt; line-height: 1.45; }
-.paid-rent-document h1, .paid-rent-document h2, .paid-rent-document .doc-figure strong, .paid-rent-document .doc-property { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif; }
+  color: var(--doc-ink); background: #fff; font-family: Corbel, Candara, "Avenir Next", "Gill Sans", "Segoe UI", system-ui, sans-serif; font-size: 10pt; line-height: 1.5; font-variant-numeric: lining-nums tabular-nums; }
+.paid-rent-document h1, .paid-rent-document h2, .paid-rent-document .doc-figure strong, .paid-rent-document .doc-property { font-family: Constantia, "Palatino Linotype", "Iowan Old Style", "Book Antiqua", Georgia, serif; font-weight: 600; letter-spacing: .01em; font-variant-numeric: lining-nums tabular-nums; }
 .doc-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 6mm; border-bottom: 2px solid var(--doc-accent); }
 .doc-brand { display: flex; align-items: center; gap: 2.5mm; font-weight: 700; font-size: 11pt; letter-spacing: .02em; color: var(--doc-accent); }
 .doc-mark { display: inline-grid; width: 7mm; height: 7mm; place-items: center; border-radius: 1.6mm; background: var(--doc-accent); color: #fff; font-size: 10pt; }
@@ -1623,3 +1623,27 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
 .ph-calendar td.has-due i { position: absolute; left: 50%; bottom: .1rem; width: .4rem; height: .4rem; margin-left: -.2rem; border-radius: 50%; background: var(--warning, #b45309); }
 .ph-today { margin-top: .4rem; }
 @media (max-width: 48rem) { .ph-clock { grid-template-columns: minmax(0, 1fr); } }
+
+/* Months owed from the notebook (waiting for a double check). */
+.notebook-months { display: grid; gap: 0.85rem; margin-top: 1rem; }
+.notebook-months h4 { margin: 0; font-size: 1.05rem; }
+.notebook-form textarea { width: 100%; min-height: 4.5rem; }
+.notebook-list { display: grid; gap: 0.5rem; margin: 0.5rem 0 0.85rem; padding: 0; list-style: none; }
+.notebook-row { display: flex; align-items: flex-start; gap: 0.7rem; min-height: 2.75rem; padding: 0.6rem 0.8rem; border: 1px solid var(--warning-border); border-radius: 0.8rem; background: var(--warning-surface); cursor: pointer; font-weight: 400; }
+.notebook-row input { flex: none; width: 1.4rem; height: 1.4rem; min-height: 0; margin: 0.15rem 0 0; }
+.notebook-row small { display: block; color: var(--text-secondary); font-size: 0.9rem; overflow-wrap: anywhere; }
+
+/* Maintenance screen. */
+.maintenance { display: grid; gap: 1rem; }
+.maintenance-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
+.maintenance-toolbar input { max-width: 14rem; }
+.maintenance-total { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.4rem 1rem; }
+.maintenance-total h3, .maintenance-total p { margin: 0; }
+.maintenance-total strong { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.maintenance-rows { display: grid; gap: 0.6rem; margin: 0.8rem 0 0; padding: 0; list-style: none; }
+.maintenance-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 0.4rem 1rem; padding: 0.7rem 0.9rem; border: 1px solid var(--border); border-radius: 0.8rem; background: var(--surface-alt); }
+.maintenance-row small { display: block; color: var(--text-secondary); }
+.maintenance-amount { font-variant-numeric: tabular-nums; }
+.maintenance-void { grid-column: 1 / -1; display: grid; gap: 0.4rem; }
+.maintenance-form { display: grid; gap: 0.35rem; }
+@media (max-width: 40rem) { .maintenance-row { grid-template-columns: minmax(0, 1fr); } }

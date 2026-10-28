@@ -77,7 +77,7 @@ try {
 
   Write-Output 'Starting isolated local Supabase stack...'
   $stackMayExist = $true
-  $null = Invoke-Cli @('start', '--exclude', 'realtime,storage-api,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor') 'Disposable Supabase startup failed.'
+  $null = Invoke-Cli @('start', '--exclude', 'realtime,storage-api,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor') 'Disposable Supabase startup failed.' -IncludeFailureDetails
 
   Write-Output 'Applying reviewed migrations to the disposable database...'
   $null = Invoke-Cli @('db', 'push', '--local', '--yes') 'Disposable database migrations failed.'

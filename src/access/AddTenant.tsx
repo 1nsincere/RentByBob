@@ -8,8 +8,8 @@ import { philippineToday } from './payment-preview-model.ts'
 import { supabase } from './client'
 import { text, type Language } from '../i18n'
 
-type Draft = { name: string; kind: 'individual' | 'business'; building: string; room: string; moveIn: string; rent: string }
-const empty = (): Draft => ({ name: '', kind: 'individual', building: '', room: '', moveIn: philippineToday(), rent: '' })
+type Draft = { name: string; kind: 'individual' | 'business'; building: string; room: string; moveIn: string; rent: string; guess: boolean }
+const empty = (): Draft => ({ name: '', kind: 'individual', building: '', room: '', moveIn: philippineToday(), rent: '', guess: false })
 
 // One-step tenant registration (same layout as the preview): details, optional vacant room with move-in date and
 // rent, review, then a single transactional save (register_tenant). No occupant names are collected.
@@ -80,6 +80,8 @@ export function AddTenant({ propertyId, preselect, assignTenant, done, openDirec
         p_property_id: propertyId, p_tenant_id: ids.current.tenant, p_display_name: draft.name.trim(), p_kind: draft.kind,
         p_agreement_id: unit ? ids.current.agreement : null, p_unit_id: unit?.id ?? null, p_move_in: unit ? draft.moveIn : null, p_rent: unit ? draft.rent.trim() : null,
       })
+    let flagFailed = false
+    if (!rpcError && unit && draft.guess) flagFailed = !!(await supabase!.rpc('flag_move_in_estimate', { p_property_id: propertyId, p_agreement_id: ids.current.agreement })).error
     setBusy(false)
     if (rpcError) {
       setError(rpcError.code === '42501' ? tr('Your staff session needs the authenticator code again. Nothing was saved.', 'Kinahanglan na usab ang authenticator code. Walay na-save.')
@@ -87,6 +89,7 @@ export function AddTenant({ propertyId, preselect, assignTenant, done, openDirec
         : tr('The tenant could not be saved. Nothing was changed; check the details and try again.', 'Wala ma-save ang nag-abang. Walay nausab; susiha ang detalye ug sulayi pag-usab.'))
       setStep('form'); return
     }
+    if (flagFailed) setError(tr('The tenant was saved, but the move-in date could not be marked as a best guess. Mark it from Payments > Rent by month.', 'Na-save ang nag-abang, apan wala mamarkahan nga hinuhaan ang petsa sa pagsulod. Markahi sa Payments > Abang kada bulan.'))
     setStep('saved'); done(); void load()
   }
   function reset() { setExisting(null); setDraft(empty()); setStep('form'); setError(''); ids.current = { tenant: crypto.randomUUID(), agreement: crypto.randomUUID() } }
@@ -107,7 +110,7 @@ export function AddTenant({ propertyId, preselect, assignTenant, done, openDirec
     </section> : step === 'review' ? <section className="card tenant-review" aria-labelledby="tenant-review-heading"><h3 id="tenant-review-heading">{tr('Review tenant details', 'Susiha ang detalye sa nag-abang')}</h3>
       <dl><><dt>{tr('Name', 'Ngalan')}</dt><dd>{draft.name.trim()}</dd></><><dt>{tr('Type', 'Klase')}</dt><dd>{draft.kind === 'business' ? tr('Business', 'Negosyo') : tr('Individual', 'Indibidwal')}</dd></>
         <><dt>{tr('Room', 'Kwarto')}</dt><dd>{unit ? `${building?.label} · ${unit.label}${unit.floor_label ? ` (${unit.floor_label})` : ''}` : tr('Assign later', 'I-assign unya')}</dd></>
-        {unit && <><><dt>{tr('Move-in date', 'Petsa sa pagsulod')}</dt><dd>{draft.moveIn}</dd></><><dt>{tr('Monthly rent', 'Binulan nga abang')}</dt><dd>{decimalPesos(draft.rent.trim())}</dd></></>}</dl>
+        {unit && <><><dt>{tr('Move-in date', 'Petsa sa pagsulod')}</dt><dd>{draft.moveIn}{draft.guess && ` (${tr('best guess, needs a double check', 'hinuhaan, kinahanglan og double check')})`}</dd></><><dt>{tr('Monthly rent', 'Binulan nga abang')}</dt><dd>{decimalPesos(draft.rent.trim())}</dd></></>}</dl>
       {unit && <p className="field-help">{tr('Saving creates the tenant and their room agreement together. Monthly rent is then added from Payments; nothing is charged yet.', 'Ang pag-save mohimo sa nag-abang ug sa kasabotan sa kwarto. Idugang ang binulan nga abang sa Payments; walay masingil pa.')}</p>}
       <div className="form-actions"><Button className="secondary-button" disabled={busy} onClick={() => setStep('form')}>{tr('Edit details', 'Usba ang detalye')}</Button><Button className="primary" disabled={busy} onClick={() => void save()}>{busy ? tr('Saving…', 'Gi-save…') : existing ? tr('Confirm and assign room', 'Kumpirmaha ug i-assign') : tr('Confirm and add tenant', 'Kumpirmaha ug idugang')}</Button></div>
     </section> : <div className="tenant-form-layout"><form className="card tenant-entry-form" onSubmit={e => { e.preventDefault(); const message = problem(); if (message) { setError(message); return } setStep('review') }}>
@@ -125,6 +128,8 @@ export function AddTenant({ propertyId, preselect, assignTenant, done, openDirec
         {draft.building && <>
           {unit && <div className="form-grid"><div><label htmlFor="tenant-move-in">{tr('Move-in date', 'Petsa sa pagsulod')}</label><input id="tenant-move-in" type="date" value={draft.moveIn} onChange={e => edit({ moveIn: e.target.value })} /></div>
             <div><label htmlFor="tenant-rent">{tr('Monthly rent (PHP)', 'Binulan nga abang (PHP)')}</label><input id="tenant-rent" inputMode="decimal" value={draft.rent} onChange={e => edit({ rent: e.target.value })} placeholder="3500.00" /></div></div>}
+          {unit && <><label className="duplicate-warning" htmlFor="tenant-guess"><input id="tenant-guess" type="checkbox" checked={draft.guess} onChange={e => edit({ guess: e.target.checked })} /> {tr('I do not know the exact move-in date (it is a best guess)', 'Wala ko kahibalo sa eksaktong petsa sa pagsulod (hinuhaan lang)')}</label>
+            {draft.guess && <p className="field-help">{tr('Choose the earliest date they could have moved in. Another staff member will double check it later. Unpaid months from the notebook are added afterwards in Payments, and also wait for a double check.', 'Pilia ang pinakaaga nga petsa nga pwede silang misulod. Susihon unya sa laing staff. Ang mga wala mabayri nga bulan gikan sa kuwaderno idugang sa Payments, ug maghulat usab og double check.')}</p>}</>}
           <p className="field-help">{tr('Rent is due on the same day each month as the move-in date (the last day in shorter months).', 'Ang abang bayran sa parehong adlaw matag bulan sama sa petsa sa pagsulod (kataposang adlaw sa mubo nga bulan).')}</p>
         </>}
       </fieldset>

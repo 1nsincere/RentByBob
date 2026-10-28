@@ -18,6 +18,7 @@ const PropertyDirectory = deferredScreen(() => import('./access/PropertyLocation
 const AccessAudit = deferredScreen(() => import('./access/AccessAudit').then(module => module.AccessAudit))
 const InvitationReconciliation = deferredScreen(() => import('./access/InvitationReconciliation').then(module => module.InvitationReconciliation))
 const CollectionsOverview = deferredScreen(() => import('./access/CollectionsOverview').then(module => module.CollectionsOverview))
+const Maintenance = deferredScreen(() => import('./access/Maintenance').then(module => module.Maintenance))
 const RoomListingsManager = deferredScreen(() => import('./access/RoomListingsManager').then(module => module.RoomListingsManager))
 const TenantDirectory = deferredScreen(() => import('./access/TenantDirectory').then(module => module.TenantDirectory))
 const AddTenant = deferredScreen(() => import('./access/AddTenant').then(module => module.AddTenant))
@@ -255,6 +256,7 @@ export function App() {
     { id: 'property-locations', label: translate('Buildings and units', 'Mga bilding ug kwarto') },
     { id: 'create-tenant', label: translate('Add tenant record', 'Idugang ang nag-abang') },
     { id: 'payment-records', label: translate('Payments and balances', 'Mga bayad ug balanse'), badge: snapshot?.toCheck ? `${snapshot.toCheck} ${translate('to check', 'susihon')}` : undefined },
+    ...(preview ? [] : [{ id: 'maintenance', label: translate('Maintenance', 'Maintenance') }]),
     { id: 'room-listings', label: `${translate('Room listings & inquiries', 'Lista sa kwarto ug pangutana')}${snapshot?.newInquiries ? ` (${snapshot.newInquiries} ${translate('new', 'bag-o')})` : ''}` },
     { id: 'invite-account', label: translate('Invite account', 'Pagdapit og account') },
     ...(role === 'owner' ? [
@@ -293,7 +295,7 @@ export function App() {
         {item.id === 'create-tenant' && !dashboardPreview && <span className="nav-add-mark" aria-hidden="true">+</span>}{item.label}{item.badge && <span className="nav-badge" aria-hidden="true">{item.badge}</span>}
       </a>
     </li>
-    const daily = ['tenant-records', 'payment-records', 'property-locations', 'room-listings'].map(byId).filter(Boolean) as NavigationItem[]
+    const daily = ['tenant-records', 'payment-records', 'maintenance', 'property-locations', 'room-listings'].map(byId).filter(Boolean) as NavigationItem[]
     const more = ['invite-account', 'manage-access', 'invitation-review', 'access-history', 'account-security'].map(byId).filter(Boolean) as NavigationItem[]
     const moreShown = moreOpen || more.some(item => item.id === activeSection)
     return <nav aria-label={translateText(language, 'Property workspace', 'Workspace sa propiedad')}>
@@ -457,6 +459,7 @@ export function App() {
                               : visitedSections.includes('payment-records') && <DeferredBoundary loadingLabel={translate('Loading payment records…', 'Gikarga ang mga rekord sa bayad…')} rows={3} language={language} reset={SavedPayments.reset}>
                                 <SavedPayments.Screen key={propertyId} propertyId={propertyId} propertyName={snapshot.properties.find(property => property.id === propertyId)?.name} tenants={tenantList} owner={role === 'owner'} userId={session.user.id} focusTenant={paymentTenant} active={activeSection === 'payment-records'} language={language} />
                               </DeferredBoundary>}</div>
+                              {!preview && <div id="maintenance" hidden={activeSection !== 'maintenance'} tabIndex={-1} className="workspace-section">{visitedSections.includes('maintenance') && <DeferredBoundary loadingLabel={translate('Loading maintenance…', 'Gikarga ang maintenance…')} rows={3} language={language} reset={Maintenance.reset}><Maintenance.Screen key={`maintenance:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} userId={session.user.id} language={language} /></DeferredBoundary>}</div>}
                               <div id="room-listings" hidden={activeSection !== 'room-listings'} tabIndex={-1} className="workspace-section">{visitedSections.includes('room-listings') && <DeferredBoundary loadingLabel={translate('Loading room listings…', 'Gikarga ang lista sa kwarto…')} rows={3} language={language} reset={RoomListingsManager.reset}><RoomListingsManager.Screen key={`listings:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} /></DeferredBoundary>}</div>
                               <div id="invite-account" hidden={activeSection !== 'invite-account'} tabIndex={-1} className="workspace-section">{visitedSections.includes('invite-account') && <DeferredBoundary loadingLabel={translate('Loading invitations…', 'Gikarga ang mga imbitasyon…')} rows={2} language={language} reset={Invitations.reset}><Invitations.Screen key={`invite:${propertyId}`} propertyId={propertyId} owner={role === 'owner'} language={language} /></DeferredBoundary>}</div>
                             {role === 'owner' && <>
