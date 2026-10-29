@@ -541,8 +541,8 @@
 
 /* Developer card: hover reveal (a lens that follows the pointer shows the second photo; click or tap flips the whole photo)
    and the contact links. */
-@property --x { syntax: "<length>"; initial-value: 50%; inherits: true; }
-@property --y { syntax: "<length>"; initial-value: 50%; inherits: true; }
+@property --x { syntax: "<length-percentage>"; initial-value: 50%; inherits: true; }
+@property --y { syntax: "<length-percentage>"; initial-value: 50%; inherits: true; }
 @property --r { syntax: "<length>"; initial-value: 0px; inherits: true; }
 .dev-photo { --r: 0px; cursor: none; touch-action: manipulation; }
 .dev-photo-hover { position: absolute; inset: 0; z-index: 1; clip-path: circle(var(--r) at var(--x) var(--y)); transition: --r 650ms cubic-bezier(.2, .8, .2, 1), --x 140ms ease-out, --y 140ms ease-out; will-change: clip-path; }
