@@ -229,9 +229,8 @@
 .v-jttape { stroke: #6f787f; stroke-width: 0.7; }
 
 /* Bob strolls the shoulder in front of his house (his figure is a little larger than true scale so he can be seen). */
-.lp-bob { position: absolute; z-index: 5; left: 70%; top: 67.2%; width: 5.4%; transform: translate(-50%, -50%); animation: lp-stroll 46s ease-in-out infinite; cursor: help; }
-.lp-bob svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-turn 46s ease-in-out infinite; }
-.lp-bob:hover, .lp-bob:focus-visible, .lp-bob:hover svg, .lp-bob:focus-visible svg { animation-play-state: paused; }
+.lp-bob { position: absolute; z-index: 5; left: 70%; top: 67.2%; width: 5.4%; transform: translate(-50%, -50%); animation: lp-stroll 60s ease-in-out infinite; cursor: help; }
+.lp-bob svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-turn 60s ease-in-out infinite; }
 .lp-bob:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; border-radius: 50%; }
 .lp-bob-bubble { position: absolute; left: 50%; bottom: calc(100% + .55rem); transform: translate(-50%, 4px); padding: .3rem .7rem; border: 1.5px solid var(--amber); border-radius: .7rem; background: rgb(12 32 24 / 94%); color: #fff; font-weight: 800; font-size: clamp(.65rem, 1.1vw, .9rem); white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 160ms ease, transform 160ms ease; }
 .lp-bob-bubble::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -.35rem; border: .35rem solid transparent; border-top-color: var(--amber); }
@@ -247,19 +246,110 @@
 .bob-cane line { stroke: #8a5a2b; stroke-width: 1.6; stroke-linecap: round; }
 .bob-cane circle:not(.bob-hand) { fill: #2b2420; }
 @keyframes lp-step { from { transform: translateX(-2.2px); } to { transform: translateX(2.2px); } }
-@keyframes lp-stroll { 0%, 6% { translate: 0 0; } 38%, 48% { translate: 426% 0; } 88%, 100% { translate: 0 0; } }
-@keyframes lp-turn { 0%, 38% { transform: rotate(0deg); } 42%, 88% { transform: rotate(180deg); } 92%, 100% { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .lp-bob { left: 82%; } }
-/* The student (the developer, also a tenant): down Mariano Abella St, along the front of Bob's house, in through the
-   door, a pause inside, then out and back the same way. Facing east in the drawing; --st-door is the door's x. */
-.lp-student { appearance: none; padding: 0; border: 0; background: none; font: inherit; --st-door: 32.3%; position: absolute; z-index: 5; left: 18.5%; top: 74%; width: 4.4%; transform: translate(-50%, -50%); opacity: 0; animation: lp-student-walk 48s linear infinite; cursor: pointer; }
+@keyframes lp-stroll { 0%, 3% { translate: 0 0; } 25%, 33% { translate: 426% 0; } 50%, 100% { translate: 0 0; } }
+@keyframes lp-turn { 0%, 25% { transform: rotate(0deg); } 28%, 80% { transform: rotate(180deg); } 84%, 100% { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .lp-bob { left: 82%; } .lp-bob svg { animation: none; } }
+/* Roaming cast: the student (the developer, a tenant), Bantay the dog, Bob and the malunggay pandesal cart share one 60 s
+   loop. The student and the dog are full-size layers whose translate is in percent of the street plan, so positions read
+   as map coordinates and only the compositor moves them. Their paths keep to sidewalks and yards; only the cart uses the
+   road. Each animation is written out in full (the CSS minifier drops a duration set apart from the name). Hovering or
+   opening anyone pauses the whole cast together so they stay in step. */
+.lp-roam { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.lp-roam--student { animation: lp-roam-student 60s linear infinite both; }
+.lp-roam--dog { z-index: 4; animation: lp-roam-dog 60s linear infinite both; }
+.lp-lane--e.lp-lane--stop { top: 58.3%; animation: lp-cart-stop 60s linear infinite both; }
+.lp-student { appearance: none; position: absolute; left: 0; top: 0; width: 4.4%; padding: 0; border: 0; background: none; font: inherit; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; }
 .lp-student::before { content: ""; position: absolute; inset: -.55rem; }
 .lp-student:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; border-radius: 50%; }
-.lp-student.is-open, .lp-student.is-open svg, .lp-student:focus-visible, .lp-student:focus-visible svg { animation-play-state: paused; }
-.lp-student:focus-visible .lp-bob-bubble { opacity: 1; transform: translate(-50%, 0); }
-.lp-student svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-student-turn 48s linear infinite; }
-.lp-student:hover, .lp-student:hover svg { animation-play-state: paused; }
-.lp-student:hover .lp-bob-bubble { opacity: 1; transform: translate(-50%, 0); }
+.lp-student:hover .lp-bob-bubble, .lp-student:focus-visible .lp-bob-bubble { opacity: 1; transform: translate(-50%, 0); }
+.lp-student svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-face-student 60s linear infinite both; }
+.lp-dog { position: absolute; left: 0; top: 0; width: 3.3%; transform: translate(-50%, -50%); }
+.lp-dog svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-face-dog 60s linear infinite both; }
+.lp-plan:has(.lp-student:hover, .lp-student:focus-visible, .lp-student.is-open, .lp-bob:hover, .lp-bob:focus-visible) :is(.lp-roam, .lp-roam svg, .lp-bob, .lp-bob svg, .lp-say, .lp-lane--stop) { animation-play-state: paused; }
+.dog-body { fill: #b97a43; }
+.dog-back { fill: #8a5730; }
+.dog-ear { fill: #6e4325; }
+.dog-snout { fill: #d9a77a; }
+.dog-nose { fill: #1b1310; }
+.dog-leg { fill: #9a6236; }
+.dog-tail path { fill: none; stroke: #8a5730; stroke-width: 1.6; stroke-linecap: round; }
+.dog-tail { transform-origin: 5.2px 10px; animation: lp-wag .35s ease-in-out infinite alternate; }
+@keyframes lp-wag { from { transform: rotate(-22deg); } to { transform: rotate(22deg); } }
+/* Speech bubbles, each shown in its own window of the loop. */
+.lp-say { position: absolute; left: 0; top: 0; z-index: 6; padding: .22rem .55rem; border-radius: .6rem; background: #fffdf4; color: #10201a; font-weight: 800; font-size: clamp(.5rem, .95vw, .78rem); line-height: 1.1; white-space: nowrap; box-shadow: 0 4px 10px rgb(0 0 0 / 30%); transform: translate(-50%, calc(-100% - 1.5em)); opacity: 0; pointer-events: none; }
+.lp-say::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -.3rem; border: .3rem solid transparent; border-top-color: #fffdf4; }
+.lp-say--heart { background: none; box-shadow: none; color: #ff5a6e; font-size: clamp(.8rem, 1.5vw, 1.2rem); transform: translate(-50%, calc(-100% - .6em)); }
+.lp-say--heart::after { display: none; }
+.lp-say--bob { left: 50%; transform: translate(-50%, calc(-100% - .4em)); }
+.lp-say--vendor { left: 4.5%; transform: translate(-50%, calc(-100% - .3em)); }
+.lp-say--pet { animation: lp-say-pet 60s linear infinite both; }
+.lp-say--heart { animation: lp-say-heart 60s linear infinite both; }
+.lp-say--buy { animation: lp-say-buy 60s linear infinite both; }
+.lp-say--vendor { animation: lp-say-vendor 60s linear infinite both; }
+.lp-say--hello { animation: lp-say-hello 60s linear infinite both; }
+.lp-say--bob { animation: lp-say-bob 60s linear infinite both; }
+.lp-say--bark { animation: lp-say-bark 60s linear infinite both; }
+@keyframes lp-say-pet { 0%, 15.9% { opacity: 0; } 16%, 21% { opacity: 1; } 21.1%, 100% { opacity: 0; } }
+@keyframes lp-say-heart { 0%, 16.9% { opacity: 0; translate: 0 0; } 17% { opacity: 1; } 21% { opacity: 1; translate: 0 -60%; } 21.1%, 100% { opacity: 0; translate: 0 -80%; } }
+@keyframes lp-say-buy { 0%, 28.9% { opacity: 0; } 29%, 34% { opacity: 1; } 34.1%, 100% { opacity: 0; } }
+@keyframes lp-say-vendor { 0%, 33.9% { opacity: 0; } 34%, 40% { opacity: 1; } 40.1%, 100% { opacity: 0; } }
+@keyframes lp-say-hello { 0%, 55.9% { opacity: 0; } 56%, 61% { opacity: 1; } 61.1%, 100% { opacity: 0; } }
+@keyframes lp-say-bob { 0%, 60.9% { opacity: 0; } 61%, 67% { opacity: 1; } 67.1%, 100% { opacity: 0; } }
+@keyframes lp-say-bark { 0%, 57.9% { opacity: 0; } 58%, 61% { opacity: 1; } 61.1%, 100% { opacity: 0; } }
+/* The cart: rolls in along the near lane, stops in front of Bob's house (its middle at 50%) for about ten seconds, leaves. */
+@keyframes lp-cart-stop { 0% { transform: translateX(-14%); } 26%, 42% { transform: translateX(45.5%); } 62%, 100% { transform: translateX(110%); } }
+/* The student's minute. Points (x%, y% of the plan): door 38.9,96.5; yard corner 53,96.5; side path 53,69; by the cart
+   50,67.6; by Bob 64,68.5. Hidden while inside the house. */
+@keyframes lp-roam-student {
+  0% { translate: 38.9% 96.5%; opacity: 0; visibility: hidden; }
+  3.9% { translate: 38.9% 96.5%; opacity: 0; visibility: visible; }
+  5% { translate: 40.5% 96.5%; opacity: 1; }
+  9% { translate: 53% 96.5%; }
+  15% { translate: 53% 69%; }
+  22% { translate: 53% 69%; }
+  27% { translate: 50% 67.6%; }
+  42% { translate: 50% 67.6%; }
+  55% { translate: 64% 68.5%; }
+  68% { translate: 64% 68.5%; }
+  76% { translate: 53% 69%; }
+  84% { translate: 53% 96.5%; }
+  88% { translate: 40.5% 96.5%; opacity: 1; }
+  89% { translate: 38.9% 96.5%; opacity: 0; visibility: visible; }
+  89.1%, 100% { translate: 38.9% 96.5%; opacity: 0; visibility: hidden; }
+}
+@keyframes lp-face-student {
+  0%, 8.5% { transform: rotate(0deg); }
+  10%, 14% { transform: rotate(-90deg); }
+  16%, 21.5% { transform: rotate(0deg); }
+  23%, 26% { transform: rotate(-164deg); }
+  28%, 41% { transform: rotate(-90deg); }
+  43%, 67% { transform: rotate(0deg); }
+  69.5%, 75% { transform: rotate(180deg); }
+  77%, 83% { transform: rotate(90deg); }
+  85%, 89% { transform: rotate(180deg); }
+  90%, 100% { transform: rotate(360deg); }
+}
+/* Bantay: naps in the yard, runs to the student, sits by him at the cart and at Bob's, then trots home. */
+@keyframes lp-roam-dog {
+  0%, 13% { translate: 57% 90%; }
+  15% { translate: 57.5% 70.5%; }
+  22% { translate: 57.5% 70.5%; }
+  28% { translate: 54% 68.4%; }
+  42% { translate: 54% 68.4%; }
+  55% { translate: 60% 69.5%; }
+  68% { translate: 60% 69.5%; }
+  80%, 100% { translate: 57% 90%; }
+}
+@keyframes lp-face-dog {
+  0%, 13% { transform: rotate(180deg); }
+  13.5%, 14.5% { transform: rotate(270deg); }
+  16%, 22% { transform: rotate(180deg); }
+  23%, 27% { transform: rotate(210deg); }
+  29%, 42% { transform: rotate(270deg); }
+  44%, 68% { transform: rotate(360deg); }
+  70%, 79% { transform: rotate(457deg); }
+  81%, 100% { transform: rotate(540deg); }
+}
 .st-leg { fill: #3b3f45; }
 .st-polo { fill: #8d939b; stroke: #646a72; stroke-width: 0.6; }
 .st-collar { fill: none; stroke: #646a72; stroke-width: 0.7; stroke-linecap: round; }
@@ -278,25 +368,12 @@
 .lp-legend-dev { display: flex; align-items: center; gap: .45rem; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--amber); text-underline-offset: 3px; }
 .lp-legend-dev:focus-visible, .lp-legend summary:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: .3rem; }
 @media (max-width: 47.99rem) { .lp-legend { max-width: 92%; padding: .25rem .4rem .3rem; } .lp-legend ul { grid-template-columns: 1fr; gap: .15rem; } }
-@media (prefers-reduced-motion: reduce) { .lp-student { left: 18.5%; top: 90%; opacity: 1; visibility: visible; animation: none; } .lp-student svg { animation: none; transform: rotate(90deg); } }
-@keyframes lp-student-walk {
-  0% { translate: 0 0; opacity: 0; visibility: hidden; }
-  2% { translate: 0 37%; opacity: 1; visibility: visible; }
-  13% { translate: 0 422%; opacity: 1; }
-  30% { translate: 314% 422%; opacity: 1; }
-  31% { translate: 314% 422%; opacity: 0; visibility: hidden; }
-  60% { translate: 314% 422%; opacity: 0; visibility: hidden; }
-  61% { translate: 314% 422%; opacity: 1; visibility: visible; }
-  77% { translate: 0 422%; opacity: 1; }
-  90% { translate: 0 37%; opacity: 1; }
-  92% { translate: 0 0; opacity: 0; visibility: visible; }
-  93%, 100% { translate: 0 0; opacity: 0; visibility: hidden; }
-}
-@keyframes lp-student-turn {
-  0%, 13% { transform: rotate(90deg); }
-  15%, 60% { transform: rotate(0deg); }
-  60.1%, 77% { transform: rotate(180deg); }
-  79%, 100% { transform: rotate(270deg); }
+@media (prefers-reduced-motion: reduce) {
+  .lp-roam--student, .lp-roam--dog, .lp-student svg, .lp-dog svg, .dog-tail, .lp-say, .lp-lane--stop { animation: none; }
+  .lp-lane--e.lp-lane--stop { transform: translateX(45.5%); }
+  .lp-roam--student { translate: 53% 69%; } .lp-roam--dog { translate: 57.5% 70.5%; }
+  .lp-dog svg { transform: rotate(180deg); }
+  .lp-say { display: none; }
 }
 /* Homes on the plan */
 .lp-plot { position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: .3rem; color: #fff; text-decoration: none; transition: transform 260ms var(--ease); }

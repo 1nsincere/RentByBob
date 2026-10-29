@@ -11,7 +11,7 @@ export const SITE: Site[] = [
   { label: 'Building 1', kind: 'block', spaces: 10, x: 3, y: 3, w: 32, h: 47 },
   { label: 'Building 2', kind: 'block', spaces: 8, x: 37, y: 3, w: 28, h: 47 },
   { label: 'House 1', kind: 'house', spaces: 1, x: 69, y: 3, w: 26, h: 47 },
-  { label: "Bob's house", kind: 'house', spaces: 6, x: 23.4, y: 66.5, w: 20.5, h: 31 },
+  { label: "Bob's house", kind: 'house', spaces: 6, x: 30, y: 66.5, w: 20.5, h: 31 },
 ]
 export const TOTAL_SPACES = SITE.reduce((sum, site) => sum + site.spaces, 0)
 
@@ -201,15 +201,16 @@ export function Facade({ site, open, width = facadeWidth(site), onPick, focus }:
 // neighbourhood street, so it carries motorbikes only: Move It riders (red helmets), J&T riders loaded with parcels
 // and the pandesal cart (a green sidecar cart behind a motorbike, like the one that passes the houses), crawling.
 type Heading = 'e' | 'w' | 'n' | 's'
-type Ride = { kind: 'moveit' | 'jt' | 'pandesal'; heading: Heading; duration: number; delay: number; rest: number; pillion?: boolean }
+type Ride = { kind: 'moveit' | 'jt' | 'pandesal'; heading: Heading; duration: number; delay: number; rest: number; pillion?: boolean; stops?: boolean }
 const LENGTH = { moveit: 36, jt: 58, pandesal: 60 }
 // Riders in one lane share a pace so they never drive through each other; the pandesal cart sets the pace of its lane.
+// The near (eastbound) lane belongs to the malunggay pandesal cart alone: once a minute it pulls up in front of Bob's
+// house and waits while the student buys a bag (its timing is the shared 60 s street loop in landing.css).
 const TRAFFIC: Ride[] = [
-  { kind: 'moveit', heading: 'e', duration: 16, delay: -2, rest: 8, pillion: true },
-  { kind: 'jt', heading: 'e', duration: 16, delay: -8, rest: 40 },
-  { kind: 'moveit', heading: 'e', duration: 16, delay: -13, rest: 74 },
-  { kind: 'pandesal', heading: 'w', duration: 34, delay: -9, rest: 55 },
-  { kind: 'moveit', heading: 'w', duration: 34, delay: -27, rest: 20 },
+  { kind: 'moveit', heading: 'w', duration: 16, delay: -2, rest: 8, pillion: true },
+  { kind: 'jt', heading: 'w', duration: 16, delay: -8, rest: 40 },
+  { kind: 'moveit', heading: 'w', duration: 16, delay: -13, rest: 74 },
+  { kind: 'pandesal', heading: 'e', duration: 60, delay: 0, rest: 45, stops: true },
   { kind: 'jt', heading: 'n', duration: 10, delay: -3, rest: 45 },
   { kind: 'moveit', heading: 's', duration: 12, delay: -7, rest: 20 },
 ]
@@ -269,14 +270,15 @@ function RideArt({ kind, pillion }: { kind: Ride['kind']; pillion?: boolean }) {
   </>
 }
 
-function Vehicle({ ride, extra }: { ride: Ride; extra?: boolean }) {
+function Vehicle({ ride, extra, vendorLine }: { ride: Ride; extra?: boolean; vendorLine?: string }) {
   const L = LENGTH[ride.kind]
   const vertical = ride.heading === 'n' || ride.heading === 's'
   const turn = { e: undefined, w: `translate(${L},0) scale(-1,1)`, n: `translate(0,${L}) rotate(-90)`, s: `translate(20,0) rotate(90)` }[ride.heading]
-  return <span className={`lp-lane lp-lane--${ride.heading}${extra ? ' lp-lane--extra' : ''}`} style={{ '--dur': `${ride.duration}s`, '--delay': `${ride.delay}s`, '--rest': `${ride.rest}%` } as CSSProperties}>
+  return <span className={`lp-lane lp-lane--${ride.heading}${extra ? ' lp-lane--extra' : ''}${ride.stops ? ' lp-lane--stop' : ''}`} style={{ '--dur': `${ride.duration}s`, '--delay': `${ride.delay}s`, '--rest': `${ride.rest}%` } as CSSProperties}>
     <svg viewBox={vertical ? `2 0 16 ${L}` : `0 2 ${L} 16`} aria-hidden="true" focusable="false"><g transform={turn}>
       <RideArt kind={ride.kind} pillion={ride.pillion} />
     </g></svg>
+    {ride.stops && vendorLine && <span className="lp-say lp-say--vendor" aria-hidden="true">{vendorLine}</span>}
   </span>
 }
 
@@ -291,17 +293,20 @@ const BobArt = () => <>
       <circle className="bob-ear" cx="12.6" cy="5.9" r="1.1" /><circle className="bob-ear" cx="12.6" cy="14.1" r="1.1" />
       <circle className="bob-head" cx="13" cy="10" r="4.4" /><ellipse className="bob-shine" cx="11.8" cy="8.4" rx="1.8" ry="1.1" />
 </>
-function Bob({ label }: { label: string }) {
+function Bob({ label, line }: { label: string; line: string }) {
   return <span className="lp-bob" tabIndex={0} role="img" aria-label={label}>
     <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
+    <span className="lp-say lp-say--bob" aria-hidden="true">{line}</span>
     <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false">
       <BobArt />
     </svg>
   </span>
 }
 
-// The developer, who is also a tenant: a student with black hair, a gray polo and dark gray pants. He walks down Mariano
-// Abella St, along the front of Bob's house, goes in through the door, and later comes back out the same way.
+// The developer, who is also a tenant: a student with black hair, a gray polo and dark gray pants. A day on the street, on
+// sidewalks and yards only (never the road): out of Bob's house, Bantay the dog runs over to be petted, the malunggay
+// pandesal cart stops and he buys a bag, offers some to Sir Bob, then home again. Bob, the student, Bantay and the cart
+// share one 60-second loop (landing.css).
 const StudentArt = () => <>
       <ellipse className="bob-shadow" cx="12" cy="11" rx="10" ry="8.5" />
       <ellipse className="st-leg bob-foot bob-foot--a" cx="11" cy="7" rx="4.2" ry="2.1" /><ellipse className="st-leg bob-foot bob-foot--b" cx="11" cy="13" rx="4.2" ry="2.1" />
@@ -329,20 +334,45 @@ export const DEVELOPER = {
   aim: { en: 'Work in progress', bis: 'Gigtrabaho pa' } as Bilingual,
   note: { en: "Also a tenant at Bob's house", bis: 'Nag-abang sad sa balay ni Bob' } as Bilingual,
   groups: [
-    { title: { en: 'Software', bis: 'Software' } as Bilingual, items: ['PHP', 'HTML', 'CSS', 'React', 'TypeScript', 'Supabase', 'JS', 'Python', 'Node.js', 
-'Git', 'Linux', 'and more' ] },
-    { title: { en: 'Hardware and networking', bis: 'Hardware ug networking' } as Bilingual, items: ['Mimosa', 'Ubuntu servers', 'pfSense', 'Ubiquiti', 'IP networking'] },
+    { title: { en: 'Software', bis: 'Software' } as Bilingual, items: ['PHP', 'HTML', 'CSS', 'React', 'TypeScript', 'Supabase', 'JS', 'Node.js', 
+'Git' ] },
+    { title: { en: 'Hardware and networking', bis: 'Hardware ug networking' } as Bilingual, items: ['Mimosa P2P', 'Ubuntu Server', 'PfSense Server', 'Ubiquiti', 'Internet Service Technician'] },
     { title: { en: 'Off the clock', bis: 'Kalingawan' } as Bilingual, items: ['Gym', 'Gaming', 'Guitar', 'Hiking', 'Cooking', 'and more'] },
   ],
 }
 
+// Bantay, the street's dog: brown with a darker back, drawn from above facing east; the tail wags.
+const DogArt = () => <>
+      <ellipse className="bob-shadow" cx="12" cy="11" rx="10" ry="6.5" />
+      <g className="dog-tail"><path d="M5.2 10 Q2 8.6 0.8 6.4" /></g>
+      <ellipse className="dog-leg bob-foot bob-foot--a" cx="9" cy="6.4" rx="1.8" ry="1.1" /><ellipse className="dog-leg bob-foot bob-foot--b" cx="9" cy="13.6" rx="1.8" ry="1.1" />
+      <ellipse className="dog-leg bob-foot bob-foot--b" cx="15" cy="6.6" rx="1.7" ry="1.1" /><ellipse className="dog-leg bob-foot bob-foot--a" cx="15" cy="13.4" rx="1.7" ry="1.1" />
+      <ellipse className="dog-body" cx="11" cy="10" rx="6.8" ry="3.9" />
+      <ellipse className="dog-back" cx="10.2" cy="10" rx="4.2" ry="2.1" />
+      <ellipse className="dog-ear" cx="18.2" cy="7.1" rx="1.7" ry="1.2" /><ellipse className="dog-ear" cx="18.2" cy="12.9" rx="1.7" ry="1.2" />
+      <circle className="dog-body" cx="19.2" cy="10" r="3.3" />
+      <ellipse className="dog-snout" cx="22.3" cy="10" rx="1.6" ry="1.3" /><circle className="dog-nose" cx="23.7" cy="10" r="0.65" />
+</>
+function Dog({ heart, bark }: { heart: string; bark: string }) {
+  return <div className="lp-roam lp-roam--dog" aria-hidden="true">
+    <span className="lp-dog"><svg viewBox="0 0 26 20" focusable="false"><DogArt /></svg></span>
+    <span className="lp-say lp-say--heart">{heart}</span>
+    <span className="lp-say lp-say--bark">{bark}</span>
+  </div>
+}
+
 function Student({ label, open, onToggle, tr }: { label: string; open: boolean; onToggle: () => void; tr: (english: string, bisaya: string) => string }) {
-  return <button type="button" className={`lp-student${open ? ' is-open' : ''}`} aria-label={`${label}. ${tr('Show profile', 'Ipakita ang profile')}`} aria-expanded={open} aria-controls="lp-dev-card" onClick={onToggle}>
+  return <div className="lp-roam lp-roam--student">
+    <button type="button" className={`lp-student${open ? ' is-open' : ''}`} aria-label={`${label}. ${tr('Show profile', 'Ipakita ang profile')}`} aria-expanded={open} aria-controls="lp-dev-card" onClick={onToggle}>
     <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
     <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false">
       <StudentArt />
     </svg>
-  </button>
+    </button>
+    <span className="lp-say lp-say--pet" aria-hidden="true">{tr('Hi, Bantay!', 'Hi, Bantay!')}</span>
+    <span className="lp-say lp-say--buy" aria-hidden="true">{tr('One bag, please!', 'Usa ka supot, palihug!')}</span>
+    <span className="lp-say lp-say--hello" aria-hidden="true">{tr('Pandesal, Sir Bob?', 'Pandesal, Sir Bob?')}</span>
+  </div>
 }
 
 const LinkIcon = ({ kind }: { kind: 'facebook' | 'email' | 'github' }) => kind === 'github'
@@ -517,8 +547,9 @@ function Legend({ tr, onDeveloper }: { tr: (english: string, bisaya: string) => 
     <ul>
       <li><span className="lp-legend-icon">{bike('moveit', 36, true)}</span>{tr('Move It rider', 'Move It rider')}</li>
       <li><span className="lp-legend-icon lp-legend-icon--wide">{bike('jt', 58)}</span>{tr('J&T rider with parcels', 'J&T rider nga naay parcel')}</li>
-      <li><span className="lp-legend-icon lp-legend-icon--wide">{bike('pandesal', 60)}</span>{tr('Pandesal cart', 'Karton sa pandesal')}</li>
+      <li><span className="lp-legend-icon lp-legend-icon--wide">{bike('pandesal', 60)}</span>{tr('Malunggay pandesal cart', 'Karton sa malunggay pandesal')}</li>
       <li><span className="lp-legend-icon">{person(<BobArt />)}</span>{tr('Bob, with his sungkod', 'Si Bob, naay sungkod')}</li>
+      <li><span className="lp-legend-icon">{person(<DogArt />)}</span>{tr('Bantay, the street dog', 'Si Bantay, ang iro sa dalan')}</li>
       <li><button type="button" className="lp-legend-dev" onClick={onDeveloper}><span className="lp-legend-icon">{person(<StudentArt />)}</span>{tr('Developer and tenant (tap)', 'Developer ug nag-abang (i-tap)')}</button></li>
     </ul>
   </details>
@@ -562,8 +593,9 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
       <circle className="lp-tree-shadow" cx="23" cy="24" r="16" /><circle className="lp-tree-crown" cx="20" cy="20" r="16" />
       <circle className="lp-tree-leaf" cx="14" cy="15" r="7" /><circle className="lp-tree-leaf" cx="25" cy="23" r="6" /><circle className="lp-tree-leaf" cx="15" cy="26" r="5" />
     </svg>)}
-    {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} extra={index >= 4} />)}
-    <Bob label={tr('This is Bob', 'Kini si Bob')} />
+    {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} extra={index >= 4} vendorLine={tr('Still warm! Malunggay pandesal!', 'Init pa! Malunggay pandesal!')} />)}
+    <Bob label={tr('This is Bob', 'Kini si Bob')} line={tr('Thank you, iho!', "Salamat, 'do!")} />
+    <Dog heart="♥" bark={tr('Arf!', 'Aw aw!')} />
     <Student label={tr('The developer, and a tenant here too', 'Ang developer, ug nag-abang sad dinhi')} open={profile} onToggle={() => setProfile(open => !open)} tr={tr} />
     {SITE.map(site => {
       const open = (openByBuilding.get(site.label) ?? []).slice(0, site.spaces)
