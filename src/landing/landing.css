@@ -538,23 +538,32 @@
 :root[data-perf="lite"] .bob-foot, :root[data-perf="lite"] .lp-legend, :root[data-perf="lite"] .lp-plot-tag { backdrop-filter: none; }
 @media (prefers-reduced-motion: reduce) { .lp-tree, .lp[data-phase="day"] .lp-cloud { animation: none; } .lp-cloud { display: none; } }
 
-/* Developer card: on pointer screens a slanted band follows the pointer and shows the second photo through it (drawn by
-   useBandReveal in street.tsx, after the hero on landonorris.com), and a gold frame fades in. Click or tap shows the whole
-   second photo with a curved top-to-bottom wipe; lite phones get a plain fade. Contact links follow. */
-.dev-photo { cursor: pointer; touch-action: manipulation; }
-.dev-photo .dev-photo-hover { position: absolute; inset: 0; z-index: 1; object-fit: contain; clip-path: inset(50% 50% 50% 50%); transform: scale(1.03); transition: transform 750ms cubic-bezier(.65, .05, 0, 1); }
+/* Developer card, after the landonorris.com hero. At rest: the first photo with a faint, slowly breathing ghost of the second
+   one over it. Moving the pointer paints the second photo along its path (canvas, useTrailReveal in street.tsx) and a gold
+   frame fades in; the trail fades back by itself. Click or tap shows the whole second photo with a curved top-to-bottom
+   wipe (the touch-screen version); lite phones get a plain fade. Contact links follow. */
+.dev-photo { cursor: crosshair; touch-action: manipulation; }
+.dev-photo .dev-photo-ghost { position: absolute; inset: 0; z-index: 1; object-fit: contain; filter: grayscale(1) contrast(1.15); mix-blend-mode: screen; opacity: .1; pointer-events: none; animation: dev-ghost 4.5s ease-in-out infinite alternate; transition: opacity 400ms ease; }
+@keyframes dev-ghost { from { opacity: .06; } to { opacity: .16; } }
+.dev-photo-trail { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; }
+.dev-photo .dev-photo-hover { position: absolute; inset: 0; z-index: 2; object-fit: contain; clip-path: ellipse(100% 0% at 50% 0); pointer-events: none; }
 .dev-photo-frame { position: absolute; inset: .7rem; z-index: 3; border: 1.5px solid #ffbf1f; border-radius: .9rem; opacity: 0; transition: opacity 750ms cubic-bezier(.65, .05, 0, 1); pointer-events: none; }
 .dev-photo::after { z-index: 3; }
 .dev-photo figcaption, .dev-photo-hint { z-index: 4; }
 .dev-photo-hint { position: absolute; right: .9rem; bottom: .9rem; padding: .3rem .7rem; border: 1px solid rgb(255 255 255 / 35%); border-radius: 999px; background: rgb(8 20 15 / 62%); color: #fff; font: 600 .7rem ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; pointer-events: none; }
 .dev-photo figcaption { right: auto; }
-.dev-photo.is-flipped .dev-photo-hover { clip-path: ellipse(100% 120% at 50% 0%) !important; transform: scale(1); animation: dev-wipe 750ms cubic-bezier(.65, .05, 0, 1); }
+.dev-photo.is-flipped { cursor: pointer; }
+.dev-photo.is-flipped .dev-photo-hover { clip-path: ellipse(100% 120% at 50% 0%); animation: dev-wipe 750ms cubic-bezier(.65, .05, 0, 1); }
 @keyframes dev-wipe { from { clip-path: ellipse(100% 0% at 50% 0); transform: scale(1.05); } }
 .dev-photo.is-flipped .dev-photo-frame { opacity: 1; }
-@media (hover: hover) { .dev-photo:hover .dev-photo-hover { transform: scale(1); } .dev-photo:hover .dev-photo-frame { opacity: 1; } }
-:root[data-perf="lite"] .dev-photo .dev-photo-hover { clip-path: none !important; transform: none; opacity: 0; transition: opacity 300ms ease; animation: none; }
+.dev-photo.is-flipped .dev-photo-ghost { opacity: 0; animation: none; }
+@media (hover: hover) { .dev-photo:hover .dev-photo-frame { opacity: 1; } }
+@media (hover: none) { .dev-photo { cursor: pointer; } }
+:root[data-perf="lite"] .dev-photo .dev-photo-hover { clip-path: none; opacity: 0; transition: opacity 300ms ease; animation: none; }
 :root[data-perf="lite"] .dev-photo.is-flipped .dev-photo-hover { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .dev-photo .dev-photo-hover, .dev-photo-frame { transition: none; animation: none; } }
+:root[data-perf="lite"] .dev-photo .dev-photo-ghost { animation: none; }
+:root[data-perf="lite"] .dev-photo-trail { display: none; }
+@media (prefers-reduced-motion: reduce) { .dev-photo .dev-photo-hover, .dev-photo .dev-photo-ghost, .dev-photo-frame { transition: none; animation: none; } }
 .dev-links { display: flex; flex-wrap: wrap; gap: .5rem; margin: .2rem 0 0; padding: 0; list-style: none; }
 .dev-link { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; padding: .45rem .95rem; border: 1px solid rgb(255 255 255 / 22%); border-radius: 999px; background: rgb(255 255 255 / 7%); color: #fff; font-weight: 700; font-size: .9rem; text-decoration: none; transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease, color 180ms ease; }
 .dev-link:hover { background: #ffbf1f; border-color: #ffbf1f; color: #10201a; transform: translateY(-2px); }

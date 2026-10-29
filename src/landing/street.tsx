@@ -351,57 +351,90 @@ const LinkIcon = ({ kind }: { kind: 'facebook' | 'email' | 'github' }) => kind =
     ? <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="currentColor"><path d="M13.5 21v-7.5h2.6l.4-3h-3V8.7c0-.9.3-1.5 1.5-1.5h1.6V4.5c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.1H7.8v3h2.6V21h3.1z" /></svg>
     : <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5" /><path d="m4 7.5 8 6 8-6" /></svg>
 
-// The landonorris.com hero reveal, adapted: while the pointer is over the photo, a slanted blade-shaped band follows it
-// (with a little lag and a lean in the direction of movement) and shows the second photo through it. Pointer screens only,
-// and not on lite phones; touch screens and lite phones flip the whole photo on tap instead (CSS).
-function useBandReveal(figureRef: { current: HTMLElement | null }, layerRef: { current: HTMLElement | null }, off: boolean) {
+// The landonorris.com hero, adapted. Moving the pointer over the photo paints the second photo along its path: a trail of
+// slanted blobs (bigger when moving faster) that merge, then shrink and fade back within about a second. When the card
+// opens, one painted stroke sweeps across by itself so people see there is something to discover. Drawn on a canvas only
+// while the trail is alive. Pointer screens only, and not on lite phones or with reduced motion; those flip on tap (CSS).
+function useTrailReveal(figureRef: { current: HTMLElement | null }, canvasRef: { current: HTMLCanvasElement | null }, src: string, off: boolean) {
   useEffect(() => {
-    const figure = figureRef.current, layer = layerRef.current
-    if (!figure || !layer || off || !window.matchMedia?.('(hover: hover)').matches || document.documentElement.dataset.perf === 'lite') return
+    const figure = figureRef.current, canvas = canvasRef.current
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-    let w = 1, h = 1, frame = 0, grow = 0, goal = 0, started = false
-    const target = { x: 0, y: 0 }, pos = { x: 0, y: 0 }
-    const ease = reduced ? 1 : 0.16
-    const draw = () => {
-      const a = 0.46 * w * grow, b = 0.1 * h * grow
-      const lean = Math.max(-0.17, Math.min(0.17, (target.x - pos.x) * 0.004))
-      const angle = 0.19 + lean // about 11 degrees, leaning with the movement
-      const cos = Math.cos(angle), sin = Math.sin(angle)
-      const points: string[] = []
-      for (let k = 0; k < 28; k++) {
-        const phi = (k / 28) * Math.PI * 2, c = Math.cos(phi), n = Math.sin(phi)
-        const x = a * Math.sign(c) * Math.abs(c) ** 0.6
-        const y = b * Math.sign(n) * Math.abs(n) ** 0.6 * (0.45 + 0.55 * (c + 1) / 2) // thin at the left end, full at the right
-        points.push(`${(pos.x + x * cos - y * sin).toFixed(1)}px ${(pos.y + x * sin + y * cos).toFixed(1)}px`)
+    if (!figure || !canvas || off || reduced || !window.matchMedia?.('(hover: hover)').matches || document.documentElement.dataset.perf === 'lite') return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const photo = new Image()
+    photo.src = src
+    type Blob = { x: number; y: number; born: number; size: number; angle: number }
+    let blobs: Blob[] = [], frame = 0, last: { x: number; y: number; t: number } | null = null, w = 0, h = 0
+    const LIFE = 950
+    const fit = () => {
+      const box = figure.getBoundingClientRect(), ratio = Math.min(window.devicePixelRatio || 1, 2)
+      if (Math.round(box.width) === w && Math.round(box.height) === h) return
+      w = Math.round(box.width); h = Math.round(box.height)
+      canvas.width = w * ratio; canvas.height = h * ratio
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
+    }
+    const draw = (now: number) => {
+      blobs = blobs.filter(blob => now - blob.born < LIFE)
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.clearRect(0, 0, w, h)
+      if (!blobs.length || !photo.complete || !photo.naturalWidth) { frame = blobs.length ? requestAnimationFrame(draw) : 0; return }
+      ctx.fillStyle = '#000'
+      for (const blob of blobs) {
+        const age = (now - blob.born) / LIFE
+        const r = blob.size * Math.min(1, age / 0.12) * (1 - age) ** 1.4 // grows quickly, then shrinks away
+        if (r < 0.5) continue
+        ctx.beginPath()
+        ctx.ellipse(blob.x, blob.y, r * 1.7, r * 0.75, blob.angle, 0, Math.PI * 2)
+        ctx.fill()
       }
-      layer.style.clipPath = `polygon(${points.join(',')})`
+      // Keep only the painted shapes, filled with the second photo placed like object-fit: contain.
+      const scale = Math.min(w / photo.naturalWidth, h / photo.naturalHeight)
+      const pw = photo.naturalWidth * scale, ph = photo.naturalHeight * scale
+      ctx.globalCompositeOperation = 'source-in'
+      ctx.drawImage(photo, (w - pw) / 2, (h - ph) / 2, pw, ph)
+      frame = requestAnimationFrame(draw)
     }
-    const tick = () => {
-      pos.x += (target.x - pos.x) * ease; pos.y += (target.y - pos.y) * ease
-      grow += (goal - grow) * (reduced ? 1 : 0.14)
-      if (goal === 0 && grow < 0.01) { grow = 0; layer.style.clipPath = ''; frame = 0; return }
-      draw()
-      const moving = Math.abs(target.x - pos.x) > 0.3 || Math.abs(target.y - pos.y) > 0.3 || Math.abs(goal - grow) > 0.003
-      frame = moving ? requestAnimationFrame(tick) : 0
+    const run = () => { if (!frame) frame = requestAnimationFrame(draw) }
+    const paint = (x: number, y: number, now: number) => {
+      if (last) {
+        const dx = x - last.x, dy = y - last.y, dist = Math.hypot(dx, dy)
+        const speed = dist / Math.max(1, now - last.t) // px per ms
+        const size = Math.max(26, Math.min(95, 26 + speed * 55))
+        const angle = Math.atan2(dy, dx) * 0.35 + 0.19 // mostly level, tilted like the reference, leaning with the stroke
+        const steps = Math.max(1, Math.floor(dist / 9))
+        for (let i = 1; i <= steps; i++) blobs.push({ x: last.x + dx * i / steps, y: last.y + dy * i / steps, born: now, size, angle })
+      }
+      last = { x, y, t: now }
+      run()
     }
-    const run = () => { if (!frame) frame = requestAnimationFrame(tick) }
-    const aim = (event: PointerEvent) => {
+    const move = (event: PointerEvent) => {
+      fit()
       const box = figure.getBoundingClientRect()
-      w = box.width; h = box.height
-      target.x = event.clientX - box.left; target.y = event.clientY - box.top
-      if (!started) { pos.x = target.x; pos.y = target.y; started = true }
+      paint(event.clientX - box.left, event.clientY - box.top, performance.now())
     }
-    const enter = (event: PointerEvent) => { aim(event); goal = 1; run() }
-    const move = (event: PointerEvent) => { aim(event); run() }
-    const leave = () => { goal = 0; started = false; run() }
-    figure.addEventListener('pointerenter', enter)
+    const leave = () => { last = null }
+    // One stroke by itself when the card opens.
+    let teaser = 0
+    const tease = window.setTimeout(() => {
+      fit()
+      const start = performance.now(), from = { x: w * 0.08, y: h * 0.3 }, to = { x: w * 0.92, y: h * 0.46 }
+      last = { ...from, t: start }
+      const step = (now: number) => {
+        const p = Math.min(1, (now - start) / 650), e = 1 - (1 - p) ** 3
+        paint(from.x + (to.x - from.x) * e, from.y + (to.y - from.y) * e, now)
+        if (p < 1) teaser = requestAnimationFrame(step); else last = null
+      }
+      teaser = requestAnimationFrame(step)
+    }, 700)
     figure.addEventListener('pointermove', move)
     figure.addEventListener('pointerleave', leave)
     return () => {
-      figure.removeEventListener('pointerenter', enter); figure.removeEventListener('pointermove', move); figure.removeEventListener('pointerleave', leave)
-      cancelAnimationFrame(frame); layer.style.clipPath = ''
+      window.clearTimeout(tease); cancelAnimationFrame(teaser); cancelAnimationFrame(frame)
+      figure.removeEventListener('pointermove', move); figure.removeEventListener('pointerleave', leave)
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
     }
-  }, [figureRef, layerRef, off])
+  }, [figureRef, canvasRef, src, off])
 }
 
 function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (english: string, bisaya: string) => string; language: Language }) {
@@ -419,14 +452,16 @@ function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (engl
   const t = (value: Bilingual) => text(language, value.en, value.bis)
   const [flipped, setFlipped] = useState(false)
   const photoRef = useRef<HTMLElement>(null)
-  const revealRef = useRef<HTMLImageElement>(null)
-  useBandReveal(photoRef, revealRef, flipped)
+  const trailRef = useRef<HTMLCanvasElement>(null)
+  useTrailReveal(photoRef, trailRef, DEVELOPER.photoHover, flipped)
   return createPortal(<div className="dev-backdrop" onClick={event => { if (event.target === event.currentTarget) onClose() }}>
     <section id="lp-dev-card" className="dev-card" role="dialog" aria-modal="true" aria-label={tr('Developer profile', 'Profile sa developer')}>
       <button type="button" className="dev-close" ref={closeRef} onClick={onClose} aria-label={tr('Close profile', 'Isira ang profile')}><span aria-hidden="true">×</span></button>
       <figure ref={photoRef} className={`dev-photo${flipped ? ' is-flipped' : ''}`} onClick={() => setFlipped(value => !value)}>
         <img className="dev-photo-main" src={DEVELOPER.photo} alt={t(DEVELOPER.photoAlt)} width="520" height="780" />
-        <img ref={revealRef} className="dev-photo-hover" src={DEVELOPER.photoHover} alt="" aria-hidden="true" width="520" height="780" />
+        <img className="dev-photo-ghost" src={DEVELOPER.photoHover} alt="" aria-hidden="true" width="520" height="780" />
+        <img className="dev-photo-hover" src={DEVELOPER.photoHover} alt="" aria-hidden="true" width="520" height="780" />
+        <canvas ref={trailRef} className="dev-photo-trail" aria-hidden="true" />
         <span className="dev-photo-frame" aria-hidden="true" />
         <span className="dev-photo-hint" aria-hidden="true">{flipped ? tr('Tap to go back', 'I-tap aron mobalik') : tr('Hover or tap me', 'I-hover o i-tap ko')}</span>
         <figcaption><span className="dev-tag">{t(DEVELOPER.note)}</span></figcaption>
