@@ -19,7 +19,11 @@ const publicRoomsPage = /^\/rooms\/?$/.test(location.pathname)
 // Public landing page at "/" welcomes everyone, including staff and renters who are already signed in (owner decision,
 // 29 Oct 2026); they continue from its Sign in button to /sign-in, where the open session resumes. A query string or hash
 // (development previews, sign-in links) still goes straight to the app.
-const landingPage = location.pathname === '/' && (!location.search || location.search === '?intro') && !location.hash // ?intro replays the full intro
+// Only the app's own links skip it; anything else in the address, such as the fbclid Facebook and Messenger add to shared
+// links or utm_ campaign tags, still opens the landing page (on phones most visitors arrive with one of those).
+const appParams = ['auth', 'preview', 'availability', 'atoms']
+const landingPage = location.pathname === '/' && !appParams.some(name => params.has(name)) &&
+  !/access_token|error_code|(^|&|#)error=/.test(location.hash)
 
 async function startApp() {
   if (atomsGallery) {
