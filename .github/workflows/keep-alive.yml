@@ -1,0 +1,49 @@
+name: Keep alive and uptime check
+
+# Supabase Free pauses a project after about 7 days without activity. This job reads the public room list (a real
+# database call) every day so the project never pauses, and it checks that the live site and its page links still work.
+# If anything fails, GitHub emails the repository owner about the failed run.
+
+on:
+  schedule:
+    - cron: '17 1 * * *' # 09:17 Philippine time, off the busy top-of-hour slot
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-alive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    name: Database ping and site check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping the database through the public room list
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Missing SUPABASE_URL or SUPABASE_ANON_KEY repository secret"; exit 1
+          fi
+          status=$(curl -sS -o /dev/null -w '%{http_code}' --retry 3 --retry-delay 10 --max-time 30 \
+            -X POST "$SUPABASE_URL/rest/v1/rpc/read_public_listings" \
+            -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H 'Content-Type: application/json' -d '{}')
+          echo "Database ping status: $status"
+          [ "$status" = "200" ]
+
+      - name: Check the live site pages
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://rentbybob.acegrantk.workers.dev' }}
+        run: |
+          for page in / /rooms /sign-in /auth/callback; do
+            status=$(curl -sS -o /dev/null -w '%{http_code}' --retry 3 --retry-delay 10 --max-time 30 "$SITE_URL$page")
+            echo "$page -> $status"
+            [ "$status" = "200" ] || failed=1
+          done
+          [ -z "$failed" ]
