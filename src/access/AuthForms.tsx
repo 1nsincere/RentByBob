@@ -3,6 +3,18 @@ import { Button, LoadingSkeleton } from '../components/atoms'
 import { hostedDevelopment, supabase } from './client'
 import { deviceLabel, saveDevice } from './trusted-device'
 import { copy, text, type Language } from '../i18n'
+import { LogoMark } from '../components/Logo'
+
+// Show/hide password: an eye icon button sitting inside the field (its name is still "Show password" / "Hide password").
+function EyeToggle({ shown, onToggle, label }: { shown: boolean; onToggle: () => void; label: string }) {
+  return <button type="button" className="password-eye" aria-label={label} title={label} aria-pressed={shown} onClick={onToggle}>
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      {shown
+        ? <><path d="M3 3l18 18" /><path d="M10.6 5.1A9.7 9.7 0 0 1 12 5c5.5 0 9 5.5 9 7a8.3 8.3 0 0 1-2.3 3.2M6.3 6.4C4.2 7.8 3 10.4 3 12c0 1.5 3.5 7 9 7 1.6 0 3-.4 4.2-1" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /></>
+        : <><path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" /><circle cx="12" cy="12" r="3" /></>}
+    </svg>
+  </button>
+}
 
 export function Feedback({ message, error = false }: { message: string; error?: boolean }) {
   const ref = useRef<HTMLParagraphElement>(null)
@@ -18,7 +30,7 @@ export function SignIn({ language = 'en' }: { language?: Language }) {
   const [message, setMessage] = useState('')
   const [error, setError] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  return <section className="card auth-card"><p className="eyebrow">{tr('WELCOME TO RENTBYBOB', 'MAAYONG PAG-ABOT SA RENTBYBOB')}</p><h2>{recovery ? t.resetPassword : t.signIn}</h2>
+  return <section className="card auth-card auth-card--sign-in"><div className="auth-brand"><LogoMark size={46} /><p className="eyebrow">{tr('WELCOME TO RENTBYBOB', 'MAAYONG PAG-ABOT SA RENTBYBOB')}</p></div><h2>{recovery ? t.resetPassword : t.signIn}</h2>
     <p>{t.continue}</p>
     <Feedback message={message} error={error} />
     <form onSubmit={async e => {
@@ -43,9 +55,9 @@ export function SignIn({ language = 'en' }: { language?: Language }) {
     }}>
       <label htmlFor="email">{t.email}</label><input id="email" name="email" type="email" autoComplete="username" required maxLength={320} aria-describedby="email-help" />
       <p className="field-help" id="email-help">{t.invitationEmail}</p>
-      {!recovery && <>      <label htmlFor="password">{t.password}</label><div className="password-input-row">
+      {!recovery && <>      <label htmlFor="password">{t.password}</label><div className="password-field">
         <input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required />
-        <Button type="button" className="secondary-button password-toggle" aria-label={showPassword ? t.hidePassword : t.showPassword} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? t.hidePassword : t.showPassword}</Button>
+        <EyeToggle shown={showPassword} label={showPassword ? t.hidePassword : t.showPassword} onToggle={() => setShowPassword(value => !value)} />
       </div></>}
       <Button className="primary" disabled={busy}>{busy ? t.pleaseWait : recovery ? t.sendResetLink : t.signIn}</Button>
     </form>
@@ -75,9 +87,9 @@ export function PasswordSetup({ done, email = '', language = 'en' }: { done: () 
       } catch { setMessage(tr('The password could not be saved. Your session may need an authenticator code, or the link may no longer be valid. Contact the owner if this continues.', 'Wala ma-save ang password. Basin kinahanglan og authenticator code ang session o dili na balido ang link. Kontaka ang tag-iya kung magpadayon kini.')) }
       finally { setBusy(false) }
     }}>
-      <label htmlFor="new-password">{t.newPassword}</label><div className="password-input-row">
+      <label htmlFor="new-password">{t.newPassword}</label><div className="password-field">
         <input id="new-password" name="new-password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={12} required aria-describedby="password-help" />
-        <Button type="button" className="secondary-button password-toggle" aria-label={showPassword ? t.hidePasswords : t.showPasswords} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? t.hidePassword : t.showPassword}</Button>
+        <EyeToggle shown={showPassword} label={showPassword ? t.hidePasswords : t.showPasswords} onToggle={() => setShowPassword(value => !value)} />
       </div><p className="field-help" id="password-help">{t.passwordHelp}</p>
       <label htmlFor="confirm-password">{t.confirmPassword}</label><input id="confirm-password" name="confirm-password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={12} required />
       <Button className="primary" disabled={busy}>{busy ? (language === 'ceb' ? 'Nag-save…' : 'Saving…') : t.savePassword}</Button>

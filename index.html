@@ -1,2 +1,31 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="description" content="A rental records app with property-owner-managed access."/><meta name="theme-color" content="#1f6b4f"/><meta name="color-scheme" content="light dark"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><title>RentByBob | Your rental records</title></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="description" content="A rental records app with property-owner-managed access."/><meta name="theme-color" content="#1f6b4f"/><meta name="color-scheme" content="light dark"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><title>RentByBob | Your rental records</title>
+<style>
+/* Intro splash: part of the page itself so it shows before any script loads. src/intro.ts removes it (about 1.5 seconds on a first visit). */
+#intro { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; align-content: center; gap: 1.1rem; background: radial-gradient(70% 60% at 50% 42%, #1d5a43 0%, #0f3d2d 62%, #0a2a1f 100%); color: #fff; pointer-events: none; transition: opacity 420ms ease, transform 420ms ease; font-family: Inter, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
+#intro.is-leaving { opacity: 0; transform: scale(1.04); }
+#intro .in-glow { position: absolute; width: 36rem; max-width: 120vw; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgb(255 191 31 / 22%), transparent 65%); animation: in-glow 1.6s ease-out both; }
+#intro .in-mark { position: relative; width: clamp(5rem, 22vw, 7rem); height: auto; filter: drop-shadow(0 18px 28px rgb(0 0 0 / 45%)); animation: in-pop 700ms cubic-bezier(.2, 1.3, .3, 1) both; }
+#intro .in-b { stroke-dasharray: 90; stroke-dashoffset: 90; animation: in-draw 700ms ease 380ms forwards; }
+#intro .in-word { position: relative; display: flex; font-weight: 800; font-size: clamp(1.9rem, 7vw, 2.7rem); letter-spacing: -.05em; }
+#intro .in-word span { display: inline-block; opacity: 0; transform: translateY(.6em); animation: in-rise 520ms cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: calc(560ms + var(--i) * 45ms); }
+#intro .in-word .in-gold { color: #ffbf1f; }
+#intro .in-tag { position: relative; margin: -.4rem 0 0; color: #bcd8c7; font-size: clamp(.85rem, 2.6vw, 1rem); letter-spacing: .08em; opacity: 0; animation: in-fade 500ms ease 1000ms forwards; }
+#intro .in-bar { position: relative; width: min(11rem, 44vw); height: 3px; margin-top: .7rem; overflow: hidden; border-radius: 3px; background: rgb(255 255 255 / 14%); }
+#intro .in-bar::after { content: ""; position: absolute; inset: 0; transform-origin: 0 50%; border-radius: 3px; background: linear-gradient(90deg, #ffbf1f, #ffe27a); animation: in-load 1.25s cubic-bezier(.5, .1, .2, 1) 250ms both; }
+@keyframes in-pop { from { opacity: 0; transform: scale(.55) rotate(-8deg); } to { opacity: 1; transform: none; } }
+@keyframes in-draw { to { stroke-dashoffset: 0; } }
+@keyframes in-rise { to { opacity: 1; transform: none; } }
+@keyframes in-fade { to { opacity: 1; } }
+@keyframes in-load { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes in-glow { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #intro, #intro * { animation: none !important; transition: opacity 200ms ease !important; } #intro .in-word span, #intro .in-tag { opacity: 1; transform: none; } #intro .in-b { stroke-dashoffset: 0; } #intro .in-bar::after { transform: none; } #intro.is-leaving { transform: none; } }
+</style></head><body>
+<div id="intro" aria-hidden="true">
+  <span class="in-glow"></span>
+  <svg class="in-mark" viewBox="0 0 64 64" focusable="false"><defs><linearGradient id="it" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a8a66"/><stop offset="1" stop-color="#134634"/></linearGradient><linearGradient id="ih" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#f2b61d"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#it)"/><rect x="39.5" y="13" width="6.5" height="11" rx="1.5" fill="#f2b61d"/><path d="M11 32 32 12.5 53 32v18.5a4 4 0 0 1-4 4H15a4 4 0 0 1-4-4Z" fill="url(#ih)"/><path class="in-b" pathLength="90" d="M26 28.5v21M26 28.5h6.5a5.2 5.2 0 0 1 0 10.4H26m0 0h7.5a5.5 5.5 0 0 1 0 10.6H26" fill="none" stroke="#12382a" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="in-word"><span style="--i:0">R</span><span style="--i:1">e</span><span style="--i:2">n</span><span style="--i:3">t</span><span class="in-gold" style="--i:4">B</span><span class="in-gold" style="--i:5">y</span><span style="--i:6">B</span><span style="--i:7">o</span><span style="--i:8">b</span></div>
+  <p class="in-tag">Your Cebu City home concierge</p>
+  <div class="in-bar"></div>
+</div>
+<div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>

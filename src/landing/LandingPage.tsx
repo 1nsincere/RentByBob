@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react'
 import { text, type Language } from '../i18n'
 import { parsePublicListings, type PublicListings } from '../access/public-listings-model.ts'
+import { LogoMark } from '../components/Logo'
 import { Facade, SITE, StreetPlan, TOTAL_SPACES, statusText } from './street'
 import './landing.css'
 
@@ -240,7 +241,7 @@ export function LandingPage() {
     {simulated !== null && <p className="lp-sim" role="status">{tr('Simulated Cebu time', 'Gisundog nga oras')} {clock} · <a href="#" onClick={event => { event.preventDefault(); history.replaceState(null, '', location.pathname); setSimulated(null) }}>{tr('Back to live time', 'Balik sa tinuod nga oras')}</a></p>}
     <a className="lp-skip" href="#lp-main">{tr('Skip to content', 'Lakaw sa sulod')}</a>
     <header className="lp-nav">
-      <a className="lp-brand" href="/" aria-label="RentByBob home"><span className="lp-brand-mark" aria-hidden="true" /><span>Rent<i>By</i>Bob</span></a>
+      <a className="lp-brand" href="/" aria-label="RentByBob home"><LogoMark size={34} /><span>Rent<i>By</i>Bob</span></a>
       <nav aria-label={tr('Main', 'Panguna')}>
         <a href="#street">{tr('The street', 'Ang dalan')}</a>
         <a href="#homes">{tr('Homes', 'Mga balay')}</a>

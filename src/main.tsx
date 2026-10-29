@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './styles.css'
+import { finishIntro } from './intro'
 
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 const params = new URLSearchParams(location.search)
@@ -64,4 +65,4 @@ function StartupFailure() {
 startApp().catch((error: unknown) => {
   console.error('RentByBob could not start.', error)
   root.render(<StartupFailure />)
-})
+}).finally(finishIntro)

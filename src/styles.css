@@ -1724,3 +1724,49 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
 .doc-optional h2 { font-size: 11pt; }
 .doc-net th { text-align: left; font-weight: 600; }
 .doc-net tfoot th, .doc-net tfoot td { font-weight: 700; border-top: 1.5px solid var(--doc-ink); }
+
+/* Logo in the app bar */
+.brand .logo-mark { flex: none; border-radius: 0.6rem; box-shadow: 0 4px 10px rgb(15 61 45 / 28%); }
+.brand .wordmark { line-height: 1; }
+
+/* Sign-in page: a deep green welcome panel beside a raised sign-in card (29 Oct 2026 redesign). */
+.sign-in-shell { background: radial-gradient(900px 520px at 6% -4%, rgb(31 107 79 / 16%), transparent 62%), radial-gradient(720px 440px at 100% 100%, rgb(242 194 48 / 18%), transparent 60%), var(--page); }
+.sign-in-shell #main { gap: clamp(1.5rem, 4vw, 3.5rem); }
+.sign-in-shell .page-intro { position: relative; isolation: isolate; overflow: hidden; align-self: stretch; display: flex; flex-direction: column; justify-content: center; padding: clamp(1.6rem, 4vw, 3.2rem); border-radius: 1.75rem; background: linear-gradient(155deg, #1f6b4f 0%, #134634 58%, #0d3226 100%); color: #fff; box-shadow: 0 30px 60px -28px rgb(10 42 31 / 70%); }
+.sign-in-shell .page-intro::before { content: ""; position: absolute; z-index: -1; right: -6rem; top: -6rem; width: 22rem; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgb(255 191 31 / 34%), transparent 66%); animation: sign-in-drift 9s ease-in-out infinite alternate; }
+.sign-in-shell .page-intro::after { content: ""; position: absolute; z-index: -1; left: -4rem; bottom: -5rem; width: 18rem; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgb(125 214 164 / 22%), transparent 66%); animation: sign-in-drift 11s ease-in-out infinite alternate-reverse; }
+.sign-in-shell .page-intro .eyebrow { color: #ffd25a; }
+.sign-in-shell .page-intro h1 { color: #fff; max-width: 14ch; }
+.sign-in-shell .page-intro .page-summary { color: #d3e8db; }
+.sign-in-shell .welcome-number { background: rgb(255 255 255 / 14%); color: #ffd25a; border: 1px solid rgb(255 255 255 / 18%); backdrop-filter: blur(4px); }
+.sign-in-shell .welcome-points strong { color: #fff; }
+.sign-in-shell .welcome-points small { color: #bcd8c7; }
+.sign-in-shell .welcome-points > div { padding: 0.7rem 0.85rem; border: 1px solid rgb(255 255 255 / 12%); border-radius: 1rem; background: rgb(255 255 255 / 7%); transition: transform 220ms ease, background-color 220ms ease; }
+.sign-in-shell .welcome-points > div:hover { transform: translateX(4px); background: rgb(255 255 255 / 12%); }
+@keyframes sign-in-drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(-1.6rem, 1.4rem) scale(1.12); } }
+
+.sign-in-shell .auth-card { position: relative; border: 1px solid var(--border); border-radius: 1.75rem; box-shadow: 0 30px 60px -30px rgb(10 42 31 / 38%), 0 2px 6px rgb(10 42 31 / 6%); }
+.sign-in-shell .auth-card::before { content: ""; position: absolute; left: 1.75rem; right: 1.75rem; top: 0; height: 4px; border-radius: 0 0 4px 4px; background: linear-gradient(90deg, #1f6b4f, #ffbf1f); }
+.auth-brand { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.9rem; }
+.auth-brand .logo-mark { border-radius: 0.9rem; box-shadow: 0 8px 18px rgb(15 61 45 / 30%); }
+.auth-brand .eyebrow { margin: 0; color: var(--brand); }
+.auth-card--sign-in h2 { font-size: 1.9rem; margin-bottom: 0.2rem; }
+.auth-card--sign-in input:not([type="checkbox"]) { min-height: 3.1rem; border-radius: 0.9rem; transition: border-color 160ms ease, box-shadow 160ms ease; }
+.auth-card--sign-in input:not([type="checkbox"]):focus { border-color: var(--brand); box-shadow: 0 0 0 4px rgb(31 107 79 / 18%); outline: none; }
+.auth-card--sign-in input:not([type="checkbox"]):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.auth-card--sign-in form > .primary { border-radius: 0.95rem; box-shadow: 0 12px 24px -10px rgb(31 107 79 / 65%); transition: transform 160ms ease, box-shadow 160ms ease; }
+.auth-card--sign-in form > .primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 16px 28px -10px rgb(31 107 79 / 70%); }
+
+/* Password field with an eye icon inside it (replaces the wide "Show password" button). */
+.password-field { position: relative; }
+.password-field input { width: 100%; padding-right: 3.2rem; }
+.password-eye { position: absolute; right: 0.3rem; top: 50%; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0; transform: translateY(-50%); border: 0; border-radius: 0.7rem; background: transparent; color: var(--text-secondary); cursor: pointer; transition: color 140ms ease, background-color 140ms ease; }
+.password-eye:hover { background: var(--brand-tint); color: var(--brand); }
+.password-eye[aria-pressed="true"] { color: var(--brand); }
+.password-eye:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+
+@media (max-width: 54rem) {
+  .sign-in-shell .page-intro { padding: 1.3rem 1.3rem 1.5rem; border-radius: 1.4rem; }
+  .sign-in-shell .page-intro h1 { max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) { .sign-in-shell .page-intro::before, .sign-in-shell .page-intro::after { animation: none; } .sign-in-shell .welcome-points > div { transition: none; } }

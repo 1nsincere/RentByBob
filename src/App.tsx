@@ -5,6 +5,7 @@ import { WorkspaceIcon } from './components/WorkspaceIcon'
 import { DeferredBoundary, deferredScreen } from './components/DeferredScreen'
 import { dashboardPreview, hostedDevelopment, liveTarget, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
 import { ChangePassword, Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
+import { LogoMark, Wordmark } from './components/Logo'
 import { IdleSignOut } from './access/IdleSignOut'
 import { PhilippineClock } from './access/PhilippineClock'
 import { TrustedDevices } from './access/TrustedDevices'
@@ -319,7 +320,7 @@ export function App() {
     <div className="environment-note">{environmentLabel}</div>
     <header className="site-header">
       <div className="shell header-inner">
-        <a className="brand" href="/" aria-label={translateText(language, 'RentByBob home', 'Panimalay sa RentByBob')}><span className="brand-mark" aria-hidden="true">R</span><span>Rent<span className="brand-accent">ByBob</span></span></a>
+        <a className="brand" href="/" aria-label={translateText(language, 'RentByBob home', 'Panimalay sa RentByBob')}><LogoMark size={34} /><Wordmark /></a>
         {/* App bar: display controls, then the signed-in account and Sign out (same accessible names as before). */}
         <div className="session-tools">
           <div className="session-actions">

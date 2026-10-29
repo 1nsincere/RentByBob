@@ -315,11 +315,11 @@ const StudentArt = () => <>
 // The developer's profile card (opened from the walking student). Fill in or change anything here.
 type Bilingual = { en: string; bis: string }
 export const DEVELOPER = {
-  name: 'AceGrant Kyamko',
+  name: 'Ace Grant Kyamko',
   photo: '/developer.jpg',
-  photoAlt: { en: 'AceGrant Kyamko standing in a night-lit garden path, head bowed, arms crossed', bis: 'Si AceGrant Kyamko nga nagbarog sa tigom nga dalan sa gabii, nakayuko ug naka-cross ang bukton' },
+  photoAlt: { en: 'Ace Grant Kyamko standing in a night-lit garden path, head bowed, arms crossed', bis: 'Si AceGrant Kyamko nga nagbarog sa tigom nga dalan sa gabii, nakayuko ug naka-cross ang bukton' },
   role: { en: 'Developer of RentByBob', bis: 'Developer sa RentByBob' } as Bilingual,
-  study: { en: 'Computer Engineering (CpE), 3rd–4th year · CIT University', bis: 'Computer Engineering (CpE), ika-3 hangtod ika-4 nga tuig · CIT University' } as Bilingual,
+  study: { en: 'Computer Engineer · CIT University', bis: 'Computer Engineer · CIT University' } as Bilingual,
   aim: { en: 'Work in progress', bis: 'Gigtrabaho pa' } as Bilingual,
   note: { en: "Also a tenant at Bob's house", bis: 'Nag-abang sad sa balay ni Bob' } as Bilingual,
   groups: [
