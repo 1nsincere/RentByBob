@@ -4,12 +4,10 @@
 /* Intro: drawn by the page itself so it shows before any script loads. src/intro.ts lifts it (about 5 seconds on a first
    visit to the landing page, shorter elsewhere) with a curtain wipe. The story: night on B. Zubiri St; the homes are drawn,
    their windows switch on, a Move It rider passes and the sun comes up as the counter reaches 100. */
-@property --n { syntax: "<integer>"; initial-value: 0; inherits: false; }
-#intro { --mx: 0; --my: 0; position: fixed; inset: 0; z-index: 2000; overflow: hidden; background: radial-gradient(75% 65% at 50% 40%, #174f3a 0%, #0d3426 58%, #06180f 100%); color: #fff; pointer-events: none; clip-path: inset(0 0 0 0); font-family: Inter, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
-#intro.is-leaving { clip-path: inset(0 0 100% 0); transition: clip-path 900ms cubic-bezier(.76, 0, .24, 1); }
-#intro.is-leaving .in-center, #intro.is-leaving .in-top, #intro.is-leaving .in-bottom { opacity: 0; transform: translateY(-5vh); transition: opacity 450ms ease, transform 700ms cubic-bezier(.76, 0, .24, 1); }
-.in-edge { position: fixed; left: 0; right: 0; top: 0; z-index: 2001; height: 3px; background: linear-gradient(90deg, #1f6b4f, #ffbf1f 30%, #ffe27a 70%, #1f6b4f); box-shadow: 0 0 26px 5px rgb(255 191 31 / 55%); transform: translateY(100vh); transform: translateY(100dvh); pointer-events: none; transition: transform 900ms cubic-bezier(.76, 0, .24, 1); }
-.in-edge.go { transform: translateY(-6px); }
+#intro { --mx: 0; --my: 0; --rf: -13.3%; --rt: 110.8%; position: fixed; inset: 0; z-index: 2000; overflow: hidden; background: radial-gradient(75% 65% at 50% 40%, #174f3a 0%, #0d3426 58%, #06180f 100%); color: #fff; pointer-events: none; contain: layout paint; font-family: Inter, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
+#intro::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: linear-gradient(to top, #ffe27a 0, #ffe27a 3px, rgb(255 191 31 / 50%) 3px, transparent 40px); opacity: 0; pointer-events: none; }
+#intro.is-leaving { transform: translate3d(0, -101%, 0); transition: transform 900ms cubic-bezier(.76, 0, .24, 1); }
+#intro.is-leaving::after { opacity: 1; }
 #intro .in-dawn { position: absolute; inset: 0; background: radial-gradient(90% 70% at 50% 100%, rgb(255 176 64 / 62%) 0%, rgb(255 120 60 / 22%) 38%, transparent 70%); opacity: 0; animation: in-dawn 4.6s cubic-bezier(.5, 0, .4, 1) 500ms forwards; }
 #intro .in-glow { position: absolute; left: 50%; top: 32%; width: 44rem; max-width: 140vw; aspect-ratio: 1; margin: -22rem 0 0 -22rem; border-radius: 50%; background: radial-gradient(circle, rgb(255 191 31 / 18%), rgb(255 191 31 / 5%) 40%, transparent 66%); transform: translate(calc(var(--mx) * -26px), calc(var(--my) * -26px)); animation: in-glow 3.2s ease-out both, in-breathe 5s ease-in-out 3.2s infinite alternate; }
 #intro .in-dust { position: absolute; left: 0; top: 0; width: 3px; height: 3px; border-radius: 50%; opacity: 0; animation: in-twinkle 3.6s ease-in-out 200ms infinite alternate, in-hover var(--t, 9s) ease-in-out infinite alternate; }
@@ -20,34 +18,36 @@
 
 /* The street */
 #intro .in-ground { position: absolute; left: 0; right: 0; bottom: 0; height: clamp(4.6rem, 13vh, 7.4rem); background: #06150e; }
-#intro .in-scene { position: absolute; left: 0; right: 0; bottom: clamp(4.6rem, 13vh, 7.4rem); width: 100%; height: auto; max-height: 52vh; overflow: visible; translate: calc(var(--mx) * -8px) 0; }
+#intro .in-layer { position: absolute; left: 0; right: 0; bottom: clamp(4.6rem, 13vh, 7.4rem); width: 100%; height: auto; max-height: 52vh; overflow: visible; }
 #intro .in-bld { fill: #0b2a1f; fill-opacity: 0; stroke: #7fd6a4; stroke-width: 1.7; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 100; animation: in-draw 1500ms cubic-bezier(.5, 0, .2, 1) calc(500ms + var(--b)) forwards, in-fill 900ms ease calc(1700ms + var(--b)) forwards; }
-#intro .in-win { fill: #29473a; opacity: .55; animation: in-lit 600ms ease var(--d) forwards; }
+#intro .in-win { fill: #29473a; opacity: .55; animation: in-lit 180ms steps(3) var(--d) forwards; }
 #intro .in-wins { filter: drop-shadow(0 0 3px rgb(255 191 31 / 70%)); }
-#intro .in-sunrise { animation: in-sun 4.6s cubic-bezier(.4, 0, .25, 1) 500ms both; }
+#intro .in-sunlayer { animation: in-sun 4.6s cubic-bezier(.4, 0, .25, 1) 500ms both; }
 #intro .in-dash { animation: in-road 1.4s linear infinite; }
-#intro .in-bike { animation: in-ride 3.9s cubic-bezier(.35, .1, .5, 1) 1500ms both; transform: translateX(var(--rf, -160px)); }
+#intro .in-riderlayer { animation: in-ride 3.9s cubic-bezier(.35, .1, .5, 1) 1500ms both; transform: translateX(var(--rf)); }
 #intro .in-bike-bob { animation: in-bob .35s ease-in-out infinite alternate; }
 
 #intro .in-top, #intro .in-bottom { position: absolute; left: clamp(1rem, 4vw, 3rem); right: clamp(1rem, 4vw, 3rem); display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; color: #a9cbb8; font: 600 clamp(.62rem, 1.6vw, .78rem) ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .16em; text-transform: uppercase; opacity: 0; animation: in-fade 900ms ease 500ms forwards; }
 #intro .in-top { top: clamp(1rem, 4vh, 2.4rem); align-items: flex-start; }
 #intro .in-bottom { bottom: clamp(.9rem, 3vh, 2rem); }
-#intro .in-count { display: flex; align-items: baseline; gap: .15em; color: #fff; font: 800 clamp(2.6rem, 10vw, 5.4rem) / .9 Inter, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; letter-spacing: -.06em; font-variant-numeric: tabular-nums; counter-reset: n var(--n); animation: in-count 3.9s cubic-bezier(.55, 0, .25, 1) 400ms forwards; }
-#intro .in-count::before { content: counter(n); }
+#intro .in-count { display: flex; align-items: baseline; gap: .12em; color: #fff; font: 800 clamp(2.6rem, 10vw, 5.4rem) / .95 Inter, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
+#intro .in-count-win { display: block; height: .95em; overflow: hidden; text-align: right; }
+#intro .in-count-strip { display: block; animation: in-count 3.9s steps(100, end) 400ms forwards; }
+#intro .in-count-strip i { display: block; height: .95em; font-style: normal; }
 #intro .in-count::after { content: "%"; color: #ffbf1f; font-size: .42em; letter-spacing: 0; }
 #intro .in-line { flex: 1; height: 1px; margin: 0 clamp(.8rem, 3vw, 2rem) .55rem; transform-origin: 0 50%; background: linear-gradient(90deg, #ffbf1f, rgb(255 255 255 / 12%)); animation: in-load 3.9s cubic-bezier(.55, 0, .25, 1) 400ms both; }
 
 #intro .in-center { position: absolute; left: 0; right: 0; top: clamp(3.6rem, 11vh, 7rem); display: grid; justify-items: center; gap: 1rem; transform: translate(calc(var(--mx) * 10px), calc(var(--my) * 10px)); }
 #intro .in-logo { position: relative; width: clamp(8.8rem, 26vw, 11.5rem); aspect-ratio: 1; filter: drop-shadow(0 22px 34px rgb(0 0 0 / 50%)); animation: in-float 3.8s ease-in-out 1.8s infinite alternate; }
 #intro .in-logo svg { display: block; width: 100%; height: 100%; overflow: visible; }
-#intro .in-textring { transform-origin: 60px 60px; animation: in-spin 26s linear infinite, in-fade 900ms ease 700ms both; opacity: 0; }
+#intro .in-textring { position: absolute; inset: 0; animation: in-spin 26s linear infinite, in-fade 900ms ease 700ms both; opacity: 0; }
 #intro .in-textring text { fill: #ffd25a; font: 700 6.4px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .2em; }
 #intro .in-ring { transform-origin: 60px 60px; transform: rotate(-90deg); stroke-dasharray: 100; stroke-dashoffset: 100; animation: in-ring 3.9s cubic-bezier(.55, 0, .25, 1) 400ms forwards; }
 #intro .in-mark { transform-origin: 60px 60px; animation: in-pop 1100ms cubic-bezier(.2, 1.35, .3, 1) 250ms both; }
 #intro .in-roof { stroke-dasharray: 100; stroke-dashoffset: 100; animation: in-draw 1000ms ease 600ms forwards; }
 #intro .in-b { stroke-dasharray: 100; stroke-dashoffset: 100; animation: in-draw 1300ms ease 1300ms forwards; }
 #intro .in-word { position: relative; display: flex; overflow: hidden; padding: 0 .1em .1em; font-weight: 800; font-size: clamp(2.2rem, 8.5vw, 3.6rem); line-height: 1.05; letter-spacing: -.05em; }
-#intro .in-word::after { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; transform: skewX(-20deg); background: linear-gradient(90deg, transparent, rgb(255 255 255 / 38%), transparent); -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent); mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent); animation: in-shine 1.5s ease 3.9s both; }
+#intro .in-word::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 30%; transform: skewX(-20deg); translate: -140% 0; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 38%), transparent); -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent); mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent); animation: in-shine 1.5s ease 3.9s both; }
 #intro .in-l { display: inline-block; overflow: hidden; padding-bottom: .12em; margin-bottom: -.12em; }
 #intro .in-l b { display: inline-block; font-weight: inherit; transform: translateY(115%); animation: in-up 900ms cubic-bezier(.2, .9, .2, 1) forwards, in-wave 2.8s ease-in-out infinite alternate; animation-delay: calc(1700ms + var(--i) * 110ms), calc(3200ms + var(--i) * 140ms); }
 #intro .in-gold { color: #ffbf1f; }
@@ -61,68 +61,79 @@
 @keyframes in-wave { from { translate: 0 0; } to { translate: 0 -.07em; } }
 @keyframes in-fade { to { opacity: 1; } }
 @keyframes in-load { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@keyframes in-count { from { --n: 0; } to { --n: 100; } }
+@keyframes in-count { from { transform: translateY(0); } to { transform: translateY(-99.0099%); } }
 @keyframes in-glow { from { opacity: 0; scale: .5; } to { opacity: 1; scale: 1; } }
 @keyframes in-breathe { from { scale: 1; } to { scale: 1.12; } }
 @keyframes in-float { from { transform: translateY(-5px); } to { transform: translateY(6px); } }
 @keyframes in-twinkle { from { opacity: .25; } to { opacity: 1; } }
 @keyframes in-hover { from { transform: translateY(2.5vh); } to { transform: translateY(-3.5vh); } }
 @keyframes in-lit { to { fill: #ffc83d; opacity: 1; } }
-@keyframes in-sun { from { transform: translateY(210px); } to { transform: translateY(-132px); } }
+@keyframes in-sun { from { transform: translateY(70%); } to { transform: translateY(-44%); } }
 @keyframes in-dawn { to { opacity: 1; } }
 @keyframes in-road { to { stroke-dashoffset: -38; } }
-@keyframes in-ride { from { transform: translateX(var(--rf, -160px)); } to { transform: translateX(var(--rt, 1330px)); } }
+@keyframes in-ride { from { transform: translateX(var(--rf)); } to { transform: translateX(var(--rt)); } }
 @keyframes in-bob { from { transform: translateY(0); } to { transform: translateY(-1.2px); } }
-@keyframes in-shine { from { left: -40%; } to { left: 130%; } }
+@keyframes in-shine { from { translate: -140% 0; } to { translate: 440% 0; } }
 @media (max-width: 40rem) {
-  #intro { --rf: 300px; --rt: 930px; }
-  #intro .in-scene { left: -62%; right: auto; width: 224%; max-height: none; }
+  #intro { --rf: 25%; --rt: 77.5%; }
+  #intro .in-layer { left: -62%; right: auto; width: 224%; max-height: none; }
   #intro .in-center { top: clamp(3.8rem, 10vh, 5.4rem); }
   #intro .in-top { display: none; }
 }
+/* Lite phones (set by src/perf.ts): the story stays, the heavy effects go. */
+:root[data-perf="lite"] #intro .in-dust--mid, :root[data-perf="lite"] #intro .in-dust--near { display: none; }
+:root[data-perf="lite"] #intro .in-dust { animation: none; opacity: .8; }
+:root[data-perf="lite"] #intro .in-glow { animation: in-glow 1.6s ease-out both; }
+:root[data-perf="lite"] #intro .in-logo { animation: none; filter: none; }
+:root[data-perf="lite"] #intro .in-textring { animation: in-fade 600ms ease 700ms both; }
+:root[data-perf="lite"] #intro .in-l b { animation: in-up 900ms cubic-bezier(.2, .9, .2, 1) forwards; animation-delay: calc(1500ms + var(--i) * 90ms); }
+:root[data-perf="lite"] #intro .in-wins { filter: none; }
+:root[data-perf="lite"] #intro .in-word::after { display: none; }
+:root[data-perf="lite"] #intro .in-bike-bob { animation: none; }
+:root[data-perf="lite"] #intro .in-sunlayer circle:first-child { display: none; }
+:root[data-perf="lite"] #intro .in-bld { animation: none; stroke-dashoffset: 0; fill-opacity: 1; }
+:root[data-perf="lite"] #intro .in-scenelayer { opacity: 0; animation: in-fade 900ms ease 700ms forwards; }
+:root[data-perf="lite"] #intro .in-ring, :root[data-perf="lite"] #intro .in-roof, :root[data-perf="lite"] #intro .in-b { animation: none; stroke-dashoffset: 0; }
+:root[data-perf="lite"] #intro .in-mark { opacity: 0; animation: in-fade 700ms ease 300ms forwards; }
+:root[data-perf="lite"] #intro .in-dash { animation: none; }
+:root[data-perf="lite"] #intro .in-win { animation-duration: 1ms; animation-timing-function: steps(1); }
 /* 2. Evening (3 pm to 4 am, Cebu time): the sun sets behind the homes as their windows light up. */
-#intro[data-phase="dusk"] .in-sunrise { animation-name: in-sunset; }
+#intro[data-phase="dusk"] .in-sunlayer { animation-name: in-sunset; }
 #intro[data-phase="dusk"] .in-dawn { background: radial-gradient(90% 70% at 50% 100%, rgb(255 112 72 / 62%) 0%, rgb(170 64 120 / 26%) 40%, transparent 72%); }
 #intro[data-phase="dusk"] .in-glow { background: radial-gradient(circle, rgb(255 140 90 / 16%), rgb(180 80 140 / 5%) 40%, transparent 66%); }
-@keyframes in-sunset { from { transform: translateY(-190px); } to { transform: translateY(-52px); } }
+@keyframes in-sunset { from { transform: translateY(-63.3%); } to { transform: translateY(-17.3%); } }
 
 /* Skip */
-#intro-skip { position: fixed; top: clamp(.8rem, 3.4vh, 2.1rem); right: clamp(1rem, 4vw, 3rem); z-index: 2002; min-height: 2.75rem; padding: .5rem 1.1rem; border: 1px solid rgb(255 255 255 / 34%); border-radius: 999px; background: rgb(8 24 17 / 55%); color: #fff; font: 600 clamp(.66rem, 1.7vw, .8rem) ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; backdrop-filter: blur(4px); opacity: 0; animation: in-fade 600ms ease 1200ms forwards; }
+#intro-skip { position: fixed; top: clamp(.8rem, 3.4vh, 2.1rem); right: clamp(1rem, 4vw, 3rem); z-index: 2002; min-height: 2.75rem; padding: .5rem 1.1rem; border: 1px solid rgb(255 255 255 / 34%); border-radius: 999px; background: rgb(8 24 17 / 55%); color: #fff; font: 600 clamp(.66rem, 1.7vw, .8rem) ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; opacity: 0; animation: in-fade 600ms ease 1200ms forwards; }
 #intro-skip:hover { background: rgb(255 191 31 / 22%); border-color: #ffbf1f; }
 #intro-skip:focus-visible { outline: 3px solid #ffbf1f; outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) {
   #intro-skip { animation: none; opacity: 1; }
-  #intro[data-phase="dusk"] .in-sunrise { transform: translateY(-52px); }
+  #intro[data-phase="dusk"] .in-sunlayer { transform: translateY(-17.3%); }
   #intro *, #intro::before, #intro *::after { animation: none !important; }
   #intro .in-dust { opacity: .8; }
   #intro .in-l b, #intro .in-tag, #intro .in-top, #intro .in-bottom, #intro .in-textring { opacity: 1; transform: none; }
   #intro .in-b, #intro .in-roof, #intro .in-ring, #intro .in-bld { stroke-dashoffset: 0; }
   #intro .in-bld { fill-opacity: 1; }
   #intro .in-win { fill: #ffc83d; opacity: 1; }
-  #intro:not([data-phase="dusk"]) .in-sunrise { transform: translateY(-132px); }
+  #intro:not([data-phase="dusk"]) .in-sunlayer { transform: translateY(-44%); }
   #intro .in-dawn { opacity: 1; }
-  #intro .in-bike { display: none; }
-  #intro .in-count { --n: 100; }
+  #intro .in-riderlayer { display: none; }
+  #intro .in-count-strip { transform: translateY(-99.0099%); }
   #intro .in-line { transform: none; }
-  #intro.is-leaving { clip-path: none; opacity: 0; transition: opacity 250ms ease; }
+  #intro.is-leaving { transform: none; opacity: 0; transition: opacity 250ms ease; }
 }
 </style></head><body>
 <div id="intro" aria-hidden="true">
   <span class="in-glow"></span><span class="in-dawn"></span>
   <span class="in-dust in-dust--far"></span><span class="in-dust in-dust--mid"></span><span class="in-dust in-dust--near"></span>
+  <svg class="in-layer in-sunlayer" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet" focusable="false"><defs><radialGradient id="isun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff4c2"/><stop offset=".45" stop-color="#ffcf3a"/><stop offset="1" stop-color="#ff9a1f" stop-opacity="0"/></radialGradient></defs><circle cx="600" cy="262" r="170" fill="url(#isun)" opacity=".5"/><circle cx="600" cy="262" r="62" fill="url(#isun)"/></svg>
   <div class="in-ground"></div>
-  <svg class="in-scene" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet" focusable="false">
-  <defs>
-    <radialGradient id="isun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff4c2"/><stop offset=".45" stop-color="#ffcf3a"/><stop offset="1" stop-color="#ff9a1f" stop-opacity="0"/></radialGradient>
-    <linearGradient id="ibeam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffe9a0" stop-opacity=".75"/><stop offset="1" stop-color="#ffe9a0" stop-opacity="0"/></linearGradient>
-  </defs>
-  <clipPath id="isc"><rect x="-400" y="-900" width="2000" height="1152.5"/></clipPath><g clip-path="url(#isc)"><g class="in-sunrise"><circle cx="600" cy="262" r="170" fill="url(#isun)" opacity=".5"/><circle cx="600" cy="262" r="62" fill="url(#isun)"/></g></g>
-  <g class="in-bldgs"><path class="in-bld" style="--b:0ms" pathLength="100" d="M50 150 85 118H455L490 150H470V252H70V150Z"/><path class="in-bld" style="--b:250ms" pathLength="100" d="M515 178 545 152H805L835 178H820V252H530V178Z"/><path class="in-bld" style="--b:500ms" pathLength="100" d="M870 196 920 150 970 196H960V252H880V196Z"/><path class="in-bld" style="--b:750ms" pathLength="100" d="M996 156 1085 104 1174 156H1160V252H1010V156Z"/></g>
-  <g class="in-wins"><rect class="in-win" style="--d:1650ms" x="100" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:1430ms" x="156" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:3740ms" x="212" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:3080ms" x="268" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:1210ms" x="324" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:2090ms" x="380" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:1870ms" x="436" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:1540ms" x="110" y="208" width="18" height="24" rx="2"/><rect class="in-win" style="--d:2860ms" x="180" y="208" width="18" height="24" rx="2"/><rect class="in-win" style="--d:4180ms" x="250" y="208" width="18" height="24" rx="2"/><rect class="in-win" style="--d:3850ms" x="320" y="208" width="18" height="24" rx="2"/><rect class="in-win" style="--d:1320ms" x="390" y="208" width="18" height="24" rx="2"/><rect class="in-win" style="--d:3960ms" x="556" y="190" width="16" height="18" rx="2"/><rect class="in-win" style="--d:2750ms" x="606" y="190" width="16" height="18" rx="2"/><rect class="in-win" style="--d:2310ms" x="656" y="190" width="16" height="18" rx="2"/><rect class="in-win" style="--d:3520ms" x="706" y="190" width="16" height="18" rx="2"/><rect class="in-win" style="--d:3630ms" x="756" y="190" width="16" height="18" rx="2"/><rect class="in-win" style="--d:2530ms" x="566" y="220" width="16" height="22" rx="2"/><rect class="in-win" style="--d:1100ms" x="624" y="220" width="16" height="22" rx="2"/><rect class="in-win" style="--d:3190ms" x="682" y="220" width="16" height="22" rx="2"/><rect class="in-win" style="--d:2970ms" x="740" y="220" width="16" height="22" rx="2"/><rect class="in-win" style="--d:2420ms" x="904" y="212" width="16" height="18" rx="2"/><rect class="in-win" style="--d:4070ms" x="936" y="212" width="16" height="18" rx="2"/><rect class="in-win" style="--d:3300ms" x="1030" y="174" width="20" height="20" rx="2"/><rect class="in-win" style="--d:3410ms" x="1074" y="174" width="20" height="20" rx="2"/><rect class="in-win" style="--d:1760ms" x="1118" y="174" width="20" height="20" rx="2"/><rect class="in-win" style="--d:4290ms" x="1028" y="214" width="18" height="22" rx="2"/><rect class="in-win" style="--d:1980ms" x="1062" y="214" width="18" height="22" rx="2"/><rect class="in-win" style="--d:2640ms" x="1096" y="214" width="18" height="22" rx="2"/><rect class="in-win" style="--d:2200ms" x="1130" y="214" width="18" height="22" rx="2"/></g>
+  <svg class="in-layer in-scenelayer" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet" focusable="false"><g class="in-bldgs"><path class="in-bld" style="--b:0ms" pathLength="100" d="M50 150 85 118H455L490 150H470V252H70V150Z"/><path class="in-bld" style="--b:250ms" pathLength="100" d="M515 178 545 152H805L835 178H820V252H530V178Z"/><path class="in-bld" style="--b:500ms" pathLength="100" d="M870 196 920 150 970 196H960V252H880V196Z"/><path class="in-bld" style="--b:750ms" pathLength="100" d="M996 156 1085 104 1174 156H1160V252H1010V156Z"/></g><g class="in-wins"><rect class="in-win" style="--d:1650ms" x="100" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:1430ms" x="156" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:3740ms" x="212" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:3080ms" x="268" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:1210ms" x="324" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:2090ms" x="380" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:1870ms" x="436" y="162" width="18" height="20" rx="2"/><rect class="in-win" style="--d:1540ms" x="110" y="208" width="18" height="24" rx="2"/><rect class="in-win" style="--d:2860ms" x="180" y="208" width="18" height="24" rx="2"/><rect class="in-win" style="--d:4180ms" x="250" y="208" width="18" height="24" rx="2"/><rect class="in-win" style="--d:3850ms" x="320" y="208" width="18" height="24" rx="2"/><rect class="in-win" style="--d:1320ms" x="390" y="208" width="18" height="24" rx="2"/><rect class="in-win" style="--d:3960ms" x="556" y="190" width="16" height="18" rx="2"/><rect class="in-win" style="--d:2750ms" x="606" y="190" width="16" height="18" rx="2"/><rect class="in-win" style="--d:2310ms" x="656" y="190" width="16" height="18" rx="2"/><rect class="in-win" style="--d:3520ms" x="706" y="190" width="16" height="18" rx="2"/><rect class="in-win" style="--d:3630ms" x="756" y="190" width="16" height="18" rx="2"/><rect class="in-win" style="--d:2530ms" x="566" y="220" width="16" height="22" rx="2"/><rect class="in-win" style="--d:1100ms" x="624" y="220" width="16" height="22" rx="2"/><rect class="in-win" style="--d:3190ms" x="682" y="220" width="16" height="22" rx="2"/><rect class="in-win" style="--d:2970ms" x="740" y="220" width="16" height="22" rx="2"/><rect class="in-win" style="--d:2420ms" x="904" y="212" width="16" height="18" rx="2"/><rect class="in-win" style="--d:4070ms" x="936" y="212" width="16" height="18" rx="2"/><rect class="in-win" style="--d:3300ms" x="1030" y="174" width="20" height="20" rx="2"/><rect class="in-win" style="--d:3410ms" x="1074" y="174" width="20" height="20" rx="2"/><rect class="in-win" style="--d:1760ms" x="1118" y="174" width="20" height="20" rx="2"/><rect class="in-win" style="--d:4290ms" x="1028" y="214" width="18" height="22" rx="2"/><rect class="in-win" style="--d:1980ms" x="1062" y="214" width="18" height="22" rx="2"/><rect class="in-win" style="--d:2640ms" x="1096" y="214" width="18" height="22" rx="2"/><rect class="in-win" style="--d:2200ms" x="1130" y="214" width="18" height="22" rx="2"/></g>
   <rect x="0" y="252" width="1200" height="48" fill="#06150e"/>
   <line x1="0" y1="252.5" x2="1200" y2="252.5" stroke="#2f7a5a" stroke-width="1.6"/>
-  <line class="in-dash" x1="0" y1="277" x2="1200" y2="277" stroke="#ffbf1f" stroke-width="2.2" stroke-dasharray="20 18" opacity=".8"/>
-  <g transform="translate(0 268)"><g class="in-bike"><g class="in-bike-bob">
+  <line class="in-dash" x1="0" y1="277" x2="1200" y2="277" stroke="#ffbf1f" stroke-width="2.2" stroke-dasharray="20 18" opacity=".8"/></svg>
+  <svg class="in-layer in-riderlayer" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet" focusable="false"><defs><linearGradient id="ibeam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffe9a0" stop-opacity=".75"/><stop offset="1" stop-color="#ffe9a0" stop-opacity="0"/></linearGradient></defs><g transform="translate(0 268)"><g class="in-bike-bob">
     <polygon points="44,-17 150,-34 150,-2" fill="url(#ibeam)"/>
     <circle cx="9" cy="-9" r="8.5" fill="#0d1311" stroke="#33423b" stroke-width="2"/><circle cx="41" cy="-9" r="8.5" fill="#0d1311" stroke="#33423b" stroke-width="2"/>
     <path d="M6 -16 16 -26H32L40 -14 34 -11H14Z" fill="#202a26"/><rect x="12" y="-27" width="13" height="4" rx="2" fill="#0a0f0d"/>
@@ -131,19 +142,17 @@
     <line x1="22" y1="-38" x2="38" y2="-30" stroke="#2b3a34" stroke-width="3" stroke-linecap="round"/>
     <circle cx="24" cy="-49" r="6.6" fill="#d62b2b" stroke="#7d1414" stroke-width="1"/><rect x="26" y="-52" width="5.5" height="5" rx="2" fill="#0f1a22"/>
     <circle cx="45" cy="-19" r="2.4" fill="#fff6c9"/>
-  </g></g></g>
-</svg>
+  </g></g></svg>
   <div class="in-top"><span>Labangon · Cebu City · Est. 2026</span></div>
   <div class="in-center">
-    <div class="in-logo"><svg viewBox="-14 -14 148 148" focusable="false"><defs><linearGradient id="ig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#f2b61d"/></linearGradient><path id="in-circ" d="M60 60m-65 0a65 65 0 1 1 130 0a65 65 0 1 1 -130 0"/></defs>
-      <g class="in-textring"><text><textPath href="#in-circ" textLength="400" lengthAdjust="spacing">RENTBYBOB · LABANGON · CEBU CITY · HOME CONCIERGE ·</textPath></text></g>
+    <div class="in-logo"><svg class="in-textring" viewBox="-14 -14 148 148" focusable="false"><defs><path id="in-circ" d="M60 60m-65 0a65 65 0 1 1 130 0a65 65 0 1 1 -130 0"/></defs><text><textPath href="#in-circ" textLength="400" lengthAdjust="spacing">RENTBYBOB · LABANGON · CEBU CITY · HOME CONCIERGE ·</textPath></text></svg><svg viewBox="-14 -14 148 148" focusable="false"><defs><linearGradient id="ig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#f2b61d"/></linearGradient></defs>
       <circle cx="60" cy="60" r="54" fill="none" stroke="rgb(255 255 255 / 12%)" stroke-width="2"/>
       <circle class="in-ring" cx="60" cy="60" r="54" fill="none" stroke="#ffbf1f" stroke-width="2.4" stroke-linecap="round" pathLength="100"/>
       <g class="in-mark"><g transform="translate(60 61) scale(1.55) translate(-32 -34)"><rect x="40.5" y="13" width="5.4" height="9.5" rx="1.3" fill="#ffcf3a"/><path class="in-roof" pathLength="100" d="M12 30 32 13.5 52 30" fill="none" stroke="url(#ig)" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><path class="in-b" pathLength="100" d="M25 54V34h6a5 5 0 0 1 0 10h-6h7a5 5 0 0 1 0 10h-7" fill="none" stroke="url(#ig)" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/></g></g></svg></div>
     <div class="in-word"><span class="in-l"><b style="--i:0">R</b></span><span class="in-l"><b style="--i:1">e</b></span><span class="in-l"><b style="--i:2">n</b></span><span class="in-l"><b style="--i:3">t</b></span><span class="in-l in-gold"><b style="--i:4">B</b></span><span class="in-l in-gold"><b style="--i:5">y</b></span><span class="in-l"><b style="--i:6">B</b></span><span class="in-l"><b style="--i:7">o</b></span><span class="in-l"><b style="--i:8">b</b></span></div>
     <p class="in-tag">Your Cebu City home concierge</p>
   </div>
-  <div class="in-bottom"><span class="in-count"></span><span class="in-line"></span><span>Opening the street</span></div>
+  <div class="in-bottom"><span class="in-count"><span class="in-count-win"><span class="in-count-strip"><i>0</i><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i><i>6</i><i>7</i><i>8</i><i>9</i><i>10</i><i>11</i><i>12</i><i>13</i><i>14</i><i>15</i><i>16</i><i>17</i><i>18</i><i>19</i><i>20</i><i>21</i><i>22</i><i>23</i><i>24</i><i>25</i><i>26</i><i>27</i><i>28</i><i>29</i><i>30</i><i>31</i><i>32</i><i>33</i><i>34</i><i>35</i><i>36</i><i>37</i><i>38</i><i>39</i><i>40</i><i>41</i><i>42</i><i>43</i><i>44</i><i>45</i><i>46</i><i>47</i><i>48</i><i>49</i><i>50</i><i>51</i><i>52</i><i>53</i><i>54</i><i>55</i><i>56</i><i>57</i><i>58</i><i>59</i><i>60</i><i>61</i><i>62</i><i>63</i><i>64</i><i>65</i><i>66</i><i>67</i><i>68</i><i>69</i><i>70</i><i>71</i><i>72</i><i>73</i><i>74</i><i>75</i><i>76</i><i>77</i><i>78</i><i>79</i><i>80</i><i>81</i><i>82</i><i>83</i><i>84</i><i>85</i><i>86</i><i>87</i><i>88</i><i>89</i><i>90</i><i>91</i><i>92</i><i>93</i><i>94</i><i>95</i><i>96</i><i>97</i><i>98</i><i>99</i><i>100</i></span></span></span><span class="in-line"></span><span>Opening the street</span></div>
 </div>
 <button type="button" id="intro-skip">Skip intro</button>
 <div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>

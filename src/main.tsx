@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import './perf'
 import './styles.css'
 import { finishIntro } from './intro'
 

@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, typ
 import { text, type Language } from '../i18n'
 import { parsePublicListings, type PublicListings } from '../access/public-listings-model.ts'
 import { LogoMark } from '../components/Logo'
-import { Facade, SITE, StreetPlan, TOTAL_SPACES, statusText } from './street'
+import { Facade, SITE, StreetPlan, StreetSummary, TOTAL_SPACES, statusText } from './street'
 import './landing.css'
 
 // Public landing page at "/" for visitors who are not signed in. Live vacancy comes only from the public listing
@@ -304,6 +304,7 @@ export function LandingPage() {
           </div>
           <div className="lp-street-stage">
             <div className="lp-plan-frame"><StreetPlan openByBuilding={openByBuilding} known={known} active={active} setActive={setActive} language={language} /></div>
+            <StreetSummary openByBuilding={openByBuilding} known={known} active={active} setActive={setActive} language={language} />
             <p className="lp-plan-note">{tr('Not to scale. Hover or tap a home to see its rooms.', 'Dili sukod. I-hover o i-tap ang balay aron makita ang kwarto.')}<span className="lp-swipe-hint"> {tr('Swipe sideways to see the whole street.', 'I-swipe pa-sidlakan aron makita ang tibuok dalan.')}</span></p>
           </div>
         </div>

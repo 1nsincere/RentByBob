@@ -269,11 +269,11 @@ function RideArt({ kind, pillion }: { kind: Ride['kind']; pillion?: boolean }) {
   </>
 }
 
-function Vehicle({ ride }: { ride: Ride }) {
+function Vehicle({ ride, extra }: { ride: Ride; extra?: boolean }) {
   const L = LENGTH[ride.kind]
   const vertical = ride.heading === 'n' || ride.heading === 's'
   const turn = { e: undefined, w: `translate(${L},0) scale(-1,1)`, n: `translate(0,${L}) rotate(-90)`, s: `translate(20,0) rotate(90)` }[ride.heading]
-  return <span className={`lp-lane lp-lane--${ride.heading}`} style={{ '--dur': `${ride.duration}s`, '--delay': `${ride.delay}s`, '--rest': `${ride.rest}%` } as CSSProperties}>
+  return <span className={`lp-lane lp-lane--${ride.heading}${extra ? ' lp-lane--extra' : ''}`} style={{ '--dur': `${ride.duration}s`, '--delay': `${ride.delay}s`, '--rest': `${ride.rest}%` } as CSSProperties}>
     <svg viewBox={vertical ? `2 0 16 ${L}` : `0 2 ${L} 16`} aria-hidden="true" focusable="false"><g transform={turn}>
       <RideArt kind={ride.kind} pillion={ride.pillion} />
     </g></svg>
@@ -400,6 +400,15 @@ export const statusText = (language: Language, known: boolean, lit: number) => !
 export function StreetPlan({ openByBuilding, known, active, setActive, language }: { openByBuilding: Map<string, string[]>; known: boolean; active: string; setActive: (label: string) => void; language: Language }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [profile, setProfile] = useState(false)
+  const planRef = useRef<HTMLDivElement>(null)
+  // Everything on the plan stands still while it is scrolled out of view (saves battery and work on phones).
+  useEffect(() => {
+    const plan = planRef.current
+    if (!plan || typeof IntersectionObserver === 'undefined') return
+    const watcher = new IntersectionObserver(([entry]) => plan.classList.toggle('is-offscreen', !entry.isIntersecting), { rootMargin: '120px' })
+    watcher.observe(plan)
+    return () => watcher.disconnect()
+  }, [])
   useEffect(() => {
     if (!profile) return
     const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setProfile(false) }
@@ -412,15 +421,15 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
     <Legend tr={tr} onDeveloper={() => setProfile(true)} />
     {profile && <ProfileCard onClose={() => setProfile(false)} tr={tr} language={language} />}
     <div className="lp-plan-scroll" tabIndex={0} role="region" aria-label={tr('Street map. Scroll sideways to see all of it on a small screen.', 'Mapa sa dalan. I-scroll pa-sidlakan aron makita tanan sa gamay nga screen.')}>
-    <div className={`lp-plan${profile ? ' has-profile' : ''}`} role="group" aria-label={tr('Site plan on B. Zubiri St and Mariano Abella St. Glowing doors and windows are spaces open now. Choose a home to see rooms.', 'Plano sa B. Zubiri St ug Mariano Abella St. Ang nagsiga nga pultahan ug bintana bakante karon. Pilia ang balay aron makita ang kwarto.')}>
+    <div ref={planRef} className={`lp-plan${profile ? ' has-profile' : ''}`} role="group" aria-label={tr('Site plan on B. Zubiri St and Mariano Abella St. Glowing doors and windows are spaces open now. Choose a home to see rooms.', 'Plano sa B. Zubiri St ug Mariano Abella St. Ang nagsiga nga pultahan ug bintana bakante karon. Pilia ang balay aron makita ang kwarto.')}>
     <span className="lp-plan-road lp-plan-road--main" aria-hidden="true"><b>B. ZUBIRI ST.</b></span>
     <span className="lp-plan-road lp-plan-road--side" aria-hidden="true"><b><span className="lp-road-long">MARIANO ABELLA ST.</span><span className="lp-road-short">M. ABELLA ST.</span></b></span>
     {LAMPS.map(([left, side]) => <span key={`${left}${side}`} className={`lp-lamp lp-lamp--${side}`} style={{ left: `${left}%` } as CSSProperties} aria-hidden="true" />)}
-    {TREES.map(([left, top, size]) => <svg key={`${left}:${top}`} className="lp-tree" viewBox="0 0 40 40" style={{ left: `${left}%`, top: `${top}%`, width: `${size}%` } as CSSProperties} aria-hidden="true" focusable="false">
+    {TREES.map(([left, top, size], index) => <svg key={`${left}:${top}`} className="lp-tree" viewBox="0 0 40 40" style={{ left: `${left}%`, top: `${top}%`, width: `${size}%`, '--i': index } as CSSProperties} aria-hidden="true" focusable="false">
       <circle className="lp-tree-shadow" cx="23" cy="24" r="16" /><circle className="lp-tree-crown" cx="20" cy="20" r="16" />
       <circle className="lp-tree-leaf" cx="14" cy="15" r="7" /><circle className="lp-tree-leaf" cx="25" cy="23" r="6" /><circle className="lp-tree-leaf" cx="15" cy="26" r="5" />
     </svg>)}
-    {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} />)}
+    {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} extra={index >= 4} />)}
     <Bob label={tr('This is Bob', 'Kini si Bob')} />
     <Student label={tr('The developer, and a tenant here too', 'Ang developer, ug nag-abang sad dinhi')} open={profile} onToggle={() => setProfile(open => !open)} tr={tr} />
     {SITE.map(site => {
@@ -434,8 +443,21 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
         <Facade site={site} open={open} />
       </a>
     })}
+    <span className="lp-cloud lp-cloud--a" aria-hidden="true" /><span className="lp-cloud lp-cloud--b" aria-hidden="true" />
     <span className="lp-compass" aria-hidden="true">N</span>
     </div>
     </div>
   </div>
+}
+
+// The same four homes as plain buttons under the map: easy to tap on a phone, and they light up with the map.
+export function StreetSummary({ openByBuilding, known, active, setActive, language }: { openByBuilding: Map<string, string[]>; known: boolean; active: string; setActive: (label: string) => void; language: Language }) {
+  return <ul className="lp-plan-chips" aria-label={text(language, 'Homes on the street', 'Mga balay sa dalan')}>
+    {SITE.map(site => {
+      const lit = (openByBuilding.get(site.label) ?? []).slice(0, site.spaces).length
+      return <li key={site.label}><a href="/rooms" className={`lp-chip${active === site.label ? ' is-active' : ''}${lit ? ' has-open' : ''}`} onMouseEnter={() => setActive(site.label)} onFocus={() => setActive(site.label)}>
+        <span className="lp-chip-name">{site.label}</span><span className="lp-chip-status">{statusText(language, known, lit)}</span>
+      </a></li>
+    })}
+  </ul>
 }

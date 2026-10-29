@@ -247,7 +247,7 @@
 .bob-cane line { stroke: #8a5a2b; stroke-width: 1.6; stroke-linecap: round; }
 .bob-cane circle:not(.bob-hand) { fill: #2b2420; }
 @keyframes lp-step { from { transform: translateX(-2.2px); } to { transform: translateX(2.2px); } }
-@keyframes lp-stroll { 0%, 6% { left: 70%; } 38%, 48% { left: 93%; } 88%, 100% { left: 70%; } }
+@keyframes lp-stroll { 0%, 6% { translate: 0 0; } 38%, 48% { translate: 426% 0; } 88%, 100% { translate: 0 0; } }
 @keyframes lp-turn { 0%, 38% { transform: rotate(0deg); } 42%, 88% { transform: rotate(180deg); } 92%, 100% { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .lp-bob { left: 82%; } }
 /* The student (the developer, also a tenant): down Mariano Abella St, along the front of Bob's house, in through the
@@ -280,17 +280,17 @@
 @media (max-width: 47.99rem) { .lp-legend { max-width: 92%; padding: .25rem .4rem .3rem; } .lp-legend ul { grid-template-columns: 1fr; gap: .15rem; } }
 @media (prefers-reduced-motion: reduce) { .lp-student { left: 18.5%; top: 90%; opacity: 1; visibility: visible; animation: none; } .lp-student svg { animation: none; transform: rotate(90deg); } }
 @keyframes lp-student-walk {
-  0% { left: 18.5%; top: 74%; opacity: 0; visibility: hidden; }
-  2% { left: 18.5%; top: 76%; opacity: 1; visibility: visible; }
-  13% { left: 18.5%; top: 96.8%; opacity: 1; }
-  30% { left: var(--st-door); top: 96.8%; opacity: 1; }
-  31% { left: var(--st-door); top: 96.8%; opacity: 0; visibility: hidden; }
-  60% { left: var(--st-door); top: 96.8%; opacity: 0; visibility: hidden; }
-  61% { left: var(--st-door); top: 96.8%; opacity: 1; visibility: visible; }
-  77% { left: 18.5%; top: 96.8%; opacity: 1; }
-  90% { left: 18.5%; top: 76%; opacity: 1; }
-  92% { left: 18.5%; top: 74%; opacity: 0; visibility: visible; }
-  93%, 100% { left: 18.5%; top: 74%; opacity: 0; visibility: hidden; }
+  0% { translate: 0 0; opacity: 0; visibility: hidden; }
+  2% { translate: 0 37%; opacity: 1; visibility: visible; }
+  13% { translate: 0 422%; opacity: 1; }
+  30% { translate: 314% 422%; opacity: 1; }
+  31% { translate: 314% 422%; opacity: 0; visibility: hidden; }
+  60% { translate: 314% 422%; opacity: 0; visibility: hidden; }
+  61% { translate: 314% 422%; opacity: 1; visibility: visible; }
+  77% { translate: 0 422%; opacity: 1; }
+  90% { translate: 0 37%; opacity: 1; }
+  92% { translate: 0 0; opacity: 0; visibility: visible; }
+  93%, 100% { translate: 0 0; opacity: 0; visibility: hidden; }
 }
 @keyframes lp-student-turn {
   0%, 13% { transform: rotate(90deg); }
@@ -512,3 +512,28 @@
   .dev-body { padding: 1.2rem 1.2rem 1.5rem; }
 }
 @media (prefers-reduced-motion: reduce) { .dev-backdrop, .dev-card { animation: none; } }
+
+/* Street plan: gentle life that costs almost nothing (compositor-only motion), a summary row under the map, and a lite mode. */
+.lp-tree { transform-origin: 50% 92%; animation: lp-sway 7s ease-in-out infinite alternate; animation-delay: calc(var(--i, 0) * -1.3s); }
+@keyframes lp-sway { from { transform: rotate(-1.4deg); } to { transform: rotate(1.4deg); } }
+.lp-cloud { position: absolute; z-index: 4; left: 0; width: 38%; aspect-ratio: 2.6; border-radius: 50%; background: radial-gradient(closest-side, rgb(5 25 15 / 16%), transparent); opacity: 0; pointer-events: none; }
+.lp-cloud--a { top: 8%; } .lp-cloud--b { top: 56%; width: 30%; }
+.lp[data-phase="day"] .lp-cloud { opacity: 1; animation: lp-cloud 70s linear infinite; }
+.lp[data-phase="day"] .lp-cloud--b { animation-duration: 95s; animation-delay: -40s; }
+@keyframes lp-cloud { from { translate: -110% 0; } to { translate: 290% 0; } }
+.lp-plan.is-offscreen *, .lp-plan.is-offscreen { animation-play-state: paused !important; }
+.lp-plan-chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: .5rem; margin: .8rem 0 0; padding: 0; list-style: none; }
+.lp-chip { display: flex; flex-direction: column; justify-content: center; min-height: 2.75rem; padding: .45rem .8rem; border: 1.5px solid var(--line-night); border-radius: .8rem; background: rgb(255 255 255 / 4%); color: inherit; text-decoration: none; transition: border-color 200ms ease, background-color 200ms ease; }
+.lp-chip-name { font-weight: 800; font-size: .95rem; line-height: 1.15; }
+.lp-chip-status { font: 600 .75rem var(--mono); color: var(--muted-night); }
+.lp-chip.has-open { border-color: rgb(255 191 31 / 55%); }
+.lp-chip.has-open .lp-chip-status { color: var(--amber); }
+.lp-chip:hover, .lp-chip.is-active { background: rgb(255 191 31 / 12%); border-color: var(--amber); }
+.lp-chip:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+/* Lite mode (set by src/perf.ts on phones that may struggle): no filters, no endless ambient motion, fewer riders. */
+:root[data-perf="lite"] .lp-lane--extra, :root[data-perf="lite"] .lp-cloud { display: none; }
+:root[data-perf="lite"] .lp-tree { animation: none; }
+:root[data-perf="lite"] .lp-lane svg, :root[data-perf="lite"] .lp-facade { filter: none; }
+:root[data-perf="lite"] .lp-plan-frame { box-shadow: none; }
+:root[data-perf="lite"] .bob-foot, :root[data-perf="lite"] .lp-legend, :root[data-perf="lite"] .lp-plot-tag { backdrop-filter: none; }
+@media (prefers-reduced-motion: reduce) { .lp-tree, .lp[data-phase="day"] .lp-cloud { animation: none; } .lp-cloud { display: none; } }
