@@ -14,7 +14,8 @@ export function finishIntro() {
   let seen = false
   try { seen = sessionStorage.getItem('rentbybob-intro') === '1'; sessionStorage.setItem('rentbybob-intro', '1') } catch { /* private mode: every load counts as a first visit */ }
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-  const full = !reduced && !seen && location.pathname === '/'
+  const replay = location.search === '?intro' // open /?intro to watch the full intro again in the same tab
+  const full = !reduced && (!seen || replay) && location.pathname === '/'
   const wipeMs = full ? WIPE_MS : QUICK_WIPE_MS
 
   // Particles, glow and logo drift a little with the pointer (or finger).

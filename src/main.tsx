@@ -18,7 +18,7 @@ const publicRoomsPage = /^\/rooms\/?$/.test(location.pathname)
 // Public landing page at "/" welcomes everyone, including staff and renters who are already signed in (owner decision,
 // 29 Oct 2026); they continue from its Sign in button to /sign-in, where the open session resumes. A query string or hash
 // (development previews, sign-in links) still goes straight to the app.
-const landingPage = location.pathname === '/' && !location.search && !location.hash
+const landingPage = location.pathname === '/' && (!location.search || location.search === '?intro') && !location.hash // ?intro replays the full intro
 
 async function startApp() {
   if (atomsGallery) {
