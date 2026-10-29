@@ -14,9 +14,10 @@ const atomsGallery = import.meta.env.DEV && params.has('atoms') && !params.has('
 const renterPreview = import.meta.env.DEV && params.get('preview') === 'renter' && !params.has('auth')
 // Public, sign-in-free room listing (production route). Reads only listed rooms; inquiries are write-only.
 const publicRoomsPage = /^\/rooms\/?$/.test(location.pathname)
-// Public landing page at "/" for visitors without an open session (staff and renters sign in at /sign-in).
-const hasSession = (() => { try { return Object.keys(sessionStorage).some(key => /^sb-.+-auth-token$/.test(key)) } catch { return false } })()
-const landingPage = location.pathname === '/' && !location.search && !hasSession
+// Public landing page at "/" welcomes everyone, including staff and renters who are already signed in (owner decision,
+// 29 Oct 2026); they continue from its Sign in button to /sign-in, where the open session resumes. A query string or hash
+// (development previews, sign-in links) still goes straight to the app.
+const landingPage = location.pathname === '/' && !location.search && !location.hash
 
 async function startApp() {
   if (atomsGallery) {
