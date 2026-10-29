@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { text, type Language } from '../i18n'
 import './facade.css'
@@ -317,6 +317,12 @@ type Bilingual = { en: string; bis: string }
 export const DEVELOPER = {
   name: 'Ace Grant Kyamko',
   photo: '/developer.jpg',
+  photoHover: '/developer-hover.jpg',
+  links: [
+    { kind: 'facebook', label: 'Facebook', href: 'https://www.facebook.com/sheluvsalas' },
+    { kind: 'email', label: 'acegrantk@gmail.com', href: 'mailto:acegrantk@gmail.com' },
+    { kind: 'github', label: 'GitHub', href: 'https://github.com/1nsincere' },
+  ] as { kind: 'facebook' | 'email' | 'github'; label: string; href: string }[],
   photoAlt: { en: 'Ace Grant Kyamko standing in a night-lit garden path, head bowed, arms crossed', bis: 'Si AceGrant Kyamko nga nagbarog sa tigom nga dalan sa gabii, nakayuko ug naka-cross ang bukton' },
   role: { en: 'Developer of RentByBob', bis: 'Developer sa RentByBob' } as Bilingual,
   study: { en: 'Computer Engineer · CIT University', bis: 'Computer Engineer · CIT University' } as Bilingual,
@@ -339,6 +345,12 @@ function Student({ label, open, onToggle, tr }: { label: string; open: boolean; 
   </button>
 }
 
+const LinkIcon = ({ kind }: { kind: 'facebook' | 'email' | 'github' }) => kind === 'github'
+  ? <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" focusable="false" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" /></svg>
+  : kind === 'facebook'
+    ? <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="currentColor"><path d="M13.5 21v-7.5h2.6l.4-3h-3V8.7c0-.9.3-1.5 1.5-1.5h1.6V4.5c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.1H7.8v3h2.6V21h3.1z" /></svg>
+    : <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5" /><path d="m4 7.5 8 6 8-6" /></svg>
+
 function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (english: string, bisaya: string) => string; language: Language }) {
   const closeRef = useRef<HTMLButtonElement>(null)
   useEffect(() => {
@@ -352,11 +364,19 @@ function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (engl
     return () => { window.removeEventListener('keydown', keys); opener?.focus?.() }
   }, [onClose])
   const t = (value: Bilingual) => text(language, value.en, value.bis)
+  const [flipped, setFlipped] = useState(false)
+  const aim = (event: ReactPointerEvent<HTMLElement>) => {
+    const box = event.currentTarget.getBoundingClientRect()
+    event.currentTarget.style.setProperty('--x', `${Math.round(event.clientX - box.left)}px`)
+    event.currentTarget.style.setProperty('--y', `${Math.round(event.clientY - box.top)}px`)
+  }
   return createPortal(<div className="dev-backdrop" onClick={event => { if (event.target === event.currentTarget) onClose() }}>
     <section id="lp-dev-card" className="dev-card" role="dialog" aria-modal="true" aria-label={tr('Developer profile', 'Profile sa developer')}>
       <button type="button" className="dev-close" ref={closeRef} onClick={onClose} aria-label={tr('Close profile', 'Isira ang profile')}><span aria-hidden="true">×</span></button>
-      <figure className="dev-photo">
-        <img src={DEVELOPER.photo} alt={t(DEVELOPER.photoAlt)} width="520" height="780" />
+      <figure className={`dev-photo${flipped ? ' is-flipped' : ''}`} onPointerEnter={aim} onPointerMove={aim} onClick={() => setFlipped(value => !value)}>
+        <img className="dev-photo-main" src={DEVELOPER.photo} alt={t(DEVELOPER.photoAlt)} width="520" height="780" />
+        <img className="dev-photo-hover" src={DEVELOPER.photoHover} alt="" aria-hidden="true" width="520" height="780" />
+        <span className="dev-photo-hint" aria-hidden="true">{flipped ? tr('Tap to go back', 'I-tap aron mobalik') : tr('Hover or tap me', 'I-hover o i-tap ko')}</span>
         <figcaption><span className="dev-tag">{t(DEVELOPER.note)}</span></figcaption>
       </figure>
       <div className="dev-body">
@@ -364,6 +384,11 @@ function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (engl
         <h2 className="dev-name">{DEVELOPER.name}</h2>
         <p className="dev-study">{t(DEVELOPER.study)}</p>
         <p className="dev-aim">{t(DEVELOPER.aim)}</p>
+        <ul className="dev-links" aria-label={tr('Find me online', 'Pangita ko online')}>
+          {DEVELOPER.links.map(link => <li key={link.kind}><a href={link.href} className={`dev-link dev-link--${link.kind}`} {...(link.kind === 'email' ? {} : { target: '_blank', rel: 'noopener noreferrer' })}>
+            <LinkIcon kind={link.kind} /><span>{link.label}</span>{link.kind !== 'email' && <span className="visually-hidden"> ({tr('opens in a new tab', 'mo-abli sa bag-ong tab')})</span>}
+          </a></li>)}
+        </ul>
         {DEVELOPER.groups.map(group => <div key={group.title.en} className="dev-group">
           <h3>{t(group.title)}</h3>
           <ul>{group.items.map(item => <li key={item}>{item === 'and more' ? tr('and more', 'ug uban pa') : item}</li>)}</ul>
