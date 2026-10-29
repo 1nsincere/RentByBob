@@ -17,7 +17,7 @@ Nothing here has been run. Each step that creates accounts, spends money, or tou
 ## 2. Cloudflare Pages (owner authorizes)
 1. Connect the private GitHub repository; production branch `main`; build command `npm ci && npm run build:staging` for staging (`npm run build` for production); output `dist`; Node 24.
 2. Environment variables: only the public Supabase URL and publishable (anon) key, plus `VITE_SUPABASE_TARGET`. Never a service-role key.
-3. `public/_headers` and `public/_redirects` deploy automatically. If the Supabase project uses a custom domain, add it to `connect-src` in `_headers` and rerun `npm run test:csp`.
+3. `public/_headers` deploys automatically, and `wrangler.jsonc` (single-page-application mode) makes /rooms, /sign-in and /auth/callback open directly. Do **not** add a `_redirects` file with 200 rewrites: on Cloudflare Workers each becomes a redirect to `/` and breaks sign-in and invite links. If the Supabase project uses a custom domain, add it to `connect-src` in `_headers` and rerun `npm run test:csp`.
 4. After the first deploy: open `/` and `/rooms`, sign in as the owner with MFA, check the browser console for CSP reports, and confirm the response headers (`curl -I`).
 
 ## 3. Before real use (production)

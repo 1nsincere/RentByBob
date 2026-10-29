@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import assert from 'node:assert/strict'
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -42,7 +43,7 @@ for (const developmentOnlyMarker of [
 }
 
 // Cloudflare Pages security headers ship with the build and keep their key protections.
-const headers = await readFile(path.join(outputDirectory, '_headers'), 'utf8')
+const headers = (await readFile(path.join(outputDirectory, '_headers'), 'utf8')).split('\r\n').join('\n') // Windows checkouts use CRLF
 for (const required of ["script-src 'self'", "frame-ancestors 'none'", "object-src 'none'", 'X-Content-Type-Options: nosniff', 'Referrer-Policy:', 'Strict-Transport-Security:', 'Cross-Origin-Resource-Policy: same-origin', 'Cross-Origin-Opener-Policy: same-origin']) {
   assert.ok(headers.includes(required), `dist/_headers must keep: ${required}`)
 }
@@ -55,7 +56,12 @@ assert.ok(!headers.includes('*.supabase.co'), 'dist/_headers must not allow ever
 assert.ok(/connect-src[^;]*https:\/\/[a-z0-9]{20}\.supabase\.co/.test(headers), 'dist/_headers connect-src must name the approved Supabase project')
 assert.ok(!/unsafe-eval/.test(headers) && !/script-src[^;]*unsafe-inline/.test(headers), 'dist/_headers must not allow eval or inline scripts')
 assert.ok(!/<script(?![^>]*\bsrc=)[^>]*>/.test(html), 'index.html must not contain inline scripts (blocked by the CSP)')
-const redirects = await readFile(path.join(outputDirectory, '_redirects'), 'utf8')
-assert.ok(/^\/rooms \/index\.html 200$/m.test(redirects), 'dist/_redirects must serve /rooms')
+// Single-page-application routing (/rooms, /sign-in, /auth/callback must open directly) comes from wrangler.jsonc on
+// Cloudflare Workers. A _redirects file with "200" rewrite rules must NOT ship: on Workers it turns each page link into a
+// redirect to "/" (found on the first live deploy, 29 Oct 2026), which broke sign-in, the rooms page and invite links.
+const wranglerConfig = await readFile('wrangler.jsonc', 'utf8')
+assert.ok(/"not_found_handling"\s*:\s*"single-page-application"/.test(wranglerConfig), 'wrangler.jsonc must keep single-page-application routing')
+assert.ok(/"directory"\s*:\s*"\.\/dist"/.test(wranglerConfig), 'wrangler.jsonc must serve ./dist')
+assert.ok(!existsSync(path.join(outputDirectory, '_redirects')), 'dist must not contain a _redirects file (its rewrites become redirects to "/" on Workers)')
 
 console.log(`Production artifact verified: ${javascriptFiles.length} JavaScript chunk(s), ${stylesheetFiles.length} stylesheet(s); no public availability preview code; security headers and redirects present.`)

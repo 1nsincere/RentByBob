@@ -1,0 +1,12 @@
+{
+  // Cloudflare Workers (static assets) deployment of the built site (`npm run build` writes ./dist).
+  // The security headers come from dist/_headers; single-page-application mode serves index.html for /rooms, /sign-in and
+  // /auth/callback so those links work when opened directly. No secrets belong in this file: the Supabase settings are
+  // build-time variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_SUPABASE_TARGET) set in the Cloudflare dashboard.
+  "name": "rentbybob",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
