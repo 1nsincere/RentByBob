@@ -1,31 +1,77 @@
 <!doctype html>
 <html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="description" content="A rental records app with property-owner-managed access."/><meta name="theme-color" content="#1f6b4f"/><meta name="color-scheme" content="light dark"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><title>RentByBob | Your rental records</title>
 <style>
-/* Intro splash: part of the page itself so it shows before any script loads. src/intro.ts removes it (about 1.5 seconds on a first visit). */
-#intro { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; align-content: center; gap: 1.1rem; background: radial-gradient(70% 60% at 50% 42%, #1d5a43 0%, #0f3d2d 62%, #0a2a1f 100%); color: #fff; pointer-events: none; transition: opacity 420ms ease, transform 420ms ease; font-family: Inter, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
-#intro.is-leaving { opacity: 0; transform: scale(1.04); }
-#intro .in-glow { position: absolute; width: 36rem; max-width: 120vw; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgb(255 191 31 / 22%), transparent 65%); animation: in-glow 1.6s ease-out both; }
-#intro .in-mark { position: relative; width: clamp(5rem, 22vw, 7rem); height: auto; filter: drop-shadow(0 18px 28px rgb(0 0 0 / 45%)); animation: in-pop 700ms cubic-bezier(.2, 1.3, .3, 1) both; }
-#intro .in-b { stroke-dasharray: 90; stroke-dashoffset: 90; animation: in-draw 700ms ease 380ms forwards; }
-#intro .in-word { position: relative; display: flex; font-weight: 800; font-size: clamp(1.9rem, 7vw, 2.7rem); letter-spacing: -.05em; }
-#intro .in-word span { display: inline-block; opacity: 0; transform: translateY(.6em); animation: in-rise 520ms cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: calc(560ms + var(--i) * 45ms); }
-#intro .in-word .in-gold { color: #ffbf1f; }
-#intro .in-tag { position: relative; margin: -.4rem 0 0; color: #bcd8c7; font-size: clamp(.85rem, 2.6vw, 1rem); letter-spacing: .08em; opacity: 0; animation: in-fade 500ms ease 1000ms forwards; }
-#intro .in-bar { position: relative; width: min(11rem, 44vw); height: 3px; margin-top: .7rem; overflow: hidden; border-radius: 3px; background: rgb(255 255 255 / 14%); }
-#intro .in-bar::after { content: ""; position: absolute; inset: 0; transform-origin: 0 50%; border-radius: 3px; background: linear-gradient(90deg, #ffbf1f, #ffe27a); animation: in-load 1.25s cubic-bezier(.5, .1, .2, 1) 250ms both; }
-@keyframes in-pop { from { opacity: 0; transform: scale(.55) rotate(-8deg); } to { opacity: 1; transform: none; } }
+/* Intro: drawn by the page itself so it shows before any script loads. src/intro.ts lifts it (about 3 seconds on a first
+   visit in a tab) with a curtain wipe. Particles are three layers of box-shadow dots that hover and twinkle. */
+@property --n { syntax: "<integer>"; initial-value: 0; inherits: false; }
+#intro { --mx: 0; --my: 0; position: fixed; inset: 0; z-index: 2000; overflow: hidden; display: grid; place-items: center; background: radial-gradient(75% 65% at 50% 46%, #1b5841 0%, #0f3d2d 55%, #081f17 100%); color: #fff; pointer-events: none; clip-path: inset(0 0 0 0); font-family: Inter, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
+#intro.is-leaving { clip-path: inset(0 0 100% 0); transition: clip-path 900ms cubic-bezier(.76, 0, .24, 1); }
+#intro.is-leaving .in-center, #intro.is-leaving .in-top, #intro.is-leaving .in-bottom { opacity: 0; transform: translateY(-5vh); transition: opacity 450ms ease, transform 700ms cubic-bezier(.76, 0, .24, 1); }
+.in-edge { position: fixed; left: 0; right: 0; top: 0; z-index: 2001; height: 3px; background: linear-gradient(90deg, #1f6b4f, #ffbf1f 30%, #ffe27a 70%, #1f6b4f); box-shadow: 0 0 26px 5px rgb(255 191 31 / 55%); transform: translateY(100vh); transform: translateY(100dvh); pointer-events: none; transition: transform 900ms cubic-bezier(.76, 0, .24, 1); }
+.in-edge.go { transform: translateY(-6px); }
+#intro .in-glow { position: absolute; left: 50%; top: 46%; width: 44rem; max-width: 140vw; aspect-ratio: 1; margin: -22rem 0 0 -22rem; border-radius: 50%; background: radial-gradient(circle, rgb(255 191 31 / 20%), rgb(255 191 31 / 6%) 40%, transparent 66%); transform: translate(calc(var(--mx) * -26px), calc(var(--my) * -26px)); animation: in-glow 2.4s ease-out both, in-breathe 4.5s ease-in-out 2.4s infinite alternate; }
+#intro .in-dust { position: absolute; left: 0; top: 0; width: 3px; height: 3px; border-radius: 50%; opacity: 0; animation: in-twinkle 3.6s ease-in-out 200ms infinite alternate, in-hover var(--t, 9s) ease-in-out infinite alternate; }
+#intro .in-dust--far { --t: 12s; --px: 8px; box-shadow: 85.0vw 46.6vh 0 0.1px rgb(190 235 210 / 50%),42.1vw 2.8vh 0 0.4px rgb(190 235 210 / 50%),31.9vw 71.4vh 0 0.3px rgb(255 255 255 / 45%),65.2vw 66.7vh 0 0.3px rgb(190 235 210 / 50%),66.5vw 88.9vh 0 0.1px rgb(190 235 210 / 50%),11.1vw 33.9vh 0 0.1px rgb(255 255 255 / 45%),55.6vw 53.9vh 0 0.1px rgb(190 235 210 / 50%),75.8vw 86.4vh 0 0.0px rgb(255 255 255 / 45%),37.2vw 52.3vh 0 0.0px rgb(255 255 255 / 45%),89.4vw 90.8vh 0 0.3px rgb(255 255 255 / 45%),42.8vw 81.5vh 0 0.0px rgb(255 255 255 / 45%),75.2vw 23.8vh 0 0.4px rgb(255 255 255 / 45%),63.5vw 83.5vh 0 0.3px rgb(255 255 255 / 45%),68.1vw 39.0vh 0 0.1px rgb(190 235 210 / 50%),26.2vw 90.5vh 0 0.1px rgb(255 255 255 / 45%),33.6vw 52.9vh 0 0.2px rgb(190 235 210 / 50%),55.7vw 31.4vh 0 0.2px rgb(255 255 255 / 45%),95.6vw 67.2vh 0 0.3px rgb(190 235 210 / 50%),74.5vw 72.4vh 0 0.3px rgb(255 255 255 / 45%),22.8vw 64.3vh 0 0.1px rgb(190 235 210 / 50%),10.8vw 15.4vh 0 0.1px rgb(255 255 255 / 45%),67.3vw 76.0vh 0 0.2px rgb(190 235 210 / 50%),48.9vw 35.0vh 0 0.3px rgb(190 235 210 / 50%),28.7vw 51.4vh 0 0.2px rgb(255 255 255 / 45%),28.6vw 40.0vh 0 0.2px rgb(190 235 210 / 50%),62.4vw 80.5vh 0 0.3px rgb(255 255 255 / 45%),20.4vw 39.4vh 0 0.3px rgb(255 255 255 / 45%),43.1vw 70.3vh 0 0.2px rgb(255 255 255 / 45%),91.6vw 37.0vh 0 0.1px rgb(255 255 255 / 45%),55.4vw 36.8vh 0 0.2px rgb(255 255 255 / 45%),53.5vw 86.2vh 0 0.4px rgb(190 235 210 / 50%),27.9vw 31.5vh 0 0.3px rgb(190 235 210 / 50%),1.9vw 75.6vh 0 0.1px rgb(190 235 210 / 50%),39.0vw 38.6vh 0 0.0px rgb(255 255 255 / 45%); }
+#intro .in-dust--mid { --t: 9s; --px: 18px; box-shadow: 33.6vw 49.1vh 0 0.1px rgb(255 255 255 / 70%),64.5vw 60.9vh 0 0.2px rgb(255 226 122 / 75%),76.9vw 8.4vh 0 0.8px rgb(190 235 210 / 70%),83.6vw 77.3vh 0 0.4px rgb(255 255 255 / 70%),19.4vw 43.3vh 0 0.3px rgb(190 235 210 / 70%),99.4vw 57.6vh 0 0.2px rgb(255 255 255 / 70%),50.8vw 16.3vh 0 0.5px rgb(255 226 122 / 75%),96.8vw 81.0vh 0 0.7px rgb(255 226 122 / 75%),28.0vw 84.4vh 0 0.1px rgb(190 235 210 / 70%),90.4vw 56.6vh 0 0.3px rgb(255 255 255 / 70%),1.8vw 35.9vh 0 0.7px rgb(255 255 255 / 70%),45.1vw 41.9vh 0 0.6px rgb(255 255 255 / 70%),12.1vw 85.8vh 0 0.3px rgb(255 255 255 / 70%),41.5vw 26.9vh 0 0.8px rgb(190 235 210 / 70%),99.1vw 76.6vh 0 0.5px rgb(255 255 255 / 70%),21.2vw 41.5vh 0 0.5px rgb(255 255 255 / 70%),68.7vw 56.0vh 0 0.6px rgb(190 235 210 / 70%),50.3vw 86.4vh 0 0.3px rgb(190 235 210 / 70%),10.0vw 97.3vh 0 0.2px rgb(255 255 255 / 70%),41.8vw 40.3vh 0 0.1px rgb(255 255 255 / 70%),26.2vw 77.3vh 0 0.7px rgb(190 235 210 / 70%),84.4vw 26.8vh 0 0.3px rgb(255 226 122 / 75%),66.8vw 70.4vh 0 0.8px rgb(255 226 122 / 75%),74.6vw 42.3vh 0 0.4px rgb(255 255 255 / 70%); animation-delay: 700ms, 0s; }
+#intro .in-dust--near { --t: 7s; --px: 34px; box-shadow: 53.2vw 7.0vh 0 0.0px rgb(255 255 255 / 85%),18.1vw 15.5vh 0 1.2px rgb(255 191 31 / 90%),47.9vw 77.1vh 0 0.7px rgb(255 255 255 / 85%),77.9vw 89.9vh 0 0.9px rgb(255 226 122 / 90%),68.2vw 60.7vh 0 0.7px rgb(255 255 255 / 85%),99.7vw 17.0vh 0 0.3px rgb(255 226 122 / 90%),23.8vw 39.6vh 0 1.4px rgb(255 191 31 / 90%),48.2vw 83.7vh 0 1.5px rgb(255 226 122 / 90%),60.4vw 76.7vh 0 0.2px rgb(255 191 31 / 90%),82.9vw 22.0vh 0 0.6px rgb(255 226 122 / 90%),9.1vw 39.7vh 0 1.5px rgb(255 191 31 / 90%),69.1vw 16.6vh 0 1.3px rgb(255 255 255 / 85%),34.4vw 79.5vh 0 1.0px rgb(255 226 122 / 90%),36.5vw 29.5vh 0 1.0px rgb(255 191 31 / 90%); filter: drop-shadow(0 0 3px rgb(255 191 31 / 70%)); animation-delay: 1100ms, 0s; }
+#intro .in-dust { translate: calc(var(--mx) * var(--px) * -1) calc(var(--my) * var(--px) * -1); }
+#intro .in-top, #intro .in-bottom { position: absolute; left: clamp(1rem, 4vw, 3rem); right: clamp(1rem, 4vw, 3rem); display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; color: #a9cbb8; font: 600 clamp(.62rem, 1.6vw, .78rem) ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .16em; text-transform: uppercase; opacity: 0; animation: in-fade 700ms ease 400ms forwards; }
+#intro .in-top { top: clamp(1rem, 4vh, 2.4rem); align-items: flex-start; }
+#intro .in-bottom { bottom: clamp(1rem, 4vh, 2.4rem); }
+#intro .in-count { display: flex; align-items: baseline; gap: .15em; color: #fff; font: 800 clamp(2.6rem, 11vw, 6rem) / .9 Inter, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; letter-spacing: -.06em; font-variant-numeric: tabular-nums; counter-reset: n var(--n); animation: in-count 2.55s cubic-bezier(.65, 0, .25, 1) 300ms forwards; }
+#intro .in-count::before { content: counter(n); }
+#intro .in-count::after { content: "%"; color: #ffbf1f; font-size: .42em; letter-spacing: 0; }
+#intro .in-line { flex: 1; height: 1px; margin: 0 clamp(.8rem, 3vw, 2rem) .55rem; transform-origin: 0 50%; background: linear-gradient(90deg, #ffbf1f, rgb(255 255 255 / 12%)); animation: in-load 2.55s cubic-bezier(.65, 0, .25, 1) 300ms both; }
+#intro .in-center { position: relative; display: grid; justify-items: center; gap: 1.2rem; transform: translate(calc(var(--mx) * 10px), calc(var(--my) * 10px)); }
+#intro .in-logo { position: relative; width: clamp(8.5rem, 30vw, 11.5rem); aspect-ratio: 1; filter: drop-shadow(0 22px 34px rgb(0 0 0 / 50%)); animation: in-float 3.4s ease-in-out 1.2s infinite alternate; }
+#intro .in-logo svg { display: block; width: 100%; height: 100%; overflow: visible; }
+#intro .in-orbit { transform-origin: 60px 60px; animation: in-spin 18s linear infinite; opacity: .55; }
+#intro .in-ring { transform-origin: 60px 60px; transform: rotate(-90deg); stroke-dasharray: 100; stroke-dashoffset: 100; animation: in-ring 2.55s cubic-bezier(.65, 0, .25, 1) 300ms forwards; }
+#intro .in-mark { transform-origin: 60px 60px; animation: in-pop 800ms cubic-bezier(.2, 1.35, .3, 1) 150ms both; }
+#intro .in-roof { stroke-dasharray: 100; stroke-dashoffset: 100; animation: in-draw 700ms ease 450ms forwards; }
+#intro .in-b { stroke-dasharray: 100; stroke-dashoffset: 100; animation: in-draw 900ms ease 850ms forwards; }
+#intro .in-word { display: flex; font-weight: 800; font-size: clamp(2.2rem, 9vw, 3.6rem); line-height: 1.05; letter-spacing: -.05em; }
+#intro .in-l { display: inline-block; overflow: hidden; padding-bottom: .12em; margin-bottom: -.12em; }
+#intro .in-l b { display: inline-block; font-weight: inherit; transform: translateY(115%); animation: in-up 700ms cubic-bezier(.2, .9, .2, 1) forwards, in-wave 2.6s ease-in-out infinite alternate; animation-delay: calc(900ms + var(--i) * 70ms), calc(2000ms + var(--i) * 120ms); }
+#intro .in-gold { color: #ffbf1f; }
+#intro .in-tag { margin: 0; color: #bcd8c7; font-size: clamp(.82rem, 2.6vw, 1rem); letter-spacing: .22em; text-transform: uppercase; opacity: 0; animation: in-fade 700ms ease 1500ms forwards; }
+@keyframes in-pop { from { opacity: 0; transform: scale(.4) rotate(-14deg); } to { opacity: 1; transform: none; } }
 @keyframes in-draw { to { stroke-dashoffset: 0; } }
-@keyframes in-rise { to { opacity: 1; transform: none; } }
+@keyframes in-ring { to { stroke-dashoffset: 0; } }
+@keyframes in-spin { to { transform: rotate(360deg); } }
+@keyframes in-up { to { transform: none; } }
+@keyframes in-wave { from { translate: 0 0; } to { translate: 0 -.07em; } }
 @keyframes in-fade { to { opacity: 1; } }
 @keyframes in-load { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@keyframes in-glow { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { #intro, #intro * { animation: none !important; transition: opacity 200ms ease !important; } #intro .in-word span, #intro .in-tag { opacity: 1; transform: none; } #intro .in-b { stroke-dashoffset: 0; } #intro .in-bar::after { transform: none; } #intro.is-leaving { transform: none; } }
+@keyframes in-count { from { --n: 0; } to { --n: 100; } }
+@keyframes in-glow { from { opacity: 0; scale: .5; } to { opacity: 1; scale: 1; } }
+@keyframes in-breathe { from { scale: 1; } to { scale: 1.12; } }
+@keyframes in-float { from { transform: translateY(-5px); } to { transform: translateY(6px); } }
+@keyframes in-twinkle { from { opacity: .25; } to { opacity: 1; } }
+@keyframes in-hover { from { transform: translateY(2.5vh); } to { transform: translateY(-3.5vh); } }
+@media (prefers-reduced-motion: reduce) {
+  #intro *, #intro::before { animation: none !important; }
+  #intro .in-dust { opacity: .8; }
+  #intro .in-l b, #intro .in-tag, #intro .in-top, #intro .in-bottom { opacity: 1; transform: none; }
+  #intro .in-b, #intro .in-roof, #intro .in-ring { stroke-dashoffset: 0; }
+  #intro .in-count { --n: 100; }
+  #intro .in-line { transform: none; }
+  #intro.is-leaving { clip-path: none; opacity: 0; transition: opacity 250ms ease; }
+}
 </style></head><body>
 <div id="intro" aria-hidden="true">
   <span class="in-glow"></span>
-  <svg class="in-mark" viewBox="0 0 64 64" focusable="false"><defs><linearGradient id="it" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a8a66"/><stop offset="1" stop-color="#134634"/></linearGradient><linearGradient id="ih" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#f2b61d"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#it)"/><rect x="39.5" y="13" width="6.5" height="11" rx="1.5" fill="#f2b61d"/><path d="M11 32 32 12.5 53 32v18.5a4 4 0 0 1-4 4H15a4 4 0 0 1-4-4Z" fill="url(#ih)"/><path class="in-b" pathLength="90" d="M26 28.5v21M26 28.5h6.5a5.2 5.2 0 0 1 0 10.4H26m0 0h7.5a5.5 5.5 0 0 1 0 10.6H26" fill="none" stroke="#12382a" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  <div class="in-word"><span style="--i:0">R</span><span style="--i:1">e</span><span style="--i:2">n</span><span style="--i:3">t</span><span class="in-gold" style="--i:4">B</span><span class="in-gold" style="--i:5">y</span><span style="--i:6">B</span><span style="--i:7">o</span><span style="--i:8">b</span></div>
-  <p class="in-tag">Your Cebu City home concierge</p>
-  <div class="in-bar"></div>
+  <span class="in-dust in-dust--far"></span><span class="in-dust in-dust--mid"></span><span class="in-dust in-dust--near"></span>
+  <div class="in-top"><span>Labangon · Cebu City</span><span>Est. 2026</span></div>
+  <div class="in-center">
+    <div class="in-logo"><svg viewBox="0 0 120 120" focusable="false"><defs><linearGradient id="ig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#f2b61d"/></linearGradient></defs>
+      <circle class="in-orbit" cx="60" cy="60" r="58" fill="none" stroke="#ffd25a" stroke-width="1" stroke-dasharray="1.5 7" stroke-linecap="round"/>
+      <circle cx="60" cy="60" r="54" fill="none" stroke="rgb(255 255 255 / 12%)" stroke-width="2"/>
+      <circle class="in-ring" cx="60" cy="60" r="54" fill="none" stroke="#ffbf1f" stroke-width="2.4" stroke-linecap="round" pathLength="100"/>
+      <g class="in-mark"><g transform="translate(60 61) scale(1.55) translate(-32 -34)"><rect x="40.5" y="13" width="5.4" height="9.5" rx="1.3" fill="#ffcf3a"/><path class="in-roof" pathLength="100" d="M12 30 32 13.5 52 30" fill="none" stroke="url(#ig)" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><path class="in-b" pathLength="100" d="M25 54V34h6a5 5 0 0 1 0 10h-6h7a5 5 0 0 1 0 10h-7" fill="none" stroke="url(#ig)" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/></g></g></svg></div>
+    <div class="in-word"><span class="in-l"><b style="--i:0">R</b></span><span class="in-l"><b style="--i:1">e</b></span><span class="in-l"><b style="--i:2">n</b></span><span class="in-l"><b style="--i:3">t</b></span><span class="in-l in-gold"><b style="--i:4">B</b></span><span class="in-l in-gold"><b style="--i:5">y</b></span><span class="in-l"><b style="--i:6">B</b></span><span class="in-l"><b style="--i:7">o</b></span><span class="in-l"><b style="--i:8">b</b></span></div>
+    <p class="in-tag">Your Cebu City home concierge</p>
+  </div>
+  <div class="in-bottom"><span class="in-count"></span><span class="in-line"></span><span>Opening the street</span></div>
 </div>
 <div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>
