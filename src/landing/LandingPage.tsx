@@ -8,8 +8,10 @@ import './landing.css'
 // function (the same data as /rooms); nothing private is read. The phone number is still a PLACEHOLDER for the owner
 // to replace before going public (docs/DEPLOYMENT.md); the Facebook page is the owner's real contact (28 Oct 2026).
 export const CONTACT = {
-  phone: '0900 000 0000', // placeholder
-  phoneHref: 'tel:+639000000000', // placeholder
+  // Set both to the real business number to show the Call button, e.g. '0917 123 4567' and 'tel:+639171234567'.
+  // While they are empty the button stays hidden, so visitors never see a fake number.
+  phone: '',
+  phoneHref: '',
   facebookHref: 'https://www.facebook.com/jameslee.gica.1',
   address: '100A B. Zubiri St, Cebu City, 6000 Cebu',
   mapsHref: 'https://www.google.com/maps/search/?api=1&query=100A+B.+Zubiri+St,+Cebu+City,+6000+Cebu',
@@ -364,7 +366,7 @@ export function LandingPage() {
             <address>100A B. Zubiri St<br />Cebu City, 6000 Cebu</address>
             <div className="lp-contact">
               <a className="lp-pill lp-pill--amber lp-magnetic" href={CONTACT.mapsHref} target="_blank" rel="noopener noreferrer" data-cursor={tr('Map', 'Mapa')}>{tr('Directions', 'Direksyon')} <span aria-hidden="true">↗</span></a>
-              <a className="lp-pill lp-pill--ghost lp-magnetic" href={CONTACT.phoneHref}>{tr('Call', 'Tawag')} {CONTACT.phone}</a>
+              {CONTACT.phone && CONTACT.phoneHref && <a className="lp-pill lp-pill--ghost lp-magnetic" href={CONTACT.phoneHref}>{tr('Call', 'Tawag')} {CONTACT.phone}</a>}
               <a className="lp-pill lp-pill--ghost lp-magnetic" href={CONTACT.facebookHref} target="_blank" rel="noopener noreferrer">Facebook<span className="visually-hidden"> ({tr('opens in a new tab', 'mo-abli sa bag-ong tab')})</span></a>
             </div>
           </div>
