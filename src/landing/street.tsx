@@ -351,10 +351,11 @@ const LinkIcon = ({ kind }: { kind: 'facebook' | 'email' | 'github' }) => kind =
     ? <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="currentColor"><path d="M13.5 21v-7.5h2.6l.4-3h-3V8.7c0-.9.3-1.5 1.5-1.5h1.6V4.5c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.1H7.8v3h2.6V21h3.1z" /></svg>
     : <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5" /><path d="m4 7.5 8 6 8-6" /></svg>
 
-// The landonorris.com hero, adapted. Moving the pointer over the photo paints the second photo along its path: a trail of
-// slanted blobs (bigger when moving faster) that merge, then shrink and fade back within about a second. When the card
-// opens, one painted stroke sweeps across by itself so people see there is something to discover. Drawn on a canvas only
-// while the trail is alive. Pointer screens only, and not on lite phones or with reduced motion; those flip on tap (CSS).
+// The landonorris.com hero, adapted. Moving the pointer over the photo paints the second photo with one liquid stroke: a
+// springy chain of points follows the pointer, the stroke swells with speed and tapers to the tail, and when the pointer
+// stops it thins and slides back to nothing in about a second. Smooth curved edges, frame-rate independent, drawn on a
+// canvas only while it is moving. When the card opens, one stroke sweeps across by itself. Pointer screens only, and not
+// on lite phones or with reduced motion; those flip the photo on tap instead (CSS).
 function useTrailReveal(figureRef: { current: HTMLElement | null }, canvasRef: { current: HTMLCanvasElement | null }, src: string, off: boolean) {
   useEffect(() => {
     const figure = figureRef.current, canvas = canvasRef.current
@@ -364,69 +365,89 @@ function useTrailReveal(figureRef: { current: HTMLElement | null }, canvasRef: {
     if (!ctx) return
     const photo = new Image()
     photo.src = src
-    type Blob = { x: number; y: number; born: number; size: number; angle: number }
-    let blobs: Blob[] = [], frame = 0, last: { x: number; y: number; t: number } | null = null, w = 0, h = 0
-    const LIFE = 950
+    const COUNT = 26
+    let w = 0, h = 0, frame = 0, then = 0, energy = 0, live = false
+    const target = { x: 0, y: 0 }
+    const chain = Array.from({ length: COUNT }, () => ({ x: 0, y: 0 }))
     const fit = () => {
-      const box = figure.getBoundingClientRect(), ratio = Math.min(window.devicePixelRatio || 1, 2)
+      const box = figure.getBoundingClientRect(), ratio = Math.min(window.devicePixelRatio || 1, 1.5)
       if (Math.round(box.width) === w && Math.round(box.height) === h) return
       w = Math.round(box.width); h = Math.round(box.height)
-      canvas.width = w * ratio; canvas.height = h * ratio
+      canvas.width = Math.round(w * ratio); canvas.height = Math.round(h * ratio)
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
     }
-    const draw = (now: number) => {
-      blobs = blobs.filter(blob => now - blob.born < LIFE)
+    const place = (x: number, y: number) => { target.x = x; target.y = y; if (!live) { chain.forEach(p => { p.x = x; p.y = y }); live = true } }
+    const follow = (rate: number, dt: number) => 1 - (1 - rate) ** (dt / 16.67) // the same feel at 60 or 120 frames a second
+    const shape = () => {
+      const max = Math.min(w, h) * 0.62 // widest part of the stroke
+      const left: { x: number; y: number }[] = [], right: { x: number; y: number }[] = []
+      for (let i = 0; i < COUNT; i++) {
+        const p = chain[i], q = chain[Math.min(COUNT - 1, i + 1)], o = chain[Math.max(0, i - 1)]
+        let dx = o.x - q.x, dy = o.y - q.y
+        const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len
+        const taper = (1 - i / (COUNT - 1)) ** 0.7
+        const half = max * energy * taper * 0.5
+        left.push({ x: p.x - dy * half, y: p.y + dx * half }); right.push({ x: p.x + dy * half, y: p.y - dx * half })
+      }
+      const path = new Path2D()
+      const outline = [...left, ...right.reverse()]
+      path.moveTo((outline[0].x + outline[1].x) / 2, (outline[0].y + outline[1].y) / 2)
+      for (let i = 1; i < outline.length; i++) {
+        const p = outline[i], n = outline[(i + 1) % outline.length]
+        path.quadraticCurveTo(p.x, p.y, (p.x + n.x) / 2, (p.y + n.y) / 2)
+      }
+      path.closePath()
+      path.ellipse(chain[0].x, chain[0].y, max * energy * 0.5, max * energy * 0.5, 0, 0, Math.PI * 2) // round head
+      return path
+    }
+    const tick = (now: number) => {
+      const dt = Math.min(48, now - (then || now - 16.67)); then = now
+      const head = chain[0], before = { x: head.x, y: head.y }
+      const k = follow(0.3, dt)
+      head.x += (target.x - head.x) * k; head.y += (target.y - head.y) * k
+      const link = follow(0.42, dt)
+      for (let i = 1; i < COUNT; i++) { chain[i].x += (chain[i - 1].x - chain[i].x) * link; chain[i].y += (chain[i - 1].y - chain[i].y) * link }
+      const speed = Math.hypot(head.x - before.x, head.y - before.y) / dt // px per ms
+      const want = Math.min(1, speed / 0.45)
+      energy += (want - energy) * follow(want > energy ? 0.16 : 0.07, dt)
       ctx.globalCompositeOperation = 'source-over'
       ctx.clearRect(0, 0, w, h)
-      if (!blobs.length || !photo.complete || !photo.naturalWidth) { frame = blobs.length ? requestAnimationFrame(draw) : 0; return }
-      ctx.fillStyle = '#000'
-      for (const blob of blobs) {
-        const age = (now - blob.born) / LIFE
-        const r = blob.size * Math.min(1, age / 0.12) * (1 - age) ** 1.4 // grows quickly, then shrinks away
-        if (r < 0.5) continue
-        ctx.beginPath()
-        ctx.ellipse(blob.x, blob.y, r * 1.7, r * 0.75, blob.angle, 0, Math.PI * 2)
-        ctx.fill()
+      if (energy > 0.004 && photo.complete && photo.naturalWidth) {
+        ctx.fillStyle = '#000'
+        ctx.fill(shape())
+        const scale = Math.min(w / photo.naturalWidth, h / photo.naturalHeight)
+        const pw = photo.naturalWidth * scale, ph = photo.naturalHeight * scale
+        ctx.globalCompositeOperation = 'source-in'
+        ctx.drawImage(photo, (w - pw) / 2, (h - ph) / 2, pw, ph)
       }
-      // Keep only the painted shapes, filled with the second photo placed like object-fit: contain.
-      const scale = Math.min(w / photo.naturalWidth, h / photo.naturalHeight)
-      const pw = photo.naturalWidth * scale, ph = photo.naturalHeight * scale
-      ctx.globalCompositeOperation = 'source-in'
-      ctx.drawImage(photo, (w - pw) / 2, (h - ph) / 2, pw, ph)
-      frame = requestAnimationFrame(draw)
+      const tail = chain[COUNT - 1]
+      const settling = energy > 0.004 || Math.hypot(target.x - tail.x, target.y - tail.y) > 0.5
+      if (settling) frame = requestAnimationFrame(tick)
+      else { frame = 0; then = 0; energy = 0 }
     }
-    const run = () => { if (!frame) frame = requestAnimationFrame(draw) }
-    const paint = (x: number, y: number, now: number) => {
-      if (last) {
-        const dx = x - last.x, dy = y - last.y, dist = Math.hypot(dx, dy)
-        const speed = dist / Math.max(1, now - last.t) // px per ms
-        const size = Math.max(26, Math.min(95, 26 + speed * 55))
-        const angle = Math.atan2(dy, dx) * 0.35 + 0.19 // mostly level, tilted like the reference, leaning with the stroke
-        const steps = Math.max(1, Math.floor(dist / 9))
-        for (let i = 1; i <= steps; i++) blobs.push({ x: last.x + dx * i / steps, y: last.y + dy * i / steps, born: now, size, angle })
-      }
-      last = { x, y, t: now }
-      run()
-    }
+    const run = () => { if (!frame) frame = requestAnimationFrame(tick) }
     const move = (event: PointerEvent) => {
       fit()
       const box = figure.getBoundingClientRect()
-      paint(event.clientX - box.left, event.clientY - box.top, performance.now())
+      place(event.clientX - box.left, event.clientY - box.top)
+      run()
     }
-    const leave = () => { last = null }
+    const leave = () => { live = false }
     // One stroke by itself when the card opens.
     let teaser = 0
     const tease = window.setTimeout(() => {
       fit()
-      const start = performance.now(), from = { x: w * 0.08, y: h * 0.3 }, to = { x: w * 0.92, y: h * 0.46 }
-      last = { ...from, t: start }
+      const start = performance.now(), from = { x: w * 0.02, y: h * 0.26 }, to = { x: w * 0.98, y: h * 0.4 }
+      live = false
+      place(from.x, from.y)
       const step = (now: number) => {
-        const p = Math.min(1, (now - start) / 650), e = 1 - (1 - p) ** 3
-        paint(from.x + (to.x - from.x) * e, from.y + (to.y - from.y) * e, now)
-        if (p < 1) teaser = requestAnimationFrame(step); else last = null
+        const p = Math.min(1, (now - start) / 900), e = p < 0.5 ? 4 * p ** 3 : 1 - (-2 * p + 2) ** 3 / 2
+        target.x = from.x + (to.x - from.x) * e; target.y = from.y + (to.y - from.y) * e
+        run()
+        if (p < 1) teaser = requestAnimationFrame(step); else live = false
       }
       teaser = requestAnimationFrame(step)
-    }, 700)
+    }, 650)
     figure.addEventListener('pointermove', move)
     figure.addEventListener('pointerleave', leave)
     return () => {
