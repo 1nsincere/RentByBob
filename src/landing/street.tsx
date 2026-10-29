@@ -370,7 +370,7 @@ function Student({ label, open, onToggle, tr }: { label: string; open: boolean; 
     </svg>
     </button>
     <span className="lp-say lp-say--pet" aria-hidden="true">{tr('Hi, Bantay!', 'Hi, Bantay!')}</span>
-    <span className="lp-say lp-say--buy" aria-hidden="true">{tr('One bag, please!', 'Usa ka supot, palihug!')}</span>
+    <span className="lp-say lp-say--buy" aria-hidden="true">{tr('Papalita ko ya!', 'Papalita ko ya!')}</span>
     <span className="lp-say lp-say--hello" aria-hidden="true">{tr('Pandesal, Sir Bob?', 'Pandesal, Sir Bob?')}</span>
   </div>
 }
@@ -593,7 +593,7 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
       <circle className="lp-tree-shadow" cx="23" cy="24" r="16" /><circle className="lp-tree-crown" cx="20" cy="20" r="16" />
       <circle className="lp-tree-leaf" cx="14" cy="15" r="7" /><circle className="lp-tree-leaf" cx="25" cy="23" r="6" /><circle className="lp-tree-leaf" cx="15" cy="26" r="5" />
     </svg>)}
-    {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} extra={index >= 4} vendorLine={tr('Still warm! Malunggay pandesal!', 'Init pa! Malunggay pandesal!')} />)}
+    {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} extra={index >= 4} vendorLine={tr('Malunggay Pandesal, init pa with cheese, tag singko lang!', 'Malunggay Pandesal, init pa with cheese, tag singko lang!')} />)}
     <Bob label={tr('This is Bob', 'Kini si Bob')} line={tr('Thank you, iho!', "Salamat, 'do!")} />
     <Dog heart="♥" bark={tr('Arf!', 'Aw aw!')} />
     <Student label={tr('The developer, and a tenant here too', 'Ang developer, ug nag-abang sad dinhi')} open={profile} onToggle={() => setProfile(open => !open)} tr={tr} />
