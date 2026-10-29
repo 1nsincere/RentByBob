@@ -141,7 +141,12 @@
 .lp-plan-frame { padding: .7rem; border-radius: 1.1rem; background: linear-gradient(160deg, #2a6a50, #163d2e 60%); box-shadow: 0 40px 80px -40px rgb(0 0 0 / 80%), 0 0 0 1px rgb(243 239 226 / 10%); transform-origin: 50% 60%; transition: filter 600ms ease; }
 .lp-plan-note { margin: .8rem 0 0; font: .8rem var(--mono); color: var(--muted-night); }
 
-/* Street plan */
+/* Street plan. On a phone it is drawn wider than the screen and scrolls sideways inside its frame. */
+.lp-plan-wrap { position: relative; }
+.lp-plan-scroll { overflow-x: auto; overscroll-behavior-x: contain; border-radius: .6rem; scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 40%) transparent; }
+.lp-plan-scroll:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.lp-swipe-hint { display: none; }
+@media (max-width: 47.99rem) { .lp-plan { min-width: 42rem; } .lp-swipe-hint { display: inline; } }
 .lp-plan { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-radius: .6rem; color: #eef6f0;
   background: radial-gradient(120% 80% at 30% 0%, #2a6a50 0%, #1d4d3b 55%, #163d2e 100%); }
 .lp-plan::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgb(255 255 255 / 6%) 1px, transparent 1.4px); background-size: 14px 14px; }

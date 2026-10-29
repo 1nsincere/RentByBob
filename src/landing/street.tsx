@@ -405,7 +405,13 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
     window.addEventListener('keydown', close)
     return () => window.removeEventListener('keydown', close)
   }, [profile])
-  return <div className={`lp-plan${profile ? ' has-profile' : ''}`} role="group" aria-label={tr('Site plan on B. Zubiri St and Mariano Abella St. Glowing doors and windows are spaces open now. Choose a home to see rooms.', 'Plano sa B. Zubiri St ug Mariano Abella St. Ang nagsiga nga pultahan ug bintana bakante karon. Pilia ang balay aron makita ang kwarto.')}>
+  // On a phone the plan is wider than the screen and scrolls sideways inside its frame (so it can be drawn larger); the
+  // legend stays put over it and the profile card is a page-level dialog.
+  return <div className="lp-plan-wrap">
+    <Legend tr={tr} onDeveloper={() => setProfile(true)} />
+    {profile && <ProfileCard onClose={() => setProfile(false)} tr={tr} language={language} />}
+    <div className="lp-plan-scroll" tabIndex={0} role="region" aria-label={tr('Street map. Scroll sideways to see all of it on a small screen.', 'Mapa sa dalan. I-scroll pa-sidlakan aron makita tanan sa gamay nga screen.')}>
+    <div className={`lp-plan${profile ? ' has-profile' : ''}`} role="group" aria-label={tr('Site plan on B. Zubiri St and Mariano Abella St. Glowing doors and windows are spaces open now. Choose a home to see rooms.', 'Plano sa B. Zubiri St ug Mariano Abella St. Ang nagsiga nga pultahan ug bintana bakante karon. Pilia ang balay aron makita ang kwarto.')}>
     <span className="lp-plan-road lp-plan-road--main" aria-hidden="true"><b>B. ZUBIRI ST.</b></span>
     <span className="lp-plan-road lp-plan-road--side" aria-hidden="true"><b><span className="lp-road-long">MARIANO ABELLA ST.</span><span className="lp-road-short">M. ABELLA ST.</span></b></span>
     {LAMPS.map(([left, side]) => <span key={`${left}${side}`} className={`lp-lamp lp-lamp--${side}`} style={{ left: `${left}%` } as CSSProperties} aria-hidden="true" />)}
@@ -416,8 +422,6 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
     {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} />)}
     <Bob label={tr('This is Bob', 'Kini si Bob')} />
     <Student label={tr('The developer, and a tenant here too', 'Ang developer, ug nag-abang sad dinhi')} open={profile} onToggle={() => setProfile(open => !open)} tr={tr} />
-    <Legend tr={tr} onDeveloper={() => setProfile(true)} />
-    {profile && <ProfileCard onClose={() => setProfile(false)} tr={tr} language={language} />}
     {SITE.map(site => {
       const open = (openByBuilding.get(site.label) ?? []).slice(0, site.spaces)
       const lit = open.length
@@ -430,5 +434,7 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
       </a>
     })}
     <span className="lp-compass" aria-hidden="true">N</span>
+    </div>
+    </div>
   </div>
 }

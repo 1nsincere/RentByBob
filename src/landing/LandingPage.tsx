@@ -299,7 +299,7 @@ export function LandingPage() {
           </div>
           <div className="lp-street-stage">
             <div className="lp-plan-frame"><StreetPlan openByBuilding={openByBuilding} known={known} active={active} setActive={setActive} language={language} /></div>
-            <p className="lp-plan-note">{tr('Not to scale. Hover or tap a home to see its rooms.', 'Dili sukod. I-hover o i-tap ang balay aron makita ang kwarto.')}</p>
+            <p className="lp-plan-note">{tr('Not to scale. Hover or tap a home to see its rooms.', 'Dili sukod. I-hover o i-tap ang balay aron makita ang kwarto.')}<span className="lp-swipe-hint"> {tr('Swipe sideways to see the whole street.', 'I-swipe pa-sidlakan aron makita ang tibuok dalan.')}</span></p>
           </div>
         </div>
       </section>
