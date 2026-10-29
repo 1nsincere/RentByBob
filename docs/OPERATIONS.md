@@ -98,3 +98,21 @@ The current local schema includes migration `202610160009`; apply only with `npx
 There is no resend/reissue path for a previously attempted property/recipient. The unique-recipient guard depends on retaining the private attempt row indefinitely at present. Do not manually delete such rows or use a different identifier to try again; obtain the owner-approved reissue and retention policy first. A revocation can race after the transactional dispatch claim but before Auth is called; any issued invite still requires separate owner assignment.
 
 The local API test registers intended recipient emails and attempt UUIDs before invoking Auth. Its cleanup queries only those UUIDs, this run's property, the created Auth users and matching Mailpit messages; it does not reset or delete existing fictional accounts, properties, MFA factors or directory records. PGlite/workflow fault tests simulate provider and audit failures; actual local Supabase Auth tests exercise successful dispatch, concurrent HTTP retries, acceptance and cleanup, not an injected Auth timeout. See STATUS.md for current counts and limitations.
+
+## Hosted trial: keep-alive, uptime check and daily backup - 29 Oct 2026
+
+Two GitHub Actions workflows keep the free-tier trial running (both are in `.github/workflows/`, both can be started by hand from the Actions tab):
+
+- **Keep alive and uptime check** (`keep-alive.yml`, daily 09:17 Manila). Calls `read_public_listings` (a real database read) so Supabase Free never pauses the project (it pauses after about 7 days idle), then requests `/`, `/rooms`, `/sign-in` and `/auth/callback` on the live site and fails if any is not 200. A failed run emails the repository owner.
+- **Daily database backup** (`backup.yml`, daily 23:47 Manila). `pg_dump` of the hosted database (`public`, `auth`, `private`), checked readable, encrypted with AES-256 (gpg) and kept 30 days as a workflow artifact. Free Supabase has no backups of its own.
+
+Repository secrets to add (GitHub, Settings, Secrets and variables, Actions, New repository secret):
+
+| Secret | Value |
+|---|---|
+| `SUPABASE_URL` | `https://hxkfuwqxpykckxvsbvbc.supabase.co` |
+| `SUPABASE_ANON_KEY` | the publishable key only |
+| `SUPABASE_DB_URL` | Supabase, Connect, **Session pooler** connection string with the database password filled in (the direct connection is IPv6-only and GitHub cannot reach it) |
+| `BACKUP_PASSPHRASE` | a long random passphrase; also store it in the owner's password manager, because a backup cannot be opened without it |
+
+**Restore (rehearse into a new Supabase project or local container first, never over live data):** download the artifact, unzip, `gpg --decrypt rentbybob-DATE.dump.gpg > backup.dump`, then `pg_restore --no-owner --clean --if-exists -d "<target connection string>" backup.dump`. Keep a copy of the newest backup outside GitHub (external drive) once a month. Limits: the dump holds accounts and MFA records, so protect the passphrase; Supabase Pro adds provider backups and no pausing and should replace this once the client pays.
