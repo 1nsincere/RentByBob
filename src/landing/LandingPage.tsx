@@ -152,7 +152,11 @@ function simulatedMinutes(hash: string): number | null {
 }
 const clockText = (minutes: number) => `${(Math.floor(minutes / 60) + 11) % 12 + 1}:${String(minutes % 60).padStart(2, '0')} ${minutes < 720 ? 'AM' : 'PM'}`
 
+// True when this tab already has a saved sign-in, so the menu button says so.
+const signedInHere = (() => { try { return Object.keys(sessionStorage).some(key => /^sb-.+-auth-token$/.test(key)) } catch { return false } })()
+
 export function LandingPage() {
+  const signedIn = signedInHere
   const [language, setLanguage] = useState<Language>(() => { try { return localStorage.getItem('rentbybob-language') === 'ceb' ? 'ceb' : 'en' } catch { return 'en' } })
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [listings, setListings] = useState<PublicListings | null>(null)
@@ -245,7 +249,7 @@ export function LandingPage() {
       </nav>
       <div className="lp-nav-actions">
         <button type="button" className="lp-lang" aria-label={language === 'en' ? 'Gamita ang Bisaya' : 'Use English'} onClick={() => setLanguage(language === 'en' ? 'ceb' : 'en')}><span className={language === 'en' ? 'is-on' : ''}>EN</span><span className={language === 'ceb' ? 'is-on' : ''}>CEB</span></button>
-        <a className="lp-pill lp-pill--light" href="/sign-in">{tr('Sign in', 'Sulod')}</a>
+        <a className="lp-pill lp-pill--light" href="/sign-in">{signedIn ? tr('Open my account', 'Ablihi ang akong account') : tr('Sign in', 'Sulod')}</a>
       </div>
     </header>
 
@@ -299,7 +303,7 @@ export function LandingPage() {
           </div>
           <div className="lp-street-stage">
             <div className="lp-plan-frame"><StreetPlan openByBuilding={openByBuilding} known={known} active={active} setActive={setActive} language={language} /></div>
-            <p className="lp-plan-note">{tr('Not to scale. Hover or tap a home to see its rooms.', 'Dili sukod. I-hover o i-tap ang balay aron makita ang kwarto.')}</p>
+            <p className="lp-plan-note">{tr('Not to scale. Hover or tap a home to see its rooms.', 'Dili sukod. I-hover o i-tap ang balay aron makita ang kwarto.')}<span className="lp-swipe-hint"> {tr('Swipe sideways to see the whole street.', 'I-swipe pa-sidlakan aron makita ang tibuok dalan.')}</span></p>
           </div>
         </div>
       </section>
