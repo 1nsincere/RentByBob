@@ -5,7 +5,7 @@ import path from 'node:path'
 import { chromium } from '@playwright/test'
 
 // Serves the PRODUCTION build (run `npm run build` first) the way Cloudflare Pages would: the rules in
-// dist/_headers and the /rooms rewrite in dist/_redirects. Opens the sign-in page and the public rooms page and fails
+// dist/_headers and single-page routing of /rooms (wrangler.jsonc). Opens the sign-in page and the public rooms page and fails
 // on any Content-Security-Policy violation, so a deploy cannot ship a page its own security headers would break.
 // Local builds may point at a local Supabase (http://127.0.0.1); those connect-src reports are expected and ignored
 // because a deployed build uses an https://*.supabase.co project.
