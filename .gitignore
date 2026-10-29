@@ -10,3 +10,6 @@ supabase/.temp/
 supabase/.branches/
 test-results/
 playwright-report/
+
+# TypeScript incremental build cache (changes on every build)
+tsconfig.tsbuildinfo

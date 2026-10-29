@@ -3,49 +3,7 @@ import { Button } from '../components/atoms'
 import { useProperty, change, occupant, roomPeople, rooms, type Building } from './property-preview-store'
 import { WorkspaceIcon } from '../components/WorkspaceIcon'
 import { type Language } from '../i18n'
-
-function BuildingArt({ building }: { building: Building }) {
-  const count = building.floors.reduce((n, f) => n + f.rooms.length, 0)
-  return <svg viewBox="0 0 120 72" className="building-art" aria-hidden="true">
-    <path d="M12 23 60 5 108 23V28H12Z" fill="currentColor" opacity=".7" />
-    <rect x="20" y="28" width="80" height="39" rx="3" fill="currentColor" opacity=".18" />
-    {Array.from({ length: Math.min(12, Math.max(2, count)) }, (_, i) => <rect key={i} x={29 + (i % 6) * 11} y={34 + Math.floor(i / 6) * 14} width="7" height="9" rx="1" fill="currentColor" />)}
-    <path d="M14 68H106" stroke="currentColor" strokeWidth="3" />
-  </svg>
-}
-
-function BuildingFacade({ building, language = 'en' }: { building: Building; language?: Language }) {
-  const tr = (en: string, ceb: string) => language === 'ceb' ? ceb : en
-  const storyHeight = 180
-  const wallTop = 91
-  const wallBottom = wallTop + building.floors.length * storyHeight
-  const height = wallBottom + 30
-  return <svg className="facade-art" viewBox={`0 0 720 ${height}`} role="img" aria-label={`${building.floors.length}-${tr('floor illustrative facade with decorative room doors; door symbols do not indicate room count','andana nga hulagway sa atubangan nga adunay dekorasyon nga pultahan; dili sukod sa gidaghanon sa kwarto ang mga pultahan')}`}>
-    <path className="facade-roof-shape" d="M34 91 360 12 686 91 678 108 360 39 42 108Z" />
-    <path className="facade-roof-edge" d="M40 91 360 16 680 91" />
-    <path className="facade-wall" d={`M68 96 360 34 652 96V${wallBottom}H68Z`} />
-    <path className="facade-gable-detail" d="M112 88 360 38 608 88" />
-    {building.floors.map((floor, floorIndex) => {
-      const rowTop = wallTop + floorIndex * storyHeight
-      const doorY = rowTop + 34
-      return <g className="facade-story" key={floor.label}>
-        {floorIndex > 0 && <path className="facade-story-line" d={`M72 ${rowTop}H648`} />}
-        <text className="facade-floor-label" x="82" y={rowTop + 17}>{floor.label}</text>
-        {Array.from({ length: 6 }, (_, doorIndex) => {
-          const x = 145 + doorIndex * 82
-          return <g className="facade-room-door" key={doorIndex} transform={`translate(${x} ${doorY})`}>
-            <rect className="facade-door-frame" width="58" height="110" rx="2" />
-            <rect className="facade-door-panel" x="6" y="6" width="46" height="98" rx="1" />
-            <path className="facade-door-panel-line" d="M8 66H50" />
-            <circle className="facade-door-knob" cx="45" cy="78" r="2.5" />
-          </g>
-        })}
-      </g>
-    })}
-    <path className="facade-foundation" d={`M58 ${wallBottom}H662V${wallBottom + 12}H58Z`} />
-    <path className="facade-ground-line" d={`M38 ${wallBottom + 16}H682`} />
-  </svg>
-}
+import { BuildingArt, BuildingFacade, isRentalRoom } from './BuildingDrawings'
 
 export function TenantDirectoryPreview({ openMap, addTenant, openPayments, language = 'en' }: { openMap: () => void; addTenant: () => void; openPayments: () => void; language?: Language }) {
   const bi = language === 'ceb'
@@ -95,6 +53,14 @@ export function PropertyMapPreview({ addTenant, language = 'en' }: { addTenant: 
     select(id)
     if (['bob', 'b1', 'b2'].includes(id)) setEnteredBuilding(id)
   }
+  // Tile subtitle follows the entered layout: confirmed rentable rooms, floors and named special spaces.
+  function buildingSummary(b: Building) {
+    const rentable = b.floors.flatMap(f => f.rooms).filter(isRentalRoom).length
+    const special = b.floors.flatMap(f => f.rooms).filter(r => !isRentalRoom(r))
+    if (!rentable) return special[0]?.kind === 'House' ? tr('Whole-house rental','Abang sa tibuok balay') : tr('Commercial space','Lugar pangnegosyo')
+    const unset = b.floors.some(f => f.count === null)
+    return [`${rentable}${unset ? '+' : ''} ${tr(rentable === 1 ? 'room' : 'rooms','ka kwarto')}`, `${b.floors.length} ${tr(b.floors.length === 1 ? 'floor' : 'floors','andana')}`, ...special.map(r => r.label)].join(' · ')
+  }
   function update(next: Building) { change({ buildings: buildings.map(b => b.id === next.id ? next : b) }) }
   const selectedRoom = floor.rooms.find(r => r.id === room)
   const floorCountLabel = (count: number | null) => count === null ? tr('Not set','Wala pa matino') : `${count} ${tr(count === 1 ? 'rentable room' : 'rentable rooms',count === 1 ? 'kwarto nga paabangan' : 'mga kwarto nga paabangan')}`
@@ -110,7 +76,8 @@ export function PropertyMapPreview({ addTenant, language = 'en' }: { addTenant: 
     const nextRooms = Array.from({ length: count }, (_, i) => existing[i] ?? rooms(`${building.id}-floor${index}`, count)[i]);
     const nextFloors = building.floors.map((f, i) => i === index ? { ...f, count, rooms: [...nextRooms, ...f.rooms.filter(r => r.kind !== 'Room')] } : f);
     update({ ...building, name: String(values.get('building-name')).trim(), floors: nextFloors }); change({ room: '' }); setMessage(tr('Preview layout updated. Reloading restores the original sketch.','Nausab ang layout sa sample. Mobalik ang orihinal nga hulagway inig abli pag-usab.'));
-  }}><h4>{tr('Edit this floor','Usba kining andana')}</h4><label htmlFor="edit-building-name">{tr('Building name','Ngalan sa bilding')}</label><input id="edit-building-name" name="building-name" defaultValue={building.name} required pattern=".*\S.*" maxLength={80} /><label htmlFor="room-count">{tr('Rentable rooms on this floor','Mga kwarto nga paabangan niining andana')}</label><input id="room-count" name="count" type="number" min={0} max={40} defaultValue={floor.count ?? ''} placeholder={tr('Not set','Wala pa matino')} required /><p className="field-help">{tr('Only enter a count when confirmed. Apartments, shops and shared spaces stay separate. Maximum 40 rooms per floor in this preview.','Ibutang lang ang ihap kon kumpirmado na. Lahi ang apartment, tindahan ug gipaambit nga lugar. Kutob sa 40 ka kwarto matag andana niining sample.')}</p><Button className="primary">{tr('Update preview layout','I-update ang layout sa sample')}</Button></form></div>
+  }}><h4>{tr('Edit this floor','Usba kining andana')}</h4><label htmlFor="edit-building-name">{tr('Building name','Ngalan sa bilding')}</label><input id="edit-building-name" name="building-name" defaultValue={building.name} required pattern=".*\S.*" maxLength={80} /><label htmlFor="room-count">{tr('Rentable rooms on this floor','Mga kwarto nga paabangan niining andana')}</label><input id="room-count" name="count" type="number" min={0} max={40} defaultValue={floor.count ?? ''} placeholder={tr('Not set','Wala pa matino')} required /><p className="field-help">{tr('Only enter a count when confirmed. Apartments, shops and shared spaces stay separate. You can increase the count later if the property grows. Maximum 40 rooms per floor in this preview.','Ibutang lang ang ihap kon kumpirmado na. Lahi ang apartment, tindahan ug gipaambit nga lugar. Mahimo nimong taasan ang ihap kon motubo ang property. Kutob sa 40 ka kwarto matag andana niining sample.')}</p><Button className="primary">{tr('Update preview layout','I-update ang layout sa sample')}</Button></form></div>
+
   const roomEditor = selectedRoom && <form className="room-editor" key={selectedRoom.id} onSubmit={e => { e.preventDefault(); const label = String(new FormData(e.currentTarget).get('room-label')).trim(); update({ ...building, floors: building.floors.map((f, i) => i === index ? { ...f, rooms: f.rooms.map(r => r.id === selectedRoom.id ? { ...r, label } : r) } : f) }); setMessage(tr('Room label updated in this preview.','Nausab ang ngalan sa kwarto niining sample.')) }}><div><p className="eyebrow">{tr('SELECTED SPACE','NAPILING LUGAR')}</p><h4>{selectedRoom.label}</h4><p>{occupant(selectedRoom.id)?.name ?? tr('No tenant assigned','Walay nag-abang nga gi-assign')} · {selectedRoom.kind === 'Shared space' ? tr('Shared space','Gipaambit nga lugar') : tr('Room','Kwarto')}</p></div><div><label htmlFor="room-label">{tr('Room or space label','Ngalan sa kwarto o lugar')}</label><input id="room-label" name="room-label" defaultValue={selectedRoom.label} required pattern=".*\S.*" maxLength={60} /></div><Button className="secondary-button">{tr('Rename space','Usba ang ngalan sa lugar')}</Button>{selectedRoom.kind !== 'Shared space' && <Button type="button" className="primary" onClick={() => { change({ draftLocation: { building: building.id, room: selectedRoom.id } }); addTenant() }}>{tr('Add tenant to this space','Idugang ang nag-abang dinhi')}</Button>}<div className="room-occupants"><h4 className="occupant-count"><WorkspaceIcon kind="people" />{roomPeople(selectedRoom.id).length} {tr('people in this space','ka tawo niining lugara')}</h4>{roomPeople(selectedRoom.id).length ? <ul className="occupant-roster">{roomPeople(selectedRoom.id).map((name, i) => <li key={i}><WorkspaceIcon kind="people" /><span>{name}</span></li>)}</ul> : <p>{tr('No occupants recorded.','Walay nagpuyo nga narekord.')}</p>}<p className="field-help">{tr('Rental rooms: minimum 2 occupants. Maximum capacity has not been confirmed.','Mga kwarto nga paabangan: labing menos 2 ka nagpuyo. Wala pa matino ang pinakadaghan nga mahimo.')}</p></div></form>
   return <section className="property-visual" aria-labelledby="property-map-heading">
     <div className="section-heading"><div><p className="eyebrow">{tr('YOUR PROPERTY, AT A GLANCE','IMONG PROPIEDAD, SA USA KA TAN-AW')}</p><h2 id="property-map-heading">{tr('Buildings and units','Mga bilding ug kwarto')}</h2><p>{tr('Explore the site, select a floor, and manage its rental spaces.','Tan-awa ang lugar, pilia ang andana, ug dumalaa ang mga paabangan.')}</p></div><Button className="primary" onClick={() => setAdding(!adding)} aria-expanded={adding}>+ {tr('Add building','Idugang ang bilding')}</Button></div>
@@ -119,7 +86,7 @@ export function PropertyMapPreview({ addTenant, language = 'en' }: { addTenant: 
     {!enteredBuilding && view === 'map' && <div className="map-scroll" tabIndex={0} role="region" aria-label={tr('Property sketch. Scroll horizontally on small screens, or use Building list.','Hulagway sa propiedad. I-scroll pahalang sa gamay nga screen o gamita ang lista sa mga bilding.')}><div className="property-plan">
       <svg viewBox="0 0 1000 650" preserveAspectRatio="none" className="plan-roads" aria-hidden="true"><path d="M0 400H1000M230 400V650" stroke="#343c38" strokeWidth="58" /><path d="M0 400H1000M230 440V650" stroke="#d4d9d3" strokeWidth="2" strokeDasharray="12 12" /></svg>
       <span className="road-label">{tr('ACCESS ROAD','AGIANAN PADULONG SA PROPIEDAD')}</span><span className="plan-caption">{tr('PROPERTY OVERVIEW','TIBUOK NGA PROPIEDAD')}</span>
-      {buildings.filter(b => b.x !== undefined).map(b => <button type="button" key={b.id} className={`plan-building ${b.id === selected ? 'selected' : ''} ${b.id.startsWith('store') ? 'store-building' : ''}`} style={{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.w}%`, height: `${b.h}%` }} onClick={() => explore(b.id)} aria-pressed={b.id === selected} aria-label={`${tr('Explore','Tan-awa')} ${b.name}`}><BuildingArt building={b} /><strong>{b.name}</strong>{!b.id.startsWith('store') && <span>{b.id === 'bob' ? `${b.floors[0].count ?? '?'} ${tr('rooms for rent','ka kwarto nga paabangan')}` : b.id === 'b1' ? `2 ${tr('floors · Apartment','andana · Apartment')}` : b.id === 'b2' ? `2 ${tr('floors · Gym','andana · Gym')}` : b.id === 'house' ? tr('Whole-house rental','Abang sa tibuok balay') : tr('Commercial space','Lugar pangnegosyo')}</span>}</button>)}
+      {buildings.filter(b => b.x !== undefined).map(b => <button type="button" key={b.id} className={`plan-building ${b.id === selected ? 'selected' : ''} ${b.id.startsWith('store') ? 'store-building' : ''}`} style={{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.w}%`, height: `${b.h}%` }} onClick={() => explore(b.id)} aria-pressed={b.id === selected} aria-label={`${tr('Explore','Tan-awa')} ${b.name}`}><BuildingArt building={b} /><strong>{b.name}</strong>{!b.id.startsWith('store') && <span>{buildingSummary(b)}</span>}</button>)}
     </div></div>}
     {!enteredBuilding && view === 'list' && <div className="building-list">{buildings.map(b => <button type="button" key={b.id} className={`building-list-card ${b.id === selected ? 'selected' : ''}`} aria-pressed={b.id === selected} onClick={() => explore(b.id)}><BuildingArt building={b} /><strong>{b.name}</strong><span>{b.floors.length} {tr(b.floors.length === 1 ? 'level' : 'levels',b.floors.length === 1 ? 'andana' : 'andana')}</span></button>)}</div>}
     {!enteredBuilding && view === 'map' && buildings.some(b => b.x === undefined) && <div className="unplaced-buildings"><h3>{tr('Not placed on sketch','Wala pa gibutang sa hulagway')}</h3>{buildings.filter(b => b.x === undefined).map(b => <Button key={b.id} aria-pressed={selected === b.id} onClick={() => select(b.id)}>{b.name}</Button>)}</div>}
@@ -128,8 +95,8 @@ export function PropertyMapPreview({ addTenant, language = 'en' }: { addTenant: 
       <div className="building-entry-title"><div><p className="eyebrow">{tr('FRONT VIEW · ILLUSTRATIVE ONLY','ATUBANGAN · HULAGWAY LAMANG')}</p><h3 id="building-entry-heading">{building.name}</h3></div><span className="building-count">{floorCountLabel(totalRoomCount)}</span></div>
       <div className="building-entry-scene">
         <figure className="building-facade">
-          <BuildingFacade building={building} language={language} />
-          <figcaption>{tr('Illustrative lodging-house facade. Door symbols are decorative and do not indicate a room count or surveyed layout.','Pananglitan nga atubangan sa balay-abangan. Dekorasyon lamang ang mga pultahan ug dili sukod sa ihap sa kwarto o plano sa yuta.')}</figcaption>
+          <BuildingFacade building={building} selectedRoom={room} language={language} isOccupied={roomId => Boolean(occupant(roomId))} />
+          <figcaption>{tr('Drawn from the room counts entered for each floor: one door per space, shaded when an example tenant is assigned. Positions and sizes are illustrative, not surveyed.','Gihimo gikan sa ihap sa kwarto matag andana: usa ka pultahan matag lugar, may kolor kon adunay sample nga nag-abang. Pananglitan lamang ang puwesto ug gidak-on, dili sukod.')}</figcaption>
         </figure>
         <div className="floor-count-overview" aria-label={tr('Rentable room counts by floor','Ihap sa mga kwarto nga paabangan matag andana')}>{building.floors.map((item, floorNumber) => <article key={item.label} className="floor-count-card"><span>{item.label}</span><strong>{floorCountLabel(item.count)}</strong><small>{tr('Floor','Andana')} {floorNumber + 1}</small></article>)}</div>
       </div>

@@ -52,7 +52,10 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
 
   await t.test('every application table has RLS and anonymous access is denied', async () => {
     const rows = (await db.query<{ relrowsecurity: boolean }>("select relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'")).rows
-    assert.equal(rows.length, 18)
+    // 21 includes cash_reversals (202610270001), room_listings and rental_inquiries (202610270002); 22 adds agreement_room_changes (202610270009); 23 adds renter_payment_reports (202610270012); every table must still have RLS.
+    // 24 adds rent_month_drafts (202610280001), months copied from the notebook, which have no browser grants.
+    // 25 adds maintenance_expenses (202610280003).
+    assert.equal(rows.length, 25)
     assert.ok(rows.every(r => r.relrowsecurity))
     await db.exec('set role anon')
     await denied('select * from public.tenants')
@@ -142,10 +145,18 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
       from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname in ('public','private') and p.prosecdef
     `)
-    assert.equal(result.rows.length, 32)
+    // 42 adds read_renter_account (202610260001), reverse_rent_cash and end_rental_agreement (202610270001), six
+    // public-listing functions (202610270002) and setup_property_from_sketch (202610270003). Update only after review.
+    // 43 adds register_tenant (202610270004); 48 adds the five trusted-device functions (202610270007); 49 adds set_auto_listing (202610270008); 55 adds automatic rent, room change and remove tenant (202610270009); 59 adds advance credit (202610270010); 64 adds renter payment reports (202610270012); 65 adds withdraw_payment_report (202610270013); 68 adds check bank details and staff names (202610270014).
+    // 74 adds the six notebook-month and move-in double-check functions (202610280001), each staff-only with no anonymous grant.
+    // 78 adds remove_tenant_with_room (202610280002) and the three maintenance functions (202610280003), staff-only.
+    // 79 adds private.add_rent_month_core (202610280005), not callable from the browser.
+    assert.equal(result.rows.length, 79)
+    // The only reviewed anonymous entry points: read listed rooms and leave an inquiry (202610270002).
+    const anonymousAllowed = new Set(['read_public_listings', 'submit_rental_inquiry'])
     for (const fn of result.rows) {
       assert.ok(fn.proconfig.some(value => value === 'search_path=""'), fn.proname)
-      assert.equal(fn.anon_execute, false, fn.proname)
+      assert.equal(fn.anon_execute, anonymousAllowed.has(fn.proname), fn.proname)
     }
   })
   await t.test('archival audit failure leaves record and access unchanged', async () => {
@@ -293,8 +304,7 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     await assert.rejects(db.query(sql,[otherProperty,id(62),'Cross-property unit',id(60)]))
     await as(clerk)
     assert.equal((await db.query('select * from public.units')).rows.length,2)
-    await denied(sql,[property,id(63),'Not allowed',null])
-    await denied(manage,[property,id(65),'archive',null,'Clerk cannot archive'])
+    // Clerks run the system (28 Oct 2026): creating and managing locations is allowed for them; MFA is still required.
     await as(owner,'aal1');await denied(sql,[property,id(63),'MFA required',null])
     await denied(manage,[property,id(65),'rename','No MFA','MFA required'])
     await as(business,'aal1')

@@ -1,66 +1,111 @@
-@import "tailwindcss";
+/* Scan only app source for classes: docs/screenshots edits must not reload a running dev server mid-test. */
+@import "tailwindcss" source(".");
 
 :root {
   color-scheme: light;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-text);
+  --font-text: Inter, "Segoe UI Variable Text", "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: Inter, "Segoe UI Variable Display", "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--text);
   background: var(--page);
   font-size: 112.5%;
   line-height: 1.55;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --page: #f7f4ed;
-  --surface: #fff;
-  --support: #eeebe4;
-  --text: #252b31;
-  --text-secondary: #4b535c;
-  --brand: #245a81;
-  --brand-hover: #194363;
-  --action: #245a81;
-  --action-hover: #194363;
+  /* Boarding-house palette (27 Oct 2026): leaf green actions, sunlit-yellow accents, sky-green tints, warm cream
+     paper and green-black ink, matching the yellow and sky-green buildings. Status colours stay distinct. */
+  --page: #f7f5ec;
+  --surface: #fffefa;
+  --support: #eef3e8;
+  --text: #1c2a23;
+  --text-secondary: #4d5b53;
+  --brand: #1f6b4f;
+  --brand-hover: #185740;
+  --brand-tint: rgb(31 107 79 / 10%);
+  --action: #1f6b4f;
+  --action-hover: #185740;
+  --action-gradient: linear-gradient(180deg, #23785a 0%, #1f6b4f 100%);
+  --hero-gradient: radial-gradient(520px 260px at 92% 8%, rgb(242 194 48 / 24%), transparent 70%), linear-gradient(135deg, #23785a 0%, #1a5c43 100%);
   --on-action: #fff;
-  --surface-hover: #f0f3f5;
-  --surface-alt: #faf9f6;
-  --table-heading: #e9edf0;
-  --border-hover: #c7c4bc;
-  --pressed-surface: #e1e8ed;
-  --avatar-surface: #e7edf1;
-  --notice-border: #b9cbc1;
-  --error-border: #dbb4ae;
-  --success-border: #b7cdbd;
-  --warning-border: #c8b17e;
-  --accent: #8d642e;
-  --border: #ddd8cf;
-  --control-border: #747982;
-  --error: #8a2929;
-  --error-surface: #fff0ed;
-  --success: #245c3d;
-  --success-surface: #edf5ef;
-  --warning: #70490d;
-  --warning-surface: #fbf3df;
-  --focus: #245a81;
-  --radius: 0.75rem;
-  --radius-small: 0.45rem;
-  --shadow-card: 0 2px 10px rgb(37 43 49 / 5%);
+  --surface-hover: #f5f9f1;
+  --surface-alt: #fbfaf4;
+  --table-heading: #edf3e9;
+  --border-hover: #c4d5c6;
+  --pressed-surface: #e1efe4;
+  --avatar-surface: #ddf2e6;
+  --notice-border: #cfe0d2;
+  --error-border: #f2c3bd;
+  --success-border: #b6e0c8;
+  --warning-border: #ecd28a;
+  --accent: #8a6100;
+  --border: #e3e7da;
+  --control-border: #74837a;
+  --error: #b42318;
+  --error-surface: #fdecea;
+  --success: #157347;
+  --success-surface: #e7f6ee;
+  --warning: #8a5a00;
+  --warning-surface: #fff5d6;
+  --focus: #1f6b4f;
+  /* Action colours (button atoms): danger = removal, approve = approval / double check, info = neutral notice. White text on each solid passes 4.5:1. */
+  --on-solid: #fff;
+  --danger: #b42318; --danger-hover: #912018; --danger-pressed: #7a1912;
+  --approve: #157347; --approve-hover: #0f5c38; --approve-pressed: #0b4a2d;
+  --info: #1d4f91; --info-surface: #e6f0fb; --info-border: #b9d2ee;
+  --radius: 1rem;
+  --radius-small: 0.7rem;
+  --shadow-card: 0 1px 2px rgb(20 38 30 / 5%), 0 4px 14px rgb(20 38 30 / 6%);
+  --shadow-raised: 0 2px 4px rgb(20 38 30 / 7%), 0 16px 36px rgb(20 38 30 / 11%);
+  --glow: radial-gradient(1000px 480px at 100% -10%, rgb(242 194 48 / 13%), transparent 60%);
+  --nav-surface: linear-gradient(180deg, #1d5a43 0%, #164634 100%);
+  --nav-text: #dbece1; --nav-label: #bcd8c7; --nav-hover: #236b50;
+  --tone-blue: #1f6b4f; --tone-blue-bg: #ddf2e6;
+  --tone-teal: #0b7f6e; --tone-teal-bg: #e2f6f2;
+  --tone-violet: #8a6100; --tone-violet-bg: #fff3c8;
+  --tone-amber: #a35a00; --tone-amber-bg: #fff2dd;
+  --facade-wall-top: #fffdf2; --facade-wall-bottom: #fbefc2; --facade-line: #d9c886;
+  --facade-roof-top: #2a8a66; --facade-roof-bottom: #1d5a43;
+  --facade-door: #eaf5ee; --facade-door-frame: #2b4a3b;
+  --facade-door-occupied: #1f6b4f; --facade-door-occupied-panel: #3f9a75;
+  --facade-shared: #f7d08a; --facade-shared-edge: #a35a00;
+  --facade-selected: #ea580c; --facade-selected-text: #9a3412; --facade-ground: #9aa89e;
   transition: background-color 160ms ease, color 160ms ease;
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  color: #f1f3f2;
-  background: #171b1d;
-  --page: #171b1d; --surface: #22282b; --support: #2e363a;
-  --text: #f1f3f2; --text-secondary: #c3cbce;
-  --brand: #91c8eb; --brand-hover: #b4dcf6; --accent: #e1bf82;
-  --action: #245a81; --action-hover: #194363; --on-action: #fff;
-  --surface-hover: #343e42; --surface-alt: #282f32; --table-heading: #2e363a;
-  --border-hover: #65747a; --pressed-surface: #2e363a; --avatar-surface: #2e363a;
-  --notice-border: #465156; --error-border: #65747a; --success-border: #65747a; --warning-border: #8c7447;
-  --border: #465156; --control-border: #93a2a8;
-  --error: #ffaaa2; --error-surface: #412927;
-  --success: #9fd4af; --success-surface: #223a2c;
-  --warning: #f0cc83; --warning-surface: #40351e;
-  --focus: #92caff; --shadow-card: 0 2px 12px rgb(0 0 0 / 22%);
+  color: #e9f1ec;
+  background: #0f1914;
+  --page: #0f1914; --surface: #15221b; --support: #1c2c24;
+  --text: #e9f1ec; --text-secondary: #a9bdb1;
+  --brand: #7ed6ae; --brand-hover: #a6e6c8; --brand-tint: rgb(126 214 174 / 12%); --accent: #f5d166;
+  --action: #1f6b4f; --action-hover: #23785a; --on-action: #fff;
+  --action-gradient: linear-gradient(180deg, #23785a 0%, #1f6b4f 100%);
+  --hero-gradient: radial-gradient(520px 260px at 92% 8%, rgb(242 194 48 / 16%), transparent 70%), linear-gradient(135deg, #1f6b4f 0%, #163f30 100%);
+  --surface-hover: #1a2a22; --surface-alt: #131e18; --table-heading: #1c2c24;
+  --border-hover: #34503f; --pressed-surface: #213528; --avatar-surface: #1c3a2c;
+  --notice-border: #2c4436; --error-border: #5d3a38; --success-border: #2f5442; --warning-border: #6d5a37;
+  --border: #263a2f; --control-border: #7f9488;
+  --shadow-raised: 0 2px 4px rgb(0 0 0 / 30%), 0 16px 38px rgb(0 0 0 / 40%);
+  --glow: radial-gradient(1000px 480px at 100% -10%, rgb(242 194 48 / 8%), transparent 60%);
+  --error: #ffaaa2; --error-surface: #3d2224;
+  --success: #8fdcb0; --success-surface: #12332a;
+  --warning: #f5d166; --warning-surface: #3a3014;
+  --on-solid: #fff;
+  --danger: #d92d20; --danger-hover: #b42318; --danger-pressed: #912018;
+  --approve: #1a7f55; --approve-hover: #15694a; --approve-pressed: #105438;
+  --info: #9cc4f5; --info-surface: #14273d; --info-border: #2d4a6e;
+  --nav-surface: linear-gradient(180deg, #12291f 0%, #0b1a13 100%);
+  --nav-text: #cfe3d7; --nav-label: #92b3a1; --nav-hover: #1a3a2c;
+  --tone-blue: #7ed6ae; --tone-blue-bg: #1c3a2c; --tone-teal: #6fd9c5; --tone-teal-bg: #12302f;
+  --tone-violet: #f5d166; --tone-violet-bg: #3a3014; --tone-amber: #f5c26b; --tone-amber-bg: #33270f;
+  --facade-wall-top: #22382c; --facade-wall-bottom: #1a2c22; --facade-line: #3b5a48;
+  --facade-roof-top: #2a8a66; --facade-roof-bottom: #174a36;
+  --facade-door: #23382c; --facade-door-frame: #9ebfab;
+  --facade-door-occupied: #3f9a75; --facade-door-occupied-panel: #2a8a66;
+  --facade-shared: #6b5326; --facade-shared-edge: #f5c26b;
+  --facade-selected: #fb923c; --facade-selected-text: #fdba74; --facade-ground: #4f6a5a;
+  --focus: #a6e6c8; --shadow-card: 0 1px 2px rgb(0 0 0 / 28%), 0 6px 18px rgb(0 0 0 / 26%);
 }
 
 * { box-sizing: border-box; }
@@ -95,7 +140,8 @@ strong, li, time { overflow-wrap: anywhere; }
 .page-intro { margin-bottom: 1.25rem; }
 .page-summary { max-width: 42rem; margin: 0.5rem 0 0; color: var(--text-secondary); font-size: 1rem; }
 .eyebrow { margin: 0 0 0.35rem; color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.075em; line-height: 1.4; }
-.route-heading:focus { outline: 3px solid var(--focus); outline-offset: 4px; border-radius: 0.15rem; }
+/* Headings receive programmatic focus for screen-reader announcement only; they are not operable controls. */
+.route-heading:focus { outline: none; }
 .skip-link { position: fixed; z-index: 20; top: 0.5rem; left: 0.5rem; transform: translateY(-160%); padding: 0.75rem 1rem; border: 2px solid var(--brand); border-radius: var(--radius-small); background: var(--surface); color: var(--text); }
 .skip-link:focus { transform: translateY(0); }
 
@@ -148,6 +194,7 @@ code { max-width: 100%; overflow-wrap: anywhere; }
 .notice--error { border-color: var(--error-border); border-left-color: var(--error); background: var(--error-surface); color: var(--error); }
 .notice--success { border-color: var(--success-border); border-left-color: var(--success); background: var(--success-surface); color: var(--success); }
 .notice:focus { outline: 3px solid var(--focus); outline-offset: 3px; }
+.deferred-failure__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: .75rem 0; }
 .loading-state { margin: 1rem 0; padding: 0.85rem 1rem; border-radius: var(--radius-small); background: var(--support); color: var(--text-secondary); }
 
 .workspace-layout { display: grid; grid-template-columns: 14.5rem minmax(0, 1fr); align-items: start; gap: clamp(1rem, 2.5vw, 2rem); }
@@ -189,6 +236,27 @@ code { max-width: 100%; overflow-wrap: anywhere; }
 .section-heading h2 { margin-bottom: 0; }
 .record-count { color: var(--text-secondary); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
 .tenant-records { margin: 1rem 0 0; }
+.tenant-directory-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; max-width: 46rem; }
+.tenant-directory-filters > div { min-width: 0; }
+.property-directory-search { max-width: 46rem; margin-top: 1rem; }
+.availability-preview-notice { padding: 0.45rem 1rem; background: var(--warning-surface); color: var(--warning); text-align: center; font-size: 0.9rem; font-weight: 650; }
+.availability-preview-header { min-height: 4.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem max(1.25rem, calc((100% - 72rem) / 2)); border-bottom: 1px solid var(--border); background: var(--surface); }
+.availability-preview-mode { color: var(--text-secondary); font-size: 0.95rem; }
+.availability-preview-main { width: min(100% - 2.5rem, 60rem); margin: 0 auto; padding-block: clamp(1.5rem, 5vw, 3rem); }
+.availability-preview-main:focus { outline: none; }
+.availability-preview-intro { max-width: 44rem; margin-bottom: 1.5rem; }
+.availability-preview-intro h1 { margin-bottom: 0.65rem; }
+.availability-preview-intro > p:last-child { max-width: 40rem; margin-bottom: 0; color: var(--text-secondary); }
+.availability-preview-caution { margin-bottom: 1.25rem; padding: 1rem 1.1rem; border: 1px solid var(--warning-border); border-radius: var(--radius); background: var(--warning-surface); color: var(--text); }
+.availability-preview-caution p { margin: 0.25rem 0 0; }
+.availability-buildings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.availability-building { min-width: 0; padding: 1.2rem; }
+.availability-building h2 { margin-bottom: 0.15rem; }
+.availability-building > p { margin: 0; color: var(--text-secondary); }
+.availability-room-list { margin: 0.85rem 0 0; padding: 0; list-style: none; }
+.availability-room { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.85rem 0; border-top: 1px solid var(--border); }
+.availability-preview-footnote { max-width: 50rem; margin: 1.5rem 0 0; color: var(--text-secondary); font-size: 0.95rem; }
+.availability-preview-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); color: var(--text-secondary); text-align: center; font-size: 0.9rem; }
 .records { margin: 1rem 0; padding: 0; list-style: none; }
 .records > li { min-width: 0; padding: 1rem 0; border-top: 1px solid var(--border); }
 .tenant-record { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr) auto; align-items: center; gap: 0.75rem; }
@@ -284,7 +352,7 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .workspace-links a { min-height: 3rem; padding: 0.65rem 0.8rem; border-radius: 0.65rem; }
 .workspace-links a[aria-current="location"] { background: var(--action); color: var(--on-action); border-left-color: transparent; }
 .workspace-toolbar { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: transparent; padding: 0 0 1.25rem; }
-.workspace-section:focus, .directory-card:focus, .account-security:focus { outline: 2px solid var(--focus); outline-offset: 4px; }
+.workspace-section:focus-visible, .directory-card:focus-visible, .account-security:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
 .card { border-radius: 1rem; box-shadow: 0 4px 24px rgb(32 40 36 / 4%); }
 .tenant-records > li { padding: 1.1rem 0.25rem; }
 .record-initial { border: 0; border-radius: 0.75rem; }
@@ -358,7 +426,7 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .directory-filters { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; padding: 1rem; }
 .directory-filters label { margin-top: 0; }
 .tenant-card-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,19rem),1fr)); gap: 1rem; }
-.tenant-person-card { margin: 0; padding: 1.3rem; border-top: 4px solid var(--accent); }
+.tenant-person-card { margin: 0; padding: 1.3rem; }
 .person-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: .8rem; }
 .tenant-avatar { background: var(--avatar-surface); color: var(--brand-hover); display: grid; place-items: center; border-radius: 50%; width: 3.3rem; height: 3.3rem; font-weight: 700; }
 .tenant-person-card h3 { margin: .4rem 0; font-size: 1.15rem; }
@@ -416,9 +484,9 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .visual-edit-form { max-width: 32rem; }
 .unplaced-buildings { margin-top: 1rem; }
 .unplaced-buildings .button { margin: .3rem; }
-#preview-tenant-records:focus { outline: 2px solid var(--focus); outline-offset: 4px; }
+#preview-tenant-records:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
 @media (max-width: 70rem) { .floor-layout { grid-template-columns: minmax(0,1fr); } .floor-settings { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); padding-top: 1rem; } .directory-filters { grid-template-columns: 1fr 1fr; } .directory-filters > :first-child { grid-column: 1 / -1; } }
-@media (max-width: 40rem) { .directory-stats { gap: .4rem; } .directory-stats > div { padding: .75rem; } .directory-stats strong { font-size: 1.4rem; } .directory-stats span { font-size: .85rem; } .directory-filters { grid-template-columns: 1fr; } .room-editor { grid-template-columns: minmax(0,1fr); } .building-inspector { padding: 1rem; } .person-actions .button { width: auto; } .map-toolbar .segmented-control { width: 100%; } .segmented-control .button { width: auto; flex: 1; } }
+@media (max-width: 40rem) { .directory-stats { gap: .4rem; } .directory-stats > div { padding: .75rem; } .directory-stats strong { font-size: 1.4rem; } .directory-stats span { font-size: .85rem; } .directory-filters, .tenant-directory-filters { grid-template-columns: 1fr; } .room-editor { grid-template-columns: minmax(0,1fr); } .building-inspector { padding: 1rem; } .person-actions .button { width: auto; } .map-toolbar .segmented-control { width: 100%; } .segmented-control .button { width: auto; flex: 1; } }
 @media (max-width: 22rem) { .directory-stats { grid-template-columns: 1fr; } .directory-stats > div { display: flex; align-items: center; gap: .75rem; } .tenant-place { flex-wrap: wrap; } }
 
 .building-entry { animation: building-entry-arrive 650ms cubic-bezier(.2,.72,.25,1) both; }
@@ -433,18 +501,49 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .building-entry-scene { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(12rem, .8fr); align-items: stretch; gap: 1rem; margin-block: 1rem 1.5rem; }
 .building-facade { display: flex; min-width: 0; flex-direction: column; justify-content: center; margin: 0; padding: .8rem .7rem .65rem; border: 1px solid #d2d0ca; border-radius: .6rem; background: #f0eee8; }
 .facade-art { display: block; width: 100%; height: auto; overflow: visible; }
-.facade-roof-shape { fill: #627887; stroke: #435968; stroke-width: 3; stroke-linejoin: round; }
-.facade-roof-edge { fill: none; stroke: #8c9ba3; stroke-width: 3; }
-.facade-wall { fill: #e8e0d2; stroke: #82796c; stroke-width: 2; stroke-linejoin: round; }
-.facade-gable-detail { fill: none; stroke: #c1b5a2; stroke-width: 2; }
-.facade-story-line { stroke: #b8ad9c; stroke-width: 2; }
-.facade-floor-label { fill: #4b535c; font-family: inherit; font-size: 13px; font-weight: 600; }
-.facade-door-frame { fill: #526b7c; stroke: #3d5362; stroke-width: 2; }
-.facade-door-panel { fill: #879aa5; stroke: #d6dce0; stroke-width: 2; }
-.facade-door-panel-line { fill: none; stroke: #d6dce0; stroke-width: 2; }
-.facade-door-knob { fill: #d4b26e; stroke: #6a5737; stroke-width: 1; }
-.facade-foundation { fill: #7f817d; stroke: #62645f; stroke-width: 2; }
-.facade-ground-line { fill: none; stroke: #a7a39a; stroke-width: 2; }
+.facade-roof-stop-top { stop-color: var(--facade-roof-top); }
+.facade-roof-stop-bottom { stop-color: var(--facade-roof-bottom); }
+.facade-wall-stop-top { stop-color: var(--facade-wall-top); }
+.facade-wall-stop-bottom { stop-color: var(--facade-wall-bottom); }
+.facade-roof-shape { stroke: var(--facade-roof-bottom); stroke-width: 2; stroke-linejoin: round; }
+.facade-wall { stroke: var(--facade-line); stroke-width: 2; stroke-linejoin: round; }
+.facade-story-line { stroke: var(--facade-line); stroke-width: 2; stroke-dasharray: 2 6; stroke-linecap: round; }
+.facade-floor-label { fill: var(--text-secondary); font-family: inherit; font-size: 15px; font-weight: 650; letter-spacing: .02em; }
+.facade-door-frame { fill: var(--facade-door); stroke: var(--facade-door-frame); stroke-width: 2.5; }
+.facade-door-panel, .facade-door-glass { fill: var(--surface); stroke: var(--facade-line); stroke-width: 1.5; opacity: .9; }
+.facade-door-panel-line { fill: none; stroke: var(--facade-door-frame); stroke-width: 2; opacity: .5; }
+.facade-door-knob { fill: var(--facade-door-frame); }
+.facade-door-label { fill: var(--text); font-family: inherit; font-size: 15px; font-weight: 650; }
+.facade-room-door.is-occupied .facade-door-frame { fill: var(--facade-door-occupied); stroke: var(--facade-door-occupied); }
+.facade-room-door.is-occupied .facade-door-panel { fill: var(--facade-door-occupied-panel); stroke: none; }
+.facade-room-door.is-occupied .facade-door-knob { fill: #fff; }
+.facade-occupant-mark circle, .facade-occupant-mark path { fill: #fff; }
+.facade-space--shared .facade-door-frame, .facade-space--unit .facade-door-frame { fill: var(--facade-shared); stroke: var(--facade-shared-edge); }
+.facade-room-door.is-selected .facade-door-frame { stroke: var(--facade-selected); stroke-width: 5; }
+.facade-room-door.is-selected .facade-door-label { fill: var(--facade-selected-text); text-decoration: underline; }
+.facade-unset rect { fill: none; stroke: var(--facade-line); stroke-width: 2; stroke-dasharray: 8 8; }
+.facade-unset text { fill: var(--text-secondary); font-family: inherit; font-size: 16px; font-weight: 600; }
+.facade-foundation { fill: var(--facade-ground); }
+.facade-ground-line { fill: none; stroke: var(--facade-ground); stroke-width: 2; opacity: .6; }
+/* Owner's Building 1 sketch (27 Oct 2026): tin-roof ribs, balcony walkway, windows beside doors, the cut-away hallway
+   behind the gate with the stairs. Decoration only: rooms remain the .facade-room-door groups. */
+.facade-roof-rib { stroke: rgb(255 255 255 / 18%); stroke-width: 2; }
+.facade-walkway rect { fill: var(--facade-wall-top); stroke: var(--facade-line); stroke-width: 2; }
+.facade-window rect { fill: var(--facade-door); stroke: var(--facade-door-frame); stroke-width: 3; }
+.facade-window path { fill: none; stroke: var(--facade-door-frame); stroke-width: 2.5; }
+.facade-inside rect { fill: var(--facade-wall-bottom); stroke: var(--facade-line); stroke-width: 2; stroke-dasharray: 9 6; filter: brightness(.93); }
+.facade-inside text { fill: var(--text-secondary); font-family: inherit; font-size: 13px; font-weight: 650; }
+.facade-stairs path:first-child { fill: var(--facade-door); stroke: var(--facade-door-frame); stroke-width: 2; }
+.facade-stairs .facade-stairs-rail { fill: none; stroke: var(--facade-door-frame); stroke-width: 3; stroke-linecap: round; }
+.facade-gate rect { fill: var(--facade-door-frame); }
+.facade-entry rect { fill: var(--facade-door); stroke: var(--facade-door-frame); stroke-width: 2.5; stroke-dasharray: 6 4; }
+.facade-entry circle { fill: var(--facade-door-frame); }
+.facade-gate-bar { stroke: var(--facade-door); stroke-width: 2.5; opacity: .55; }
+.facade-gate-split { stroke: var(--facade-door); stroke-width: 3; }
+.building-art-roof { fill: var(--facade-roof-bottom); }
+.building-art-wall { fill: var(--facade-wall-bottom); stroke: var(--facade-line); stroke-width: 1.5; }
+.building-art-window { fill: var(--brand); opacity: .85; }
+.building-art-ground { stroke: var(--facade-ground); }
 .building-facade figcaption { padding-top: .55rem; color: var(--text-secondary); font-size: .85rem; line-height: 1.4; }
 .floor-count-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); align-content: center; gap: .65rem; }
 .floor-count-card { display: flex; min-height: 5rem; flex-direction: column; justify-content: center; gap: .2rem; padding: .7rem; border: 1px solid var(--control-border); border-radius: .5rem; background: var(--surface); }
@@ -457,7 +556,6 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .building-floor-content .floor-tabs .button { min-height: 3rem; }
 .building-floor-content .floor-tabs small { display: block; font-size: .8rem; }
 @media (max-width: 40rem) {
-  .term-help-list { grid-template-columns: minmax(0, 1fr); }
   .building-entry { padding: 1rem; }
   .building-entry-scene { grid-template-columns: minmax(0, 1fr); }
   .building-facade { min-height: 12rem; }
@@ -492,7 +590,7 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .focused-preview .section-heading p:not(.eyebrow) { color: var(--text-secondary); margin: .35rem 0 0; font-size: .95rem; }
 .focused-preview .section-heading .button { flex-shrink: 0; }
 .focused-preview .directory-stats { margin-block: 1.5rem; gap: .75rem; }
-.focused-preview .directory-stats > div { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: .6rem; }
+.focused-preview .directory-stats > div { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-card); }
 .focused-preview .directory-stats strong { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
 .focused-preview .directory-filters { box-shadow: none; padding: 1rem; margin-bottom: .8rem; border-radius: .65rem; }
 .directory-results-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: .5rem 0 1rem; flex-wrap: wrap; }
@@ -663,7 +761,7 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .workspace-overview { margin-top: 1rem; }
 .dashboard-home { min-width: 0; margin-bottom: 1.25rem; scroll-margin-top: 1rem; }
 .dashboard-home:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; border-radius: var(--radius); }
-.dashboard-welcome { padding: clamp(1rem, 2.5vw, 1.6rem); border: 1px solid var(--border); border-top: 3px solid var(--brand); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-card); }
+.dashboard-welcome { padding: clamp(1rem, 2.5vw, 1.6rem); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-card); }
 .dashboard-welcome h2 { margin: 0; font-size: clamp(1.55rem, 3vw, 2rem); letter-spacing: -.025em; }
 .dashboard-identity { margin: .25rem 0 1.35rem; color: var(--text-secondary); overflow-wrap: anywhere; }
 .dashboard-identity strong { color: var(--text); font-weight: 600; }
@@ -677,7 +775,6 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 .dashboard-action small { color: var(--text-secondary); font-size: .9rem; line-height: 1.4; }
 .dashboard-action-arrow { color: var(--brand); font-size: 1.5rem; line-height: 1; }
 .stat-card { border-radius: .85rem; }
-.stat-card:nth-child(2) { border-top: 3px solid var(--accent); }
 .stat-card strong { font-size: clamp(1.5rem, 2.4vw, 2rem); font-variant-numeric: tabular-nums; letter-spacing: -.035em; }
 .payment-overview { border-top: 3px solid var(--accent); }
 .payment-overview > p:not(.field-help) { color: var(--text-secondary); }
@@ -877,8 +974,753 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 :root[data-theme='dark'] .room-tile[aria-pressed=true] { outline-color: var(--focus); }
 .term-help { background: var(--surface); }
 .term-help .section-heading { align-items: center; }
-.term-help-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: .75rem 0 0; }
+.term-help-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: .75rem; margin: .75rem 0 0; }
 .term-help-list > div { min-width: 0; padding: .8rem; border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--page); }
-.term-help-list dt { font-weight: 700; }
+.term-help-list dt { font-weight: 700; overflow-wrap: anywhere; }
 .term-help-list dd { margin: .25rem 0 0; color: var(--text-secondary); }
 @media print { .ack-dialog[open] { background: white; padding: 0; } .pos-receipt { width: 80mm; max-width: 100%; padding: 4mm; font-size: 9pt; box-shadow: none; border-top: 2px solid black; } .pos-receipt dt, .pos-receipt .field-help, .pos-signature p, .pos-signature small { font-size: 8pt; } .pos-receipt h2 { font-size: 11pt; } .pos-receipt .pos-brand { font-size: 20pt; } .pos-receipt h3 { font-size: 10pt; } }
+
+/* Theme v2 - 26 Oct 2026. Property-management dashboard style: navy sidebar, bright blue actions, cool grey-blue page,
+   white cards, tinted icon circles, gradient hero and gentle motion. 18px text, 44px targets, focus rings and status
+   words are unchanged; every colour pair is measured in DESIGN_SYSTEM.md. Motion is removed under reduced motion. */
+body { background: var(--glow), var(--page); background-attachment: fixed; -webkit-font-smoothing: antialiased; }
+h1, h2, .brand, .stat-card strong, .dashboard-welcome h2 { font-family: var(--font-display); }
+h1 { font-weight: 720; letter-spacing: -0.03em; }
+h2 { font-weight: 700; letter-spacing: -0.02em; }
+h3 { letter-spacing: -0.01em; }
+.eyebrow, .stat-label, .sidebar-label { letter-spacing: 0.11em; font-size: 0.76rem; }
+::selection { background: color-mix(in srgb, var(--brand) 24%, transparent); }
+
+/* Header */
+.environment-note { border-bottom: 1px solid var(--border); background: var(--support); letter-spacing: 0.02em; }
+.site-header { border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 85%, transparent); backdrop-filter: saturate(1.5) blur(14px); -webkit-backdrop-filter: saturate(1.5) blur(14px); }
+.brand { color: var(--text); }
+.brand-mark { border-radius: 0.75rem; background: var(--action-gradient); box-shadow: inset 0 1px 0 rgb(255 255 255 / 22%), 0 4px 12px rgb(31 107 79 / 30%); font-family: var(--font-display); font-weight: 760; }
+.session-actions { gap: 0.4rem; }
+.session-actions .quiet-button { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); padding-inline: 1rem; box-shadow: 0 1px 2px rgb(20 38 30 / 5%); }
+.session-actions .quiet-button:hover { border-color: var(--border-hover); background: var(--surface-hover); color: var(--brand); }
+
+/* Navy sidebar panel */
+.app-shell .workspace-sidebar { top: 1.25rem; padding: 1.1rem 0.8rem 1.3rem; border: 0; border-radius: 1.25rem; background: var(--nav-surface); box-shadow: 0 18px 40px rgb(20 38 30 / 22%); }
+.workspace-sidebar .sidebar-label { margin-inline: 0.75rem; color: var(--nav-label); }
+.workspace-sidebar .workspace-links a { color: var(--nav-text); border-left: 0; border-radius: 0.85rem; font-weight: 560; }
+.workspace-sidebar .workspace-links a:hover { background: var(--nav-hover); color: #fff; }
+.workspace-sidebar .workspace-links a[aria-current="location"] { background: var(--action-gradient); color: #fff; font-weight: 650; box-shadow: inset 0 1px 0 rgb(255 255 255 / 16%), 0 6px 16px rgb(31 107 79 / 35%); }
+.workspace-sidebar .workspace-links a:focus-visible { outline-color: #fff; }
+.focused-preview .workspace-content { border-left: 0; }
+.workspace-links .workspace-icon { opacity: 0.95; }
+.mobile-workspace-navigation details { border-color: var(--border); border-radius: 1rem; background: var(--surface); box-shadow: var(--shadow-card); }
+.mobile-workspace-navigation .workspace-links a[aria-current="location"] { background: var(--action-gradient); color: #fff; }
+
+/* Surfaces */
+.card, .stat-card, .workspace-toolbar, .loading-skeleton { border-color: var(--border); border-radius: var(--radius); box-shadow: var(--shadow-card); }
+.card, .stat-card, .dashboard-action, .room-tile, .plan-building, .building-list-card { transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease, background-color 200ms ease; }
+.card:hover, .stat-card:hover { border-color: var(--border); box-shadow: var(--shadow-raised); }
+.stat-card:hover { transform: translateY(-2px); }
+.card .card, .card .card:hover { box-shadow: none; }
+.notice { border-radius: var(--radius-small); border-left-width: 3px; box-shadow: 0 1px 2px rgb(20 38 30 / 3%); }
+.status { border-radius: 999px; padding-inline: 0.75rem; }
+
+/* Controls */
+.button { border-radius: 0.75rem; font-weight: 620; letter-spacing: -0.005em; }
+.button:active { transform: translateY(1px) scale(0.985); }
+.button.primary { border-color: transparent; background: var(--action-gradient); box-shadow: inset 0 1px 0 rgb(255 255 255 / 16%), 0 1px 2px rgb(20 38 30 / 14%), 0 6px 16px rgb(31 107 79 / 24%); }
+.button.primary:hover { border-color: transparent; background: var(--action-hover); box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%), 0 2px 4px rgb(20 38 30 / 16%), 0 10px 22px rgb(31 107 79 / 30%); transform: translateY(-1px); }
+/* Selected (pressed) tabs keep white-on-blue on hover; the generic hover must not lighten them. */
+.button:not(.primary):not(.quiet-button):not([aria-pressed="true"]):hover { background: var(--surface-hover); border-color: var(--brand); }
+.segmented-control .button[aria-pressed=true]:hover, .floor-tabs .button[aria-pressed=true]:hover { background: var(--action-hover); color: #fff; }
+input, select, textarea { border-radius: 0.75rem; transition: border-color 140ms ease, box-shadow 140ms ease; }
+input:hover, select:hover, textarea:hover { border-color: var(--text-secondary); }
+input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 4px var(--brand-tint); }
+.segmented-control:has(.button[aria-pressed]) { width: fit-content; max-width: 100%; padding: 0.3rem; border: 1px solid var(--border); border-radius: 0.95rem; background: var(--support); }
+.segmented-control .button { border-color: transparent; border-radius: 0.72rem; background: transparent; }
+.segmented-control .button[aria-pressed=true], .floor-tabs .button[aria-pressed=true] { border-color: transparent; background: var(--action-gradient); color: #fff; box-shadow: 0 4px 12px rgb(31 107 79 / 25%); }
+
+/* Tinted icon circles */
+.dashboard-action-icon, .stat-icon { display: grid; flex: 0 0 auto; place-items: center; border-radius: 999px; }
+.dashboard-action-icon { width: 3rem; height: 3rem; }
+.stat-icon { width: 2.75rem; height: 2.75rem; margin-bottom: 0.6rem; }
+.dashboard-action-icon .workspace-icon, .stat-icon .workspace-icon { width: 1.4rem; height: 1.4rem; }
+.tone-blue { background: var(--tone-blue-bg); color: var(--tone-blue); }
+.tone-teal { background: var(--tone-teal-bg); color: var(--tone-teal); }
+.tone-violet { background: var(--tone-violet-bg); color: var(--tone-violet); }
+.tone-amber { background: var(--tone-amber-bg); color: var(--tone-amber); }
+
+/* Dashboard: gradient hero with white action cards */
+.dashboard-welcome { position: relative; overflow: hidden; padding: clamp(1.25rem, 3vw, 2.1rem); border: 0; background: var(--hero-gradient); color: #fff; box-shadow: 0 18px 40px rgb(31 107 79 / 22%); }
+.dashboard-welcome .eyebrow, .dashboard-welcome .dashboard-identity { color: #eef3ff; }
+.dashboard-welcome h2, .dashboard-welcome h3, .dashboard-welcome .dashboard-identity strong { color: #fff; }
+.dashboard-welcome h2 { font-size: clamp(1.8rem, 3.6vw, 2.5rem); font-weight: 740; letter-spacing: -0.035em; }
+.dashboard-welcome:focus-visible { outline-color: #fff; }
+.dashboard-action { gap: 0.9rem; justify-content: flex-start; border: 0; border-radius: 1rem; background: var(--surface); color: var(--text); box-shadow: 0 2px 6px rgb(20 38 30 / 12%); }
+.dashboard-action > span:nth-child(2) { display: grid; flex: 1 1 auto; gap: 0.18rem; min-width: 0; }
+.dashboard-action:hover { background: var(--surface); box-shadow: 0 14px 30px rgb(20 38 30 / 20%); transform: translateY(-2px); }
+.dashboard-action:focus-visible { outline-color: #fff; }
+.dashboard-action strong { color: var(--text); font-weight: 680; }
+.dashboard-action-arrow { display: grid; flex: 0 0 2.4rem; width: 2.4rem; height: 2.4rem; place-items: center; border-radius: 999px; background: var(--brand-tint); color: var(--brand); font-size: 1.15rem; transition: transform 180ms ease, background-color 180ms ease, color 180ms ease; }
+.dashboard-action:hover .dashboard-action-arrow { background: var(--action); color: var(--on-action); transform: translateX(3px); }
+.stat-card { padding: 1.2rem 1.3rem; }
+.stat-card strong { font-size: clamp(1.75rem, 2.8vw, 2.4rem); font-weight: 720; }
+
+/* Decorative stripes removed; left bars that flag a review or amount still due are kept because they carry meaning. */
+.rent-month-card, .payment-overview, .paid-rent-summary > .card:first-of-type, .paid-report-sheet, .unpaid-report-sheet, .add-missed-month-sheet { border-top: 1px solid var(--border); }
+.paid-report-metrics article { border-left: 1px solid var(--border); border-radius: 0.85rem; }
+.paid-report-table thead th { color: var(--text-secondary); font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* Property map and building view */
+.property-plan { border: 1px solid var(--border); border-radius: 1.25rem; background-color: var(--surface-alt); background-image: radial-gradient(color-mix(in srgb, var(--text-secondary) 22%, transparent) 1px, transparent 1px); box-shadow: inset 0 1px 0 rgb(255 255 255 / 60%); }
+.plan-building { border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); box-shadow: var(--shadow-card); }
+.plan-building:hover { border-color: var(--brand); box-shadow: var(--shadow-raised); transform: translateY(-2px); }
+.plan-building.selected { border: 2px solid var(--brand); background: var(--surface); box-shadow: 0 0 0 4px var(--brand-tint), var(--shadow-raised); }
+.plan-building > span { color: var(--text-secondary); }
+.building-list-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-raised); }
+.building-facade { border: 1px solid var(--border); border-radius: 1.1rem; background: radial-gradient(420px 220px at 50% 0%, var(--brand-tint), transparent 70%), var(--surface-alt); }
+.floor-count-card { border-radius: 0.9rem; }
+.room-tile { border-width: 1px; border-radius: 0.95rem; background: var(--surface); box-shadow: 0 1px 2px rgb(20 38 30 / 5%); }
+.room-tile:hover { border-color: var(--brand); box-shadow: var(--shadow-raised); transform: translateY(-2px); }
+.room-tile.occupied { border-color: color-mix(in srgb, var(--brand) 45%, var(--border)); background: var(--tone-blue-bg); }
+.room-tile.shared { border-color: color-mix(in srgb, var(--tone-amber) 45%, var(--border)); background: var(--tone-amber-bg); }
+.room-tile::after { display: none; }
+
+/* Footer and sign-in */
+.site-footer { margin-top: 3rem; padding-block: 1.25rem 2rem; letter-spacing: 0.01em; }
+.site-footer > span:first-child { color: var(--text); font-family: var(--font-display); font-weight: 680; }
+.sign-in-shell h1 { color: var(--text); font-weight: 760; letter-spacing: -0.045em; }
+.sign-in-shell h1::after { content: ""; display: block; width: 4.5rem; height: 0.35rem; margin-top: 1.1rem; border-radius: 999px; background: var(--action-gradient); }
+.sign-in-shell .auth-card { box-shadow: var(--shadow-raised); }
+.welcome-number { border: 0; background: var(--tone-blue-bg); color: var(--tone-blue); }
+
+/* Entrance motion */
+@keyframes rise-in { from { opacity: 0; transform: translateY(0.6rem); } to { opacity: 1; transform: none; } }
+.dashboard-welcome, .workspace-overview > .stat-card, .tenant-card-grid > .card, .directory-stats > div { animation: rise-in 420ms cubic-bezier(.2, .7, .2, 1) both; }
+/* Summary tiles in one row rise together; only the tenant card list is staggered. */
+.tenant-card-grid > .card:nth-child(2) { animation-delay: 60ms; }
+.tenant-card-grid > .card:nth-child(3) { animation-delay: 120ms; }
+.tenant-card-grid > .card:nth-child(n+4) { animation-delay: 160ms; }
+
+/* Compact phone header: identity on its own line, labeled actions in one wrapping row. */
+@media (max-width: 32rem) {
+  .header-inner { flex-wrap: wrap; gap: 0.5rem; padding-block: 0.6rem; }
+  .session-tools { flex-direction: column; align-items: stretch; gap: 0.4rem; border-top: 0; padding-top: 0; }
+  .session-actions { justify-content: flex-start; margin-left: 0; }
+  .session-actions .quiet-button { padding-inline: 0.8rem; font-size: 0.92rem; }
+  .focused-preview .session-identity { display: none; }
+  .dashboard-action-icon { width: 2.6rem; height: 2.6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-action:hover .dashboard-action-arrow, .button:active, .button.primary:hover, .stat-card:hover, .dashboard-action:hover,
+  .plan-building:hover, .room-tile:hover, .building-list-card:hover { transform: none; }
+  .dashboard-welcome, .workspace-overview > .stat-card, .tenant-card-grid > .card, .directory-stats > div { animation: none; }
+}
+
+/* Renter portal - redesigned 27 Oct 2026. A rent statement first (what is left, when it is due, one tap to report a
+   payment, the renter's own room lit in the building drawing), then months and payments beside "Report a payment". */
+.renter-portal { display: grid; gap: 1.5rem; }
+.renter-tenant { display: grid; gap: 1.25rem; }
+.renter-hero .eyebrow { margin: 0; }
+.renter-hero h2 { margin: 0.2rem 0 0.35rem; font-size: clamp(1.9rem, 4vw, 2.8rem); line-height: 1.05; letter-spacing: -0.03em; overflow-wrap: anywhere; }
+.renter-hero .dashboard-identity { margin: 0; color: var(--text-secondary); }
+.renter-agreement { display: grid; gap: 1.25rem; }
+.renter-agreement > *, .renter-tenant > * { min-width: 0; }
+.renter-statement { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 1.5rem; padding: clamp(1.25rem, 3vw, 2rem); border-radius: 1.5rem; color: #f3efe2; overflow: hidden;
+  background: radial-gradient(120% 90% at 100% 0%, #2a7a5a 0%, transparent 55%), linear-gradient(150deg, #1d5a43, #123d2d); box-shadow: 0 30px 60px -40px rgb(16 50 36 / 80%); }
+.renter-statement :focus-visible { outline-color: #ffbf1f; }
+.renter-statement-place { margin: 0; font-size: 0.8rem; font-weight: 750; letter-spacing: 0.14em; text-transform: uppercase; color: #ffd76a; }
+.renter-statement h3 { margin: 0.15rem 0 0.2rem; font-size: clamp(1.3rem, 2.4vw, 1.75rem); color: #fff; overflow-wrap: anywhere; }
+.renter-statement-since { margin: 0; color: #c7ddd0; }
+.renter-balance-card { display: grid; gap: 0.15rem; margin: 1.4rem 0 0.9rem; }
+.renter-balance-label { font-size: 0.85rem; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; color: #c7ddd0; }
+.renter-balance-card strong { font-size: clamp(2.6rem, 7vw, 4.2rem); font-weight: 850; line-height: 1; letter-spacing: -0.04em; color: #fff; font-variant-numeric: tabular-nums; }
+.renter-balance-card small { color: #c7ddd0; }
+.renter-due { display: inline-flex; align-items: center; gap: 0.55rem; max-width: 100%; margin: 0 0 1.2rem; padding: 0.45rem 0.95rem; border-radius: 999px; background: rgb(255 255 255 / 11%); font-weight: 650; overflow-wrap: anywhere; }
+.renter-due-dot { flex: none; width: 0.6rem; height: 0.6rem; border-radius: 50%; background: #7ee2ad; }
+.renter-statement--today .renter-due-dot, .renter-statement--passed .renter-due-dot { background: #ffbf1f; box-shadow: 0 0 0 4px rgb(255 191 31 / 25%); }
+.renter-statement-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.renter-cta.button { gap: 0.5rem; border-color: #ffbf1f; background: #ffbf1f; color: #10201a; font-weight: 800; }
+.renter-cta.button:hover { background: #ffe08a; }
+.renter-cta svg { width: 1.2rem; height: 1.2rem; }
+.renter-link-button { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1.1rem; border: 1.5px solid rgb(243 239 226 / 45%); border-radius: 999px; color: #f3efe2; font-weight: 650; text-decoration: none; }
+.renter-link-button:hover { background: rgb(255 255 255 / 10%); }
+.renter-statement-art { display: grid; align-content: end; gap: 0.6rem; margin: 0; padding: 1.4rem 1rem 0.9rem; border-radius: 1.1rem; background: radial-gradient(80% 70% at 50% 100%, #24604a, #0f2a20 75%); }
+.renter-building .lp-facade { display: block; max-width: 100%; height: auto; margin: 0 auto; filter: drop-shadow(0 8px 10px rgb(0 0 0 / 35%)); }
+.renter-statement-art figcaption { font-size: 0.88rem; text-align: center; color: #c7ddd0; }
+.renter-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 0.8rem; }
+.renter-facts > div { display: grid; align-content: start; gap: 0.15rem; padding: 1rem 1.1rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); }
+.renter-facts span { font-size: 0.8rem; font-weight: 750; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary); }
+.renter-facts strong { font-size: 1.45rem; font-variant-numeric: tabular-nums; }
+.renter-facts small { color: var(--text-secondary); }
+.renter-credit-card strong { color: var(--brand); }
+.renter-stat-text { font-size: clamp(1.2rem, 2vw, 1.45rem) !important; }
+.renter-unconfirmed { margin: 0; border-left-color: var(--warning); background: var(--warning-surface); border-color: var(--warning-border); }
+.renter-pending-list, .renter-month-list, .renter-payment-list { display: grid; gap: 0.6rem; margin: 0.75rem 0 0; padding: 0; list-style: none; }
+.renter-pending-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; }
+.renter-pending-list li > span:first-child { flex: 1 1 12rem; }
+.renter-columns { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(19rem, 1fr); align-items: start; gap: 1.25rem; }
+.renter-main { display: grid; gap: 1.25rem; min-width: 0; }
+.renter-aside { position: sticky; top: 6rem; min-width: 0; }
+.renter-section { margin: 0; scroll-margin-top: 6rem; }
+.renter-section h4 { margin: 0; font-size: 1.2rem; font-weight: 750; letter-spacing: -0.01em; scroll-margin-top: 6rem; }
+.renter-month { display: grid; grid-template-columns: minmax(8rem, 1.1fr) minmax(0, 2fr) 9.5rem; align-items: center; gap: 0.6rem 1.25rem; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
+.renter-month > div:first-child { display: grid; gap: 0.1rem; }
+.renter-month small { color: var(--text-secondary); }
+.renter-month-bar { display: block; height: 6px; margin-top: 0.45rem; overflow: hidden; border-radius: 999px; background: var(--border); }
+.renter-month-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--brand), #3fb27f); }
+.renter-month dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 1rem; margin: 0; }
+.renter-month dt { color: var(--text-secondary); font-size: 0.82rem; font-weight: 600; }
+.renter-month dd { margin: 0; font-weight: 650; font-variant-numeric: tabular-nums; }
+.renter-month--paid { background: var(--support); }
+.renter-month > .status { justify-self: end; }
+.renter-payment-list li { display: flex; align-items: center; gap: 0.9rem; padding: 0.85rem 1rem; border: 1px dashed var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
+.renter-payment-stamp { display: grid; flex: none; place-items: center; width: 2.6rem; height: 2.6rem; border: 2px dashed var(--brand); border-radius: 50%; background: var(--support); color: var(--brand); font-weight: 850; transform: rotate(-8deg); }
+.renter-payment-copy { display: grid; flex: 1 1 auto; gap: 0.1rem; min-width: 0; }
+.renter-payment-copy strong { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.renter-payment-copy span, .renter-payment-copy small { color: var(--text-secondary); overflow-wrap: anywhere; }
+/* Staff side of renter reports (Payments). */
+.renter-reports-inbox { display: grid; gap: 0.6rem; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+.renter-reports-inbox h4 { margin: 0; font-size: 1.1rem; }
+.renter-reports-card .report-dismiss { flex-basis: 100%; }
+.renter-reports-card .report-dismiss summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+/* Renter "Report a payment" (202610270012): a notice to the property, never a balance change. */
+.renter-report { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.85rem; border-top: 4px solid #e0a100; }
+.renter-report .button, .renter-statement .button { max-width: 100%; white-space: normal; }
+.renter-report h5 { margin: 0.4rem 0 0; font-size: 1.05rem; font-weight: 750; }
+.renter-report > .button { justify-self: stretch; }
+.renter-report-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.8rem; }
+.renter-report-head > div { flex: 1 1 9rem; min-width: 0; overflow-wrap: anywhere; }
+.renter-report-head p { margin: 0.2rem 0 0; }
+.renter-report-icon { display: grid; flex: none; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 0.9rem; background: #fff1c2; color: #7a5600; }
+.renter-report-icon svg { width: 1.4rem; height: 1.4rem; }
+.renter-sample-note { margin: 0; padding: 0.5rem 0.8rem; border-radius: 0.7rem; background: var(--surface-alt); color: var(--text-secondary); font-size: 0.92rem; }
+.renter-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.renter-steps li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.45rem; min-width: 0; overflow-wrap: anywhere; padding-top: 0.5rem; border-top: 3px solid var(--border); color: var(--text-secondary); font-size: 0.88rem; font-weight: 650; }
+.renter-steps li span { display: grid; flex: none; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--surface-alt); font-size: 0.8rem; }
+.renter-steps li.is-current, .renter-steps li.is-done { border-top-color: var(--brand); color: var(--text); }
+.renter-steps li.is-current span { background: var(--brand); color: #fff; }
+.renter-steps li.is-done span { background: var(--support); color: var(--brand); }
+.renter-report-form { display: grid; gap: 0.45rem; }
+.renter-report-form > label { margin-top: 0.4rem; font-weight: 650; }
+.renter-report-form input { width: 100%; }
+.renter-amount { position: relative; }
+.renter-amount > span { position: absolute; left: 0.95rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-weight: 750; pointer-events: none; }
+.renter-amount input { padding-left: 2.1rem; font-size: 1.35rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.renter-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.renter-chips button { min-height: 44px; padding: 0.4rem 0.95rem; border: 1.5px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 0.92rem; font-weight: 650; cursor: pointer; }
+.renter-chips button:hover { border-color: var(--brand); }
+.renter-chips button.is-on { border-color: var(--brand); background: var(--support); color: var(--brand); }
+.renter-collector { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin: 0.4rem 0 0; padding: 0; border: 0; min-width: 0; }
+.renter-collector legend { margin-bottom: 0.45rem; padding: 0; font-weight: 650; }
+.renter-collector label { position: relative; display: grid; place-items: center; min-height: 48px; padding: 0.4rem; border: 1.5px solid var(--border); border-radius: 0.9rem; background: var(--surface); font-weight: 700; text-align: center; cursor: pointer; overflow-wrap: anywhere; }
+.renter-collector input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.renter-collector label:focus-within { outline: 3px solid var(--brand); outline-offset: 2px; }
+.renter-collector label.is-on { border-color: var(--brand); background: var(--support); color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.renter-report-review { display: grid; gap: 0.5rem; padding: 1rem; border: 1.5px dashed var(--brand); border-radius: 0.9rem; background: var(--support); }
+.renter-report-review p { margin: 0; overflow-wrap: anywhere; }
+.renter-review-amount strong { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.renter-report-list { display: grid; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
+.renter-report-list > li { display: grid; gap: 0.7rem; padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
+.renter-report-list > li > div { display: grid; gap: 0.1rem; min-width: 0; }
+.renter-report-list strong { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.renter-report-list > li > div span, .renter-report-list > li > div small { color: var(--text-secondary); overflow-wrap: anywhere; }
+.renter-report-list .status { justify-self: start; max-width: 100%; overflow-wrap: anywhere; }
+.renter-track { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; color: var(--text-secondary); font-size: 0.8rem; font-weight: 650; }
+.renter-track li { position: relative; padding-top: 1.1rem; text-align: center; }
+.renter-track li::before { content: ""; position: absolute; top: 0.3rem; left: 50%; z-index: 1; width: 0.7rem; height: 0.7rem; margin-left: -0.35rem; border-radius: 50%; background: var(--border); }
+.renter-track li::after { content: ""; position: absolute; top: 0.6rem; left: -50%; right: 50%; height: 2px; background: var(--border); }
+.renter-track li:first-child::after { display: none; }
+.renter-track li.is-done, .renter-track li.is-current, .renter-track li.is-stopped { color: var(--text); }
+.renter-track li.is-done::before, .renter-track li.is-done::after { background: var(--brand); }
+.renter-track li.is-current::before { background: #e0a100; box-shadow: 0 0 0 4px rgb(224 161 0 / 25%); }
+.renter-track li.is-stopped::before { background: #b42318; }
+.renter-withdraw-start.button { justify-self: start; }
+.renter-withdraw { display: grid; gap: 0.4rem; padding: 0.7rem 0.8rem; border: 1px dashed var(--border); border-radius: 0.7rem; background: var(--surface); }
+.renter-withdraw p { margin: 0; }
+.renter-withdraw .person-actions { margin: 0; }
+.renter-footnote { margin: 0; }
+@media (max-width: 64rem) {
+  .renter-columns { grid-template-columns: minmax(0, 1fr); }
+  .renter-aside { position: static; order: -1; }
+}
+@media (max-width: 48rem) {
+  .renter-statement { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Staff dashboard collection figures (saved workspace only). */
+.collections-overview { margin: 0 0 1.25rem; }
+/* Late rent follow-up (27 Oct 2026): facts from confirmed payments only; reminder text for SMS/Messenger. */
+.followup-card { display: grid; gap: 0.75rem; margin: 0 0 1.25rem; }
+.followup-card h3, .followup-card h4 { margin: 0; }
+.followup-card h4 { margin-top: 0.5rem; font-size: 1.1rem; }
+.followup-list, .followup-soon { display: grid; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
+.followup-list li { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; align-items: center; gap: 0.6rem 1rem; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
+.followup-who, .followup-figures { display: grid; gap: 0.15rem; min-width: 0; }
+.followup-who span, .followup-figures small { color: var(--text-secondary); overflow-wrap: anywhere; }
+.followup-figures strong { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.followup-figures .status { justify-self: start; }
+.followup-list .person-actions { margin: 0; }
+.followup-copied { grid-column: 1 / -1; margin: 0; display: grid; gap: 0.35rem; }
+.followup-copied textarea { width: 100%; font: inherit; }
+.followup-soon li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; padding: 0.6rem 0.9rem; border-radius: 0.75rem; background: var(--surface-alt); }
+.followup-soon li > span { overflow-wrap: anywhere; }
+@media (max-width: 52rem) { .followup-list li { grid-template-columns: minmax(0, 1fr); } }
+.collections-heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.5rem 1rem; margin-bottom: 0.75rem; }
+.collections-heading h3 { margin: 0; font-size: 1.3rem; }
+.collections-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 0.85rem; }
+.collections-grid small { overflow-wrap: anywhere; }
+.collections-unavailable, .collections-loading { margin: 0 0 1.25rem; }
+/* Reserves the first screen while the app starts so the footer is not pushed down in view (layout shift). */
+.boot-placeholder { min-height: 100vh; }
+.report-export { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 0 0 1rem; }
+.report-export .field-help { margin: 0; }
+.monthly-rent-list { display: grid; gap: 0.5rem; margin: 0.75rem 0 1rem; padding: 0; list-style: none; }
+.monthly-rent-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; padding: 0.7rem 0.9rem; border: 1px solid var(--border); border-radius: 0.8rem; background: var(--surface-alt); }
+.monthly-rent-list li > div { display: grid; gap: 0.1rem; min-width: 0; }
+.monthly-rent-list span { color: var(--text-secondary); overflow-wrap: anywhere; }
+.monthly-rent-confirm { margin-top: 0.75rem; }
+.statement-event--reversed { background: var(--surface-alt); }
+.statement-event--reversed .statement-event-heading strong { text-decoration: line-through; text-decoration-thickness: 1px; }
+.statement-reverse { margin-top: 0.75rem; padding: 0.85rem; border: 1px solid var(--error-border); border-radius: var(--radius-small); background: var(--error-surface); }
+.statement-reverse textarea { min-height: 4.5rem; }
+/* Saved tenant directory as cards. */
+.tenant-records--cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 0.85rem; padding: 0; list-style: none; }
+.tenant-records--cards > li.tenant-record { align-items: start; padding: 1rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); box-shadow: var(--shadow-card); }
+.tenant-records--cards .record-initial { background: var(--tone-blue-bg); color: var(--tone-blue); font-weight: 700; }
+.tenant-room { display: block; margin-top: 0.35rem; color: var(--text); font-weight: 600; overflow-wrap: anywhere; }
+.inquiry-alert, .report-alert { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; margin: 0 0 1.25rem; }
+.inquiry-alert p, .report-alert p { margin: 0; }
+.renter-link { display: block; margin-top: 0.15rem; color: var(--text-secondary); }
+.renter-link--linked { color: var(--success); font-weight: 650; }
+.renter-link--linked::before { content: "✓ "; }
+.renter-security { max-width: 40rem; margin-top: 1.25rem; }
+.renter-security h2 { margin-bottom: 0.25rem; }
+.renter-security-actions { justify-content: flex-start; margin-top: 1rem; }
+@media (max-width: 40rem) {
+  .renter-month { grid-template-columns: minmax(0, 1fr); }
+  .renter-month > .status { justify-self: start; }
+  .renter-payment-list li { flex-wrap: wrap; }
+  .renter-payment-list .button { width: 100%; }
+}
+
+/* Public rooms page - 26 Oct 2026. One-screen browsing: building tabs, room card grid, inquiry dialog. */
+/* Payments account workspace: worklist beside the account on wide screens; tabs instead of stacked boxes. */
+@media (min-width: 72rem) {
+  .payment-record-view--with-worklist { display: grid; grid-template-columns: minmax(17rem, 22rem) minmax(0, 1fr); align-items: start; gap: 1.25rem; }
+  .payment-record-view--with-worklist > .payment-overview { position: sticky; top: 1.25rem; margin: 0; max-height: calc(100vh - 2.5rem); overflow-y: auto; }
+}
+.account-workspace { min-width: 0; }
+.account-workspace > .card:first-child { margin-top: 0; }
+.account-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr)); gap: 0.6rem; margin: 0.85rem 0; }
+.account-summary .simple-balance, .account-summary__stat { display: grid; gap: 0.15rem; align-content: start; margin: 0; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
+.account-summary .simple-balance { border-color: color-mix(in srgb, var(--brand) 35%, var(--border)); background: var(--tone-blue-bg); }
+.account-summary span { color: var(--text-secondary); font-size: 0.88rem; }
+.account-summary strong { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.account-tabs { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 1rem 0 0; padding: 0.3rem; border: 1px solid var(--border); border-radius: 0.95rem; background: var(--support); }
+.account-tab { flex: 1 1 9rem; min-height: 2.75rem; padding: 0.5rem 0.9rem; border: 0; border-radius: 0.7rem; background: transparent; color: var(--text); font-weight: 620; cursor: pointer; }
+.account-tab[aria-selected="true"] { background: var(--action-gradient); color: #fff; box-shadow: 0 4px 12px rgb(31 107 79 / 25%); }
+.account-tab:not([aria-selected="true"]):hover { background: var(--surface); color: var(--brand); }
+.account-tab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.account-panel { margin-top: 0.6rem; }
+/* Real Payments, Account tab: cash entry beside the statement on wide screens; move-out and rent months span both. */
+@media (min-width: 72rem) {
+  #pay-panel-account { display: grid; grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr); gap: 0 1.25rem; align-items: start; }
+  #pay-panel-account > details { grid-column: 1 / -1; }
+  #pay-panel-account > .account-statement { margin-top: 1rem; }
+}
+.pay-panel { margin-top: 0.75rem; }
+/* Compact pending banner inside the account workspace (one row per report, no oversized card). */
+.account-workspace .pending-cash-card { padding: 0.9rem 1.1rem; border-color: var(--warning-border); background: var(--warning-surface); }
+.account-workspace .pending-cash-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.85rem; margin-bottom: 0.6rem; }
+.account-workspace .pending-cash-heading > div { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.account-workspace .pending-cash-heading h3 { margin: 0; font-size: 1.05rem; }
+.account-workspace .pending-cash-heading p { margin: 0; padding: 0; background: none; color: var(--warning); font-weight: 600; }
+.account-workspace .pending-cash-row { padding: 0.6rem 0.8rem; background: var(--surface); }
+@media (min-width: 72rem) {
+  .payment-record-view--with-worklist .payment-worklist-filters { grid-template-columns: minmax(0, 1fr); }
+}
+.room-listings .segmented-control { margin: 0.5rem 0 1rem; }
+.staff-building-tabs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr)); gap: 0.6rem; margin-bottom: 0.85rem; }
+.staff-building-tab { display: grid; justify-items: start; gap: 0.1rem; min-height: 2.75rem; padding: 0.6rem 0.85rem; border: 1.5px solid var(--control-border); border-radius: 0.9rem; background: var(--surface); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.staff-building-tab span { color: var(--text-secondary); font-size: 0.95rem; }
+.staff-building-tab[aria-pressed="true"] { border-color: var(--brand); background: var(--pressed-surface); box-shadow: 0 0 0 2px var(--brand-tint); }
+.staff-building-tab[aria-pressed="true"] span { color: var(--brand); font-weight: 700; }
+.staff-building-tab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.listing-rows, .inquiry-list { display: grid; gap: 0.7rem; margin: 0; padding: 0; list-style: none; }
+.listing-row form, .inquiry-item { padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: 0.9rem; background: var(--surface-alt); }
+.listing-row__head, .inquiry-item__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.4rem 1rem; }
+.listing-toggle { display: flex; align-items: center; gap: 0.6rem; min-height: 2.75rem; margin: 0.5rem 0 0; font-weight: 600; }
+.listing-toggle input { width: 1.4rem; height: 1.4rem; min-height: 0; margin: 0; }
+.listing-fields { display: grid; grid-template-columns: minmax(0, 12rem) minmax(0, 1fr); gap: 0 1rem; }
+.listing-fields label { margin-top: 0.5rem; }
+.listing-row .button { margin-top: 0.5rem; }
+.inquiry-item p { margin: 0.4rem 0; }
+.inquiry-message { padding: 0.6rem 0.75rem; border-radius: 0.6rem; background: var(--surface); white-space: pre-wrap; }
+/* Handled items are marked by a muted background and the status word, never by transparency (keeps text contrast). */
+.inquiry-item--handled { background: var(--support); }
+@media (max-width: 40rem) { .listing-fields { grid-template-columns: minmax(0, 1fr); } }
+
+/* Simple live Payments (mirrors the preview): selected worklist row, cash plan and tenant card action. */
+.payment-overview .worklist-row[aria-current="true"] { background: var(--brand-tint); box-shadow: inset 4px 0 0 var(--brand); padding-inline-start: .9rem; }
+.cash-plan { display: grid; gap: .35rem; margin: .25rem 0 1rem; padding-inline-start: 1.25rem; }
+.account-header:focus-visible, .payment-entry h3:focus-visible, .payment-review h3:focus-visible, .cash-confirmation-review h3:focus-visible { outline: 3px solid var(--focus, var(--accent)); outline-offset: 3px; }
+.tenant-record .tenant-card-action { margin-top: .6rem; width: fit-content; }
+@media (max-width: 40rem) { .tenant-record .tenant-card-action { width: 100%; } }
+
+/* Real map room details and directory card actions (preview parity, 27 Oct 2026). */
+button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: left; cursor: pointer; }
+.selected-space { margin-top: 1rem; display: grid; gap: .75rem; }
+.selected-space h4 { margin: 0; font-size: 1.25rem; }
+.selected-space h4:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.selected-space-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: .75rem; margin: 0; }
+.selected-space-facts dt { color: var(--text-secondary); font-size: .9rem; }
+.selected-space-facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.selected-space-empty { margin-top: 1rem; }
+.tenant-card-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+.tenant-card-actions .tenant-card-action { margin-top: 0; }
+.archive-tenant-form { display: grid; gap: .4rem; margin-top: .75rem; padding: .9rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--surface-muted, var(--surface)); }
+.existing-tenant { margin: 0 0 .5rem; font-size: 1.05rem; }
+@media (max-width: 40rem) { .tenant-card-actions { flex-direction: column; } .tenant-card-actions .tenant-card-action { width: 100%; } }
+
+/* Visual room picker and building/property motion (27 Oct 2026). Motion is removed by the global reduced-motion rule. */
+.room-picker { display: grid; gap: 1rem; min-width: 0; }
+.room-picker-buildings { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr)); gap: .65rem; }
+.room-picker-building { display: grid; justify-items: center; align-content: start; gap: .3rem; min-height: 8.5rem; padding: .7rem .5rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); color: var(--text); font: inherit; text-align: center; cursor: pointer; box-shadow: var(--shadow-card); transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease; animation: rise-in 420ms cubic-bezier(.2,.7,.2,1) both; }
+.room-picker-building:nth-child(2) { animation-delay: 40ms; } .room-picker-building:nth-child(3) { animation-delay: 80ms; } .room-picker-building:nth-child(4) { animation-delay: 120ms; } .room-picker-building:nth-child(n+5) { animation-delay: 160ms; }
+.room-picker-building .building-art { width: 4.5rem; height: auto; transition: transform 300ms cubic-bezier(.2,.7,.2,1); }
+.room-picker-building:hover { transform: translateY(-3px); border-color: var(--brand); box-shadow: var(--shadow-raised); }
+.room-picker-building:hover .building-art { transform: scale(1.06); }
+.room-picker-building[aria-pressed="true"] { border: 2px solid var(--brand); background: var(--brand-tint); box-shadow: 0 0 0 4px var(--brand-tint), var(--shadow-raised); }
+.room-picker-building strong { font-size: .95rem; line-height: 1.2; overflow-wrap: anywhere; }
+.room-picker-building .status { font-size: .8rem; }
+.room-picker-later { align-content: center; border-style: dashed; }
+.room-picker-later span { color: var(--text-secondary); font-size: .85rem; }
+.room-picker-building-view { display: grid; gap: .75rem; min-width: 0; animation: building-entry-arrive 520ms cubic-bezier(.2,.72,.25,1) both; }
+.room-picker-facade { max-width: 46rem; }
+.room-picker-rooms .room-tile { min-height: 6rem; }
+.room-picker-rooms .room-tile:disabled { cursor: not-allowed; opacity: 1; }
+.room-tile.selected, .room-picker-rooms .room-tile[aria-pressed="true"] { border: 2px solid var(--brand); box-shadow: 0 0 0 4px var(--brand-tint), var(--shadow-raised); }
+.room-grid > .room-tile { animation: rise-in 360ms cubic-bezier(.2,.7,.2,1) both; }
+.room-grid > .room-tile:nth-child(2) { animation-delay: 30ms; } .room-grid > .room-tile:nth-child(3) { animation-delay: 60ms; } .room-grid > .room-tile:nth-child(4) { animation-delay: 90ms; } .room-grid > .room-tile:nth-child(n+5) { animation-delay: 120ms; }
+
+/* Vacant doors glow softly and lift on hover; the chosen door pops. */
+.facade-room-door.is-clickable { cursor: pointer; }
+.facade-room-door.is-pickable .facade-door-frame { animation: door-glow 2.4s ease-in-out infinite; }
+
+.facade-room-door.is-clickable:hover .facade-door-frame { stroke: var(--brand); stroke-width: 5; }
+.facade-room-door.is-selected .facade-door-frame { animation: door-pop 420ms cubic-bezier(.2,.9,.3,1.3) both; }
+@keyframes door-glow { 0%, 100% { filter: drop-shadow(0 0 0 rgb(31 107 79 / 0)); } 50% { filter: drop-shadow(0 0 7px rgb(31 107 79 / .55)); } }
+@keyframes door-pop { from { transform: scale(.94); } to { transform: none; } }
+.facade-room-door .facade-door-frame { transform-box: fill-box; transform-origin: center; }
+
+/* Property map: buildings settle in one after another; windows light up on hover. */
+.property-plan > .plan-building { animation: rise-in 480ms cubic-bezier(.2,.7,.2,1) both; }
+.property-plan > .plan-building:nth-of-type(2) { animation-delay: 50ms; } .property-plan > .plan-building:nth-of-type(3) { animation-delay: 100ms; } .property-plan > .plan-building:nth-of-type(4) { animation-delay: 150ms; } .property-plan > .plan-building:nth-of-type(5) { animation-delay: 200ms; } .property-plan > .plan-building:nth-of-type(n+6) { animation-delay: 250ms; }
+.plan-building .building-art { transition: transform 300ms cubic-bezier(.2,.7,.2,1); }
+.plan-building:hover .building-art { transform: translateY(-2px) scale(1.05); }
+.plan-building:hover .building-art-window { fill: #ffd56b; transition: fill 250ms ease; }
+.selected-space { animation: rise-in 320ms cubic-bezier(.2,.7,.2,1) both; }
+@media (max-width: 40rem) { .room-picker-buildings { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .room-picker-building:hover, .plan-building:hover .building-art, .room-picker-building:hover .building-art { transform: none; } .facade-room-door.is-pickable .facade-door-frame { animation: none; } }
+
+/* Pending cash in the narrow account column: amount, then "Collected by" and "Date received" as readable lines,
+   then the action or verifier note on its own row (previously squeezed into three columns). */
+.account-workspace .pending-cash-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; }
+.account-workspace .pending-cash-details { flex: 1 1 min(100%, 14rem); grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr)); align-items: start; }
+.account-workspace .pending-cash-details > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .4rem; }
+.account-workspace .pending-cash-row > .field-help { flex: 1 1 100%; margin: 0; }
+.account-workspace .pending-cash-row > .button { flex: 0 0 auto; }
+
+/* Dashboard collections: four figures in one row on wide screens, two by two otherwise (no orphan tile). */
+.collections-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 64rem) { .collections-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 30rem) { .collections-grid { grid-template-columns: minmax(0, 1fr); } }
+/* Directory heading: title on the left, Add tenant with the record count on the right. */
+.directory-card > .section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; }
+.directory-heading-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; }
+/* Compact workspace toolbar: status, property and Refresh access on one line. */
+.workspace-toolbar { padding: .6rem .9rem; }
+.workspace-toolbar .refresh-access { margin: 0; }
+.toolbar-property { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem; margin: 0 auto 0 0; min-width: 0; }
+.toolbar-property span { color: var(--text-secondary); font-size: .9rem; }
+.toolbar-property strong { overflow-wrap: anywhere; }
+/* Real add-tenant: wider form beside a slimmer record preview; compact building cards (three or more per row). */
+@media (min-width: 65rem) { .add-tenant .tenant-form-layout { grid-template-columns: minmax(0, 1fr) minmax(13rem, 16rem); } }
+.room-picker-buildings { grid-template-columns: repeat(auto-fill, minmax(min(100%, 7.25rem), 1fr)); gap: .5rem; }
+.room-picker-building { min-height: 6.25rem; padding: .55rem .4rem; gap: .2rem; }
+.room-picker-building .building-art { width: 3.25rem; }
+.room-picker-building strong { font-size: .88rem; }
+.room-picker-building .status { padding: .15rem .45rem; font-size: .75rem; }
+
+/* Remember this device (authenticator screen) and the remembered-device list (Account security). */
+.remember-device { display: flex; align-items: flex-start; gap: .6rem; margin: .75rem 0 1rem; font-weight: 600; cursor: pointer; }
+.remember-device input { width: 1.4rem; height: 1.4rem; min-height: 0; margin-top: .15rem; flex: 0 0 auto; }
+.remember-device span { display: grid; gap: .15rem; }
+.remember-device small { color: var(--text-secondary); font-weight: 400; }
+.trusted-devices { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); display: grid; gap: .6rem; }
+.trusted-devices h3 { margin: 0; }
+.trusted-device-list { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.trusted-device-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; padding: .75rem .9rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--surface); }
+.trusted-device-list li > div { display: grid; gap: .2rem; min-width: 0; }
+.trusted-device-list strong { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; overflow-wrap: anywhere; }
+.trusted-device-list small { color: var(--text-secondary); }
+
+/* Room listings: automatic listing switch. */
+.auto-listing { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; margin: 0 0 1rem; padding: 1rem 1.1rem; border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: .9rem; background: var(--surface); }
+.auto-listing--on { border-left-color: var(--success); background: var(--success-surface); }
+.auto-listing > div { flex: 1 1 18rem; min-width: 0; }
+.auto-listing h3 { margin: 0 0 .3rem; font-size: 1.05rem; }
+.auto-listing p { margin: 0; }
+.remember-device label { cursor: pointer; font-weight: 600; margin: 0; }
+
+/* Grouped workspace menu: Add tenant action, "Daily work" heading, and a collapsible "More" group. */
+.nav-group-label { margin: 1rem .75rem .35rem; color: var(--text-secondary); font-size: .74rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.nav-group-toggle { display: flex; width: 100%; min-height: 2.75rem; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .9rem; padding: .55rem .75rem; border: 1px dashed var(--border); border-radius: .85rem; background: transparent; color: var(--text-secondary); font: inherit; font-size: .9rem; font-weight: 600; text-align: left; cursor: pointer; }
+.nav-group-toggle:hover { color: var(--brand); border-style: solid; }
+.nav-group-chevron { transition: transform 200ms ease; }
+.nav-group-toggle[aria-expanded="true"] .nav-group-chevron { transform: rotate(180deg); }
+.nav-group-more { margin-top: .35rem; }
+.nav-group-more:not([hidden]) { animation: rise-in 260ms cubic-bezier(.2,.7,.2,1) both; }
+.workspace-links a.nav-add-tenant { gap: .5rem; margin-top: .35rem; border: 1px solid var(--border); font-weight: 650; }
+.nav-badge { display: inline-flex; align-items: center; margin-left: 0.45rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: #f2c230; color: #1c2a23; font-size: 0.78rem; font-weight: 800; line-height: 1.4; white-space: nowrap; }
+.nav-add-mark { display: inline-grid; width: 1.5rem; height: 1.5rem; place-items: center; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 800; line-height: 1; }
+.workspace-sidebar .nav-group-label { color: var(--nav-label); }
+.workspace-sidebar .nav-group-toggle { border-color: rgb(255 255 255 / 22%); color: var(--nav-text); }
+.workspace-sidebar .nav-group-toggle:hover { border-color: rgb(255 255 255 / 45%); color: #fff; background: var(--nav-hover); }
+.workspace-sidebar .nav-group-toggle:focus-visible { outline-color: #fff; }
+.workspace-sidebar .workspace-links a.nav-add-tenant { border-color: rgb(255 255 255 / 22%); }
+.workspace-sidebar .workspace-links a.nav-add-tenant[aria-current="location"] { border-color: transparent; }
+.workspace-sidebar .nav-add-mark { background: #fff; color: var(--brand-hover, #1a5c43); }
+.mobile-workspace-navigation .nav-group-toggle, .mobile-workspace-navigation .nav-group-label { grid-column: 1 / -1; }
+/* Map room tiles: responsible renter and monthly rent for occupied rooms. */
+.room-renter { display: grid; gap: .1rem; margin-top: .2rem; padding-top: .35rem; border-top: 1px solid var(--border); width: 100%; min-width: 0; }
+.room-renter b { font-weight: 650; font-size: .9rem; overflow-wrap: anywhere; }
+.room-renter span { color: var(--text-secondary); font-size: .82rem; font-variant-numeric: tabular-nums; }
+
+/* Paid rent report PDF ("Save as PDF"). Hidden on screen; shown alone while printing this report.
+   Font pairing: Constantia (elegant serif) for headings and key figures, Corbel (soft humanist sans) for body text, lining tabular numbers; both ship with Windows, with Palatino/Iowan and Avenir/Gill Sans fallbacks (the CSP allows system fonts only). */
+.print-document { display: none; }
+@media print {
+  html.print-paid-report body > :not(.print-document) { display: none !important; }
+  html.print-paid-report body { background: #fff !important; }
+  html.print-paid-report .paid-rent-document { display: block; }
+  @page { size: A4; margin: 16mm 15mm 18mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt Corbel, Candara, "Avenir Next", "Gill Sans", "Segoe UI", sans-serif; color: #6b7280; } }
+}
+.paid-rent-document { --doc-ink: #17221c; --doc-muted: #55625a; --doc-line: #dde3d6; --doc-accent: #1f6b4f; --doc-tint: #f4f7ee;
+  color: var(--doc-ink); background: #fff; font-family: Corbel, Candara, "Avenir Next", "Gill Sans", "Segoe UI", system-ui, sans-serif; font-size: 10pt; line-height: 1.5; font-variant-numeric: lining-nums tabular-nums; }
+.paid-rent-document h1, .paid-rent-document h2, .paid-rent-document .doc-figure strong, .paid-rent-document .doc-property { font-family: Constantia, "Palatino Linotype", "Iowan Old Style", "Book Antiqua", Georgia, serif; font-weight: 600; letter-spacing: .01em; font-variant-numeric: lining-nums tabular-nums; }
+.doc-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 6mm; border-bottom: 2px solid var(--doc-accent); }
+.doc-brand { display: flex; align-items: center; gap: 2.5mm; font-weight: 700; font-size: 11pt; letter-spacing: .02em; color: var(--doc-accent); }
+.doc-mark { display: inline-grid; width: 7mm; height: 7mm; place-items: center; border-radius: 1.6mm; background: var(--doc-accent); color: #fff; font-size: 10pt; }
+.doc-confidential { font-size: 7.5pt; letter-spacing: .12em; text-transform: uppercase; color: var(--doc-muted); }
+.doc-title { padding: 8mm 0 6mm; }
+.doc-kicker { margin: 0 0 1.5mm; font-size: 7.5pt; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--doc-accent); }
+.paid-rent-document h1 { margin: 0; font-size: 26pt; font-weight: 600; line-height: 1.1; letter-spacing: -.01em; }
+.doc-property { margin: 2mm 0 5mm; font-size: 13pt; font-style: italic; color: var(--doc-muted); }
+.doc-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin: 0; padding: 3.5mm 4mm; border: 1px solid var(--doc-line); border-radius: 2mm; background: var(--doc-tint); }
+.doc-meta dt { font-size: 7pt; letter-spacing: .1em; text-transform: uppercase; color: var(--doc-muted); }
+.doc-meta dd { margin: .8mm 0 0; font-weight: 600; }
+.doc-summary { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 4mm; margin-bottom: 8mm; }
+.doc-figure { display: grid; gap: 1mm; padding: 4mm; border: 1px solid var(--doc-line); border-radius: 2mm; break-inside: avoid; }
+.doc-figure--lead { border-color: var(--doc-accent); border-width: 1.5px; }
+.doc-figure span { font-size: 7.5pt; letter-spacing: .08em; text-transform: uppercase; color: var(--doc-muted); }
+.doc-figure strong { font-size: 18pt; font-weight: 600; font-variant-numeric: tabular-nums; }
+.doc-figure small { color: var(--doc-muted); font-size: 8pt; }
+.doc-section { margin-bottom: 8mm; }
+.paid-rent-document h2 { display: flex; align-items: baseline; gap: 3mm; margin: 0 0 1.5mm; font-size: 14pt; font-weight: 600; break-after: avoid; }
+.doc-number { display: inline-grid; width: 6mm; height: 6mm; place-items: center; border-radius: 50%; background: var(--doc-accent); color: #fff; font: 700 8pt "Segoe UI", system-ui, sans-serif; }
+.doc-note { margin: 0 0 3mm; color: var(--doc-muted); font-size: 8.5pt; }
+.doc-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.doc-table thead { display: table-header-group; }
+.doc-table th, .doc-table td { padding: 2.2mm 2.5mm; text-align: left; vertical-align: top; }
+.doc-table thead th { font-size: 7pt; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--doc-muted); border-bottom: 1.5px solid var(--doc-ink); }
+.doc-table tbody tr { break-inside: avoid; }
+.doc-table tbody td { border-bottom: 1px solid var(--doc-line); }
+.doc-table tbody tr:nth-child(even) td { background: var(--doc-tint); }
+.doc-table tfoot th, .doc-table tfoot td { padding-top: 3mm; font-weight: 700; border-top: 1.5px solid var(--doc-ink); }
+.doc-money { text-align: right !important; white-space: nowrap; }
+.doc-code { font-family: ui-monospace, Consolas, monospace; font-size: 8pt; color: var(--doc-muted); }
+.doc-empty { margin: 0; padding: 4mm; border: 1px dashed var(--doc-line); border-radius: 2mm; color: var(--doc-muted); font-style: italic; }
+.doc-footer { display: flex; justify-content: space-between; gap: 6mm; margin-top: 10mm; padding-top: 3mm; border-top: 1px solid var(--doc-line); font-size: 7.5pt; color: var(--doc-muted); }
+@media print { .paid-rent-document * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+/* App bar (27 Oct 2026): sticky, frosted surface; icon theme toggle, EN/CEB switch, account chip with avatar, Sign out. */
+.site-header { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--border); box-shadow: 0 1px 0 rgb(20 38 30 / 3%), 0 6px 18px rgb(20 38 30 / 6%); }
+.site-header .header-inner { min-height: 4.25rem; }
+.site-header .session-tools { display: flex; align-items: center; gap: .75rem; }
+.site-header .session-actions { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+.site-header .appbar-icon { display: inline-grid; place-items: center; width: 2.75rem; height: 2.75rem; min-height: 2.75rem; padding: 0; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); color: var(--text); }
+.site-header .appbar-icon svg, .site-header .appbar-signout svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.site-header .appbar-icon:hover { border-color: var(--brand); color: var(--brand); }
+.site-header .appbar-language { display: inline-flex; align-items: center; gap: .15rem; min-height: 2.75rem; padding: .25rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font-size: .8rem; font-weight: 700; letter-spacing: .04em; }
+.site-header .appbar-language span { padding: .35rem .6rem; border-radius: 999px; color: var(--text-secondary); }
+.site-header .appbar-language span.is-on { background: var(--text); color: var(--surface); }
+.site-header .appbar-dev { min-height: 2.75rem; padding: .3rem .8rem; border: 1px dashed var(--border); border-radius: 999px; background: transparent; color: var(--text-secondary); font-size: .82rem; }
+.site-header .appbar-account { display: flex; align-items: center; gap: .6rem; min-width: 0; padding-left: .85rem; border-left: 1px solid var(--border); }
+.site-header .appbar-avatar { display: inline-grid; flex: 0 0 auto; width: 2.5rem; height: 2.5rem; place-items: center; border-radius: 50%; background: var(--action-gradient, var(--brand)); color: #fff; font-weight: 750; box-shadow: 0 4px 10px rgb(31 107 79 / 28%); }
+.site-header .session-identity { min-width: 0; }
+.site-header .signed-in-label { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--brand); }
+.site-header .account-email { max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; font-size: .9rem; font-weight: 600; }
+.site-header .appbar-signout { display: inline-flex; align-items: center; gap: .4rem; min-height: 2.75rem; padding: .4rem .85rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font-weight: 600; }
+.site-header .appbar-signout:hover { border-color: var(--danger, #b42318); color: var(--danger, #b42318); }
+.environment-note { letter-spacing: .02em; }
+@media (max-width: 48rem) {
+  .site-header .header-inner { flex-wrap: wrap; row-gap: .4rem; }
+  .site-header .session-tools { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
+  .site-header .appbar-account { order: -1; padding-left: 0; border-left: 0; flex: 1 1 100%; }
+  .site-header .account-email { max-width: 100%; }
+  .site-header .appbar-signout { margin-left: auto; }
+}
+@media (max-width: 22rem) { .site-header .appbar-signout svg { display: none; } }
+/* Phones: the app bar keeps avatar + role, Sign out and the display controls; the long email and the dev-only chip
+   are hidden so nothing scrolls sideways (the email is still in Account security). */
+@media (max-width: 40rem) {
+  .site-header .header-inner { min-width: 0; }
+  .site-header .session-tools, .site-header .session-actions, .site-header .appbar-account { min-width: 0; max-width: 100%; }
+  .site-header .account-email, .site-header .appbar-dev { display: none; }
+  .site-header .appbar-account { flex: 1 1 auto; }
+  .site-header .appbar-signout { padding-inline: .75rem; white-space: nowrap; }
+}
+.site-header .header-inner { max-width: 100%; overflow-x: clip; } /* sub-pixel rounding at 320px + 200% text */
+
+/* Tenant picker: search, short result list, chosen chip (replaces long tenant dropdowns). */
+.tenant-picker { display: grid; gap: .4rem; min-width: 0; }
+.tenant-picker-label { margin: 0; font-weight: 700; }
+.tenant-picker-results { display: grid; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+.tenant-picker-results button, .tenant-picker-chosen { display: flex; align-items: center; gap: .7rem; width: 100%; min-height: 3rem; padding: .5rem .75rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--surface); color: var(--text); font: inherit; text-align: left; }
+.tenant-picker-results button { cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease; }
+.tenant-picker-results button:hover { border-color: var(--brand); background: var(--brand-tint); }
+.tenant-picker-results span:last-child, .tenant-picker-chosen > span:nth-child(2) { display: grid; min-width: 0; flex: 1 1 auto; }
+.tenant-picker strong { overflow-wrap: anywhere; }
+.tenant-picker small { color: var(--text-secondary); font-size: .85rem; }
+.tenant-picker-chosen { border-color: var(--brand); background: var(--brand-tint); }
+.tenant-picker-chosen .button { flex: 0 0 auto; margin: 0; }
+.tenant-picker-avatar { display: inline-grid; flex: 0 0 auto; width: 2.1rem; height: 2.1rem; place-items: center; border-radius: 50%; background: var(--surface-muted, var(--page)); color: var(--brand-hover, var(--brand)); font-weight: 750; }
+
+/* Worklist beside the account: text on top, full-width "Open account" below (no word-by-word wrapping). */
+.payment-record-view--with-worklist .payment-overview .cash-row { flex-direction: column; align-items: stretch; gap: .6rem; }
+.payment-record-view--with-worklist .payment-overview .cash-row > .button { width: 100%; }
+.payment-overview .worklist-row p { margin: .15rem 0 0; }
+
+/* Room listings: compact rows (two per line on wide screens), instant show/hide, details folded away. */
+.listing-rows { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); gap: .6rem; }
+.room-listings .listing-row { display: grid; align-content: start; gap: .45rem; margin: 0; padding: .85rem 1rem; }
+.room-listings .listing-row .listing-toggle { margin: 0; }
+.listing-edit summary { display: flex; align-items: center; min-height: 2.75rem; color: var(--brand); font-weight: 600; cursor: pointer; overflow-wrap: anywhere; }
+.listing-edit[open] summary { margin-bottom: .4rem; }
+@media print { html.print-paid-report, html.print-paid-report body { background: #fff !important; background-image: none !important; } }
+.doc-date { white-space: nowrap; }
+.doc-code { overflow-wrap: anywhere; }
+.room-listings .listing-row { border: 1px solid var(--border); border-radius: .9rem; background: var(--surface); box-shadow: var(--shadow-card); }
+/* Tenant cards: a little wider so actions sit neatly; action labels stay on one line. */
+.tenant-records--cards { grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); }
+.tenant-card-actions .tenant-card-action { white-space: nowrap; padding-inline: .9rem; font-size: .92rem; }
+@media (max-width: 40rem) { .tenant-card-actions .tenant-card-action { white-space: normal; } }
+
+/* Dashboard: Philippine time and month calendar (rent due days marked). */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.ph-clock { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 1.5rem; align-items: start; margin: 1rem 0; }
+.ph-clock-now { display: grid; align-content: start; gap: .25rem; }
+.ph-clock-now .eyebrow { margin: 0; }
+.ph-clock-time { font-family: var(--font-display, inherit); font-size: clamp(2.2rem, 5vw, 3.2rem); font-weight: 700; line-height: 1.05; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--text); }
+.ph-clock-date { margin: 0 0 .5rem; font-size: 1.1rem; font-weight: 600; color: var(--text-secondary); }
+.ph-calendar-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .35rem; }
+.ph-calendar-head strong { font-size: 1.05rem; }
+.ph-calendar-head .button { min-width: 2.75rem; padding-inline: .5rem; font-size: 1.3rem; line-height: 1; }
+.ph-calendar table { width: 100%; border-collapse: separate; border-spacing: .2rem; table-layout: fixed; }
+.ph-calendar th { color: var(--text-secondary); font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding-bottom: .2rem; }
+.ph-calendar td { position: relative; height: 2.4rem; border-radius: .6rem; text-align: center; font-variant-numeric: tabular-nums; }
+.ph-calendar td span { display: inline-grid; place-items: center; width: 2.1rem; height: 2.1rem; border-radius: 50%; }
+.ph-calendar td.is-today span { background: var(--action-gradient, var(--brand)); color: #fff; font-weight: 750; box-shadow: 0 4px 12px rgb(31 107 79 / 30%); }
+.ph-calendar td.has-due i { position: absolute; left: 50%; bottom: .1rem; width: .4rem; height: .4rem; margin-left: -.2rem; border-radius: 50%; background: var(--warning, #b45309); }
+.ph-today { margin-top: .4rem; }
+@media (max-width: 48rem) { .ph-clock { grid-template-columns: minmax(0, 1fr); } }
+
+/* Months owed from the notebook (waiting for a double check). */
+.notebook-months { display: grid; gap: 0.85rem; margin-top: 1rem; }
+.notebook-months h4 { margin: 0; font-size: 1.05rem; }
+.notebook-form textarea { width: 100%; min-height: 4.5rem; }
+.notebook-list { display: grid; gap: 0.5rem; margin: 0.5rem 0 0.85rem; padding: 0; list-style: none; }
+.notebook-row { display: flex; align-items: flex-start; gap: 0.7rem; min-height: 2.75rem; padding: 0.6rem 0.8rem; border: 1px solid var(--warning-border); border-radius: 0.8rem; background: var(--warning-surface); cursor: pointer; font-weight: 400; }
+.notebook-row input { flex: none; width: 1.4rem; height: 1.4rem; min-height: 0; margin: 0.15rem 0 0; }
+.notebook-row small { display: block; color: var(--text-secondary); font-size: 0.9rem; overflow-wrap: anywhere; }
+
+/* Maintenance screen. */
+.maintenance { display: grid; gap: 1rem; }
+.maintenance-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
+.maintenance-toolbar input { max-width: 14rem; }
+.maintenance-total { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.4rem 1rem; }
+.maintenance-total h3, .maintenance-total p { margin: 0; }
+.maintenance-total strong { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.maintenance-rows { display: grid; gap: 0.6rem; margin: 0.8rem 0 0; padding: 0; list-style: none; }
+.maintenance-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 0.4rem 1rem; padding: 0.7rem 0.9rem; border: 1px solid var(--border); border-radius: 0.8rem; background: var(--surface-alt); }
+.maintenance-row small { display: block; color: var(--text-secondary); }
+.maintenance-amount { font-variant-numeric: tabular-nums; }
+.maintenance-void { grid-column: 1 / -1; display: grid; gap: 0.4rem; }
+.maintenance-form { display: grid; gap: 0.35rem; }
+@media (max-width: 40rem) { .maintenance-row { grid-template-columns: minmax(0, 1fr); } }
+
+/* ===== Button system (atoms) =====
+   Variants: primary, secondary, ghost, approve, danger, danger-quiet. Sizes: lg, md (default), sm. Older class names
+   (.primary, .secondary-button, .quiet-button) share these looks. Every size keeps a 44px minimum target. */
+.button { border-radius: 999px; }
+.button.primary, .button--primary { box-shadow: 0 6px 14px -8px rgb(21 83 60 / 70%); }
+.button--secondary { border-color: var(--control-border); background: var(--surface); color: var(--text); }
+.button--secondary:hover:not(:disabled) { border-color: var(--brand); color: var(--brand); }
+.button--ghost { min-height: 2.6rem; border-color: transparent; background: transparent; color: var(--brand); }
+.button--ghost:hover:not(:disabled) { background: var(--brand-tint); border-color: transparent; }
+.button--primary { border-color: var(--action); background: var(--action); color: var(--on-action); }
+.button--primary:hover:not(:disabled) { border-color: var(--action-hover); background: var(--action-hover); color: var(--on-action); }
+.button--approve { border-color: var(--approve); background: var(--approve); color: var(--on-solid); box-shadow: 0 6px 14px -8px rgb(21 115 71 / 70%); }
+.button--approve::before { content: "\2713"; content: "\2713" / ""; font-weight: 800; } /* the check mark is decoration: empty alt text keeps it out of the button name */
+.button--approve:hover:not(:disabled) { border-color: var(--approve-hover); background: var(--approve-hover); color: var(--on-solid); }
+.button--approve:active:not(:disabled) { background: var(--approve-pressed); }
+.button--danger { border-color: var(--danger); background: var(--danger); color: var(--on-solid); box-shadow: 0 6px 14px -8px rgb(180 35 24 / 70%); }
+.button--danger:hover:not(:disabled) { border-color: var(--danger-hover); background: var(--danger-hover); color: var(--on-solid); }
+.button--danger:active:not(:disabled) { background: var(--danger-pressed); }
+.button--danger-quiet { border-color: var(--danger); background: var(--surface); color: var(--error); }
+.button--danger-quiet:hover:not(:disabled) { background: var(--error-surface); border-color: var(--danger-hover); color: var(--error); }
+.button--lg { min-height: 3.25rem; padding: 0.72rem 1.7rem; font-size: 1.1rem; }
+.button--sm { padding: 0.4rem 0.95rem; font-size: 0.92rem; }
+.button:disabled { box-shadow: none; }
+.button:disabled::before { opacity: .6; }
+
+.icon-button { display: inline-grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0; border: 1px solid var(--control-border); border-radius: 50%; background: var(--surface); color: var(--text); cursor: pointer; transition: background-color 130ms ease, border-color 130ms ease, color 130ms ease; }
+.icon-button:hover { border-color: var(--brand); color: var(--brand); }
+.icon-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.icon-button--white { border-color: transparent; box-shadow: 0 1px 3px rgb(20 38 30 / 18%); }
+.icon-button--brand { border-color: var(--action); background: var(--action); color: var(--on-action); }
+.icon-button--brand:hover { background: var(--action-hover); border-color: var(--action-hover); color: var(--on-action); }
+.icon-button--dark { border-color: #0f3d2e; background: #0f3d2e; color: #fff; }
+.icon-button--dark:hover { background: #0a2e22; border-color: #0a2e22; color: #fff; }
+
+.chip, .status { border-radius: 999px; }
+.chip { display: inline-flex; width: fit-content; align-items: center; gap: 0.4rem; padding: 0.28rem 0.75rem; border: 1px solid transparent; font-size: 0.9rem; font-weight: 650; line-height: 1.3; }
+.chip::before { content: ""; width: 0.48rem; height: 0.48rem; flex: 0 0 0.48rem; border-radius: 50%; background: currentColor; }
+.chip--success, .status--ready { color: var(--success); background: var(--success-surface); border-color: var(--success-border); }
+.chip--warning, .status--pending, .status--warning { color: var(--warning); background: var(--warning-surface); border-color: var(--warning-border); }
+.chip--info, .status--info { color: var(--info); background: var(--info-surface); border-color: var(--info-border); }
+.chip--danger { color: var(--error); background: var(--error-surface); border-color: var(--error-border); }
+.chip--neutral { color: var(--text-secondary); background: var(--support); border-color: var(--border); }
+.chip--brand { color: var(--on-action); background: var(--action); border-color: var(--action); }
+.status--info::before, .status--brand::before { content: ""; width: 0.48rem; height: 0.48rem; flex: 0 0 0.48rem; border-radius: 50%; background: currentColor; }
+.status--brand { color: var(--on-action); background: var(--action); }
+
+.atoms-gallery { max-width: 72rem; margin: 0 auto; padding: 2rem 1rem 4rem; display: grid; gap: 2rem; }
+.atoms-gallery h1 { margin: 0; font-size: 2.4rem; }
+.atoms-gallery h2 { margin: 0 0 0.8rem; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); }
+.atoms-table { width: 100%; border-collapse: collapse; }
+.atoms-table th, .atoms-table td { padding: 0.7rem 0.6rem; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--border); }
+.atoms-table td:last-child { color: var(--text-secondary); max-width: 18rem; }
+.atoms-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; padding: 1rem; border-radius: 1rem; background: var(--support); }
+@media (max-width: 52rem) { .atoms-gallery { overflow-x: auto; } }
+
+/* Optional bottom line of the monthly report: paid rent minus maintenance. */
+.net-report-sheet { display: grid; gap: 0.5rem; }
+.net-report-lines { display: grid; gap: 0.4rem; margin: 0; }
+.net-report-lines > div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.45rem 0; border-bottom: 1px solid var(--border); }
+.net-report-lines dt, .net-report-lines dd { margin: 0; }
+.net-report-lines dd { font-variant-numeric: tabular-nums; font-weight: 650; }
+.net-report-total { border-bottom: 0 !important; font-size: 1.15rem; font-weight: 800; }
+.net-report-total dd { font-weight: 800; }
+.doc-optional { margin-top: 6mm; padding-top: 4mm; border-top: 1px dashed var(--doc-line); }
+.doc-optional h2 { font-size: 11pt; }
+.doc-net th { text-align: left; font-weight: 600; }
+.doc-net tfoot th, .doc-net tfoot td { font-weight: 700; border-top: 1.5px solid var(--doc-ink); }

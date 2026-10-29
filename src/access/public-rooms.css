@@ -1,0 +1,97 @@
+/* Public rooms page (/rooms), redesigned 27 Oct 2026 in the landing page's look: night hero, cream page, building
+   tabs drawn with their open rooms lit, the selected building large (tap a lit room to jump to it) beside its room
+   cards, and a calm inquiry dialog. Colours are fixed here (the page has no day/night switch). */
+.pr-shell {
+  --night: #0c1612; --cream: #f3efe2; --paper: #fffdf6; --ink: #10201a; --muted: #4a5850; --muted-night: #a9bfb3;
+  --leaf: #1f6b4f; --amber: #ffbf1f; --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  min-height: 100vh; background: var(--cream); color: var(--ink);
+}
+.pr-nav { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.7rem clamp(1rem, 4vw, 3rem); background: rgb(12 22 18 / 94%); color: var(--cream); backdrop-filter: blur(10px); }
+.pr-brand { display: inline-flex; align-items: center; gap: 0.55rem; min-height: 2.75rem; color: var(--cream); font-size: 1.2rem; font-weight: 900; letter-spacing: -0.04em; text-decoration: none; }
+.pr-brand i { font-family: var(--serif); font-weight: 400; color: var(--amber); }
+.pr-brand-mark { width: 1.05rem; height: 1.05rem; background: var(--amber); clip-path: polygon(50% 0, 100% 42%, 100% 100%, 0 100%, 0 42%); }
+.pr-lang.button { min-height: 2.75rem; border-color: rgb(243 239 226 / 45%); background: transparent; color: var(--cream); }
+.pr-lang.button:hover { background: var(--cream); color: var(--ink); }
+.pr-nav :focus-visible, .pr-hero :focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+.pr-hero { padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1rem, 4vw, 3rem) clamp(5rem, 9vw, 7rem); color: var(--cream);
+  background: radial-gradient(80% 90% at 85% 100%, rgb(255 191 31 / 12%), transparent 60%), linear-gradient(180deg, #0a130f, #13221b); }
+.pr-hero__place { margin: 0 0 0.9rem; color: var(--amber); font: 700 0.82rem ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: 0.12em; text-transform: uppercase; }
+.pr-hero h1 { margin: 0; color: var(--cream); font-size: clamp(2.6rem, 8vw, 6.5rem); font-weight: 900; line-height: 0.9; letter-spacing: -0.05em; }
+.pr-hero__lede { max-width: 38rem; margin: 1.1rem 0 0; color: var(--muted-night); font-size: 1.15rem; }
+.pr-hero__count { display: inline-flex; align-items: baseline; gap: 0.5rem; margin: 1.4rem 0 0; padding: 0.45rem 1rem; border-radius: 999px; background: rgb(255 255 255 / 9%); font-weight: 650; }
+.pr-hero__count strong { color: var(--amber); font-family: var(--serif); font-size: 1.6rem; font-style: italic; font-weight: 400; }
+.pr-body { position: relative; margin-top: clamp(-4rem, -6vw, -3rem); padding: 0 clamp(1rem, 4vw, 3rem) 3rem; }
+.public-rooms { display: grid; gap: 1.25rem; }
+.public-building-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr)); gap: 0.9rem; }
+.public-building-tab { display: grid; justify-items: start; gap: 0.1rem; min-height: 4.25rem; padding: 0.9rem 1rem 1rem; border: 1.5px solid rgb(16 32 26 / 12%); border-radius: 1.1rem; background: var(--paper); color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+  box-shadow: 0 18px 40px -30px rgb(16 32 26 / 60%); transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 300ms ease, border-color 200ms ease; }
+.public-building-tab__art { display: grid; place-items: end center; width: 100%; height: 5.5rem; margin-bottom: 0.5rem; padding: 0.5rem 0.6rem 0.2rem; border-radius: 0.8rem; background: radial-gradient(80% 80% at 50% 100%, #24604a, #13221b 75%); }
+.public-building-tab__art .lp-facade { display: block; width: 100%; max-height: 100%; height: auto; }
+.public-building-tab strong { font-size: 1.15rem; font-weight: 850; letter-spacing: -0.02em; }
+.public-building-tab > span:last-child { color: var(--muted); font-size: 0.95rem; }
+.public-building-tab:hover { transform: translateY(-4px); box-shadow: 0 24px 46px -30px rgb(16 32 26 / 70%); }
+.public-building-tab[aria-selected="true"] { border-color: var(--leaf); box-shadow: 0 0 0 3px rgb(31 107 79 / 25%), 0 24px 46px -30px rgb(16 32 26 / 70%); }
+.public-building-tab[aria-selected="true"] > span:last-child { color: var(--leaf); font-weight: 700; }
+.public-building-tab:focus-visible { outline: 3px solid var(--leaf); outline-offset: 3px; }
+.pr-panel { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; gap: 1.25rem; }
+.pr-panel--plain { grid-template-columns: minmax(0, 1fr); }
+.pr-stage { position: sticky; top: 5rem; display: grid; gap: 0.7rem; margin: 0; padding: 1.4rem 1.2rem 1rem; border-radius: 1.3rem; color: #c7ddd0;
+  background: radial-gradient(90% 80% at 50% 100%, #24604a, #0f2a20 75%); box-shadow: 0 30px 60px -40px rgb(16 32 26 / 80%); }
+.pr-stage__art .lp-facade { display: block; width: 100%; height: auto; filter: drop-shadow(0 10px 12px rgb(0 0 0 / 35%)); }
+.pr-stage figcaption { font-size: 0.95rem; text-align: center; }
+.public-room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: 0.9rem; }
+.pr-panel:not(.pr-panel--plain) .public-room-grid { grid-template-columns: minmax(0, 1fr); }
+.public-room-card { display: grid; gap: 0.45rem; padding: 1.15rem 1.2rem; border: 1.5px solid rgb(16 32 26 / 12%); border-radius: 1.1rem; background: var(--paper); scroll-margin: 6rem;
+  transition: border-color 200ms ease, box-shadow 300ms ease, transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.public-room-card:hover, .public-room-card:focus-within { border-color: var(--leaf); transform: translateY(-2px); box-shadow: 0 20px 40px -30px rgb(16 32 26 / 70%); }
+.public-room-card.is-picked { border-color: #e0a100; box-shadow: 0 0 0 4px rgb(224 161 0 / 25%); }
+.public-room-card__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.public-room-card h3 { margin: 0; font-size: 1.35rem; font-weight: 850; letter-spacing: -0.02em; }
+.public-room-place { margin: 0; color: var(--leaf); font-size: 0.95rem; font-weight: 700; }
+.public-room-rent { margin: 0; }
+.public-room-rent strong { font-size: 1.55rem; font-variant-numeric: tabular-nums; }
+.public-room-rent span, .public-room-description { color: var(--muted); }
+.public-room-description { margin: 0; }
+.public-room-card .button { justify-self: start; max-width: 100%; margin-top: 0.3rem; white-space: normal; }
+.pr-empty { padding: 2rem; border-radius: 1.2rem; background: var(--paper); }
+.pr-empty h2 { margin-top: 0; }
+.pr-footnote { margin: 1.6rem 0 0; color: var(--muted); }
+.pr-footnote a { display: inline-flex; align-items: center; min-height: 2.75rem; color: var(--leaf); font-weight: 700; }
+
+/* Inquiry dialog */
+.inquiry-dialog { width: min(100% - 2rem, 34rem); max-height: calc(100vh - 2rem); padding: 1.4rem; border: 0; border-radius: 1.3rem; background: #fffdf6; color: #10201a; box-shadow: 0 40px 80px -30px rgb(0 0 0 / 60%); }
+/* Tailwind preflight removes the default dialog centring; restore it, and use a bottom sheet on phones. */
+.inquiry-dialog[open] { margin: auto; animation: pr-pop 280ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes pr-pop { from { opacity: 0; transform: translateY(14px) scale(0.98); } }
+@media (max-width: 32rem) { .inquiry-dialog[open] { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 1.3rem 1.3rem 0 0; } }
+.inquiry-dialog::backdrop { background: rgb(8 17 12 / 62%); backdrop-filter: blur(3px); }
+.inquiry-dialog__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.6rem; padding-bottom: 0.9rem; border-bottom: 1px solid rgb(16 32 26 / 12%); }
+.inquiry-dialog__head h2 { margin: 0; font-size: 1.5rem; letter-spacing: -0.02em; }
+.inquiry-dialog__head .button { flex: 0 0 auto; width: auto; }
+.inquiry-dialog__where { margin: 0; color: #1f6b4f; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.inquiry-rent { margin: 0.2rem 0 0; color: #4a5850; }
+.inquiry-dialog form { display: grid; gap: 0.35rem; }
+.inquiry-dialog form > label { margin-top: 0.45rem; font-weight: 650; }
+.inquiry-dialog textarea { min-height: 6rem; }
+.inquiry-dialog form > .button { width: 100%; margin-top: 0.6rem; }
+.inquiry-trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.inquiry-sent { display: grid; justify-items: center; gap: 0.6rem; padding: 1rem 0.5rem 0.4rem; text-align: center; }
+.inquiry-sent p { margin: 0; }
+.inquiry-sent__mark { display: grid; place-items: center; width: 3.2rem; height: 3.2rem; border-radius: 50%; background: #1f6b4f; color: #fff; font-size: 1.5rem; font-weight: 800; animation: pr-pop 400ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.inquiry-sent .button { width: 100%; }
+
+@media (max-width: 60rem) {
+  .pr-panel { grid-template-columns: minmax(0, 1fr); }
+  .pr-stage { position: static; }
+}
+/* Phones: building tabs become one swipeable row so rooms stay near the first screen. */
+@media (max-width: 40rem) {
+  .public-building-tabs { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: minmax(10.5rem, 72%); overflow-x: auto; padding-bottom: 0.4rem; scroll-snap-type: x mandatory; }
+  .public-building-tab { scroll-snap-align: start; }
+  .public-building-tab__art { height: 4.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .public-building-tab, .public-room-card { transition: none; }
+  .public-building-tab:hover, .public-room-card:hover, .public-room-card:focus-within { transform: none; }
+  .inquiry-dialog[open], .inquiry-sent__mark { animation: none; }
+}

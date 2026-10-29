@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { chromium } from '@playwright/test'
+import { screenshotDir } from './screenshot-dir.mjs'
 
 const browser = await chromium.launch({ channel: 'msedge', headless: true })
 try {
@@ -54,10 +55,10 @@ try {
   assert.ok(actionTransition.split(',').every(value => parseFloat(value) <= 0.00001), `reduced-motion transition is not suppressed: ${actionTransition}`)
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.setViewportSize({ width: 1440, height: 1000 })
-  await page.screenshot({ path: 'docs/screenshots/dashboard-landing-desktop.png', fullPage: true })
+  await page.screenshot({ path: `${screenshotDir}/dashboard-landing-desktop.png`, fullPage: true })
   await page.setViewportSize({ width: 390, height: 844 })
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
-  await page.screenshot({ path: 'docs/screenshots/dashboard-landing-mobile.png', fullPage: true })
+  await page.screenshot({ path: `${screenshotDir}/dashboard-landing-mobile.png`, fullPage: true })
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.getByRole('button', { name: /Log a payment/ }).click()
   assert.equal(await page.locator('#payment-records').isVisible(), true)
@@ -83,7 +84,7 @@ try {
   await page.getByRole('heading', { name: 'Owner workspace', exact: true }).waitFor()
   assert.equal(await page.getByText('Fictional unsaved preview', { exact: true }).count(), 0)
   await page.setViewportSize({ width: 1440, height: 1000 })
-  await page.screenshot({ path: 'docs/screenshots/dashboard-landing-desktop.png', fullPage: true })
+  await page.screenshot({ path: `${screenshotDir}/dashboard-landing-desktop.png`, fullPage: true })
   await page.setViewportSize({ width: 390, height: 844 })
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
   const stats = await page.locator('.workspace-overview .stat-card').evaluateAll(cards => cards.map(card => {
@@ -93,13 +94,15 @@ try {
   assert.equal(stats.length, 3)
   assert.ok(stats[0].width > stats[1].width * 1.8, 'active records should have clear priority on mobile')
   assert.ok(Math.abs(stats[1].y - stats[2].y) < 2, 'secondary summary cards should share a row')
-  await page.screenshot({ path: 'docs/screenshots/dashboard-landing-mobile.png', fullPage: true })
+  await page.screenshot({ path: `${screenshotDir}/dashboard-landing-mobile.png`, fullPage: true })
   assert.deepEqual(externalRequests, [])
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.getByRole('button', { name: 'Use Night mode', exact: true }).click()
   assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark')
   await page.getByRole('link', { name: 'Payments and balances', exact: true }).click()
   await page.getByRole('button', { name: 'Paid rent report', exact: true }).click()
+  // Measure the settled colours, not the 130 ms hover-to-selected transition.
+  await page.waitForTimeout(400)
   const themeContrast = await page.locator('.simple-payments > .segmented-control .button[aria-pressed="true"]').evaluate(element => {
     const channels = value => value.match(/[\d.]+/g).slice(0, 3).map(Number).map(channel => {
       const normalized = channel / 255
@@ -113,7 +116,15 @@ try {
     return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
   })
   assert.ok(themeContrast >= 4.5, `dark selected-control contrast ${themeContrast.toFixed(2)}:1 is below 4.5:1`)
-  assert.equal(await page.locator('.paid-report-table thead th').first().evaluate(element => getComputedStyle(element).backgroundColor), 'rgb(46, 54, 58)')
+  // The table header must use the active theme's --table-heading token (resolved to rgb for comparison).
+  assert.equal(await page.locator('.paid-report-table thead th').first().evaluate(element => {
+    const probe = document.createElement('span')
+    probe.style.backgroundColor = 'var(--table-heading)'
+    document.body.append(probe)
+    const expected = getComputedStyle(probe).backgroundColor
+    probe.remove()
+    return getComputedStyle(element).backgroundColor === expected && expected !== 'rgba(0, 0, 0, 0)'
+  }), true)
   assert.equal(await page.evaluate(() => localStorage.getItem('rentbybob-theme')), 'dark')
   await page.reload()
   await page.getByRole('heading', { name: 'Owner workspace', exact: true }).waitFor()

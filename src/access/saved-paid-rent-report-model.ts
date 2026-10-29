@@ -55,7 +55,8 @@ export function buildSavedPaidRentReport(
   const unitById = new Map(data.units.map(unit => [unit.id, unit]))
   const buildingById = new Map(data.buildings.map(building => [building.id, building]))
   const tenantById = new Map(tenants.map(tenant => [tenant.id, tenant]))
-  const confirmed = data.cash.filter(payment => payment.confirmed_at !== null && payment.received_on.slice(0, 7) === receiptMonth)
+  // Reversed payments no longer count as received rent.
+  const confirmed = data.cash.filter(payment => payment.confirmed_at !== null && !payment.reversal && payment.received_on.slice(0, 7) === receiptMonth)
   const cashTotal = confirmed.reduce((sum, payment) => sum + moneyMinor(payment.amount), 0n)
   const paidTenantIds = new Set(confirmed.flatMap(payment => {
     const agreement = agreementById.get(payment.agreement_id)

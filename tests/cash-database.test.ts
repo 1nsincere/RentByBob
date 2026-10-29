@@ -51,7 +51,7 @@ test('saved rent and cash acknowledgment boundaries', async t => {
  const pendingView=(await db.query<{read_rent_workspace:any}>('select public.read_rent_workspace($1)',[prop])).rows[0].read_rent_workspace
  assert.equal(pendingView.agreements[0].balance,'10000.50')
  assert.equal(pendingView.cash.find((row:any)=>row.id===cash).confirmed_at,null)
- await assert.rejects(confirm(),/Designated cash verifier/)
+ await assert.rejects(confirm(),/Clerk MFA required/) // the owner oversees but does not confirm cash; every clerk does
  await as(james,'aal1'); await assert.rejects(confirm(),/Staff MFA/)
  await as(other); assert.equal((await db.query('select * from public.cash_records')).rows.length,0); await assert.rejects(confirm())
  await as(james)
@@ -61,7 +61,7 @@ test('saved rent and cash acknowledgment boundaries', async t => {
  assert.equal((await db.query('select * from public.cash_allocations')).rows.length,2)
  await assert.rejects(db.query('update public.cash_records set acknowledgment=null'))
  await db.query('select public.record_rent_cash($1,$2,$3,$4,$5,$6)',[prop,id(20),agreement,'4000.01','2024-04-03','James'])
- await assert.rejects(db.query('select public.confirm_rent_cash($1,$2)',[prop,id(20)]),/exceeds unpaid/)
+ // Overpayment is now kept as advance credit when confirmed (202610270010; see advance-credit-database.test.ts); this one stays pending.
  assert.equal((await db.query('select * from public.cash_allocations')).rows.length,2)
  const view=(await db.query<{read_rent_workspace:any}>('select public.read_rent_workspace($1)',[prop])).rows[0].read_rent_workspace
  assert.equal(view.agreements[0].balance,'4000.00')
@@ -77,7 +77,7 @@ test('saved rent and cash acknowledgment boundaries', async t => {
  assert.equal(checkView.agreements[0].balance,'4000.00')
  assert.equal(checkView.checks[0].status,'received')
  await assert.rejects(db.query('insert into public.check_records(id,property_id,agreement_id,reference,amount,received_on,collector,received_by) values ($1,$2,$3,$4,1,current_date,$5,$6)',[id(31),prop,agreement,'CHK-9999','James',james]))
- await assert.rejects(db.query('select public.transition_rent_check($1,$2,$3,$4,$5)',[prop,id(32),checkId,'deposited','Not authorized']))
+ await as(james,'aal1'); await assert.rejects(db.query('select public.transition_rent_check($1,$2,$3,$4,$5)',[prop,id(32),checkId,'deposited','No MFA']),/Staff MFA/)
  await as(owner)
  const depositRequest=id(33), clearRequest=id(34), reverseRequest=id(35)
  await db.query('select public.transition_rent_check($1,$2,$3,$4,$5)',[prop,depositRequest,checkId,'deposited','Taken to bank'])

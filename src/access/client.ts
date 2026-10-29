@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { connectionAllowed, hostedDevelopmentUrl } from './connection'
+import { withDeviceHeader } from './trusted-device'
 
 const env = import.meta.env
 const url = env.VITE_SUPABASE_URL
@@ -8,9 +9,11 @@ const query = new URLSearchParams(location.search)
 export const dashboardPreview = import.meta.env.DEV && query.get('preview') === '1' && !query.has('auth')
 export const preview = import.meta.env.DEV && dashboardPreview ? await import('./dashboard-preview') : null
 export const hostedDevelopment = url === hostedDevelopmentUrl
+// Which online project a production-style build was made for (shown in the top note), or null for local development.
+export const liveTarget = env.VITE_SUPABASE_TARGET === 'production' || env.VITE_SUPABASE_TARGET === 'staging' ? env.VITE_SUPABASE_TARGET as 'production' | 'staging' : null
 // Hosted access is explicit, project-bound and unavailable in production builds.
 export const supabase = preview ? preview.previewClient : connectionAllowed(url, env.VITE_SUPABASE_TARGET, env.DEV) && key
-  ? createClient(url, key, { auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storage: window.sessionStorage } })
+  ? createClient(url, key, { auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storage: window.sessionStorage }, global: { fetch: withDeviceHeader((...args) => fetch(...args)) } })
   : null
 
 export const stateLabels: Record<string, string> = {
@@ -20,7 +23,7 @@ export const stateLabels: Record<string, string> = {
 export type AccessState = { state: string; staff_mfa_required: boolean }
 export type Property = { id: string; name: string }
 export type Membership = { property_id: string; role: 'owner' | 'clerk'; user_id: string; revoked_at: string | null }
-export type Tenant = { id: string; property_id: string; display_name: string; kind: string; archived_at: string | null }
+export type Tenant = { id: string; property_id: string; display_name: string; kind: string; archived_at: string | null; removed_at?: string | null }
 export type Account = { id: string; email: string; accepted: boolean; state: string; staff_role: string | null; contacts: { tenant_id: string; name: string; enabled: boolean }[] }
 
 export async function initializeAuth() {

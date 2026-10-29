@@ -6,7 +6,8 @@ function toMinorUnits(value: string): bigint | null {
   return BigInt(match[1]) * 100n + BigInt((match[2] ?? '').padEnd(2, '0'))
 }
 
-export type SavedAgreement = { id:string; tenant_id:string; unit_id:string; move_in:string; rent:string; balance:string }
+// ended_on/end_reason and cash reversal are null when absent (including before migration 202610270001 is applied).
+export type SavedAgreement = { id:string; tenant_id:string; unit_id:string; move_in:string; rent:string; balance:string; ended_on:string|null; end_reason:string|null }
 export type SavedUnit = { id:string; label:string; building_id:string }
 export type SavedCharge = StatementCharge & { agreement_id:string }
 type Cash = StatementCash & { agreement_id:string }
@@ -65,7 +66,7 @@ function validAllocation(value: unknown): value is StatementAllocation {
   return record(value) && validDate(value.month) && value.month.endsWith('-01') && minorUnits(value.amount, false)
 }
 
-function validAcknowledgment(value: unknown): value is CashAcknowledgmentData {
+export function validAcknowledgment(value: unknown): value is CashAcknowledgmentData {
   return record(value) &&
     requiredString(value.number) &&
     requiredString(value.tenant) &&
@@ -79,7 +80,9 @@ function validAcknowledgment(value: unknown): value is CashAcknowledgmentData {
     minorUnits(value.balance_at_issuance, true) &&
     Array.isArray(value.allocations) &&
     value.allocations.every(validAllocation) &&
-    value.allocations.reduce((total, allocation) => total + checkedMinorUnits(allocation.amount), 0n) === checkedMinorUnits(value.amount)
+    (value.advance_credit === undefined || minorUnits(value.advance_credit, true)) &&
+    // Months paid plus any advance credit kept must equal the cash received.
+    value.allocations.reduce((total, allocation) => total + checkedMinorUnits(allocation.amount), 0n) + (value.advance_credit === undefined ? 0n : checkedMinorUnits(value.advance_credit as string)) === checkedMinorUnits(value.amount)
 }
 
 export function parseRentWorkspaceSnapshot(value: unknown, tenants?: readonly RentWorkspaceTenant[]): RentWorkspaceSnapshot {
@@ -120,7 +123,10 @@ export function parseRentWorkspaceSnapshot(value: unknown, tenants?: readonly Re
 
   const agreements = value.agreements.map(item => {
     if (!record(item) || !validUuid(item.id) || !validUuid(item.tenant_id) || !validUuid(item.unit_id) ||
-      !validDate(item.move_in) || !minorUnits(item.rent, false) || !minorUnits(item.balance, true)) {
+      !validDate(item.move_in) || !minorUnits(item.rent, false) || !minorUnits(item.balance, true) ||
+      !(item.ended_on == null || (validDate(item.ended_on) && item.ended_on >= item.move_in)) ||
+      !(item.end_reason == null || (typeof item.end_reason === 'string' && item.end_reason.trim().length > 0 && item.end_reason.length <= 500)) ||
+      (item.ended_on == null) !== (item.end_reason == null)) {
       throw new Error('Invalid rent workspace response')
     }
     return {
@@ -130,6 +136,8 @@ export function parseRentWorkspaceSnapshot(value: unknown, tenants?: readonly Re
       move_in:item.move_in,
       rent:item.rent,
       balance:item.balance,
+      ended_on:(item.ended_on ?? null) as string|null,
+      end_reason:(item.end_reason ?? null) as string|null,
     }
   })
   const units = value.units.map(item => {
@@ -166,7 +174,8 @@ export function parseRentWorkspaceSnapshot(value: unknown, tenants?: readonly Re
       (item.collector !== 'Bob' && item.collector !== 'James') ||
       !(item.confirmed_at === null || validTimestamp(item.confirmed_at)) ||
       !(item.acknowledgment === null || validAcknowledgment(item.acknowledgment)) ||
-      (item.confirmed_at === null) !== (item.acknowledgment === null)) {
+      (item.confirmed_at === null) !== (item.acknowledgment === null) ||
+      !(item.reversal == null || (record(item.reversal) && requiredString(item.reversal.reason) && validTimestamp(item.reversal.reversed_at) && item.confirmed_at !== null))) {
       throw new Error('Invalid rent workspace response')
     }
     if (item.acknowledgment && (
@@ -184,6 +193,7 @@ export function parseRentWorkspaceSnapshot(value: unknown, tenants?: readonly Re
       collector:item.collector,
       confirmed_at:item.confirmed_at,
       acknowledgment:item.acknowledgment,
+      reversal:item.reversal == null ? null : { reason:String(item.reversal.reason), reversed_at:String(item.reversal.reversed_at) },
     }
   })
   const verifiers = value.verifiers.map(item => {
@@ -246,11 +256,12 @@ export type StatementCash = {
   collector: string
   confirmed_at: string | null
   acknowledgment: StatementAcknowledgment | null
+  reversal?: { reason: string; reversed_at: string } | null
 }
 
 export type StatementEvent =
   | { id: string; kind: 'charge'; date: string; month: string; amount: string; remaining: string }
-  | { id: string; kind: 'payment'; date: string; amount: string; collector: string; allocations: StatementAllocation[]; acknowledgment: StatementAcknowledgment | null }
+  | { id: string; kind: 'payment'; date: string; amount: string; collector: string; allocations: StatementAllocation[]; acknowledgment: StatementAcknowledgment | null; reversal: { reason: string; reversed_at: string } | null }
 
 export function buildStatementEvents(charges: StatementCharge[], cash: StatementCash[]): StatementEvent[] {
   const events: StatementEvent[] = [
@@ -270,6 +281,7 @@ export function buildStatementEvents(charges: StatementCharge[], cash: Statement
       collector: payment.collector,
       allocations: payment.acknowledgment?.allocations ?? [],
       acknowledgment: payment.acknowledgment,
+      reversal: payment.reversal ?? null,
     })),
   ]
 
@@ -278,6 +290,13 @@ export function buildStatementEvents(charges: StatementCharge[], cash: Statement
     (left.kind === right.kind ? 0 : left.kind === 'charge' ? -1 : 1) ||
     left.id.localeCompare(right.id),
   )
+}
+
+// "Building · Room": rooms repeat across buildings (Building 1 and 2 both have Room 01), so lists always name both.
+export function roomName(data: Pick<RentWorkspaceSnapshot, 'units' | 'buildings'>, unitId: string, unavailable = 'Room unavailable') {
+  const unit = data.units.find(item => item.id === unitId)
+  const building = unit && data.buildings.find(item => item.id === unit.building_id)
+  return unit ? `${building?.label ?? 'Building'} · ${unit.label}` : unavailable
 }
 
 export function hasPositiveSavedBalance(balance: string): boolean {

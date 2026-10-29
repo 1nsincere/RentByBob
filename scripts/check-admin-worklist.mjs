@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { chromium } from '@playwright/test'
+import { screenshotDir } from './screenshot-dir.mjs'
 const browser=await chromium.launch({channel:'msedge',headless:true})
 try {
  const page=await browser.newPage({viewport:{width:1440,height:1000}})
@@ -28,10 +29,10 @@ try {
  await page.getByLabel('Show',{exact:true}).selectOption('pending')
  assert.match(await page.locator('.payment-overview').innerText(),/2 cash records are waiting for James/)
  await page.evaluate(()=>scrollTo(0,0))
- await page.screenshot({path:'docs/screenshots/admin-worklist.png',fullPage:true})
+ await page.screenshot({path:`${screenshotDir}/admin-worklist.png`,fullPage:true})
  for(const width of [320,390,768]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'overflow '+width)}
  await page.setViewportSize({width:390,height:900})
- await page.screenshot({path:'docs/screenshots/admin-worklist-mobile.png',fullPage:true})
+ await page.screenshot({path:`${screenshotDir}/admin-worklist-mobile.png`,fullPage:true})
  await page.setViewportSize({width:768,height:900})
  await page.evaluate(()=>document.documentElement.style.fontSize='225%')
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth))

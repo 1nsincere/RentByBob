@@ -1,8 +1,11 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, useEffect } from 'react'
 import { Button } from '../components/atoms'
 import { Feedback } from './AuthForms'
 import { hostedDevelopment, supabase, stateLabels, type Account, type Tenant } from './client'
 import { copy, text, type Language } from '../i18n'
+import { TenantPicker } from './TenantPicker'
+import { currentTenantRooms } from './tenant-directory-model'
+import { philippineToday } from './payment-preview-model'
 
 export function Invitations({ propertyId, owner, language = 'en' }: { propertyId: string; owner: boolean; language?: Language }) {
   const t = copy[language]
@@ -73,7 +76,17 @@ export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: 
   const [kind, setKind] = useState('contact'); const [role, setRole] = useState('clerk'); const [tenant, setTenant] = useState('')
   const [enabled, setEnabled] = useState(true); const [reason, setReason] = useState(''); const [confirmation, setConfirmation] = useState('')
   const [review, setReview] = useState(false); const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [error, setError] = useState(false)
-  const activeTenants = tenants.filter(t => !t.archived_at)
+  const activeTenants = tenants.filter(t => !t.archived_at && !t.removed_at)
+  // Current room per tenant, shown in the tenant picker (staff-authorized rent data; empty if unavailable).
+  const [rooms, setRooms] = useState<Record<string, string>>({})
+  useEffect(() => {
+    let live = true
+    void supabase!.rpc('read_rent_workspace', { p_property_id: propertyId }).then(({ data, error }) => {
+      if (!live || error || !data) return
+      setRooms(Object.fromEntries(Object.entries(currentTenantRooms(data, philippineToday())).map(([tenantId, room]) => [tenantId, room.label])))
+    }, () => undefined)
+    return () => { live = false }
+  }, [propertyId])
   async function lookup() {
     const { data, error } = await supabase!.rpc('find_account_for_assignment', { p_property_id: propertyId, p_email: email.trim() })
     if (error) throw error
@@ -90,11 +103,18 @@ export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: 
       catch { setError(true); setMessage(tr('Account lookup failed. Owner access and MFA are required. No assignment was made.', 'Napakyas ang pagpangita sa account. Kinahanglan ang access sa tag-iya ug MFA. Walay access nga gi-assign.')) }
       finally { setBusy(false) }
     }}><label htmlFor="lookup-email">{tr('Exact account email', 'Eksaktong email sa account')}</label><input id="lookup-email" type="email" autoComplete="email" required value={email} onChange={e => { setEmail(e.target.value); setAccount(null); setReview(false) }} /><Button className="secondary-button" disabled={busy}>{busy ? tr('Searching…', 'Gipangita…') : tr('Find account', 'Pangitaa ang account')}</Button></form>
-    {account && <div className="divider"><h3>{tr('Matched account', 'Nakit-an nga account')}</h3><p><strong>{account.email}</strong></p><p>{language === 'ceb' ? ({pending:'Naghulat',disabled:'Gipalong',unassigned:'Wala ma-assign',ready:'Andam'} as Record<string,string>)[account.state] ?? tr('Unknown access state','Wala mailhi nga kahimtang sa access') : stateLabels[account.state] ?? tr('Unknown access state','Wala mailhi nga kahimtang sa access')}</p>
+    {account && <div className="divider"><h3>{tr('Matched account', 'Nakit-an nga account')}</h3>
+      <div className="notice" role="status">
+        <strong>{tr('Assignment summary', 'Kinatibuk-ang summary sa assignment')}</strong>
+        <p>{tr('Email matched:', 'Katugbang nga email:')} <strong>{account.email}</strong></p>
+        <p>{tr('Access state:', 'Kahimtang sa access:')} <strong>{language === 'ceb' ? ({pending:'Naghulat',disabled:'Gipalong',unassigned:'Wala ma-assign',ready:'Andam'} as Record<string,string>)[account.state] ?? tr('Unknown access state','Wala mailhi nga kahimtang sa access') : stateLabels[account.state] ?? tr('Unknown access state','Wala mailhi nga kahimtang sa access')}</strong></p>
+        <p>{tr('Invitation status:', 'Kahimtang sa imbitasyon:')} <strong>{account.accepted ? tr('Accepted', 'Gidawat') : tr('Still waiting for acceptance', 'Naghulat pa sa pagdawat')}</strong></p>
+      </div>
       <p>{tr('Current staff access:', 'Karon nga access sa staff:')} {account.staff_role ? (language === 'ceb' ? account.staff_role === 'owner' ? 'Tag-iya' : 'Klerk' : account.staff_role) : tr('None', 'Wala')}</p>
       <ul>{account.contacts.map(c => <li key={c.tenant_id}>{c.name}: {c.enabled ? tr('Enabled', 'Aktibo') : tr('Disabled', 'Gipalong')}</li>)}</ul>
       {!account.accepted ? <p>{tr('Wait for invitation acceptance before assigning access.', 'Hulata nga dawaton una ang imbitasyon sa dili pa mo-assign og access.')}</p> : <form onSubmit={async e => {
         e.preventDefault(); if (busy) return
+        if (!review && kind === 'contact' && !tenant) { setError(true); setMessage(tr('Choose the tenant record first.', 'Pilia una ang rekord sa nag-abang.')); return }
         if (!review) { setReview(true); setMessage(tr('Review the assignment and retype the matched email before confirming.', 'Susiha ang assignment ug isulat pag-usab ang email sa account sa dili pa mokumpirma.')); setError(false); return }
         setBusy(true); setMessage('')
         try {
@@ -110,7 +130,7 @@ export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: 
       }}>
         <fieldset disabled={busy || review}><legend>{tr('Choose access','Pagpili og access')}</legend>
           <label htmlFor="assignment-kind">{tr('Access type','Klase sa access')}</label><select id="assignment-kind" value={kind} onChange={e => setKind(e.target.value)}><option value="contact">{tr('Tenant/contact','Nag-abang/contact')}</option><option value="staff">{tr('Property staff','Staff sa propiedad')}</option></select>
-          {kind === 'contact' ? <><label htmlFor="assignment-tenant">{tr('Tenant record','Rekord sa nag-abang')}</label><select id="assignment-tenant" required value={tenant} onChange={e => setTenant(e.target.value)}><option value="">{tr('Choose a tenant','Pagpili og nag-abang')}</option>{activeTenants.map(t => <option key={t.id} value={t.id}>{t.display_name} ({t.kind === 'business' ? tr('business','negosyo') : tr('individual','tawo')})</option>)}</select></> : <><label htmlFor="assignment-role">{tr('Staff role','Tahom sa staff')}</label><select id="assignment-role" value={role} onChange={e => setRole(e.target.value)}><option value="clerk">{tr('Clerk','Klerk')}</option><option value="owner">{tr('Owner','Tag-iya')}</option></select></>}
+          {kind === 'contact' ? <TenantPicker label={tr('Tenant record','Rekord sa nag-abang')} tenants={activeTenants} value={tenant} onChange={setTenant} rooms={rooms} language={language} /> : <><label htmlFor="assignment-role">{tr('Staff role','Tahom sa staff')}</label><select id="assignment-role" value={role} onChange={e => setRole(e.target.value)}><option value="clerk">{tr('Clerk','Klerk')}</option><option value="owner">{tr('Owner','Tag-iya')}</option></select></>}
           <label htmlFor="assignment-action">{tr('Action','Aksyon')}</label><select id="assignment-action" value={enabled ? 'enable' : 'disable'} onChange={e => setEnabled(e.target.value === 'enable')}><option value="enable">{tr('Enable access','Ihatag ang access')}</option><option value="disable">{tr('Disable access','Tangtanga ang access')}</option></select>
           <label htmlFor="assignment-reason">{tr('Reason for this change','Rason sa kausaban')}</label><input id="assignment-reason" value={reason} onChange={e => setReason(e.target.value)} required maxLength={500} aria-describedby="assignment-reason-help" />
           <p className="field-help" id="assignment-reason-help">{tr('This reason is retained in the property access history.','Magpabilin kini nga rason sa kasaysayan sa access sa propiedad.')}</p>

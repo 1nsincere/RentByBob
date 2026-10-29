@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { chromium } from '@playwright/test'
+import { screenshotDir } from './screenshot-dir.mjs'
 const browser = await chromium.launch({ channel:'msedge', headless:true })
 try {
  const page = await browser.newPage({viewport:{width:1440,height:1000}})
@@ -76,8 +77,12 @@ try {
  assert.match(await page.getByRole('alert').innerText(),/already recorded/)
  assert.equal(await page.locator('.rent-month-row').count(),3,'a duplicate room/month charge must not be added')
  assert.match(await balance.innerText(),/8,999.75/,'a duplicate month must not alter the balance')
+ // Account details are tabs now: one panel at a time. Show the rent-by-month panel for the reflow checks.
+ await page.getByRole('tab',{name:'Rent by month',exact:true}).click()
+ assert.equal(await page.getByRole('tab',{name:'Rent by month',exact:true}).getAttribute('aria-selected'),'true')
+ assert.equal(await page.locator('#account-panel-setup').isHidden(),true,'only the selected account panel is shown')
  await page.evaluate(()=>scrollTo(0,0))
- await page.screenshot({path:'docs/screenshots/payments-simple.png',fullPage:true})
+ await page.screenshot({path:`${screenshotDir}/payments-simple.png`,fullPage:true})
  for(const width of [320,390,768]){
   await page.setViewportSize({width,height:900})
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth))
@@ -85,7 +90,7 @@ try {
   assert.ok(rowWidths.every(width=>width>0),'rent month rows should remain visible after workflow transitions')
  }
  await page.setViewportSize({width:390,height:900})
- await page.screenshot({path:'docs/screenshots/payments-simple-mobile.png',fullPage:true})
+ await page.screenshot({path:`${screenshotDir}/payments-simple-mobile.png`,fullPage:true})
  assert.deepEqual(errors,[]);assert.deepEqual(external,[])
  console.log('PASS: pending does not settle; oldest-first split; confirmation reallocation; narrow reflow; no external requests/errors')
 }finally{await browser.close()}

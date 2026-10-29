@@ -3,9 +3,7 @@ import { Button, LoadingSkeleton } from '../components/atoms'
 import { Feedback } from './AuthForms'
 import { supabase } from './client'
 import { copy, text, type Language } from '../i18n'
-
-type Building = { id: string; label: string; archived_at: string | null }
-type Unit = Building & { building_id: string }
+import { countPropertyLocations, searchPropertyDirectory, type Building, type Unit } from './property-directory-model'
 
 function LocationMaintenance({
   propertyId, locationId, label, archivedAt, building, onSaved, language,
@@ -104,6 +102,7 @@ export function PropertyDirectory({ propertyId, owner, language = 'en' }: { prop
   const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState(false)
   const [kind, setKind] = useState('building')
+  const [search, setSearch] = useState('')
   const requestId = useRef(crypto.randomUUID())
   const load = useCallback(async () => {
     setLoading(true)
@@ -127,6 +126,8 @@ export function PropertyDirectory({ propertyId, owner, language = 'en' }: { prop
     }
   }, [propertyId])
   useEffect(() => { void load() }, [load])
+  const visibleBuildings = searchPropertyDirectory(buildings, units, search)
+  const visibleLocationCount = countPropertyLocations(visibleBuildings)
 
   return <section className="card form-card" aria-labelledby="property-locations-heading">
     <p className="eyebrow">{language === 'ceb' ? 'LISTA SA PROPIEDAD' : 'PROPERTY DIRECTORY'}</p>
@@ -136,8 +137,14 @@ export function PropertyDirectory({ propertyId, owner, language = 'en' }: { prop
     <Feedback message={message} />
     {loading && !loaded && !error && <LoadingSkeleton label={tr('Loading property locations…', 'Gikarga ang mga lokasyon…')} rows={3} />}
     <Button className="secondary-button" disabled={loading} onClick={() => void load()}>{loading ? tr('Refreshing locations…', 'Gi-refresh ang mga lokasyon…') : tr('Refresh locations', 'I-refresh ang mga lokasyon')}</Button>
-    {loaded && <ul className="records">{buildings.map(building => {
-      const children = units.filter(unit => unit.building_id === building.id)
+    {loaded && buildings.length > 0 && <div className="property-directory-search">
+      <label htmlFor="property-location-search">{tr('Search buildings and units', 'Pangitaa ang mga bilding ug kwarto')}</label>
+      <input id="property-location-search" type="search" value={search} onChange={event => setSearch(event.target.value)} autoComplete="off" aria-describedby="property-location-search-help" />
+      <p className="field-help" id="property-location-search-help">{tr('Search by location label. Archived locations remain searchable.', 'Pangitaa pinaagi sa ngalan sa lokasyon. Mahimong pangitaon gihapon ang gi-archive nga mga lokasyon.')}</p>
+      <p className="field-help" aria-live="polite">{tr('Showing', 'Nagpakita og')} {visibleLocationCount} {tr('locations', 'ka lokasyon')} {search.trim() ? `${tr('matching', 'nga katugbang sa')} “${search.trim()}”` : ''}.</p>
+    </div>}
+    {loaded && visibleBuildings.length > 0 && <ul className="records">{visibleBuildings.map(building => {
+      const children = building.units
       return <li key={building.id}><article className={`location-record ${building.archived_at ? 'location-record--archived' : ''}`}>
         <div className="location-heading">
         <strong>{building.label}</strong>
@@ -174,6 +181,11 @@ export function PropertyDirectory({ propertyId, owner, language = 'en' }: { prop
     {loaded && buildings.length === 0 && <div className="empty-state">
       <h3>{tr('No locations recorded yet', 'Wala pay lokasyon nga narekord')}</h3>
       <p>{tr('Add a building or section when you are ready to organize this property directory. Locations do not define occupancy or rent.', 'Idugang ang bilding o seksyon kung andam na nga ihan-ay ang lista. Ang lokasyon wala magbuot sa nagpuyo o abang.')}</p>
+    </div>}
+    {loaded && buildings.length > 0 && visibleBuildings.length === 0 && <div className="empty-state">
+      <h3>{tr('No matching locations', 'Walay lokasyon nga katugbang')}</h3>
+      <p>{tr('No building or unit label matches this search. Archived locations remain in the directory.', 'Walay ngalan sa bilding o kwarto nga katugbang sa pangita. Magpabilin sa lista ang gi-archive nga mga lokasyon.')}</p>
+      <Button className="secondary-button" onClick={() => setSearch('')}>{tr('Clear search', 'Hawani ang pangita')}</Button>
     </div>}
     {owner && <form onSubmit={async event => {
       event.preventDefault()

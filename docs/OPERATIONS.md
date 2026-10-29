@@ -8,6 +8,28 @@ Local development remains available alongside the authorized fictional hosted Su
 
 Deployment preparation (not executed): private GitHub -> Cloudflare Pages, build `npm ci && npm run build`, output `dist`, supported Node 24. Configure only public Supabase URL/publishable key in frontend. Separate development and production projects. Recheck official provider deployment/security documentation, pricing, limits, CSP/connect-src and redirect URLs before setup. Disable public signup via supported provider configuration and enforce trusted provisioning. No paid recommendation yet.
 
+## Release-readiness sprint — code checks in place; staging and production not configured
+
+The private repository now runs the `Quality checks` GitHub Actions workflow on pull requests to `main` and pushes to `main`. It installs the lockfile with Node 24 and runs `npm run verify:release` (unit tests, strict TypeScript/Vite build, and a production artifact check). CI has read-only repository permissions and deliberately has no deployment job, Supabase secrets, or production credentials. A green CI run proves those checks only; it is not deployment approval, a live Supabase/API test, a security review, or a recovery rehearsal.
+
+Large authenticated screens are split into route-level chunks and fetched when visited, with skeleton feedback and mounted-state preservation. The built App chunk is about 37 kB (10.58 kB gzip), but total startup includes shared dependencies and the Vite gzip estimate is not a Core Web Vitals result. Record real staging LCP/INP/CLS and route request timings on representative devices/networks before setting performance acceptance.
+
+Run `npm run test:offline` for all offline browser checks; it starts and stops its own dev servers on 5173/5174 (both must be free). Screenshots go to the git-ignored `test-results/screenshots`; set `UPDATE_SCREENSHOTS=1` only when deliberately refreshing the committed `docs/screenshots`. CI runs the same command in a separate job.
+
+If a screen chunk cannot be downloaded, only that section shows "This section did not open" with Try again and Reload page; other sections keep their drafts. After any future deployment, staff with an old tab open may see this message because old chunk files are gone; Reload page is the fix. Run `node scripts/check-deferred-screen.mjs` against a backend-free dev server on port 5173 to re-check this behavior.
+
+Before enabling any Cloudflare Pages staging site:
+
+1. Owner creates and controls a **separate staging Supabase project** with synthetic data, disabled public signup, MFA/redirect settings, and only the required Edge Functions. Do not repurpose hosted development or the preserved local project as staging.
+2. Record the exact staging project URL/identifier and intended public anon/publishable key in the owner's restricted project settings. These are frontend-visible values, not secrets; never configure service-role keys in Cloudflare Pages.
+3. Implement and test an explicit build-time staging target that allows only that exact staging project. Current `connectionAllowed` intentionally rejects every Supabase URL in production builds and only permits the local project or explicitly targeted hosted development while `import.meta.env.DEV` is true. Consequently the current compiled app is fail-closed but **cannot yet authenticate to a staging or production Supabase project**. Do not relax this allowlist or build a live staging site until the owner-approved project identity exists and the target-specific behavior is reviewed.
+4. Apply reviewed migrations to the staging project only after checking project identity and migration history. Use synthetic `.invalid` identities and records. Verify RLS/direct-write denial, MFA/roles, invitation behavior without real recipients, financial invariants, error/retry behavior, logs, CSP and allowed network origins.
+5. Configure Cloudflare Pages as a manual/preview-only staging release first: build `npm ci && npm run build`, output `dist`, Node 24. Check host redirects and Supabase Auth redirect URLs. Confirm no service-role/database credential is present in build variables or browser assets.
+6. Run accessibility and performance checks against the deployed staging build, including keyboard/screen reader, native 200% zoom, 320px reflow, reduced motion, rendered contrast, slow-network behavior, and representative mobile hardware. Capture actual baseline results; do not infer Lighthouse/Core Web Vitals from the local build.
+7. Complete independent security/accounting review, restore rehearsal, language review if Bisaya is offered operationally, owner acceptance, and a scoped paper-record pilot before considering production. Public room listings and QR publication are separate; never expose private snapshots or infer vacancy.
+
+Production remains blocked until the owner explicitly authorizes a production project, project-specific allowlist/configuration, migrations, domain/redirect setup, and release. No project was provisioned and no site deployed by this sprint.
+
 Release checklist: review migrations and grants, backup, tested recovery plan, staged migration, security/accounting/accessibility suite, owner acceptance, explicit production authorization. Record commit and migration identifiers and a versioned release record. Roll frontend back to previous known-good build; database changes require reviewed forward correction or tested restore, not blind destructive down-migration.
 
 Recovery plan to complete before launch: agree RPO/RTO, retention, access and independent encrypted copies. Use provider-supported database backups plus required auth/storage/config recovery coverage; verify what each backup includes. Restore into a separate environment, reconcile charges/settlements/allocations and permissions, verify files/config/access and record duration/evidence. Excel exports are not backups. Never test restoration against live production. Schedule recovery drills and document owner-held access.
@@ -17,6 +39,27 @@ Handover must include startup/deploy/rollback commands, migration history, owner
 Local development bootstrap: see supabase/README.md. The administrative script creates only the first fictional owner/property for an existing confirmed .invalid Auth user. It never connects to a hosted database. No persistent owner account was retained from verification; test fixtures were removed. Production owner provisioning and recovery still require a separately reviewed procedure.
 
 Local startup: start Docker Desktop, local Supabase, the invite-account function and npm.cmd run dev:local as described in README.md. Use npm.cmd run setup:local only for an uninitialized fictional database; never reset existing data to make bootstrap tests pass. See ONBOARDING.md for backup-factor recovery and unresolved all-factors-lost operations.
+
+## Disposable integration test preflight
+
+Before `npm.cmd run test:cash:supabase` copies migrations or creates its temporary Supabase project, it checks `docker info --format '{{.ServerVersion}}'` and stops unless the Linux engine returns a server version. If that check fails, no test workspace or stack is created. A successful preflight only establishes Docker availability; it does not establish that integration checks passed or permit using the preserved local database.
+
+## Backups, restore rehearsal, staging and quality checks - 26 Oct 2026
+
+**Daily backup (chosen: daily, keep 30 days).** `scripts/backup-local.ps1` writes a full custom-format `pg_dump` of the local Supabase database (all schemas, including Auth) to `%USERPROFILE%\RentByBob-backups\local\`, checks that it is readable, and deletes backups older than 30 days. It refuses any container other than the local database on port 54322 and refuses to write inside the repository. To schedule it daily at 9 PM (owner-run, from the project folder in PowerShell):
+
+```powershell
+$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -File `"$PWD\scripts\backup-local.ps1`""
+Register-ScheduledTask -TaskName 'RentByBob daily backup' -Action $action -Trigger (New-ScheduledTaskTrigger -Daily -At 9pm) -Description 'Local RentByBob database backup, 30-day retention'
+```
+
+Docker Desktop and the local stack must be running at that time. Copy the backup folder to a second private location (external drive or private cloud folder) regularly; a backup on the same disk does not survive disk failure.
+
+**Restore rehearsal.** `scripts/rehearse-restore.ps1` restores the newest backup into a throwaway container (same image, no published ports), compares exact row counts for every `public` and `auth` table with the local database using read-only queries, prints the restore time, and removes the container. Run it monthly and after schema changes. To restore for real, stop the app, take a fresh backup of the current state, then restore with `pg_restore --clean --if-exists` into the target only after the owner confirms the target; that procedure has not been rehearsed against a live target.
+
+**Staging.** Staging builds connect only to the exact project pinned in `stagingUrl` (`src/access/connection.ts`), which is `null` until the owner creates a separate staging Supabase project. Then: (1) set `stagingUrl` to its exact `https://<ref>.supabase.co` in a reviewed commit; (2) apply all migrations to staging only; (3) in staging Auth, disable public sign-up, enable TOTP MFA, set the site and redirect URLs to the staging site, raise minimum password length to 12, and configure an email sender for invitations; (4) build with `npm run build:staging` using environment variables `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (public anon key only) and `VITE_SUPABASE_TARGET=staging` (in Cloudflare Pages project settings, never committed); (5) run the live checks against staging with fictional data.
+
+**Quality checks.** `npm run test:offline` (10 offline browser checks, including the axe-core accessibility scan), `npm run test:perf` (production-build Core Web Vitals on an emulated slow phone), and `npm.cmd run test:cash:supabase` (disposable live Supabase suite). Automated accessibility checks cover only part of WCAG; manual screen-reader and older-adult testing is still required.
 
 ## Backup and recovery rehearsal — not yet tested
 

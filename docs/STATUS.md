@@ -1,5 +1,417 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Live project pinned - 29 Oct 2026
+
+`productionUrl` in `src/access/connection.ts` is now the owner's Supabase project (`https://hxkfuwqxpykckxvsbvbc.supabase.co`, free plan for the 90-day trial; upgrade to Pro when the client pays). The Content Security Policy `connect-src` in `public/_headers` names only that project (no `*.supabase.co` wildcard) and `scripts/check-production-build.mjs` fails the build if the wildcard returns or the project is missing. Unit 114/114, build, artifact and production CSP checks pass. Still to do by the owner: push the code, Cloudflare Pages, Supabase migrations push, owner account, real phone number in `LandingPage.tsx`.
+
+## Security and bug sweep; Facebook link; paid rent minus maintenance - 28 Oct 2026
+
+**Method (owner request: "full sweep like a reverse engineer"):** three independent read-only reviews: (1) an attacker's pass over every database function, table and grant with exploit scripts in an in-memory PostgreSQL (cross-property access, renter isolation, role escalation, anonymous access, trusted devices, a 400-operation money fuzz); (2) the front end, headers, secrets in the tree and Git history, the built bundle, the invitation function and dependencies; (3) a defect, dependency and documentation sweep. Findings were verified against the code before fixing.
+
+**Sound (nothing found):** every table has RLS and browser roles cannot write; only the two public listing functions are open to anonymous callers; no cross-property or renter-to-renter access; clerks cannot reach owner-only access functions; trusted-device secrets are hashed and cannot be replayed across users; money invariants held under fuzzing (no over-allocation, reversed cash holds no allocation); no XSS sinks, no secrets in source or history, no source maps, dev-only routes absent from the production bundle, `npm audit --omit=dev` 0 vulnerabilities.
+
+**Fixed (migration `202610280005_sweep_fixes.sql`, front end, headers):** a typo year (e.g. 2062) used to lock a room for decades and an infinite or far-future rent month was accepted and could not be removed (now: move-in and rent months at most a year ahead, infinite dates refused by table checks); a revoked clerk's remembered device came back to life when access was granted again (devices are now revoked whenever staff access changes); the public inquiry limit was dodged by writing the same phone number differently (contacts are normalised, plus a per-room hourly cap and a minimum of real characters); NaN handover amounts; a reversed payment could be "confirmed" into a valid-looking receipt; a month waiting for a double check could be charged by hand, skipping the second person; removing a tenant with a future move-in failed; new notebook months for a removed tenant; a 440+ character notebook note broke the audit text; voided maintenance retries looked like success; "Remove tenant" answered differently for a missing tenant than for a forbidden one and locked before checking the role; automatic-rent charges were recorded under the owner instead of the person who pressed the button; handled inquiries were not audited. Front end: clearing a month box crashed the Paid rent report; the notebook form kept the previous tenant's dates; the 36-month cap was silent; reversal dates used UTC; stale responses could overwrite newer ones; archive, remove and void could leave buttons disabled; "Record cash" could show success and error together; old "owner only / designated verifier" wording (including the PDF) now matches the clerk rules. The "set your password" screen shows which email the invite or reset link signed in (login-CSRF warning). Headers: Cross-Origin-Resource-Policy, and every HTML route is uncached; the build check fails if either is removed. Docs and Node engine (>=22.18) corrected; the build cache file is no longer tracked.
+
+**Accepted by the owner (28 Oct 2026):** one clerk can record and confirm cash, clear and reverse checks, and record a handover; the audit log records who did each step. Compensating control not built yet: an owner "Activity" feed that makes those actions visible.
+
+**Landing and PDF:** the Facebook page (https://www.facebook.com/jameslee.gica.1) replaces the Messenger placeholder; the phone number is still a placeholder. The monthly report and PDF end with an optional, information-only "paid rent minus maintenance" line (exact, shown negative when maintenance exceeds the cash received).
+
+**Validation (28 Oct 2026):** unit 114/114 (new tests for every fix, each mutation-checked where it mattered); live disposable Supabase suite exit 0 with 56 checks; build, artifact and production CSP checks pass. Migration 0005 applied to the local database.
+
+**Not done / needs the owner:** (1) Cloudflare Turnstile or a rate-limit rule in front of the public inquiry form: the database cannot see IP addresses, so one script can still fill the 20-per-hour property cap and block real prospects until then; (2) pin the Content Security Policy `connect-src` to the exact Supabase project address once it exists (the wildcard allows any Supabase project); (3) **email invitations to real addresses are blocked on purpose** (the invitation function and `prepare_account_invitation` only accept `.invalid` addresses and the function refuses hosted projects), so create live logins with Supabase "Add user" as in TRIAL_LAUNCH.md until that guard is reviewed and removed; (4) Supabase Auth settings on the live project (signups off, redirect URLs, rate limits); (5) the offline browser suite was not re-run (needs the dev server on port 5173).
+
+**Reviewed and left as is (low):** `find_account_for_assignment` lets an owner look up any account by email (single-owner app); `record_account_invitation` can write an audit row for an unknown attempt id; the notebook double check applies only to months entered as notebook months (by design); the trusted-device secret lives in browser storage for 30 days (owner decision).
+
+## The clerk runs the system; button atoms - 28 Oct 2026
+
+**Roles (owner request):** the clerk manages the rental system day to day; the owner oversees (sees what is going on, inventory) and keeps every power too. Migration `202610280004_clerk_manages_operations.sql` (generated from the live function definitions) lets any signed-in staff member with MFA (or a remembered device) do what was owner-only: remove or archive tenants (also those with a room), record a move-out, reverse a confirmed payment, deposit, clear, return or reverse a check, record a collection handover, switch automatic rent and automatic listing, set up the layout, create and manage locations and rename rooms, and void maintenance entries. **Cash confirmation (the approval) belongs to every clerk**, no longer one designated verifier; the owner oversees and does not confirm cash. **Still owner-only on purpose (who may sign in):** invitations of staff accounts, assigning or disabling access, the access history, and designating a verifier. MFA is unchanged: nothing works without a staff MFA session. The screens pass "can manage" (any staff) where they used to pass "owner"; the verifier-setup panel was removed.
+
+**Button atoms (owner request, from the "Atoms" reference):** `Button` now takes `variant` (primary, secondary, ghost, approve, danger, danger-quiet) and `size` (lg, md, sm; all keep a 44px minimum target), plus new `IconButton` and `Chip` atoms and tokens for danger, approve and info (light and dark). Rules: primary = main action; secondary = alternative or Cancel; ghost = quiet row action; **approve** (green with a check mark) = confirm cash, bank clearance, make notebook months final, double check a move-in date; **danger-quiet** (red outline) = the button that only opens a removal, reversal or return; **danger** (solid red) = the final click (Remove tenant, Reverse payment, Save move-out, Remove entry, Mark not received). Old class names still work. Status chips (`.status` and the new `Chip`) are pill shaped with a dot; the status is always written out. A developer style guide shows every atom: run `npm run dev` and open `/?atoms=1` (not in the production build; verified).
+
+**Validation (28 Oct 2026):** unit 111/111 (new PGlite test: clerks run operations and the owner keeps access control; existing tests updated to the new policy); live disposable suite exit 0 with 56 checks (axe scans and 44px target checks pass with the new buttons); build, artifact check pass. Applied `202610280004` to the local database.
+
+**Not re-run:** the offline browser suite (`npm run test:offline`) after these changes. No accessibility compliance is claimed.
+
+**Limitations:** the owner can no longer be the only person who approves cash (a clerk does), and a clerk can now both record and confirm cash and record a handover; the audit log still records who did each step. Access management stays with the owner, so a clerk cannot yet link a renter's login (ask the owner, or tell me to open that to clerks). The owner's own cash-confirmation is not allowed (clerks only).
+
+**Next:** try Remove, Change room and Confirm cash as the clerk; decide whether clerks may also link renter logins.
+
+## Remove tenants who still have a room; Maintenance tab in the monthly PDF - 28 Oct 2026
+
+**Remove (owner request: "I can't remove tenants"):** Remove was hidden for tenants with a room, and the database refused until the move-out date had passed. Migration `202610280002_remove_tenant_with_room.sql` adds `remove_tenant_with_room` (owner with MFA, reason required, idempotent): it ends the tenant's room agreement and hides the tenant from every list; nothing is deleted. An agreement that never had rent charged, cash, a check or a payment report and whose move-in was before this month (an entry made by mistake) ends on its move-in date, so the room is free at once and no rent can be added; any other agreement ends today (the normal move-out rule: the move-out month stays a full month, room free from tomorrow). Waiting notebook months are dropped and renter sign-in links are revoked. The directory now shows Remove on every card for the owner, with a plain explanation.
+
+**Maintenance (owner request):** migration `202610280003_maintenance_expenses.sql`: `maintenance_expenses` (RLS, no browser grants), `record_maintenance_expense` (idempotent on a request id), `void_maintenance_expense` (reason required; the owner or the person who entered it), `read_maintenance_expenses`; all audited. New **Maintenance** menu item: pick a month, add what it was for, where (optional) and the amount, see the month total (exact centavo arithmetic), remove entries with a reason. The monthly PDF (Payments > Paid rent report) gets a "Maintenance spending" section for the "Cash received in" month, with a total, and the same table appears on screen so the two agree. Expenses never change a tenant balance, charge or payment.
+
+**Test tooling fixes:** the disposable-stack script now picks random port offsets, checks ports both on loopback and on all addresses (Windows had reserved new 64xxx ranges, and a free-looking 5173 could silently send browser checks to a running dev server), prints the disposable API address and shows the real startup error. `npm run tunnel` and ngrok-friendly `allowedHosts` were added for sharing the dev server (LOCAL_COMMANDS.md).
+
+**Validation (28 Oct 2026):** unit 110/110 (new PGlite tests for both migrations; table and function counters now 25 and 78); live disposable Supabase suite exit 0 with 56 checks, including a maintenance entry with an axe scan and the maintenance table appearing in the print document, and an owner removing a housed tenant; build, artifact and production CSP checks pass.
+
+**Not re-run after these changes:** the offline browser suite (`npm run test:offline`, 10 checks) could not run in this session because it needs the dev server on port 5173, which was not running. Run it once with the dev server up. No accessibility compliance is claimed.
+
+**Limitations:** a mistaken tenant whose move-in was in the current month is ended today, so automatic rent can still add this month's rent for them (the standard move-out rule); any unpaid rent of a removed tenant stays on record but the tenant no longer appears in lists; maintenance is listed and totalled only (no "net after maintenance" figure, because no rule for that was given); maintenance entries are voided, not edited.
+
+**Next:** apply 202610280002 and 202610280003 with the others (`npx.cmd supabase db push --local`; the live push list now ends with 202610280003), then try Remove on a test tenant and add a maintenance entry; decide whether the PDF should also show a "paid rent minus maintenance" line.
+
+## Existing tenants: months from the notebook with a double check; elegant PDF font - 28 Oct 2026
+
+**Why (owner, 28 Oct 2026):** tenants were already living here before the app, the exact move-in date may be unknown, and the only record of what they owe is a disorganised paper notebook. Past months must be enterable, but not final until checked.
+
+**Rules chosen by the owner:** (1) a month entered from the notebook is **waiting for a double check** and is shown separately; it is **not** a rent charge, so it is excluded from balances, the late-rent list and reminders until confirmed; (2) a **different** staff member (clerk or owner, never the one who entered it) confirms; (3) every entry records which notebook notes it came from (required); (4) the move-in date can be marked a **best guess**, also double checked by a different person (descriptive only, changes no rent or due date).
+
+**Built:** migration `202610280001_notebook_months_double_check.sql` (table `rent_month_drafts` with RLS and no browser grants; `draft_rent_months`, `confirm_rent_month_drafts` (all or none, then the normal `add_rent_month` rules and advance credit apply), `remove_rent_month_drafts` (reason required), `flag_move_in_estimate`, `confirm_move_in_date`, `read_rent_review`; every step audited). Screens: Add tenant has "I do not know the exact move-in date (best guess)"; Payments > account > Rent by month has "Months owed from the notebook" (month range, notes, waiting list, "I checked the notebook: make these final", remove with reason; bilingual).
+
+**PDF:** the paid rent report now uses Constantia headings with Corbel body text and lining tabular figures (system fonts, because the CSP allows no web fonts; Palatino/Iowan and Avenir/Gill Sans fallbacks on other systems). The cash receipt keeps its till-receipt style.
+
+**Validation:** unit 105/105 (new PGlite test with a mutation check: removing the "different person" rule fails it; model tests; table and function counters updated to 24 and 74); live disposable suite exit 0 with 54 checks including a browser check of the notebook panel with an axe scan.
+
+**Limitations:** a single-person business cannot confirm its own entries (create a clerk account for the second check); confirming a month that was meanwhile charged another way is refused (remove the entry); the best-guess flag does not change due days (they follow the stored move-in date); the second-person confirmation is tested in the database, not in a two-user browser run; the new PDF font was checked on a sample render, not on a saved PDF.
+
+**Next:** apply 202610280001 with the others (the push list now ends with it), then for each existing tenant: Add tenant (tick best guess if unsure), then enter the unpaid months from the notebook in Payments, and have the other staff member double check them against the notebook.
+
+## Pre-launch verification, withdraw a report, check bank details, Bob on the street - 28 Oct 2026
+
+**New:** renters can withdraw a payment report that staff have not handled yet (`202610270013_withdraw_payment_report.sql`); checks can carry a bank name and check number, fill-in only and audited, never account numbers or photos (`202610270014_check_bank_details.sql`); staff Room listings building buttons restyled (they had inherited public-page styles that were not loaded); the landing street is now ordinary neighbourhood traffic: Move It riders with red helmets, J&T riders with parcels, a slow pandesal cart, no cars, bus or crosswalk, and Bob (bald, with his sungkod) strolls the shoulder and shows a "This is Bob" bubble on hover or keyboard focus (paused while pointed at; parked under reduced motion).
+
+**Validation (28 Oct 2026, all with fictional data, local only):** unit 102/102; offline browser 10/10 (axe: 0 violations on 10 screens, light and dark); live disposable Supabase suite exit 0 with 53 passing checks across migrations through 0014; build, artifact check and production CSP check pass.
+
+**Limitations:** nothing is deployed and no hosted project exists yet; the street animation was checked by screenshot only (no axe run after Bob); Bisaya wording still needs a fluent reviewer; no WCAG compliance claim.
+
+**Exact next steps (owner):** follow `docs/TRIAL_LAUNCH.md` steps 2-6 in order (live Supabase project, pin URL in `connection.ts`, Cloudflare Pages, create owner via `scripts/bootstrap-live-owner.sql`, enter tenants and reconcile with the paper ledger). The push list must now end with `202610270014`. Confirm James's account as cash verifier first.
+
+## Landing follows the time of day in Cebu - 27 Oct 2026
+
+From 5:00 to 17:59 Cebu time the landing page shows a morning street (dawn sky, sun rising behind the homes, skyline in daylight colours with open rooms still glowing, lamps off, "open today", "The street wakes up"); otherwise the night street. Any hour can be previewed with `/#at=7` (or `#at=07:30`, `#at=19`): a "Simulated Cebu time" tag shows with "Back to live time". Visual only; listings and the "updated" time stay real. Screenshot: `docs/screenshots/landing-7am.png`. Validation: axe 0 violations at 7 AM (1440 and 390 px, no sideways scroll), offline 10/10, unit 99/99, performance LCP 2.2 s / CLS 0, CSP and artifact checks pass.
+
+## Building 2 sketch, landing "at a glance" strip, /rooms redesign - 27 Oct 2026
+
+**Building 2 (owner sketch):** upstairs Rooms 04-07 each have a window just left of the door; Room 08 sits in a wing on the left (window in the wing, door at the end of the walkway); downstairs the gym's double doors, a door to the stairs (stairs shown inside), and a hall door leading to Rooms 01-03 inside. Drawn that way on the landing page, the /rooms page and the staff front view (`SKETCHES` in `BuildingDrawings.tsx`; Building 1 stays the default pattern).
+
+**Landing:** the scrolling yellow ticker is replaced (owner request) by an "at a glance" strip: 4 homes, 25 rooms and spaces, live "open tonight", 2 languages; numbers count up once when seen (real value always available to screen readers; still under reduced motion).
+
+**/rooms (owner request: new UI and interaction):** landing-style night hero with a live "spaces open right now" count; building tabs drawn with their open rooms lit; the selected building shown large where clicking a lit door or window jumps to and focuses that room's card, and pointing at a card lights its room; cards say where the room is (upstairs on the balcony walk, in the wing, inside past the door, own street door, inside the house); calmer inquiry dialog with a confirmation mark. Keyboard path: tabs (arrow keys) and each card's button. Styles moved to `src/access/public-rooms.css`.
+
+**Validation:** offline 10/10 (public rooms sample: tabs, arrow keys, inquiry, reflow), unit 99/99, live suite exit 0 with 52 checks (visitor inquiry from /rooms, axe on public rooms), performance LCP 2.1 s / CLS 0, CSP and artifact checks pass.
+
+## Renter view redesign; Payments count in the staff menu - 27 Oct 2026
+
+**Renter view:** a rent statement card first: rent left to pay (large), the oldest unpaid month as "Next due ... in N days" or "... was due ... N days ago" (descriptive only, no fees), a "Report a payment" button that opens and scrolls to the form, and the renter's building drawn with their own room lit. Then monthly rent / advance credit / oldest month facts, the pending-confirmation notice, rent by month with a paid-share bar, confirmed payments as receipt cards, and the Report a payment card beside them (first on narrow screens). The report form has a Details → Review → Sent tracker, quick amounts (rent left, monthly rent), large Bob / James / Someone else choices (radio buttons) and each report shows Sent → Checked → Recorded / Not received. The fictional renter preview now includes the report flow (sample only, kept on screen, nothing sent). New `dueStatus` and `paidPercent` helpers are unit-tested.
+
+**Staff menu:** "Payments and balances" shows a badge with renter reports not yet handled plus cash waiting for confirmation; the link name stays the same and the count is its accessible description.
+
+**Validation:** unit 99/99, offline 10/10 (renter preview reflow fixed at 320 px with 200% text), live suite exit 0 with 52 checks (renter reports through the new collector buttons), performance/CSP/artifact pass, `npm audit` 0 vulnerabilities.
+
+## Landing page redesign and the owner's Building 1 sketch - 27 Oct 2026
+
+**Landing (user request: "top websites of the year" quality):** "Lights on B. Zubiri", a night street told on scroll. Giant headline with an italic serif line rising word by word, live Cebu clock, split-flap count of open spaces, a silhouette skyline whose open rooms glow; amber marquee; the street scene pins while scrolling (camera eases back, lamps come on, then the open rooms light) with three captions; the four homes slide sideways as you scroll down (keyboard focus scrolls a card into view); editorial "How it works" rows; tenant section with a receipt that prints; giant "Come home to B. Zubiri." close and outlined wordmark. Pointer ring, magnetic buttons, film grain and a progress line. System fonts only (CSP), no new libraries. Below 60rem or with reduced motion everything is ordinary stacked sections with no pinning or animation.
+
+**Owner's Building 1 sketch (user drawing, 27 Oct 2026):** second-floor rooms open onto a balcony walkway, numbered from the stairs end, with a window beside every other door; on the ground floor the apartment has its own arched street door, and Rooms 01-03 are inside, along the hallway behind the gate where the stairs go up (owner: "the 3 rooms are inside the door leading to the second floor"). Drawn that way on the landing page (record labels: upstairs Rooms 04-09, sketch "Room 1" = Room 04 at the stairs end) and on every staff building front view and room picker (`BuildingDrawings.tsx`: hip tin roof, walkway, windows beside alternate doors, cut-away "Inside, past the gate" hallway with stairs and gate for ground floors under other floors). Building 2 uses the same pattern with the gym in place of the apartment; Bob's house rooms show as windows. The landing page now lights the exact open room (by record label) instead of a count. Fixed: building drawings shared gradient ids, so the roof lost its colour when an earlier copy on the page was hidden.
+
+**Validation:** offline 10/10 (landing axe-clean light and dark; property preview door counts, apartment and no-overlap checks), unit 98/98, live disposable suite exit 0 with 52 checks (room picker doors clickable on the new drawing), performance LCP 2.1 s / CLS 0 / 174 KB, CSP and artifact checks pass; landing has no sideways scroll or targets under 44 px at 390/320 px, 320 px at 200% text and 1280 px at 200%.
+
+**Open:** Building 2, House 1 and Bob's house follow the Building 1 pattern by assumption; replace with the owner's sketches when available.
+
+## Landing street scene - 27 Oct 2026
+
+The landing page's live board is now an evening street (user request: buildings were "too boxy"): homes drawn front-on (green tin roofs, yellow walls; Buildings 1 and 2 as two-storey boarding houses with balcony rail and outside stair; House 1 a gable cottage; Bob's house two storeys), all at one scale, one window per rentable space that glows when the public listing shows it open. B. Zubiri St has two lanes, sidewalks and lamps; the side road beside Bob's house is labelled **Mariano Abella St** (also on the "Find us" sketch) with a crosswalk. Cars, motorcycles and a jeepney drive both ways, keeping right; on Mariano Abella a motorcycle and a car come and go at the junction. Reduced motion parks every vehicle. Screenshot: `docs/screenshots/landing-street.png` (fictional vacancies).
+
+**Validation:** offline 10/10 (landing axe-clean in light and dark), unit 98/98, performance LCP 1.8 s / CLS 0 / 168 KB on a slow phone, CSP and artifact checks pass, no sideways scroll at 390 px.
+
+## Late rent follow-up on the dashboard - 27 Oct 2026
+
+Dashboard now lists **Late rent**: each renter with recorded months whose due date has passed and that confirmed payments have not fully covered, with amount, months, days late (oldest month), any pending cash shown beside it (never subtracted), "Copy reminder" (polite EN/CEB text with only that renter's own figures, for SMS/Messenger; if the browser blocks copying, the text is shown to select) and "Open account" (opens Payments on that tenant). **Due in the next 7 days** lists upcoming unpaid months. An alert appears when renters have reported payments. No fees, grace periods or automatic messages: staff send reminders themselves. `docs/ADMIN_CAPABILITIES.md` rewritten to match the current app.
+
+**Validation:** `npm test` 98/98 (new `rent-followup-model` test: past-due only, partial remaining, pending kept separate, moved-out still listed, 7-day boundary inclusive, reminder contains no other renter's data). Live disposable suite exit 0, 52 checks (late row found, reminder copied; dashboard axe scan clean). Release build and artifact check pass.
+
+**Next:** owner applies the pending migrations and enters current tenants; then a one-month parallel run against the paper record.
+
+## Renter "Report a payment", stores kept private, boarding-house palette, landing redesign - 27 Oct 2026
+
+**Report a payment (user request):** migration `202610270012_renter_payment_reports.sql`. A linked renter (no staff MFA) tells the property they paid Bob, James or someone else: amount, date paid (today or the last 90 days), optional note, then a review step. A report is a **notice only**: it never changes a balance and is not pending cash. Staff see "Renters say they paid" in What needs attention and on the account; "Record this cash" pre-fills the normal cash entry and links the saved (still pending, verifier-confirmed) cash to the report; "Not received" needs a reason the renter sees. Retries reuse one request id; at most 5 waiting reports per room and 10 per person per day; revoked renter links lose access; every report and outcome is audited. The renter footnote now mentions reporting.
+
+**Stores and Yamaha private (user request):** `202610270011_commercial_spaces_private.sql` excludes commercial spaces from public listings, inquiries and automatic listing, and removes existing commercial listings. Landing address: 100A B. Zubiri St, Cebu City, 6000 Cebu.
+
+**Look:** palette matched to the buildings (leaf green, warm yellow, sky-green tints, cream page; green sidebar) across staff, renter, landing and PDF; yellow house favicon. Landing redesigned as a hand-made notice-board style page (hanging sign, live blueprint site plan with lit available rooms refreshed every 30 s, flyer with tear-off tabs, sketch map).
+
+**Validation:** `npm test` 96/96 (new PGlite renter report test with a mutation check: removing the ownership guard fails it; new model test). Offline 10/10 (axe: 10 screens, light and dark). Live disposable suite exit 0, 51 checks (new: renter reports in the browser, balance unchanged, staff see and dismiss it, renter sees the reason; renter cannot read or handle the staff list). Performance LCP ~1.8 s, CLS 0; CSP and artifact checks pass.
+
+**Limitations:** no photo/receipt upload and no GCash or online payment (the rule is still "pay your collector in person"); a "recorded" report shows the cash as recorded, and the balance changes only when the verifier confirms it.
+
+**Owner next step:** stop the app, `npx.cmd supabase db push --local` (applies everything up to 202610270012), then `npx.cmd supabase stop` and `npx.cmd supabase start`. Replace the CONTACT placeholders in `src/landing/LandingPage.tsx` before going public.
+
+## Landing page and Philippine time - 27 Oct 2026
+
+Public landing page at `/` for visitors without an open session (`src/landing/`): editorial hero, interactive street of the property whose lit windows are rooms open now (from the public listing function only), live counts, how it works, tenant panel, location (B. Zubiri St., Brgy. Labangon, Cebu City) with Google Maps link, EN/CEB, night mode, reduced-motion support. Contact phone and Messenger are placeholders in `CONTACT` (replace before going public). Sign-in moved to `/sign-in` (served on Pages via `_redirects`); `robots.txt` allows `/` and `/rooms`. Dashboard shows a live Philippine clock and a month calendar marking days with unpaid rent due. Validation: unit 93/93, offline 10/10 (landing scanned in light and dark), live suite exit 0, CSP and artifact checks pass; landing loads in ~1.5 s LCP with CLS 0 on a simulated slow phone.
+
+## Final polish for 27 Oct 2026
+
+Tenant picker (search, short list, chip) replaces long tenant dropdowns in Assign access and "Give an existing tenant a room"; rooms are always named with their building in lists ("Building 2 · Room 01"); Payments reloads on open, after saves and every 30 s (no manual Refresh buttons); worklist rows stack in the narrow column; Room listings use compact cards with an instant show/hide switch and folded price/description; the PDF report has no grey page fill and dates do not wrap; the cash verifier is chosen by the clerk's email (no account ID to copy). Validation: unit 93/93, offline 10/10, live disposable suite exit 0 (50 checks), production build and artifact check pass.
+
+## Billing automation, advance credit, room change, remove, map renters, PDF report, menu and app bar - 27 Oct 2026
+
+**Owner decisions** (DECISIONS.md): automatic monthly rent on the 1st (owner switch; hourly pg_cron where available plus catch-up when Payments opens); advance payments kept as credit that pays the next months automatically (reversal reopens them); room change keeps the same agreement, rent, due day and balance; Remove hides a tenant after move-out while records stay; occupied map rooms show the renter and monthly rent; the paid rent report saves as a formatted PDF instead of CSV.
+
+**Migrations:** `202610270009_auto_rent_room_change_remove_tenant.sql` and `202610270010_advance_credit.sql` (confirmation no longer refuses overpayment; `apply_credit` runs after manual and automatic rent and after reversals; `read_agreement_credits` / `read_renter_credits`).
+
+**UI:** Payments: owner switch "Add monthly rent automatically", "Change room (still renting)" form, Record cash pre-filled with the agreed rent, review shows advance credit, "Advance credit" figure; Payments reloads when opened and from tenant cards. Directory: Change room and Remove. Renter view: Advance credit card; no "Refresh access" for signed-in renters. Grouped sidebar; standard app bar (sticky, theme icon, EN/CEB, account chip, Sign out; compact on phones). Receipt shows the advance portion; its validator checks months + credit = cash.
+
+**Validation:** `npm test` 93/93 (new PGlite: automatic rent/room change/remove; advance credit with a mutation check; validator test). Live disposable suite exit 0, 50 checks. Offline 10/10.
+
+**Owner next step:** `npx.cmd supabase db push --local` (applies 202610270004–0010; stop the app first), then turn on automatic rent and automatic listing only after every current tenant and rent is entered.
+
+## Remember this device; automatic room listings - 27 Oct 2026
+
+**Remember this device (owner decision: 30 days, owner and clerks):** after a real authenticator code, staff may tick "Remember this device for 30 days". On that browser, password sign-in then skips the code. Migration `202610270007_trusted_devices.sql`: only a SHA-256 hash of the device secret is stored (private table); the browser sends the secret in `x-rentbybob-device` on database requests only (never to Auth); `private.staff_role` accepts it in place of the authenticator for that user only, until it expires, is removed, or staff access is revoked; a remembered device cannot remember itself again without a real code; at most 5 devices per person; added/removed devices are audited. Account security lists your devices with Remove and "Forget this device". The password is always required.
+
+**Automatic room listings (user request):** migration `202610270008_automatic_room_listings.sql` adds an owner switch "List vacant rooms automatically" (off by default). When on, every active rentable room appears on `/rooms` while it has no current or upcoming agreement, disappears as soon as a tenant is assigned, and returns after the move-out date. Staff can hide any room (it stays hidden until shown again). Asking rent is optional ("Ask for the price"). The switch exists because automatic listing infers vacancy from the absence of an agreement (the original brief warned against this): turn it on only after every current tenant has a room in the app.
+
+**Validation:** `npm test` 92/92 (new PGlite tests for trusted devices and automatic listings, each with a mutation check that fails without the key rule). Live disposable suite exit 0 with 47 checks, including remember/skip/forget on a real browser (the device header passes CORS) and automatic listing on the real `/rooms` page.
+
+**Owner next step:** `npx.cmd supabase db push --local` applies 202610270004–0008 (stop the app first).
+
+## Security tightening, visual room picker, animations, UI fixes - 27 Oct 2026
+
+**Security (user: "tighten its security"):** staff idle sign-out (30 min + 2 min warning, shared across tabs; Escape or "Stay signed in" keeps the session); Auth now enforces 12-character passwords, recent sign-in for password changes, 60 s between reset emails, 15 code verifications per 5 min, and 12 h / 2 h server session limits (`supabase/config.toml`); migration `202610270006_default_privileges.sql` stops new tables/functions from inheriting browser-role rights and removes all direct table writes from browser roles; production builds no longer show developer instructions when unconfigured; `/auth/callback` is served explicitly on Pages. Details in SECURITY.md; runbook in DEPLOYMENT.md.
+
+**Visual room picker (user: "assign it using the room availables in the building"):** Add tenant / Assign a room now shows building cards (drawing + vacant count), then the building's front view with glowing vacant doors to click, plus room buttons (keyboard/screen reader path); occupied and shared spaces are visible but cannot be chosen. Map doors are clickable too and select the room (and its floor).
+
+**Animation:** buildings on the map and in the picker rise in one after another, building art lifts and windows light on hover, vacant doors glow, the chosen door pops, room tiles stagger in; all removed under reduced motion.
+
+**UI fixes from screenshot review:** pending cash cards readable in the narrow account column; dashboard collections four across (two by two on smaller screens); "1 check" wording; directory heading groups Add tenant with the count; compact toolbar (single property shown as text, Refresh access inside); Add tenant has the same recoverable "section did not open" boundary as other screens; grid minimums clamp so 320 px at 200% text does not overflow.
+
+**Test reliability:** Tailwind now scans only `src/` (docs/screenshot writes no longer reload a running dev server mid-test); live-suite failures save a screenshot and the visible page text.
+
+**Validation (27 Oct 2026):** `npm test` 88/88 (new: privileges, idle model). Live disposable suite exit 0, 46 checks (idle flow with a fake clock; picker door and button selection; axe on the picker and idle warning). Offline 10/10 (caught and fixed a 200% text overflow). Build, artifact check and `npm run test:csp` pass.
+
+**Owner next steps:** `npx.cmd supabase db push --local` (applies 202610270004–0006), then `npx.cmd supabase stop` and `npx.cmd supabase start` to load the stricter Auth settings.
+
+## Simple add-tenant and payments; preview parity for directory and map; deployment headers - 27 Oct 2026
+
+**Add tenant (user: "too many steps"):** one screen like the preview: name, type, optional building → vacant room, move-in date and monthly rent, review, one save. Migration `202610270004_register_tenant.sql` (`register_tenant`) creates the tenant and agreement in one transaction, so a refused room leaves no tenant behind. The same screen assigns a room to an existing tenant (from the directory) through the existing `create_rental_agreement`.
+
+**Payments (user: "too complicated"):** rebuilt like the preview: "What needs attention?" list beside the selected account; Record cash payment → amount/date/collector → review showing which months it pays (oldest first) and a duplicate warning → save as pending; the verifier confirms with "Review cash". Account tabs: Rent by month (with add month), Payment history (statement, acknowledgments, reversal), Room rent setup (fixed rent/move-in, move-out). Property-wide confirmations, checks & handovers, monthly rent for everyone and setup are under "More tools". Same RPCs and safety rules; pending cash still never lowers a balance.
+
+**Tenant directory (new `TenantDirectory.tsx`):** search by name, building or room; filters for status (active by default), type and building (including "No room yet"); sort by name or room; card actions View rent and payments, Locate room, Assign a room, and owner-only Archive with a required reason.
+
+**Property map:** room tiles are selectable; a "Selected space" panel shows type, floor and status (no names) with Add tenant to this space, View rent and payments (occupied), and owner Rename room (reason required, existing audited function). Locate room opens the building on the right floor with the room selected.
+
+**Archiving rule:** migration `202610270005_archive_tenant_guard.sql` makes `archive_tenant` refuse while the tenant has an open agreement or one ending today or later (Philippine date), and requires a reason. Archived tenants already could not get a new room.
+
+**Deployment readiness:** `public/_headers` (CSP with self-only scripts, no framing, nosniff, referrer and permissions policies, HSTS, immutable asset caching), `robots.txt` (only `/rooms` indexable), favicon and theme colour. The production artifact check now fails if the headers, `/rooms` rewrite or inline-script ban regress. New `npm run test:csp` serves the production build with its own headers and fails on any CSP violation on `/` and `/rooms`; added to CI.
+
+**Validation (27 Oct 2026):** `npm test` 86/86 (new: register-tenant and archive-guard PGlite tests, a mutation removing the archive guard fails its test; simple-payments and directory model tests). Live disposable `npm.cmd run test:cash:supabase` exit 0 with 45 checks, including one-step add, tenant card → payments, the new cash review flow, locate, rename, assign-room and archive, and axe scans of the new screens. Offline browser checks 10/10. `npm run test:csp` passed. Production build and artifact check passed.
+
+**Next exact step for the owner:** apply `202610270004` and `202610270005` locally with `npx.cmd supabase db push --local` (the assistant does not change the preserved database).
+
+**Not carried over by rule:** occupant names (owner decision) and changing a saved rent (needs an owner rule: from which month, and who may change it).
+
+
+## Accessibility of real screens, start agreement from the map, inquiry badge - 26 Oct 2026
+
+**Local database:** the owner applied `202610270003`; verified 17/17 migrations, layout columns present, Bob's property has 8 of 8 buildings placed and 30 rooms, and anonymous execution is still limited to the two public-listing functions.
+
+**Real-screen accessibility:** the live disposable suite now runs the axe-core WCAG 2.1 A/AA scan on 13 real signed-in or public screens (owner dashboard, tenant directory, property map, building view, Payments Account/To confirm/Checks/Monthly rent/Setup, paid rent report, room listings, renter view, public `/rooms`) and fails on any violation. It found one real issue, fixed: handled inquiries (and paid renter months) were dimmed with transparency, dropping text contrast to 3.79:1; they now use a muted background instead. With `UPDATE_SCREENSHOTS=1` the suite saves `docs/screenshots/live-*.png` (fictional data only); a path-decoding bug that briefly wrote them to a stray `Rent%20Tracker%20System` Desktop folder was fixed (files moved, empty folder removed).
+
+**UI:** the real Payments Account tab places cash entry beside the statement on wide screens. A vacant room on the property map offers "Start agreement", which opens Payments → Setup with the new-agreement form open and that room preselected (occupied and shared rooms offer no button). The staff menu shows "Room listings & inquiries (N new)" and the dashboard shows a notice with "Open inquiries" while unhandled inquiries exist (count fetched with the 10-second staff refresh; shown as no badge if unavailable).
+
+**Validation (26 Oct 2026):** live `npm.cmd run test:cash:supabase` passed (exit 0), including the new accessibility, dashboard-notice, "(2 new)" badge and start-agreement steps. Offline browser checks 10/10; `npm run verify:release` 81/81.
+
+**Limitations:** automated accessibility rules cover only part of WCAG; no screen-reader or older-adult session yet.
+
+## Preview features brought to the real app: payments tabs, tenant cards, property map - 26 Oct 2026
+
+**Payments (real):** `SavedPayments.tsx` now keeps the selected agreement and three figures (rent left, waiting for confirmation, monthly rent) in a persistent account header, with tabs: Account · To confirm (count) · Checks & handovers · Monthly rent · Setup. The glossary is collapsed. No payment logic changed.
+
+**Tenant directory (real):** cards showing type, status, renter-login badge and the current room from open agreements (staff-authorized rent data).
+
+**Property map (real):** migration `202610270003_property_layout.sql` adds `buildings.sketch_slot` (fixed sketch positions), `units.floor_label` and `units.kind` (room, apartment, shared, house, commercial), and owner-only `setup_property_from_sketch` (creates the approved layout once; reuses active buildings/rooms by name; never duplicates; audited). `create_rental_agreement` and `set_room_listing` reject the shared gym. Buildings and units opens on `RealPropertyMap.tsx` (sketch map, building front view, floor tabs, Occupied/Vacant room tiles, no names) with the existing management list one tab away (`PropertyLocations.tsx`). Drawings moved to `BuildingDrawings.tsx` so production code carries no preview fixture data; the artifact check now fails if preview tenant names ship.
+
+**Validation (26 Oct 2026):** PGlite `tests/property-layout-database.test.ts` (owner-only, exact layout, idempotent rerun, existing Building 1 reused, gym unrentable/unlistable). `npm run verify:release` 81/81 (definer functions 42). Offline browser checks 10/10. Live disposable `npm.cmd run test:cash:supabase` passed (exit 0), including tabbed payments throughout, tenant card room, and the owner creating the layout with the map showing Vacant, Shared space and Occupied correctly and no renter name.
+
+**Next exact step:** the owner applies `202610270003` locally with `npx.cmd supabase db push --local` (the assistant is not permitted to change the preserved database), then opens Buildings and units → Review layout → Create layout.
+
+## Public room listings, inquiry inbox and payments workspace redesign - 26 Oct 2026
+
+**Public rooms (user request):** migration `202610270002_public_room_listings.sql` (see SECURITY.md). Public page `/rooms` (`PublicRooms.tsx`, `public-listings-model.ts`): building tabs with room counts, room cards (room, rent per month, description), and an "Ask about this room" dialog (bottom sheet on phones) with a hidden anti-bot field and a stable request ID per dialog. `public/_redirects` serves `/rooms` on Cloudflare Pages. The dev sample `/?availability=preview` now shows the same page with fictional Building 1, Building 2 and Bob's house rooms and a simulated send (excluded from production). Staff screen "Room listings & inquiries" (`RoomListingsManager.tsx`): Listings and Inquiries tabs, building tabs, per-room "Show on public page", rent and description, status text (visible / listed but hidden by an agreement / not listed), and "Mark handled" for inquiries.
+
+**Payments workspace (user feedback: too much scrolling):** on wide screens the renter worklist sits beside the selected account; the account header shows three figures (rent left, waiting for confirmation, monthly rent); the pending report is a compact banner; "Rent by month", "Payment history" and "Room rent setup" are tabs (arrow-key navigation, one panel at a time) instead of three stacked expandable boxes. No payment logic changed.
+
+**Accessibility fixes found by new checks:** both dialogs (inquiry and cash acknowledgment) now close before unmounting, so keyboard focus returns to the button that opened them (verified in browser checks).
+
+**Validation (26 Oct 2026):** PGlite `tests/public-listings-database.test.ts` (anonymous view limited to listed unoccupied rooms and public fields, no anonymous table or inquiry reads, MFA staff listing, validation, retry safety, per-contact rate limit, handled ordering, move-out returning a room, an upcoming agreement hiding it, 90-day pruning); a deliberate mutation exposing occupied rooms fails it. `tests/public-listings-model.test.ts` rejects extra fields and malformed rent. `npm run verify:release` 80/80. Offline browser checks 10/10, including the rewritten public sample check and accessibility scan. Live disposable `npm.cmd run test:cash:supabase` passed (exit 0, 36 checks), including anonymous API isolation and a real `/rooms` inquiry reaching staff who mark it handled.
+
+**Not done:** no photos; no CAPTCHA; no public hosting or QR code (needs owner authorization and a public site); the real Payments screen (`SavedPayments.tsx`) has not yet received the same tabbed layout as the preview.
+
+## Production prep: reversals, move-out, monthly rent, export, backups, staging guard, accessibility and speed - 26 Oct 2026
+
+**Source control:** work committed in two commits on `feature/renter-view-and-production-prep` and pushed to the private GitHub remote (`main` unchanged; a secret-pattern scan of the commits found nothing). The rest of this entry was committed and pushed to the same branch afterwards.
+
+**Local database:** a full `pg_dump` backup of the preserved local database was taken (664 KB, verified readable) to `%USERPROFILE%\RentByBob-backups\local\`. Applying `202610190001`, `202610260001` and `202610270001` to the preserved local database was **not done**: the tool's permission system blocked it as a change to a shared resource. The owner should run `npx.cmd supabase db push --local` (after confirming `npx.cmd supabase migration list --local`), or grant permission.
+
+**New migration `202610270001_cash_reversal_and_move_out.sql`:** `cash_reversals` table (RLS, staff read, no browser writes); `reverse_rent_cash` (owner + MFA, reason, retry-safe request ID, property lock, audit); agreement move-out columns and `end_rental_agreement` (owner + MFA, reason, retry-safe); the room's one-agreement rule changed to one *open* agreement (partial unique index) plus a no-overlap check; `add_rent_month` rejects months after move-out; staff and renter read functions include move-out and exclude reversed payments from renter "paid". Definer-function inventory now 35; app tables 19 (all RLS).
+
+**UI:** account statement shows reversed payments (reason, date) and an owner "Reverse payment" form; Payments shows a move-out notice or owner "Record move-out" form; new "Add monthly rent" review (`MonthlyRentBatch.tsx`, `monthly-rent-batch-model.ts`) adds charges one by one via the existing idempotent RPC and stops on the first failure; Paid rent report has "Download for Excel (.csv)" (`paid-rent-csv.ts`: exact amounts, BOM, CRLF, formula-injection neutralising); renter view shows "Moved out"; agreement room picker offers rooms with no open agreement.
+
+**Operations:** `scripts/backup-local.ps1` (local-only target check, full custom-format dump, readability check, 30-day retention, never writes inside the repo); `scripts/rehearse-restore.ps1` (restores the newest backup into a throwaway container of the same image with no published ports, compares exact row counts read-only). Rehearsal **passed**: 39 tables (12 app tables plus Auth), 3,021 rows matched, restored in about 7 s; two harmless notes about grants to Realtime/Functions roles absent from a bare image. Staging: `src/access/connection.ts` now has a `stagingUrl` pin (null, so staging cannot connect yet) and `npm run build:staging`.
+
+**Checks:** new `scripts/check-accessibility.mjs` (axe-core 4.13.0, new exact-pinned dev dependency with no runtime dependencies) scans 9 screens in light and dark themes for WCAG 2.1 A/AA rules: 18/18 pass after fixing a real bug (a hovered selected tab rendered white text on a near-white background, 1.06:1). New `npm run test:perf` (`scripts/check-performance.mjs`, production build, 390px phone, 4x CPU, slow 4G, median of 3): LCP 1.88 s, FCP 1.81 s, CLS 0.06 (was 0.184 before fixing a startup layout shift), 160 KB transferred. This measures the unconfigured production fallback screen; staging field data is still needed.
+
+**Validation (26 Oct 2026):** PGlite `tests/reversal-move-out-database.test.ts` passes (owner-only, MFA, reason, retry, double-reversal, pending refusal, direct-write denial, balance reopening, kept allocation history, unchanged acknowledgment, audit, renter exclusion, oldest-first re-allocation, move-out rules, room re-let only after the end date); two deliberate mutations each made it fail. Unit tests for monthly batch, CSV and staging guard pass; `npm run verify:release` 77/77. Offline browser checks 10/10 (including accessibility). Live disposable `npm.cmd run test:cash:supabase` passed twice in a row (exit 0), now including owner reversal, move-out (full-month rule), monthly review and CSV export with matching totals.
+
+**Not done or blocked:** local migration application (permission); the daily backup is not yet scheduled (an owner-run Task Scheduler command is in OPERATIONS.md); no staging project; no real-device, screen-reader or older-adult test; lab performance only.
+
+## Renter-login status for staff, owner guide and roadmap refresh - 26 Oct 2026
+
+The saved staff Tenant directory now shows, for each active tenant, "✓ Renter can sign in" or "No renter login yet". It comes from active `tenant_contacts` rows, which staff can already read under existing RLS, added to the 10-second staff snapshot load. No migration, grant or write path was added. Added an owner step-by-step guide ("Giving a renter access") to [ONBOARDING.md](ONBOARDING.md) and a "Waiting on owner decisions" list to [ROADMAP.md](ROADMAP.md).
+
+**Validation:** the live disposable `npm.cmd run test:cash:supabase` passed (exit 0) with new steps: re-enabling a previously revoked renter link restores access, and the owner's directory shows "Renter can sign in" for the linked test tenant. Eight offline checks passed against the running dev server; `npm run verify:release` passed (71/71).
+
+## Draft-loss fixes, renter password change, dashboard collections and leave warning - 26 Oct 2026
+
+**Bugs fixed (found by new live tests):**
+- `App.tsx` cleared and reloaded the entire workspace on every Supabase auth event (including the hourly token refresh), on every window focus and whenever the tab was hidden, discarding unsaved entries. It now resets only when the signed-in person changes (sign-out or a different user). Focus and returning to the tab re-check access in place; the 10-second re-check and server-side RLS/RPC checks are unchanged. No documented rationale existed for the old behaviour (it dates from the initial commit).
+- `SavedPayments.tsx` reset its selection and forms whenever the parent rebuilt the tenant list, which happens on every 10-second access re-check, so a cash entry taking over 10 seconds was lost. It now reads the latest tenant list through a ref and resets only when the property changes.
+
+**New:**
+- Renter password change (`ChangePassword` in `AuthForms.tsx`, shown under the renter view). It re-verifies the current password before `updateUser`, uses the existing 12-character rule, and reports a wrong current password without changing anything. Staff keep the email reset flow, because re-verifying would drop their MFA session.
+- Staff dashboard collection figures (`CollectionsOverview.tsx`, `collections-overview-model.ts`; saved workspace only, lazy-loaded). They use the existing Paid rent report definitions for the current Philippine month: confirmed cash by receipt date, items waiting for confirmation (pending cash plus received/deposited checks, labeled "Not counted as paid"), rent still due on recorded charges, and renters with 2+ recorded months owing. A small notice replaces them if data is unavailable. Not shown in the fictional preview, because its payment data is component-local and the numbers would disagree with the Payments preview.
+- Leave warning: after typing in a form (searches, filters and password forms excluded), leaving or reloading asks first; submitting clears it.
+
+**Validation (26 Oct 2026):** the live disposable `npm.cmd run test:cash:supabase` passed (exit 0) with new steps. A typed cash amount survives a focus event plus 11 seconds of background re-checks (this failed before both fixes). The renter rejects a wrong current password, changes the password, the old password stops working and the new one signs in (this failed before the auth-event fix). The owner dashboard shows all four collection figures. `tests/collections-overview.test.ts` covers the figures, returned-check exclusion and zero-charge months. `npm run test:offline` 9/9 passed, now including the leave prompt with and without typing. `npm run verify:release` passed (71/71; CollectionsOverview chunk 4.93 kB).
+
+**Limitations:** the leave prompt is tested by navigation; headless tab-close does not surface the dialog in this browser. Collection figures cover one month and are not a report or export. Migrations `202610190001` and `202610260001` remain unapplied to the preserved local database.
+
+## Renter self-service view - 26 Oct 2026
+
+**Database:** new migration `202610260001_renter_account_view.sql` adds one read-only SECURITY DEFINER function, `public.read_renter_account()`, with no parameters. Scope comes from the caller's identity: unarchived tenants with an active contact link only. It returns property name, room, rent, balance, charges with remaining amounts, confirmed cash (with a renter copy of the acknowledgment minus `verified_by`) and cleared checks with months covered, plus pending cash and received/deposited checks as unconfirmed. Execute is granted to `authenticated` only; no table, grant or write path was added. It depends on `202610190001_check_handover.sql`.
+
+**UI:** `src/access/RenterPortal.tsx` (lazy-loaded behind the deferred-screen boundary) replaces the old renter records list. It shows a greeting, room, balance, monthly rent, oldest month with rent left, a separate "waiting for confirmation" panel, rent by month with text statuses, confirmed payments and cash acknowledgments, in English/Bisaya. `src/access/renter-account-model.ts` validates the response strictly (exact decimals, balance = sum of remaining charges, payment months = payment amount) and shows an error instead of malformed data. A fictional, development-only preview is at `/?preview=renter` (excluded from production builds by the artifact check). Sign-in copy now says renters can see their rent, balance and confirmed payments.
+
+**Validation (26 Oct 2026):** PGlite `tests/renter-account-database.test.ts` passes: own-record isolation, matching staff balance, pending/uncleared exclusion, no staff IDs or other tenants, revoked/archived/unrelated/staff-without-link callers get nothing, anonymous execution denied, direct table reads empty. Two deliberate mutations (removing the revoked filter, then the archived filter) each made it fail. `tests/renter-account-model.test.ts` covers summaries and 10 malformed-data rejections. The definer-function inventory guard now expects 33. The live disposable `npm.cmd run test:cash:supabase` passed (exit 0): anonymous denied, unlinked account empty, owner links the account via `assign_account_access`, renter API balance equals staff balance with no staff IDs, the renter signs in through the real form without an MFA prompt and sees that balance, and revoking removes access. `npm run test:offline` 9/9 passed (new `check-renter-preview.mjs`), `npm run verify:release` passed (69/69 tests; RenterPortal chunk 12.07 kB).
+
+**Not done or blocked:** the check/handover and renter migrations are **not applied** to the preserved local database, so a real local renter sign-in will show the "could not be loaded" message until the owner approves applying both. Returned/reversed checks are not shown to renters (open decision). No renter email/notification, export or password-change screen. No screen-reader or older-adult review.
+
+**Next exact step:** with owner approval, back up the preserved local database, confirm the target is `127.0.0.1:54321`, run `npx.cmd supabase db push --local` to apply `202610190001` and `202610260001`, then link one owner-approved fictional renter account and review the renter view on the running app.
+
+## Building sketch from room counts and dashboard-style theme - 26 Oct 2026
+
+**Property map:** the building front view (`src/access/PropertyPreview.tsx`) now draws one door per entered space per floor, wraps at 10 doors per row, widens with the busiest floor, distinguishes rooms from apartment/shared/commercial spaces, marks example-occupied rooms with colour and a person mark, outlines the selected room, and shows "Room count not set" bands. Its text alternative lists real per-floor counts. Map and list thumbnails draw one window band per floor, and tile subtitles are computed (for example "9 rooms · 2 floors · Apartment"). Facade colours moved from hard-coded hex to theme tokens, so dark mode works. This reverses the earlier "decorative doors" decision; see [DECISIONS.md](DECISIONS.md).
+
+**Theme v2:** navy sidebar panel, bright-blue gradient buttons, cool grey-blue page, gradient welcome card with white action cards, tinted icon circles on actions and summary tiles, hover lift, press feedback and entrance motion (all disabled under reduced motion). Recorded with measured contrast in [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). Charts and financial KPIs from the inspiration were intentionally not added.
+
+**Validation (26 Oct 2026):** `npm run test:offline` 8/8 passed. The property check now asserts per-floor door counts (4/6, then 5/7), the apartment shape, 19 doors with zero overlaps at 14 rooms, 2 occupied marks in Bob's house, and the counts in the text alternative. The dashboard dark table-header check now compares against the live `--table-heading` token instead of a hard-coded colour. `npm.cmd run test:cash:supabase` passed (exit 0) on a disposable stack after the theme change, including authenticated 160px/320px/200%-text reflow and 44px targets. `npm run verify:release` passed (65/65; CSS 91.26 kB / 17.98 kB gzip). Committed screenshots were refreshed with `UPDATE_SCREENSHOTS=1`.
+
+**Limitations:** headless Edge only; no screen-reader, older-adult or WCAG review. Signed-in screens were checked by assertions, not inspected visually. The facade remains a fictional preview with no saved floor model.
+
+## Visual refresh, focus-ring fixes and offline checks in CI - 26 Oct 2026
+
+**UI:** applied the visual refresh recorded in [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) (tokens plus one labeled block in `src/styles.css`; no component logic changed). Fixed visible imperfections found by screenshot review: a blue outline boxed the whole section after every navigation click and the sign-in headline on load (now keyboard-only for sections and removed for announcement-only headings); the phone header used ~245px before content (now ~190px with labeled toggles in one row); inconsistent brass/navy stripes on random cards; nested cards casting double shadows. All new colour pairs were measured (main text 14.9:1, white on primary 9.3:1, borders ≥3.6:1).
+
+**Testing changes:** check scripts now write screenshots to the git-ignored `test-results/screenshots` unless `UPDATE_SCREENSHOTS=1` is set (via `scripts/screenshot-dir.mjs`), so routine runs no longer modify committed files. Committed `docs/screenshots` were refreshed deliberately with the flag to show the new design. New `npm run test:offline` starts its own backend-free dev servers, runs all eight offline browser checks, and always stops the servers. The GitHub `Quality checks` workflow has a second job that installs Edge and runs it; it has not run on GitHub yet. One check hard-coded the old dark table-header colour and was updated to the new token value.
+
+**Validation:** `npm run test:offline` 8/8 passed (also with `UPDATE_SCREENSHOTS=1`); `npm run verify:release` passed (65/65, build, artifact; CSS 83.46 kB / 16.45 kB gzip). Desktop/phone and dark-mode screenshots were inspected. No database, Supabase, or deployment was touched.
+
+**Limitations:** visual judgement is mine, not user-tested with older adults; no screen-reader or WCAG audit. After the CSS change, `npm.cmd run test:cash:supabase` was rerun on a disposable stack and passed (exit 0), including the authenticated 160px/320px/200%-text reflow and 44px-button assertions; signed-in screens were not visually screenshotted. Next: owner reviews the new look on the running app.
+
+## Isolated Supabase verification passed - 26 Oct 2026
+
+With Docker Desktop's Linux engine available (server 29.8.2), `npm.cmd run test:cash:supabase` ran on its own uniquely named disposable stack (`rbbcash…` project, shifted ports, fictional `.invalid` users) and **passed, exit 0**: 18 API checks and 10 authenticated browser checks. This is the first passing run for the saved Paid rent report and the check/handover migration. Covered: anonymous/unassigned/AAL1 denial, explicit verifier identity, idempotent agreements and charges, month-end anniversary clamping, pending cash not settling, direct table writes denied, single oldest-first confirmation with stable acknowledgment, concurrent confirmation and charge creation, audit-failure rollback (cash and check), stable `CHK-` references, owner-only concurrent clearance settling once, returned/reversed checks unsettled, handover mismatch audited without balance change, RLS reads, and browser flows for pending cash, clerk confirmation, keyboard focus, the saved Paid rent report, clerk check receipt, owner deposit (balance unchanged) then clearance (balance reduced), handover logging, 320/160/768px and 200%-text reflow with 44px buttons, and acknowledgment persistence after reload. Afterwards no `rbbcash` containers or temp folders remained; the preserved local stack was not targeted.
+
+**App bugs found and fixed by this run:**
+- `SavedPaidRentReport.tsx` crashed with `RangeError: Invalid time value` whenever it showed a database month: `rental_month` and acknowledgment months are `YYYY-MM-01`, but `formatMonth` appended `-01` again. It now uses `value.slice(0, 7)`, matching `AccountStatement.tsx`. Unit tests missed it because they test the model, not the display; the offline preview uses `YYYY-MM` data. The new deferred-screen boundary contained the crash to the Payments section.
+- The "Understand payment words" glossary never became one column on phones: its `@media (max-width: 40rem)` override came earlier in `styles.css` than the base two-column rule and lost the cascade. The base rule now uses `repeat(auto-fit, minmax(min(100%, 16rem), 1fr))` and terms wrap; the dead override was removed.
+
+**Test-script fixes (the browser section had never run to completion):** made the cash `Received by` locator exact (it also matched the handover "received by owner" fields); switched back to the records view before using the check register; selected the agreement in the owner session before reading its balance, and added an assertion that the balance is unchanged after deposit and before clearance; replaced three mojibake `â‚±` expectations already present in HEAD with `₱`; and on browser failure the runner now prints visible alert text and browser errors (fictional data only) so failures are diagnosable after the stack is removed.
+
+**Also re-run:** `npm.cmd run verify:release` (65/65, build, artifact check) and all eight offline browser checks passed after these fixes. `git diff --check` passed.
+
+**Still not done:** the check/handover migration has **not** been applied to the preserved local database. No hosted, staging or production system was contacted. This is isolated-stack evidence with fictional data, not independent security/accounting review, a recovery drill, or production readiness.
+
+**Next exact step:** owner reviews `202610190001_check_handover.sql` and this evidence, then explicitly approves applying it to the preserved local database. Before applying, back up the preserved local database (for example `npx.cmd supabase db dump --local --data-only` to a private, uncommitted location) and confirm the exact target is the local stack at `127.0.0.1:54321`. Apply with the documented `npx.cmd supabase db push --local` (never `db reset`), then sign in and confirm the check register and handover log load.
+
+## Deferred screen load-failure recovery - 26 Oct 2026
+
+**Why:** the uncommitted lazy-loading change had no error boundary. If a screen chunk failed to download (weak mobile data, or a tab left open across an app update) React would unmount the whole workspace: a blank page that also discarded unsaved drafts in other mounted sections. A failure of the initial `App` import likewise left a blank page with an unhandled rejection.
+
+**Change:** added `src/components/DeferredScreen.tsx`. `deferredScreen()` wraps each lazy screen and can create a fresh lazy component on retry (React keeps a rejected lazy import permanently). `DeferredBoundary` replaces each bare `Suspense` in `App.tsx`; it keeps the existing loading skeleton, and on a download or render error shows a focused English/Bisaya `role="alert"` message inside that section only, with **Try again** (re-requests the screen, returns focus to the section) and **Reload page** (with a plain warning that reloading clears unsaved entries elsewhere). `main.tsx` now catches a failed start, logs it to the console, and renders a bilingual reload message that does not depend on the i18n chunk. No data, Auth, RLS, financial logic or backend behavior changed; retry only remounts a screen and sends nothing.
+
+**Validation (26 Oct 2026):** `npm.cmd run verify:release` passed (65/65 unit tests, strict build, artifact check now also rejecting the test-harness marker; App chunk 38.87 kB / 11.26 kB gzip). New `node scripts/check-deferred-screen.mjs` against a backend-free Vite dev server on 5173 passed: an aborted screen download shows the focused alert, keeps a draft in another section, has ≥44px buttons, does not overflow at 320/390px, and **Try again** re-requests the module (two requests observed) and loads the screen with focus returned to the section; a render error shows the Bisaya message and recovers; an aborted `App` import shows the startup reload message. It uses a development-only harness in `tests/browser/fixtures/` that the app never imports. All seven existing offline preview checks still passed. `docker info` still fails (`dockerDesktopLinuxEngine` pipe missing), so no Supabase integration ran.
+
+**Limitations:** verified in headless Edge (Chromium) only; whether Firefox/Safari re-request a failed dynamic import on retry is unverified (Reload page remains the fallback there). The real authenticated screens were not exercised because that path needs local Supabase; the harness exercises the same component. After a real redeploy with changed chunk hashes, Try again cannot succeed and Reload page is required. No screen-reader or WCAG verification. The existing preview check scripts rewrite committed `docs/screenshots/*` on every run; those regenerated files were left in the working tree for owner review rather than reverted.
+
+**Next exact step:** unchanged — start/recover Docker Desktop's Linux engine, confirm `docker info --format '{{.ServerVersion}}'` returns a version, then run `npm.cmd run test:cash:supabase` on its disposable fictional stack.
+
+## Disposable cash-test preflight hardening - 22 Oct 2026, 17:56 +08:00
+
+Updated `scripts/test-cash-supabase.ps1` so its first operation is `docker info --format '{{.ServerVersion}}'`. The runner now refuses to create its temporary workspace, copy migrations, start a stack, or run database tests unless Docker returns a non-empty server version. Its failure message does not echo Docker output, which avoids forwarding environment-specific diagnostic text into the test log. This makes the documented Docker gate intrinsic to the runner instead of relying only on the caller to remember a separate preflight.
+
+**Validation:** `npm.cmd run test:cash:supabase` stopped at the new preflight because Docker Desktop's Linux engine is unavailable. No temporary workspace or disposable stack was created, and no migrations, API/Auth/MFA/RLS, idempotency, concurrency, audit, or browser tests ran. `git diff --check` passed. The earlier saved-cash integration evidence remains historical; the newer saved Paid rent report and check/handover Supabase assertions remain unverified.
+
+**Limitations and next step:** This is test-runner safety hardening, not a passing integration check or production-readiness claim. Start/recover Docker Desktop's Linux engine, confirm `docker info --format '{{.ServerVersion}}'` returns a version, then run `npm.cmd run test:cash:supabase` against the disposable fictional stack. Do not use the preserved local database, hosted development, or production.
+
+## Supabase workflow verification recheck - 22 Oct 2026, 17:52 +08:00
+
+Reviewed the project records before deciding whether to rerun integration checks. They document an earlier successful disposable Supabase run for the saved cash workflow, including Auth/MFA, RLS, idempotency, concurrency, audit rollback and authenticated browser verification. They do **not** document a successful run of the newer saved Paid rent report assertions or the drafted check/handover API/Auth/MFA/RLS/direct-write/idempotency/concurrency/audit-rollback/browser checks. The check/handover migration remains documented as unapplied to the preserved local database.
+
+Because required gates remain incomplete, ran `docker info --format '{{.ServerVersion}}'`. It failed: `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.` Docker Desktop's Linux engine is unavailable.
+
+Stopped before `npm.cmd run test:cash:supabase`; no new database, API, Auth/MFA, RLS, idempotency, concurrency, audit, or browser test result was produced. No local database was reset, migrated, seeded, or otherwise changed. Hosted and production systems were not contacted.
+
+**Next exact step:** start/recover Docker Desktop's Linux engine, rerun `docker info --format '{{.ServerVersion}}'`, and only after it returns a server version run `npm.cmd run test:cash:supabase` against its disposable fictional stack. Do not substitute the preserved local database or hosted development.
+
+## Isolated cash integration preflight - 22 Oct 2026, 16:55 +08:00
+
+Ran `docker info --format '{{.ServerVersion}}'` as requested. It failed with: `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.` Docker Desktop's Linux engine is unavailable in this session.
+
+Per the preflight gate, did not run `npm.cmd run test:cash:supabase`, `npx.cmd supabase status`, or any database/API/auth/browser integration command. No database was reset, migrated, seeded, or otherwise changed; hosted and production systems were not contacted. No secrets were accessed or displayed. Existing worktree changes were preserved.
+
+**Next exact step:** start Docker Desktop and its Linux engine, then rerun `docker info --format '{{.ServerVersion}}'`. Only after it returns a server version, run `npm.cmd run test:cash:supabase` against its isolated fictional stack. Do not substitute the preserved local database or hosted development.
+
+## Release-readiness CI and lazy screen loading - 22 Oct 2026
+
+Added `.github/workflows/quality.yml` to run for pull requests targeting `main` and pushes to `main`, with read-only repository permission, Node 24, lockfile install, and no deploy credentials/job. Added `npm.cmd run verify:release` for the complete unit suite, strict production build, and production artifact validation. The artifact check confirms the emitted JavaScript/CSS are referenced from `index.html` and that the development-only public availability preview is absent from production JavaScript.
+
+Also lazy-loaded payment records, property directory, invitations, owner access management, invitation review and access history. These screens are requested only after staff navigate to them, remain mounted after first visit to preserve drafts/state, and show a labeled loading skeleton while loading. Vite production output now separates `App` (37.01 kB / 10.58 kB gzip), saved payments (60.22 / 15.59 kB gzip), property directory (11.16 / 3.74 kB gzip), access management (12.88 / 4.25 kB gzip), invitation review (10.85 / 3.88 kB gzip), and access history (5.15 / 1.99 kB gzip). The index and shared chunks are still needed by the application; Vite gzip figures are build estimates, not real-device performance measurements.
+
+**Validation:** `npm.cmd run verify:release` passed: unit tests 65/65, strict TypeScript/Vite build, and production artifact check (eight JavaScript chunks, one stylesheet, with deferred administrative chunks and no public availability preview markers). All seven offline browser checks passed: dashboard, property preview, payments preview, Paid rent preview, admin worklist, workspace preview, and public availability preview. Property assertions now match configured example floors (Building 1: 3 + 6 rentable rooms plus a separate apartment; Building 2: 3 + 5 rentable rooms plus a separate gym). Fixed the preview rent-change review effect so entering review no longer resets the uncommitted new-rate draft; the “Edit details” action preserves it as specified. No database was used. `git diff --check` passed. Workflow configuration was source-reviewed; it has not run on GitHub from this worktree.
+
+**Deployment blocker:** There is no owner-approved staging Supabase project configured. `connectionAllowed` currently permits local Supabase, isolated cash-test ports, and one explicitly targeted hosted-development URL only in a development build; it rejects all Supabase URLs in a production build. This is fail-closed, but it means a built staging/production app cannot yet authenticate. Do not loosen this guard without an exact owner-approved staging project and a test proving other projects remain rejected. No backend, database, secrets, Cloudflare project, or production deployment was touched.
+
+**Next exact steps:** owner creates a separate staging Supabase project with synthetic data and provides its exact project identity through their secure setup process; then add/test a project-specific staging target, run the full API/MFA/RLS/financial/browser suite against staging or a disposable stack, and configure a manual Cloudflare Pages staging deployment. Complete accessibility, performance, independent review, recovery drill and owner acceptance before production authorization.
+
+Performance next step: measure Core Web Vitals/Lighthouse and route-level network timings against a deployed staging build on representative mobile/slow-network profiles; do not treat bundle estimates as production performance. Offline preview checks do not replace authenticated Supabase/browser verification.
+
+## Fictional public room-listing concept - 22 Oct 2026
+
+Responded to the request for prospective renters to view available rooms by adding a separate development-only page at `/?availability=preview`. The page groups fictional available sample rooms by building, labels the data as fictional and not connected to rental records, and is view-only. Its route dynamically imports only the standalone listing component; it does not initialize the authenticated app, load authorized snapshots, contact Supabase, or make external requests. Added the public-listing request, roadmap decisions and privacy gates to [ROADMAP.md](ROADMAP.md) and [DECISIONS.md](DECISIONS.md).
+
+**Validation:** `node scripts/check-public-availability-preview.mjs` passed, verifying sample building/room groups, fictional-data boundary, view-only controls, visible keyboard skip link, no Supabase/API or external requests, no authenticated app module load, no runtime errors, and no horizontal overflow at 320/390/768px. `npm.cmd test` passed 65/65. `npm.cmd run build` passed and split the authenticated app into a separate chunk; the production output contains no public preview route/component. `git diff --check` passed.
+
+**Limitations and next step:** This is not a real vacancy feed and must not be used to advertise current vacancies. Before connecting records, define who can publish a room, how availability is authoritatively established/currently updated, exactly which fields may be public, and whether inquiries are in scope. Do not infer vacancies from missing agreement/charge data or deploy/QR-link real listings without owner approval.
+
+## Saved property directory search - 22 Oct 2026
+
+Added a read-only search across saved building/section and unit labels. Searching a building retains its units; searching for a unit shows that matching unit with its parent for context. Archived locations stay searchable and visible, since they remain part of the historical directory. A live count reports how many building/unit rows are displayed. No location records, backend queries, permissions, occupancy, or billing behavior changed.
+
+**Validation:** `node --test tests/property-directory.test.ts` passed 4/4 for default results/count, building matches, unit matches with parent context, archived matches, and no matches. `npm.cmd run build` passed; Vite still reports the existing advisory for a main bundle above 500 kB. The current authenticated directory was not opened against a database.
+
+**Limitations and next step:** Search is label-only and does not change location data or reveal occupancy. Review the saved directory in the normal authenticated UI when available, including narrow-screen layout. Do not add room assignments or move-in/move-out operations until the owner confirms occupancy, timing, conflicts, archiving, and access rules.
+
+## Staff tenant directory filters - 22 Oct 2026
+
+Added read-only filters to the authenticated staff tenant directory for active/archived status and individual/business record type. The existing name search combines with both filters, the default “all” selections preserve the previous full-list behavior, and a live result count plus a clear-all action makes narrowed results easier to understand. Filters operate only on the already-authorized property snapshot; no database, access, or financial behavior changed.
+
+**Validation:** `npm.cmd test` passed 61/61, including new search, combined-filter, status-filter, and unchanged-default tests. `npm.cmd run build` passed; Vite retains its existing advisory that the main JS chunk exceeds 500 kB. `git diff --check` passed. The authenticated screen was not exercised against a temporary or preserved database.
+
+**Limitations and next step:** This adds directory navigation only; it does not edit tenant records, assign rooms/occupants, or implement occupancy lifecycle. Review the controls in the authenticated staff UI when convenient. Before implementing persisted occupancy or move-in/move-out, confirm the unresolved arrangement, effective dates, overlap/capacity, archival, and access rules with the owner.
+
+## Property room counts and invited-account clarity improvements - 21 Oct 2026
+
+Updated the preview property map to match the counted room plan for Bob's house, Building 1 and Building 2: Bob's house has six rent rooms, the first building's ground floor includes the apartment plus three rentable rooms, the second floor has six rentable rooms, the second building's ground floor includes the gym plus three rentable rooms, and the second floor has five rentable rooms. The preview still allows the floor count to be increased later if the property grows, while keeping the layout from overstating room counts on the facade.
+
+Also tightened the preview room-rent control so the saved monthly rate stays fixed until a deliberate change is enabled, and it returns to the existing amount smoothly when the toggle is turned back off without saving. This reduces confusion during room-rent edits and keeps the new rate review step clear before the next monthly charge is added.
+
+Added clearer invited-renter status guidance in the user account view and owner access assignment review so it is easier to distinguish between an active account, an accepted invitation, a shared tenant record, and the final owner approval step. This keeps the tenant-side flow easier to understand without changing the underlying access or financial rules.
+
 ## Priority follow-up: check/handover gate, language, operations and usability - 20 Oct 2026
 
 **Check register/handover:** Reviewed `202610190001_check_handover.sql`, the PGlite migration-backed tests, and the separate-session Supabase runner. The migration remains unapplied to the preserved local database. Isolated Supabase API/MFA/RLS, direct-write denial, idempotency, concurrency, audit rollback, and authenticated browser verification are still required before considering local application. Preflight command `docker info --format '{{.ServerVersion}}'` failed with `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine ... open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.` No isolated stack was started and no migration or database was changed.

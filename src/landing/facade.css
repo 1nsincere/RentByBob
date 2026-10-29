@@ -1,0 +1,41 @@
+/* Street-front building drawings (Facade in street.tsx), shared by the landing page and the renter view.
+   Follows the owner's Building 1 sketch: room doors and windows glow (is-lit) for open rooms, or the renter's own room;
+   the apartment's arched door; the cut-away hallway behind the gate (Rooms 01-03 and the stairs are inside). */
+.fx-shadow { fill: rgb(0 0 0 / 30%); }
+.fx-wall { fill: #f1d885; }
+.fx-wall-shade { fill: #dcbd62; }
+.fx-gable { fill: #e6c86c; }
+.fx-vent { fill: #2a5a45; }
+.fx-trim { fill: #fff6dc; }
+.fx-roof { fill: #2f7d5b; }
+.fx-ridge { stroke: rgb(255 255 255 / 16%); stroke-width: 1; }
+.fx-eave { fill: #245f46; }
+.fx-roof-line { fill: none; stroke: #2f7d5b; stroke-width: 6; stroke-linejoin: round; stroke-linecap: round; }
+.fx-rail { stroke: #fff6dc; stroke-width: 1.6; stroke-linecap: round; }
+.fx-baluster { stroke: rgb(255 246 220 / 80%); stroke-width: 1; }
+.fx-stair { fill: #cfd8d2; stroke: #8fa59a; stroke-width: .8; }
+.fx-door { fill: #7a4b2a; }
+.fx-knob { fill: #f2c230; }
+.fx-awning { fill: #2f7d5b; }
+.fx-frame { fill: #24503f; }
+.fx-glass { fill: #12302a; transition: fill 600ms ease, filter 600ms ease; }
+.fx-glass.is-lit { fill: #ffbf1f; filter: drop-shadow(0 0 2px #ffd54a) drop-shadow(0 0 5px rgb(255 160 20 / 75%)); animation: lp-glow 3.2s ease-in-out infinite; }
+@keyframes lp-glow { 0%, 100% { opacity: 1; } 50% { opacity: .84; } }
+.fx-curtain { fill: rgb(255 250 225 / 55%); transition: opacity 600ms ease; }
+.fx-glint { stroke: rgb(255 255 255 / 22%); stroke-width: 1.4; }
+.fx-mullion { stroke: #24503f; stroke-width: 1.2; }
+.fx-sill { fill: #e9dfc2; }
+.fx-bush { fill: #3f9a70; }
+.fx-ground { fill: #557465; }
+.fx-door-room { fill: #2f5a48; stroke: #24503f; stroke-width: .8; transition: fill 600ms ease, filter 600ms ease; }
+.fx-door-room.is-lit { fill: #ffbf1f; stroke: #e0a100; filter: drop-shadow(0 0 2px #ffd54a) drop-shadow(0 0 5px rgb(255 160 20 / 75%)); animation: lp-glow 3.2s ease-in-out infinite; }
+.fx-inside { fill: #c9a94c; stroke: #a8892f; stroke-width: .8; stroke-dasharray: 2 1.5; }
+.fx-glassdoor { fill: #7fb3a2; opacity: .85; }
+.fx-gate { fill: #3d4a44; stroke: #24302a; stroke-width: .8; }
+.fx-gate-bar { stroke: #6f7f77; stroke-width: .8; }
+.fx-gate-split { stroke: #1c2621; stroke-width: 1.2; }
+.fx-divider { stroke: #c9ab52; stroke-width: 1; }
+/* Building 2 sketch: the gym's double doors; rooms a page lets you pick (pointer) and the room under focus. */
+.fx-door-double { fill: #2f5a48; stroke: #24503f; stroke-width: .8; }
+.fx-pick { cursor: pointer; }
+.fx-pick:hover .fx-door-room.is-lit, .fx-pick:hover .fx-glass.is-lit, .fx-door-room.is-focus, .fx-glass.is-focus { fill: #fff2b0; filter: drop-shadow(0 0 3px #fff2b0) drop-shadow(0 0 9px rgb(255 191 31 / 95%)); }

@@ -1,3 +1,32 @@
+## Sweep results and fixes - 28 Oct 2026
+
+See STATUS.md. Fixed in `202610280005_sweep_fixes.sql`: date and amount bounds, finite-date table checks, device revocation on access change, normalised public-inquiry limits plus a per-room cap, NaN amounts, reversed-receipt confirmation, double-check bypass, auth oracle and lock order on tenant removal, audit attribution. Headers: `Cross-Origin-Resource-Policy: same-origin` added; every HTML route is `no-cache`. **Open (owner/accounts):** Turnstile or WAF rate limit on `/rest/v1/rpc/submit_rental_inquiry`; pin CSP `connect-src` to the production Supabase host; hosted Auth settings; email invitations to real addresses are disabled by the `.invalid` guard (migration `202610160009` and the Edge Function) and need a reviewed change before use. Accepted risk (owner): one clerk may record and confirm cash and clear or reverse checks.
+
+## Role model change - 28 Oct 2026
+
+`202610280004_clerk_manages_operations.sql`: operational functions accept any staff role (`private.staff_role() is not null`, which still requires MFA or a remembered device). `confirm_rent_cash` requires the clerk role (no single designated verifier). Owner-only (unchanged): `set_staff_access`, `assign_account_access`, `prepare_account_invitation` (staff), invitation review functions, `read_access_audit`, `assign_cash_verifier`. A PGlite test proves a clerk cannot call them and that no one operates without MFA. Segregation of duties between recording and confirming cash is no longer enforced by the database (owner decision); the audit log records the actor for every step.
+
+## Renter payment reports - 27 Oct 2026
+
+`renter_payment_reports` has RLS with a staff-only read policy; renters reach only their own rows through `read_my_payment_reports()`, which re-checks an active, unrevoked contact link and an unarchived tenant. `report_rent_payment` is SECURITY DEFINER (`search_path=''`), allowed only for the agreement's linked renter, idempotent by request id, rate-limited (5 waiting per room, 10 per person per day), date-bounded, and audited. Staff functions go through `private.cash_lock` (staff MFA or a trusted device); recording requires an existing cash record of the same agreement and property, so a report can never create or settle money on its own. Grants: `authenticated` only; anonymous calls are denied (PGlite and live tests).
+
+## Sign-in and privilege hardening - 27 Oct 2026
+
+User request: tighten security so attackers cannot get in easily.
+
+- **Auth settings (`supabase/config.toml`; for a hosted project, set the same values in the dashboard or with `supabase config push`):** minimum password length 12 enforced by Auth itself (the app's 12-character rule could previously be bypassed through the API, which allowed 6); `secure_password_change = true` (changing a password needs a recent sign-in, and the app also re-checks the current password); password-reset/confirmation emails at most once per 60 s per address; 15 one-time-code/MFA verifications per 5 minutes per IP (was 30); server-side session limits `timebox = 12h` and `inactivity_timeout = 2h` (hosted: Pro plan). Public sign-up and anonymous sign-in remain disabled; refresh-token rotation stays on. The preserved local stack picks these up only after `npx.cmd supabase stop` / `start`.
+- **Staff idle sign-out (app):** after 30 minutes without keyboard, mouse or touch activity in any open tab, staff see "Are you still there?" with Stay signed in; 2 minutes later the session is signed out locally and the sign-in screen explains why. Renter sessions are not timed out by the app (they see only their own records); the server-side limits above apply to everyone.
+- **Database default privileges (migration `202610270006_default_privileges.sql`):** tables, sequences and functions created later by migrations no longer inherit Supabase's default rights for `anon`/`authenticated`/`PUBLIC`, so a forgotten revoke cannot expose a new table or RPC. All existing public tables have direct insert/update/delete/truncate removed from browser roles, and `anon` has no table rights at all. `tests/privileges-database.test.ts` proves this, including for a newly created table and function.
+- **Response headers:** see the 27 Oct entry below (CSP, no framing, HSTS).
+- **Still recommended before going public (owner decisions/accounts needed):** Cloudflare Turnstile CAPTCHA on sign-in and the `/rooms` inquiry form (needs a site key and secret; `[auth.captcha]` and the CSP must then allow `https://challenges.cloudflare.com`); leaked-password protection (hosted Pro); MFA for renters is optional and not enforced; an independent security review before production.
+
+## Response headers and tenant archiving - 27 Oct 2026
+
+- `public/_headers` (Cloudflare Pages) sets a Content-Security-Policy allowing only same-origin scripts (no inline scripts, no eval), Supabase over HTTPS/WSS for data, no framing (`frame-ancestors 'none'`, `X-Frame-Options: DENY`), `nosniff`, a strict referrer policy, a restrictive permissions policy, HSTS and `Cross-Origin-Opener-Policy`. Inline style attributes are allowed (`style-src 'unsafe-inline'`); scripts are not. `scripts/check-production-build.mjs` fails if these protections are removed, and `npm run test:csp` renders `/` and `/rooms` under the headers and fails on any violation. If a staging/production Supabase project uses a custom domain, add it to `connect-src`.
+- `robots.txt` allows indexing only of `/rooms`; staff screens require sign-in regardless.
+- `archive_tenant` (owner, MFA) now requires a reason and refuses while the tenant has an open agreement or one ending today or later; record the move-out first. Archiving keeps all financial history.
+- `register_tenant` adds no new permission: it calls `create_tenant` and `create_rental_agreement` with their existing checks in one transaction.
+
 ## Saved cash local verification - 19 Oct 2026
 
 ## Check register and handover migration - 19 Oct 2026
@@ -21,6 +50,16 @@ At the time of this design note the migration was unapplied. It restricts confir
 PaymentsPreview is exported only through the development preview module. Entries are fictional in-memory state, reset on reload and make no external requests. Settled cash is a UI simulation, not authorized financial posting. No keys, accounts, RLS, MFA or migrations changed. Future financial writes must use reviewed transactional PostgreSQL functions with RLS, authorization, idempotency and concurrency tests.
 
 # Security plan
+
+## Anonymous entry points - 26 Oct 2026
+
+Migration `202610270002_public_room_listings.sql` adds the app's only anonymous entry points: `read_public_listings()` (returns only listed rooms with no current or upcoming agreement: building label, room label, asking rent, description, unit ID) and `submit_rental_inquiry(...)` (write-only; validates the room is still listed; idempotent request ID; rate limits; 90-day pruning). Tables `room_listings` and `rental_inquiries` have RLS, staff-only reads and no anonymous grants. The definer-function inventory test now asserts that exactly these two functions are anonymously executable. PGlite tests (with a mutation check that removing the occupied-room filter fails the test) and the live disposable suite verify isolation. Remaining risks before public hosting: no CAPTCHA (consider Cloudflare Turnstile), inquiry contact details are personal data held for 90 days, and the hidden anti-bot field only stops simple bots.
+
+## Renter read model and client session handling - 26 Oct 2026
+
+`public.read_renter_account()` (migration `202610260001`) is a SECURITY DEFINER function with an empty search path, executable by `authenticated` only. It takes no parameters and derives scope from `auth.uid()`: unarchived tenants with an unrevoked contact link. It returns no staff or verifier IDs, handovers or other tenants, and its balance rule matches staff. PGlite isolation tests (with mutation checks) and a live disposable run verify this. The definer-function inventory test now expects 33.
+
+The client no longer unmounts the workspace on token refresh, focus or tab visibility changes; it re-checks access in place every 10 seconds and on focus. This is a UX change only: RLS and RPC authorization are unchanged. Renter password changes re-verify the current password before `updateUser` (Supabase `secure_password_change` is off locally). The local `minimum_password_length` in `supabase/config.toml` is 6, while the app requires 12; consider raising the Auth setting for staging and production as an owner-approved configuration change.
 
 ## Preview creation boundary - 17 Oct 2026
 
@@ -93,11 +132,11 @@ The matrix combines implemented access controls with intended product permission
 | --- | --- | --- | --- |
 | Read records | Authorized tenant only | Assigned property | Owned property |
 | Report/withdraw pending claims | Own authorized tenant | Record/review | Review |
-| Verify cash receipt | No | Designated verifier only | No |
+| Verify (confirm) cash receipt | No | Yes, any clerk (since 28 Oct 2026; no single designated verifier) | No |
 | Record check receipt | No | Yes, under drafted migration | No |
-| Deposit, clear, return or reverse checks | No | No | Yes, under drafted migration |
-| Record collection handover | No | No | Yes, under drafted migration |
-| Manage staff roles / restricted terms | No | No | Yes |
+| Deposit, clear, return or reverse checks | No | Yes (since 28 Oct 2026) | Yes |
+| Record collection handover | No | Yes (since 28 Oct 2026) | Yes |
+| Manage staff roles / who may sign in / restricted terms | No | No | Yes (owner only, on purpose) |
 | Issue invitations | No | Renter invitations only, trusted Edge Function | Renter or staff invitations, trusted Edge Function |
 | Reconcile/export | Own statements only | Operational scope | Property scope |
 

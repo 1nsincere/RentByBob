@@ -1,5 +1,6 @@
 ﻿import assert from 'node:assert/strict'
 import { chromium } from '@playwright/test'
+import { screenshotDir } from './screenshot-dir.mjs'
 const browser=await chromium.launch({channel:'msedge',headless:true})
 try {
  const page=await browser.newPage({viewport:{width:1440,height:1000}})
@@ -30,10 +31,10 @@ try {
  assert.match(await page.locator('.add-missed-month-list').innerText(),/Sample Mara Reyes/)
  await page.getByRole('button',{name:'Add September 2026 charge',exact:true}).click()
  await page.getByText('This adds a ₱4,500.00 rent charge for September 2026, due Sep 15, 2026.',{exact:false}).waitFor()
- await page.screenshot({path:'docs/screenshots/add-rent-month-desktop.png',fullPage:true})
+ await page.screenshot({path:`${screenshotDir}/add-rent-month-desktop.png`,fullPage:true})
  await page.setViewportSize({width:390,height:844})
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth))
- await page.screenshot({path:'docs/screenshots/add-rent-month-mobile.png',fullPage:true})
+ await page.screenshot({path:`${screenshotDir}/add-rent-month-mobile.png`,fullPage:true})
  await page.setViewportSize({width:1440,height:1000})
  await page.getByRole('button',{name:'Cancel',exact:true}).click()
  assert.equal(await page.locator('.arrears-report-table tbody tr').count(),1)
@@ -71,13 +72,13 @@ try {
  await page.getByRole('dialog').waitFor()
  assert.match(await page.getByRole('dialog').innerText(),/SAMPLE ONLY/)
  assert.match(await page.getByRole('dialog').innerText(),/4,499.75/)
- await page.screenshot({path:'docs/screenshots/cash-acknowledgment.png',fullPage:true})
+ await page.screenshot({path:`${screenshotDir}/cash-acknowledgment.png`,fullPage:true})
  await page.emulateMedia({media:'print'})
- await page.pdf({path:'docs/screenshots/sample-cash-acknowledgment.pdf',format:'A4'})
+ await page.pdf({path:`${screenshotDir}/sample-cash-acknowledgment.pdf`,format:'A4'})
  await page.emulateMedia({media:'screen'})
  await page.getByRole('button',{name:'Close receipt'}).click()
  await page.evaluate(()=>scrollTo(0,0))
- await page.screenshot({path:'docs/screenshots/paid-rent.png',fullPage:true})
+ await page.screenshot({path:`${screenshotDir}/paid-rent.png`,fullPage:true})
  for(const width of [320,390,768]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));if(width<=390)assert.ok(await page.locator('.paid-table-scroll').evaluateAll(regions=>regions.every(region=>region.scrollWidth<=region.clientWidth+1)))}
  await page.setViewportSize({width:390,height:844})
  const mobileMetrics = await page.locator('.paid-report-metrics article').evaluateAll(cards => cards.map(card => {
@@ -89,7 +90,7 @@ try {
  assert.equal(await page.locator('.arrears-report-sheet.has-arrears').count(),1)
  assert.equal(await page.locator('.unpaid-report-total').evaluate(el=>getComputedStyle(el).borderLeftWidth),'4px')
  await page.evaluate(()=>scrollTo(0,0))
- await page.screenshot({path:'docs/screenshots/paid-rent-mobile.png',fullPage:true})
+ await page.screenshot({path:`${screenshotDir}/paid-rent-mobile.png`,fullPage:true})
  assert.deepEqual(errors,[]);assert.deepEqual(external,[])
  console.log('PASS: receipt-month totals, unique renter/payment counts, dates and amounts; separate rent-month outstanding list; pending exclusion; partial balances; acknowledgment; narrow reflow; zero external requests/errors')
 }finally{await browser.close()}

@@ -2,7 +2,7 @@
 
 Preview: confirm a sample cash payment, open Paid rent, then Open acknowledgment to print/save a clearly marked sample PDF. The saved staff cash workflow is active against the local database: the reviewed cash migration has been applied locally after disposable Auth/API, MFA/RLS, concurrency, audit-rollback and authenticated browser checks. The local financial tables are empty and no verifier is assigned. Before confirming cash, the owner must verify James's exact existing confirmed clerk identity and assign it in Payments and balances; review real room/rent terms before creating agreements or charges. Hosted development and production remain unchanged. Run `npm.cmd run test:cash:supabase` to repeat the full cash integration checks on a separate disposable local stack. See [docs/STATUS.md](docs/STATUS.md) and [docs/ROADMAP.md](docs/ROADMAP.md) for current evidence and next steps.
 
-The current scope checklist and verification limits are recorded in [docs/STATUS.md](docs/STATUS.md). The saved Paid rent view and check/handover integration additions are implemented but not yet verified against Supabase; the disposable run is blocked until Docker Desktop's Linux engine is available. Do not treat the offline preview or unit tests as evidence of saved database behavior.
+The current scope checklist and verification limits are recorded in [docs/STATUS.md](docs/STATUS.md). Going live (staging first, owner-authorized steps, security settings) is described in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Everyday local commands (start, stop, apply database updates, tests, backups) are in [LOCAL_COMMANDS.md](LOCAL_COMMANDS.md). The saved Paid rent view and check/handover integration additions are implemented but not yet verified against Supabase; the disposable run is blocked until Docker Desktop's Linux engine is available. Do not treat the offline preview or unit tests as evidence of saved database behavior.
 
 In the saved Payments and balances screen, the workflow-readiness panel shows the current property's verifier, agreement, monthly-charge and cash-record state. Save pending cash only for money already handed to a collector and up to the displayed outstanding balance. The form rejects excess amounts before sending a request; advance payments are not configured. A positive approved rent charge must exist first. No verifier or rent data is invented by the app.
 
@@ -30,7 +30,9 @@ Payments and balances now guides tenant selection, cash entry, review, pending r
 
 At http://127.0.0.1:5173/?preview=1 choose Payments and balances. Enter fictional per-room charges with individual due dates, review partial cash/report/check entries, and see tenant/room balances and payment history. Only simulated settled cash reduces balances. All entries reset on reload; database payment saving and verification/clearance transitions are not implemented.
 
-Payment history separates pending and confirmed examples with status, amount, receipt date and collector labels. After a fictional rent setup is created, its room rate and move-in date are fixed by default. To test a proposed rate change, unlock the rate, select its first rent month, review the amount and due date, and explicitly confirm. Earlier charges are preserved; duplicate room/month charges are rejected. This updates only in-memory preview state, not saved agreements. Persisted rent-term editing is not implemented.
+Payment history separates pending and confirmed examples with status, amount, receipt date and collector labels. After a fictional rent setup is created, its room rate and move-in date are fixed by default. The room-rent control now stays fixed until a deliberate change is toggled on, and it resets cleanly if the change is toggled back off without saving. To test a proposed rate change, unlock the rate, select its first rent month, review the amount and due date, and explicitly confirm. Earlier charges are preserved; duplicate room/month charges are rejected. This updates only in-memory preview state, not saved agreements. Persisted rent-term editing is not implemented.
+
+The invited-renter and owner-access workflow also now shows clearer status guidance: an active account can still be waiting for a shared property record, and the owner assignment review distinguishes between the invitation, the matched account, and the final access decision. This is a UX hardening step only; it does not bypass invitation or MFA rules.
 
 # Rental records
 
@@ -40,7 +42,11 @@ Preview navigation now focuses on Tenant directory, Buildings and units, and Add
 
 ## Interactive property preview
 
-Open http://127.0.0.1:5173/?preview=1 (`npm.cmd run dev:preview`). Tenant directory now has active sample tenant cards, building/room filters, expandable details and Locate room. Buildings and units has the clickable user-supplied site sketch, a mobile building list, floor selection, editable room counts/labels and Add building. Preview edits last until reload; nothing is sent to Supabase. The site footprint is fixed and not to scale. Unknown room counts stay unset.
+Open http://127.0.0.1:5173/?preview=1 (`npm.cmd run dev:preview`). Tenant directory now has active sample tenant cards, building/room filters, expandable details and Locate room. Buildings and units has the clickable user-supplied site sketch, a mobile building list, floor selection, editable room counts/labels and Add building. The current building layout reflects Bob's house at 6 rent rooms, Building 1 with an apartment plus 3 rentable rooms on the ground floor and 6 rentable rooms above, and Building 2 with a gym plus 3 rentable rooms below and 5 rentable rooms above. Floor counts can be increased later when the property grows, and preview edits last until reload; nothing is sent to Supabase. The site footprint is fixed and not to scale. Unknown room counts stay unset.
+
+## Public room-listing concept preview
+
+With the Vite development server running, open `http://127.0.0.1:5173/?availability=preview` to review a separate, fictional, view-only guest listing page. It demonstrates available-room cards grouped by building without initializing the authenticated app or reading rental records. It is not connected to saved availability and must never be shared as a real vacancy listing. A public URL and QR code for approved real listings remain planned work; owner-controlled publication and privacy boundaries must be designed first.
 
 ## No-sign-in dashboard preview
 
@@ -105,11 +111,14 @@ Old fictional payment/design screens remain in `src/prototype/PrototypeApp.tsx`,
 ```powershell
 npm.cmd test
 npm.cmd run build
+npm.cmd run verify:release
 npm.cmd run test:supabase
 npm.cmd run test:browser
 ```
 
 Browser tests use installed Microsoft Edge headlessly and real local Supabase with UUID-scoped disposable fixtures. No resets, real emails or production connections. They start the local frontend when needed; the invitation function must already be served. Traces/videos are disabled to avoid recording passwords and MFA secrets. See [status](docs/STATUS.md) for actual results and limitations.
+
+GitHub Actions runs `npm ci` and `npm run verify:release` on pull requests and pushes to `main`. It does not deploy. Staging and production remain gated on a separately owner-controlled Supabase project, project-specific connection configuration, live verification, recovery/accessibility review, and explicit authorization; see [operations](docs/OPERATIONS.md).
 
 ## Project records
 

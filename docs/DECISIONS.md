@@ -1,6 +1,89 @@
+## The clerk runs operations; the owner oversees - 28 Oct 2026 (owner decision)
+
+"The owner's login is just to see what is going on and the inventory; the clerk manages it all." Any staff member with MFA may do day-to-day operations that used to be owner-only (removal, move-out, reversal, check handling, handovers, switches, layout, room rename, voiding maintenance). Cash confirmation (the approval) is done by any clerk. The owner keeps all powers except confirming cash (clerks only) and alone controls who may sign in (invitations, access assignment, access history). Trade-off accepted by the owner: one person can now record and confirm cash; the audit log shows who did what.
+
+## Remove tenants with a room; maintenance in the monthly report - 28 Oct 2026 (owner requests)
+
+The owner may remove a tenant who still has a room in one step. The room agreement ends (on its move-in date if nothing was ever recorded against it and it began before this month, otherwise today) and the tenant is hidden from all lists; records, rent history and the audit log stay. Maintenance (what, where, amount, per month) is recorded by staff, voided rather than edited, and listed with a total in that month's PDF report. It is an expense record only and never changes a tenant balance. The owner asked (28 Oct 2026) for an optional "paid rent minus maintenance" line at the very bottom of the monthly report and PDF; it is added, labelled information only (cash received is not profit; rent still due and other costs are excluded), calculated exactly in centavos.
+
+## Past months from the notebook need a double check - 28 Oct 2026 (owner decisions)
+
+Existing tenants predate the app and the only record is the paper notebook. Months entered from it are *waiting for a double check*, shown separately and **not counted as owed** (not in balances, the late-rent list or reminders) until a **different** staff member (clerk or owner) confirms them against the notebook; each entry must name the notes it came from. A best-guess move-in date is flagged and double checked the same way. Cash received meanwhile becomes advance credit, which pays the months automatically once they are confirmed.
+
+## Building drawings follow the owner's sketch - 27 Oct 2026
+
+- **Building 1 (owner sketch):** upstairs rooms on a balcony walkway, numbered from the stairs end, windows beside every other door; apartment with its own arched street door; Rooms 01-03 inside the gate along the hallway with the stairs. Used on the landing page and on every staff front view and room picker.
+- **Building 2 (owner sketch, 27 Oct 2026):** windows left of upstairs doors; Room 08 in a left wing; gym double doors, a door to the stairs, and a hall door to Rooms 01-03 inside.
+- **Other buildings (assistant assumption until sketched):** Bob's house rooms drawn as windows; House 1 a single door and window.
+
+## Renter payment reports and private commercial spaces - 27 Oct 2026
+
+- **Report a payment (owner request):** renters may tell the property they paid in person. A report is only a notice: it never reduces a balance and is not pending cash. Staff either record the cash through the normal flow (pending until the designated verifier confirms) and link it, or mark the report not received with a reason the renter sees. Collector choices: Bob, James, someone else. No online payment or GCash (assistant default: unchanged "pay your collector in person" rule). Limits chosen by the assistant: date within the last 90 days and not in the future; 5 waiting reports per room; 10 per person per day; reports older than 180 days drop off the renter list.
+- **Stores and Yamaha are never public (owner decision):** commercial spaces cannot be listed, inquired about or auto-listed.
+
+## Billing automation, advance payments, room changes, removal - 27 Oct 2026 (owner decisions)
+
+- **Automatic monthly rent:** on the 1st of each month (Philippine time) every current agreement gets that month's rent at its agreed amount, due on its usual anniversary day; never twice; nothing after a move-out month. Owner switch per property (off until turned on; turning it on posts the current month at once). Hourly `pg_cron` job where available, plus a catch-up whenever staff open Payments. Charges are audited under the owner who turned it on.
+- **Advance payments:** confirmed cash above what is owed is kept as advance credit on the same agreement and pays the next rent months automatically (oldest month first, oldest payment first) when they are added, manually or automatically. Reversing a payment also reopens months its credit paid. Credit is never paid out by the app; refunds stay outside it. The acknowledgment records the advance portion. Record cash starts with the agreed monthly rent and can be changed.
+- **Room change while still renting:** same agreement, monthly rent, due day and balance; the room changes from a chosen date (not in the future); history kept in `agreement_room_changes`. Historical charges show the agreement's current room.
+- **Remove tenant:** owner, with a reason, after move-out: hidden from every list; payment history stays in reports and the audit log (no physical deletion).
+- **Map shows renter and rent:** occupied room tiles show the responsible renter's name and monthly rent (staff-only screen). Other occupants are still never stored or shown.
+- **Paid rent report export:** Excel/CSV removed at the owner's request; replaced by a formatted PDF (browser "Save as PDF") with the same figures as the screen.
+- **Navigation and app bar:** grouped menu (Daily work; Accounts & security folded under a toggle) and a standard app bar (theme icon, EN/CEB switch, account chip, Sign out).
+
+## Security defaults chosen by the assistant (user delegated: "tighten its security") - 27 Oct 2026
+
+Staff are signed out after 30 minutes without activity (2-minute warning with Stay signed in); server sessions end after 12 hours or 2 hours idle; passwords need 12+ characters at the Auth server. These are adjustable defaults, not business rules: change `IDLE_WARN_MS`/`IDLE_GRACE_MS` in `src/access/idle-model.ts` and `[auth.sessions]` in `supabase/config.toml` if the office finds them too strict.
+
+## Simple add-tenant and payments flow; preview features in live - 26 Oct 2026
+
+User direction: payments were "too complicated" and adding a tenant had "too many steps"; the live app should work like the preview, and from now on every preview feature should be in the live app.
+
+- **Add tenant in one step.** Name, type, optional vacant room with move-in date and monthly rent, review, then one save. Migration `202610270004_register_tenant.sql` adds `register_tenant`, which calls the existing `create_tenant` and `create_rental_agreement` in one transaction, so a refused room (taken, shared gym, bad rent) leaves no tenant behind. Same staff-MFA rule and retry-safe IDs. The vacant-room tile on the property map now says "Add tenant" and opens this form with the room chosen (it used to open the Payments agreement form).
+- **Payments like the preview.** Main view: "What needs attention?" list beside the selected account; "Record cash payment" → amount/date/collector → review showing which months it would pay (oldest first, display only; the database still allocates on confirmation) → save as pending; the verifier uses "Review cash" on the same account. Account tabs: Rent by month (with add month), Payment history (statement, acknowledgments, owner reversal), Room rent setup (fixed rent/move-in, owner move-out). Less frequent work is under **More tools**: property-wide cash to confirm, checks & handovers, monthly rent for everyone, setup (verifier, giving an existing tenant a room, glossary).
+- **Not carried over from the preview, by rule:** occupant names (the user decided "STRICTLY NO" names, only "occupied"); changing a saved rent (the preview simulated it, but the real rule is not decided: which month it starts and who may change it). The setup tab says so.
+- A duplicate warning (same tenant, amount and date) must be ticked before saving, as in the preview.
+
+## Real property layout, map and occupancy - 26 Oct 2026
+
+User decisions: the preview layout is final. Building 1 and Building 2 have a ground and a second floor (Building 1: Apartment + 3 rooms ground, 6 rooms second; Building 2: shared Gym + 3 rooms ground, 5 rooms second); Bob's house has 6 rooms; House 1 is rented as a whole house (no people count); Yamaha property is a single commercial space; Stores 1–3 are single shops whose tenant is the business (owner/business name optional). The map uses the owner's fixed site sketch positions. **No occupant names are stored**: a room shows only Occupied or Vacant, derived from a current agreement. The only name staff see is the responsible tenant who pays rent; renter details are never public. Initial room numbers continue across floors within a building (unique names required) and the owner will rename them on site. The shared gym can never be rented or publicly listed.
+
+## Public room listings and inquiries - 26 Oct 2026
+
+Supersedes the open questions of 22 Oct. User decisions: staff explicitly mark a room "listed" (owner or clerk with MFA); the public sees only building, room, asking monthly rent and a short description (no photos in this slice); visitors leave an inquiry (name, phone or Messenger, message) that staff read later. Implementation rules: a listed room is hidden automatically while it has any current or upcoming agreement (never inferred available from missing data); visitors cannot read inquiries back; spam limits of 3 inquiries per contact per 24 hours and 20 per property per hour; inquiries older than 90 days are deleted (retention period adjustable by the owner). The public page is served at `/rooms`; a QR code should point to that address once a real public site exists. Public deployment still needs explicit owner authorization.
+
+## Production-prep rules chosen by the user - 26 Oct 2026
+
+- **Reversal of confirmed cash:** owner only (with MFA), written reason required. The cash record and acknowledgment are kept unchanged; the payment is marked reversed, its rent-month allocations move into an append-only reversal record, and the rent it paid becomes owed again. Renters no longer see a reversed payment as paid.
+- **Monthly rent:** staff review, then one-click add. The screen lists active agreements missing a charge for the chosen month (amount and move-in due date shown); nothing is charged until staff confirm. No scheduled automatic charging.
+- **Move-out:** owner records a move-out date and reason. Full months only (the move-out month is charged in full, no proration); no deposit handling; unpaid rent stays owed on the ended agreement; no charge may be added for a later month, and the move-out cannot precede an already-recorded later month. The room can take a new agreement starting the day after the move-out date.
+- **Backups:** daily, keep 30 days, stored privately outside the repository; restore must be rehearsed on a throwaway copy.
+
+## Draft safety and renter password change - 26 Oct 2026
+
+Implementation choices within the user's "do what is best" direction: access is re-checked in place rather than by unmounting the workspace (the server still enforces access on every request); a renter password change requires the current password; and leaving with unsaved form typing asks first. Dashboard collection figures reuse the existing Paid rent report definitions and add no new financial rule.
+
+## Renter self-service view - 26 Oct 2026
+
+User chose that signed-in renters may see their room, rent, balance and confirmed payments, superseding the 19 Oct deferral of renter-facing statements. Sign-in stays invitation-based email + password; renters are not asked for staff MFA, and email one-time codes were not chosen. Rules applied: the balance uses the same rule as staff (confirmed cash and cleared checks only); pending cash and received/deposited checks are listed as "waiting for confirmation" and never reduce it; the view is read-only and states that payments are not made on the website. Not shown to renters: collectors' internal records, verifier/staff account IDs, handovers, other tenants. Returned or reversed checks are currently omitted from the renter view; how (or whether) to tell a renter about a returned check is an open owner decision. Monthly status words are descriptive ("Paid", "Partly paid", "Not paid yet"); no overdue, grace-period or late-fee rule is implied.
+
+## Building sketch reflects entered room counts - 26 Oct 2026
+
+User asked for the building sketch to depend on the number of rooms. This reverses the 19 Oct choice that facade doors were decorative and did not indicate a count. In the fictional preview, the front view now draws one door per entered space per floor, distinguishes rooms from apartments, shared and commercial spaces, marks example-occupied rooms with colour plus a person mark, and shows "Room count not set" instead of inventing doors. It remains illustrative and preview-only: no surveyed layout, capacity, vacancy or occupancy policy is implied, and the saved database still has no floor model.
+
+## Dashboard-style visual theme - 26 Oct 2026
+
+User supplied a property-management dashboard as inspiration and permitted routine UI decisions. Adopted its navy sidebar, bright-blue actions, gradient hero, tinted icon circles and motion. Deliberately not adopted: charts, revenue/overdue KPIs, search and notifications, because no approved data, report definition or workflow exists for them. Any future financial KPI needs an agreed definition and must exclude pending reports and uncleared checks.
+
 ## Language-switch copy and data boundary
 
 Use the existing browser-persisted English/Bisaya preference and manually authored, simple Bisaya. Do not call an external translation service. Translate app-authored labels, instructions, statuses and errors only; retain user-entered names, emails, building/room labels, dates, amounts, IDs and records exactly. Keep technical/security/financial meaning accurate, mark Bisaya as unverified until reviewed by a fluent speaker, and do not describe it as authoritative before that review. This UI-only work does not change Auth, access assignment, financial rules, or database state.
+
+## Public room availability request - 22 Oct 2026
+
+The user wants prospective renters who inquire to reach a public, view-only listing through a website URL or QR code, grouped by building and showing rooms marked available. Implement a separate fictional development preview while the real publication model is pending. Do not connect it to tenant, staff, or payment snapshots; the current saved model does not track occupancy/vacancy. Do not assume a room is vacant because it has no saved agreement or charge.
+
+Unresolved before real publication: owner-controlled publish/unpublish permissions; authoritative availability and freshness; exact public fields (including whether to show rent, photos, amenities, location or contact details); inquiry workflow; and public hosting approval. Never expose renter names, account data, financial records, or staff/security information. QR generation follows a stable, owner-authorized public URL; a QR code is not an access-control mechanism. This request does not add self-registration, public account access, online payments, or production deployment.
 
 ## Preview room-rent change interaction - 20 Oct 2026
 
