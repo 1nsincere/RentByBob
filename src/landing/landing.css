@@ -272,21 +272,8 @@
 .lp-legend-icon svg { display: block; width: 100%; height: auto; overflow: visible; }
 .lp-legend-dev { display: flex; align-items: center; gap: .45rem; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--amber); text-underline-offset: 3px; }
 .lp-legend-dev:focus-visible, .lp-legend summary:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: .3rem; }
-.lp-dev-card { position: absolute; z-index: 8; right: 3%; top: 5%; width: min(19rem, 86%); padding: 1rem 1.1rem 1.1rem; border: 1.5px solid var(--amber); border-radius: 1rem; background: rgb(12 32 24 / 97%); color: #fff; box-shadow: 0 24px 50px -16px rgb(0 0 0 / 70%); animation: lp-card-in 220ms ease both; }
-.lp-dev-top { display: flex; align-items: center; gap: .8rem; padding-right: 2rem; }
-.lp-dev-avatar { display: grid; flex: none; place-items: center; width: 3.2rem; height: 3.2rem; border: 2px solid var(--amber); border-radius: 50%; background: #14110f; color: #fff; font: 800 1.05rem var(--mono); }
-.lp-dev-name { display: block; font-weight: 900; font-size: 1.1rem; line-height: 1.15; }
-.lp-dev-role { display: block; margin-top: .15rem; color: var(--amber); font-weight: 700; font-size: .85rem; }
-.lp-dev-note { margin: .7rem 0 0; color: rgb(238 246 240 / 86%); font-size: .9rem; }
-.lp-dev-creds { display: grid; gap: .5rem; margin: .8rem 0 0; padding-top: .7rem; border-top: 1px solid rgb(255 255 255 / 18%); }
-.lp-dev-creds dt { font: 600 .68rem var(--mono); text-transform: uppercase; letter-spacing: .1em; color: rgb(238 246 240 / 65%); }
-.lp-dev-creds dd { margin: .1rem 0 0; font-weight: 700; font-size: .95rem; }
-.lp-dev-close { position: absolute; right: .35rem; top: .35rem; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 0; border-radius: 50%; background: none; color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; }
-.lp-dev-close:hover { background: rgb(255 255 255 / 12%); }
-.lp-dev-close:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
-@keyframes lp-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@media (max-width: 47.99rem) { .lp-legend { max-width: 92%; padding: .25rem .4rem .3rem; } .lp-legend ul { grid-template-columns: 1fr; gap: .15rem; } .lp-dev-card { right: 4%; left: 4%; width: auto; } }
-@media (prefers-reduced-motion: reduce) { .lp-dev-card { animation: none; } .lp-student { left: 18.5%; top: 90%; opacity: 1; visibility: visible; animation: none; } .lp-student svg { animation: none; transform: rotate(90deg); } }
+@media (max-width: 47.99rem) { .lp-legend { max-width: 92%; padding: .25rem .4rem .3rem; } .lp-legend ul { grid-template-columns: 1fr; gap: .15rem; } }
+@media (prefers-reduced-motion: reduce) { .lp-student { left: 18.5%; top: 90%; opacity: 1; visibility: visible; animation: none; } .lp-student svg { animation: none; transform: rotate(90deg); } }
 @keyframes lp-student-walk {
   0% { left: 18.5%; top: 74%; opacity: 0; visibility: hidden; }
   2% { left: 18.5%; top: 76%; opacity: 1; visibility: visible; }
@@ -489,3 +476,34 @@
 .lp-sim { position: fixed; left: 50%; bottom: 1rem; z-index: 75; display: flex; align-items: center; gap: .4rem; max-width: calc(100% - 2rem); margin: 0; padding: 0 1.1rem; border-radius: 999px; background: var(--amber); color: var(--ink); font-weight: 700; box-shadow: 0 10px 30px -10px rgb(0 0 0 / 50%); transform: translateX(-50%); flex-wrap: wrap; justify-content: center; }
 .lp-sim a { display: inline-flex; align-items: center; min-height: 2.75rem; color: var(--ink) !important; text-decoration: underline; text-underline-offset: .2em; }
 .lp-sim a:focus-visible { outline-color: var(--ink); }
+
+/* Developer profile: a full-page card over the whole screen, so it is never cut off by the street plan. It sits outside
+   the landing root (a portal on the page body), so colours are written out here instead of using the landing variables. */
+.dev-backdrop { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: max(.75rem, env(safe-area-inset-top)) max(.75rem, env(safe-area-inset-right)) max(.75rem, env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left)); background: rgb(5 15 11 / 78%); backdrop-filter: blur(6px); animation: dev-fade 200ms ease both; }
+.dev-card { position: relative; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); width: min(52rem, 100%); max-height: calc(100dvh - 1.5rem); overflow: auto; overscroll-behavior: contain; border: 1.5px solid #ffbf1f; border-radius: 1.4rem; background: linear-gradient(160deg, #123327, #0b1f17 70%); color: #fff; box-shadow: 0 40px 90px -20px rgb(0 0 0 / 80%); animation: dev-rise 260ms cubic-bezier(.2, .8, .2, 1) both; }
+.dev-close { position: absolute; z-index: 2; right: .6rem; top: .6rem; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 1.5px solid rgb(255 255 255 / 35%); border-radius: 50%; background: rgb(8 22 16 / 78%); color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+.dev-close:hover { background: rgb(255 191 31 / 25%); }
+.dev-close:focus-visible { outline: 3px solid #ffbf1f; outline-offset: 2px; }
+.dev-photo { position: relative; min-height: 100%; margin: 0; overflow: hidden; background: #0b1f17; }
+.dev-photo img { display: block; width: 100%; height: 100%; min-height: 20rem; object-fit: cover; object-position: 50% 30%; }
+.dev-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgb(8 20 15 / 78%)); pointer-events: none; }
+.dev-photo figcaption { position: absolute; z-index: 1; left: .9rem; right: .9rem; bottom: .9rem; }
+.dev-tag { display: inline-block; padding: .35rem .8rem; border-radius: 999px; background: #ffbf1f; color: #10201a; font-weight: 800; font-size: .85rem; }
+.dev-body { display: grid; align-content: start; gap: .7rem; padding: 1.6rem 1.6rem 1.8rem; }
+.dev-eyebrow { margin: 0; color: #ffbf1f; font: 700 .78rem ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em; text-transform: uppercase; }
+.dev-card .dev-name { color: #fff; margin: 0; padding-right: 2.5rem; font-size: clamp(1.7rem, 4.5vw, 2.4rem); font-weight: 900; line-height: 1.05; letter-spacing: -.03em; }
+.dev-study { margin: 0; color: #dbece1; font-weight: 600; }
+.dev-aim { width: fit-content; margin: 0; padding: .3rem .75rem; border: 1px solid rgb(255 191 31 / 55%); border-radius: 999px; color: #ffe08a; font-weight: 700; font-size: .9rem; }
+.dev-group { display: grid; gap: .4rem; padding-top: .8rem; border-top: 1px solid rgb(255 255 255 / 14%); }
+.dev-card .dev-group h3 { margin: 0; color: #a9bfb3; font: 700 .72rem ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.dev-group ul { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+.dev-group li { padding: .28rem .7rem; border-radius: 999px; background: rgb(255 255 255 / 10%); font-weight: 600; font-size: .9rem; }
+@keyframes dev-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dev-rise { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (max-width: 44rem) {
+  .dev-card { grid-template-columns: 1fr; }
+  .dev-photo { min-height: 0; aspect-ratio: 4 / 3; }
+  .dev-photo img { min-height: 0; object-position: 50% 10%; }
+  .dev-body { padding: 1.2rem 1.2rem 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) { .dev-backdrop, .dev-card { animation: none; } }

@@ -1,4 +1,5 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { text, type Language } from '../i18n'
 import './facade.css'
 
@@ -311,13 +312,21 @@ const StudentArt = () => <>
       <circle className="st-hair" cx="13" cy="10" r="4.4" /><ellipse className="st-hair-shine" cx="11.8" cy="8.6" rx="1.7" ry="1" />
 </>
 
-// The developer's profile card. Add rows to credentials to show more; with none, only the name and role show.
+// The developer's profile card (opened from the walking student). Fill in or change anything here.
+type Bilingual = { en: string; bis: string }
 export const DEVELOPER = {
   name: 'AceGrant Kyamko',
-  initials: 'AK',
-  role: { en: 'Developer of RentByBob', bis: 'Developer sa RentByBob' },
-  note: { en: "Also a tenant at Bob's house", bis: 'Nag-abang sad sa balay ni Bob' },
-  credentials: [] as { label: { en: string; bis: string }; value: string }[],
+  photo: '/developer.jpg',
+  photoAlt: { en: 'AceGrant Kyamko standing in a night-lit garden path, head bowed, arms crossed', bis: 'Si AceGrant Kyamko nga nagbarog sa tigom nga dalan sa gabii, nakayuko ug naka-cross ang bukton' },
+  role: { en: 'Developer of RentByBob', bis: 'Developer sa RentByBob' } as Bilingual,
+  study: { en: 'Computer Engineering (CpE), 3rd–4th year · CIT University', bis: 'Computer Engineering (CpE), ika-3 hangtod ika-4 nga tuig · CIT University' } as Bilingual,
+  aim: { en: 'Aspiring network engineer', bis: 'Gusto mahimong network engineer' } as Bilingual,
+  note: { en: "Also a tenant at Bob's house", bis: 'Nag-abang sad sa balay ni Bob' } as Bilingual,
+  groups: [
+    { title: { en: 'Software', bis: 'Software' } as Bilingual, items: ['PHP', 'HTML', 'CSS', 'React', 'TypeScript', 'Supabase', 'and more'] },
+    { title: { en: 'Hardware and networking', bis: 'Hardware ug networking' } as Bilingual, items: ['Mimosa', 'Ubuntu servers', 'pfSense', 'Ubiquiti', 'IP networking'] },
+    { title: { en: 'Off the clock', bis: 'Kalingawan' } as Bilingual, items: ['Gym', 'Gaming', 'Guitar', 'Hiking', 'Cooking', 'and more'] },
+  ],
 }
 
 function Student({ label, open, onToggle, tr }: { label: string; open: boolean; onToggle: () => void; tr: (english: string, bisaya: string) => string }) {
@@ -330,17 +339,37 @@ function Student({ label, open, onToggle, tr }: { label: string; open: boolean; 
 }
 
 function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (english: string, bisaya: string) => string; language: Language }) {
-  return <section id="lp-dev-card" className="lp-dev-card" aria-label={tr('Developer profile', 'Profile sa developer')}>
-    <button type="button" className="lp-dev-close" onClick={onClose} aria-label={tr('Close profile', 'Isira ang profile')}><span aria-hidden="true">×</span></button>
-    <div className="lp-dev-top">
-      <span className="lp-dev-avatar" aria-hidden="true">{DEVELOPER.initials}</span>
-      <div><strong className="lp-dev-name">{DEVELOPER.name}</strong><span className="lp-dev-role">{text(language, DEVELOPER.role.en, DEVELOPER.role.bis)}</span></div>
-    </div>
-    <p className="lp-dev-note">{text(language, DEVELOPER.note.en, DEVELOPER.note.bis)}</p>
-    {DEVELOPER.credentials.length > 0 && <dl className="lp-dev-creds">
-      {DEVELOPER.credentials.map(row => <div key={row.value}><dt>{text(language, row.label.en, row.label.bis)}</dt><dd>{row.value}</dd></div>)}
-    </dl>}
-  </section>
+  const closeRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null
+    closeRef.current?.focus()
+    const keys = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+      if (event.key === 'Tab') { event.preventDefault(); closeRef.current?.focus() } // the close button is the only control
+    }
+    window.addEventListener('keydown', keys)
+    return () => { window.removeEventListener('keydown', keys); opener?.focus?.() }
+  }, [onClose])
+  const t = (value: Bilingual) => text(language, value.en, value.bis)
+  return createPortal(<div className="dev-backdrop" onClick={event => { if (event.target === event.currentTarget) onClose() }}>
+    <section id="lp-dev-card" className="dev-card" role="dialog" aria-modal="true" aria-label={tr('Developer profile', 'Profile sa developer')}>
+      <button type="button" className="dev-close" ref={closeRef} onClick={onClose} aria-label={tr('Close profile', 'Isira ang profile')}><span aria-hidden="true">×</span></button>
+      <figure className="dev-photo">
+        <img src={DEVELOPER.photo} alt={t(DEVELOPER.photoAlt)} width="480" height="640" />
+        <figcaption><span className="dev-tag">{t(DEVELOPER.note)}</span></figcaption>
+      </figure>
+      <div className="dev-body">
+        <p className="dev-eyebrow">{t(DEVELOPER.role)}</p>
+        <h2 className="dev-name">{DEVELOPER.name}</h2>
+        <p className="dev-study">{t(DEVELOPER.study)}</p>
+        <p className="dev-aim">{t(DEVELOPER.aim)}</p>
+        {DEVELOPER.groups.map(group => <div key={group.title.en} className="dev-group">
+          <h3>{t(group.title)}</h3>
+          <ul>{group.items.map(item => <li key={item}>{item === 'and more' ? tr('and more', 'ug uban pa') : item}</li>)}</ul>
+        </div>)}
+      </div>
+    </section>
+  </div>, document.body)
 }
 
 // Who is who on the street, drawn with the same pictures that move on the plan.
