@@ -7,7 +7,7 @@
 @property --n { syntax: "<integer>"; initial-value: 0; inherits: false; }
 #intro { --mx: 0; --my: 0; position: fixed; inset: 0; z-index: 2000; overflow: hidden; background: radial-gradient(75% 65% at 50% 40%, #174f3a 0%, #0d3426 58%, #06180f 100%); color: #fff; pointer-events: none; clip-path: inset(0 0 0 0); font-family: Inter, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
 #intro.is-leaving { clip-path: inset(0 0 100% 0); transition: clip-path 900ms cubic-bezier(.76, 0, .24, 1); }
-#intro.is-leaving .in-center, #intro.is-leaving .in-top, #intro.is-leaving .in-bottom, #intro.is-leaving .in-scene { opacity: 0; transform: translateY(-5vh); transition: opacity 450ms ease, transform 700ms cubic-bezier(.76, 0, .24, 1); }
+#intro.is-leaving .in-center, #intro.is-leaving .in-top, #intro.is-leaving .in-bottom { opacity: 0; transform: translateY(-5vh); transition: opacity 450ms ease, transform 700ms cubic-bezier(.76, 0, .24, 1); }
 .in-edge { position: fixed; left: 0; right: 0; top: 0; z-index: 2001; height: 3px; background: linear-gradient(90deg, #1f6b4f, #ffbf1f 30%, #ffe27a 70%, #1f6b4f); box-shadow: 0 0 26px 5px rgb(255 191 31 / 55%); transform: translateY(100vh); transform: translateY(100dvh); pointer-events: none; transition: transform 900ms cubic-bezier(.76, 0, .24, 1); }
 .in-edge.go { transform: translateY(-6px); }
 #intro .in-dawn { position: absolute; inset: 0; background: radial-gradient(90% 70% at 50% 100%, rgb(255 176 64 / 62%) 0%, rgb(255 120 60 / 22%) 38%, transparent 70%); opacity: 0; animation: in-dawn 4.6s cubic-bezier(.5, 0, .4, 1) 500ms forwards; }
@@ -26,7 +26,7 @@
 #intro .in-wins { filter: drop-shadow(0 0 3px rgb(255 191 31 / 70%)); }
 #intro .in-sunrise { animation: in-sun 4.6s cubic-bezier(.4, 0, .25, 1) 500ms both; }
 #intro .in-dash { animation: in-road 1.4s linear infinite; }
-#intro .in-bike { animation: in-ride 3.7s cubic-bezier(.35, .1, .5, 1) 1500ms both; transform: translateX(-160px); }
+#intro .in-bike { animation: in-ride 3.9s cubic-bezier(.35, .1, .5, 1) 1500ms both; transform: translateX(var(--rf, -160px)); }
 #intro .in-bike-bob { animation: in-bob .35s ease-in-out infinite alternate; }
 
 #intro .in-top, #intro .in-bottom { position: absolute; left: clamp(1rem, 4vw, 3rem); right: clamp(1rem, 4vw, 3rem); display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; color: #a9cbb8; font: 600 clamp(.62rem, 1.6vw, .78rem) ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .16em; text-transform: uppercase; opacity: 0; animation: in-fade 900ms ease 500ms forwards; }
@@ -71,17 +71,35 @@
 @keyframes in-sun { from { transform: translateY(210px); } to { transform: translateY(-132px); } }
 @keyframes in-dawn { to { opacity: 1; } }
 @keyframes in-road { to { stroke-dashoffset: -38; } }
-@keyframes in-ride { from { transform: translateX(-160px); } to { transform: translateX(1330px); } }
+@keyframes in-ride { from { transform: translateX(var(--rf, -160px)); } to { transform: translateX(var(--rt, 1330px)); } }
 @keyframes in-bob { from { transform: translateY(0); } to { transform: translateY(-1.2px); } }
 @keyframes in-shine { from { left: -40%; } to { left: 130%; } }
+@media (max-width: 40rem) {
+  #intro { --rf: 300px; --rt: 930px; }
+  #intro .in-scene { left: -62%; right: auto; width: 224%; max-height: none; }
+  #intro .in-center { top: clamp(3.8rem, 10vh, 5.4rem); }
+  #intro .in-top { display: none; }
+}
+/* 2. Evening (3 pm to 4 am, Cebu time): the sun sets behind the homes as their windows light up. */
+#intro[data-phase="dusk"] .in-sunrise { animation-name: in-sunset; }
+#intro[data-phase="dusk"] .in-dawn { background: radial-gradient(90% 70% at 50% 100%, rgb(255 112 72 / 62%) 0%, rgb(170 64 120 / 26%) 40%, transparent 72%); }
+#intro[data-phase="dusk"] .in-glow { background: radial-gradient(circle, rgb(255 140 90 / 16%), rgb(180 80 140 / 5%) 40%, transparent 66%); }
+@keyframes in-sunset { from { transform: translateY(-190px); } to { transform: translateY(-52px); } }
+
+/* Skip */
+#intro-skip { position: fixed; top: clamp(.8rem, 3.4vh, 2.1rem); right: clamp(1rem, 4vw, 3rem); z-index: 2002; min-height: 2.75rem; padding: .5rem 1.1rem; border: 1px solid rgb(255 255 255 / 34%); border-radius: 999px; background: rgb(8 24 17 / 55%); color: #fff; font: 600 clamp(.66rem, 1.7vw, .8rem) ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; backdrop-filter: blur(4px); opacity: 0; animation: in-fade 600ms ease 1200ms forwards; }
+#intro-skip:hover { background: rgb(255 191 31 / 22%); border-color: #ffbf1f; }
+#intro-skip:focus-visible { outline: 3px solid #ffbf1f; outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) {
+  #intro-skip { animation: none; opacity: 1; }
+  #intro[data-phase="dusk"] .in-sunrise { transform: translateY(-52px); }
   #intro *, #intro::before, #intro *::after { animation: none !important; }
   #intro .in-dust { opacity: .8; }
   #intro .in-l b, #intro .in-tag, #intro .in-top, #intro .in-bottom, #intro .in-textring { opacity: 1; transform: none; }
   #intro .in-b, #intro .in-roof, #intro .in-ring, #intro .in-bld { stroke-dashoffset: 0; }
   #intro .in-bld { fill-opacity: 1; }
   #intro .in-win { fill: #ffc83d; opacity: 1; }
-  #intro .in-sunrise { transform: translateY(-132px); }
+  #intro:not([data-phase="dusk"]) .in-sunrise { transform: translateY(-132px); }
   #intro .in-dawn { opacity: 1; }
   #intro .in-bike { display: none; }
   #intro .in-count { --n: 100; }
@@ -115,7 +133,7 @@
     <circle cx="45" cy="-19" r="2.4" fill="#fff6c9"/>
   </g></g></g>
 </svg>
-  <div class="in-top"><span>Labangon · Cebu City</span><span>Est. 2026</span></div>
+  <div class="in-top"><span>Labangon · Cebu City · Est. 2026</span></div>
   <div class="in-center">
     <div class="in-logo"><svg viewBox="-14 -14 148 148" focusable="false"><defs><linearGradient id="ig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#f2b61d"/></linearGradient><path id="in-circ" d="M60 60m-65 0a65 65 0 1 1 130 0a65 65 0 1 1 -130 0"/></defs>
       <g class="in-textring"><text><textPath href="#in-circ" textLength="400" lengthAdjust="spacing">RENTBYBOB · LABANGON · CEBU CITY · HOME CONCIERGE ·</textPath></text></g>
@@ -127,4 +145,5 @@
   </div>
   <div class="in-bottom"><span class="in-count"></span><span class="in-line"></span><span>Opening the street</span></div>
 </div>
+<button type="button" id="intro-skip">Skip intro</button>
 <div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>

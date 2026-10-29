@@ -323,7 +323,8 @@ export const DEVELOPER = {
   aim: { en: 'Work in progress', bis: 'Gigtrabaho pa' } as Bilingual,
   note: { en: "Also a tenant at Bob's house", bis: 'Nag-abang sad sa balay ni Bob' } as Bilingual,
   groups: [
-    { title: { en: 'Software', bis: 'Software' } as Bilingual, items: ['PHP', 'HTML', 'CSS', 'React', 'TypeScript', 'Supabase', 'and more'] },
+    { title: { en: 'Software', bis: 'Software' } as Bilingual, items: ['PHP', 'HTML', 'CSS', 'React', 'TypeScript', 'Supabase', 'JS', 'Python', 'Node.js', 
+'Git', 'Linux', 'and more' ] },
     { title: { en: 'Hardware and networking', bis: 'Hardware ug networking' } as Bilingual, items: ['Mimosa', 'Ubuntu servers', 'pfSense', 'Ubiquiti', 'IP networking'] },
     { title: { en: 'Off the clock', bis: 'Kalingawan' } as Bilingual, items: ['Gym', 'Gaming', 'Guitar', 'Hiking', 'Cooking', 'and more'] },
   ],

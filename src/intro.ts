@@ -1,16 +1,29 @@
-// Lifts the intro that index.html draws (particles, logo, wordmark, counter) with a curtain wipe and a gold leading edge.
-// The full intro plays only for the first visit to the landing page in a tab (about 5 seconds, so every part can be seen).
-// Any other load, such as the sign-in page or a return to the landing page in the same tab, gets a short version so it
-// never feels repeated. Reduced motion gets a quick fade. Automated browsers (the test suites) skip it entirely.
+// Lifts the intro that index.html draws (particles, logo, wordmark, counter, the street at sunrise or sunset) with a curtain
+// wipe and a gold leading edge. The full intro plays only for the first visit to the landing page in a tab (about 5
+// seconds, so every part can be seen). Any other load, such as the sign-in page or a return to the landing page in the same
+// tab, gets a short version so it never feels repeated. Reduced motion gets a quick fade. A Skip button ends it at once.
+// Automated browsers (the test suites) skip it entirely.
 const FULL_MS = 5000
 const QUICK_MS = 650
 const WIPE_MS = 900
 const QUICK_WIPE_MS = 500
 
-export function finishIntro() {
+// Runs as soon as this file loads: in the evening (3 pm to 4 am, Cebu time) the sun sets instead of rising.
+function applyPhase() {
   const intro = document.getElementById('intro')
   if (!intro) return
-  if (navigator.webdriver) { intro.remove(); return }
+  try {
+    const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hourCycle: 'h23', timeZone: 'Asia/Manila' }).format(new Date()))
+    intro.dataset.phase = hour >= 15 || hour < 4 ? 'dusk' : 'dawn'
+  } catch { /* keep the default sunrise */ }
+}
+applyPhase()
+
+export function finishIntro() {
+  const intro = document.getElementById('intro')
+  const skip = document.getElementById('intro-skip')
+  if (!intro) { skip?.remove(); return }
+  if (navigator.webdriver) { intro.remove(); skip?.remove(); return }
   let seen = false
   try { seen = sessionStorage.getItem('rentbybob-intro') === '1'; sessionStorage.setItem('rentbybob-intro', '1') } catch { /* private mode: every load counts as a first visit */ }
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
@@ -24,17 +37,28 @@ export function finishIntro() {
     intro.style.setProperty('--my', String(((event.clientY / window.innerHeight) * 2 - 1).toFixed(3)))
   }
   if (full) window.addEventListener('pointermove', move)
+  if (!full) skip?.remove() // the short versions are over before anyone could use it
 
-  const wait = reduced ? 150 : full ? Math.max(0, FULL_MS - performance.now()) : Math.max(0, QUICK_MS - performance.now())
-  window.setTimeout(() => {
+  let timer = 0
+  let leaving = false
+  const leave = (quick = false) => {
+    if (leaving) return
+    leaving = true
+    window.clearTimeout(timer)
+    skip?.remove()
+    const ms = quick ? QUICK_WIPE_MS : wipeMs
     const edge = document.createElement('div')
     edge.className = 'in-edge'
     if (!reduced) {
-      edge.style.transitionDuration = `${wipeMs}ms`
-      intro.style.transitionDuration = `${wipeMs}ms`
+      edge.style.transitionDuration = `${ms}ms`
+      intro.style.transitionDuration = `${ms}ms`
       document.body.appendChild(edge); void edge.offsetWidth; edge.classList.add('go')
     }
     intro.classList.add('is-leaving')
-    window.setTimeout(() => { intro.remove(); edge.remove(); window.removeEventListener('pointermove', move) }, reduced ? 300 : wipeMs + 60)
-  }, wait)
+    window.setTimeout(() => { intro.remove(); edge.remove(); window.removeEventListener('pointermove', move) }, reduced ? 300 : ms + 60)
+  }
+  skip?.addEventListener('click', () => leave(true))
+
+  const wait = reduced ? 150 : full ? Math.max(0, FULL_MS - performance.now()) : Math.max(0, QUICK_MS - performance.now())
+  timer = window.setTimeout(() => leave(), wait)
 }
