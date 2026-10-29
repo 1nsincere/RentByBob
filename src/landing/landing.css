@@ -491,7 +491,6 @@
 .dev-close:focus-visible { outline: 3px solid #ffbf1f; outline-offset: 2px; }
 .dev-photo { position: relative; min-height: 100%; margin: 0; overflow: hidden; background: #0b1f17; }
 .dev-photo img { display: block; width: 100%; height: 100%; min-height: 20rem; object-fit: contain; object-position: 50% 50%; }
-.dev-photo .dev-photo-hover { object-fit: contain; }
 .dev-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgb(8 20 15 / 78%)); pointer-events: none; }
 .dev-photo figcaption { position: absolute; z-index: 1; left: .9rem; right: .9rem; bottom: .9rem; }
 .dev-tag { display: inline-block; padding: .35rem .8rem; border-radius: 999px; background: #ffbf1f; color: #10201a; font-weight: 800; font-size: .85rem; }
@@ -539,26 +538,29 @@
 :root[data-perf="lite"] .bob-foot, :root[data-perf="lite"] .lp-legend, :root[data-perf="lite"] .lp-plot-tag { backdrop-filter: none; }
 @media (prefers-reduced-motion: reduce) { .lp-tree, .lp[data-phase="day"] .lp-cloud { animation: none; } .lp-cloud { display: none; } }
 
-/* Developer card: hover reveal (a lens that follows the pointer shows the second photo; click or tap flips the whole photo)
-   and the contact links. */
-@property --x { syntax: "<length-percentage>"; initial-value: 50%; inherits: true; }
-@property --y { syntax: "<length-percentage>"; initial-value: 50%; inherits: true; }
-@property --r { syntax: "<length>"; initial-value: 0px; inherits: true; }
-.dev-photo { --r: 0px; cursor: none; touch-action: manipulation; }
-.dev-photo-hover { position: absolute; inset: 0; z-index: 1; clip-path: circle(var(--r) at var(--x) var(--y)); transition: --r 650ms cubic-bezier(.2, .8, .2, 1), --x 140ms ease-out, --y 140ms ease-out; will-change: clip-path; }
-.dev-photo::before { content: ""; position: absolute; z-index: 2; left: var(--x); top: var(--y); width: calc(var(--r) * 2); aspect-ratio: 1; margin: calc(var(--r) * -1) 0 0 calc(var(--r) * -1); border: 1.5px solid rgb(255 191 31 / 85%); border-radius: 50%; box-shadow: 0 0 24px rgb(255 191 31 / 35%); opacity: 0; transition: --r 650ms cubic-bezier(.2, .8, .2, 1), --x 140ms ease-out, --y 140ms ease-out, opacity 300ms ease; pointer-events: none; }
+/* Developer card: the second photo is revealed with a curved top-to-bottom wipe while the first photo zooms in and a gold
+   frame fades in, the same kind of card hover as the helmet cards on landonorris.com (ellipse clip-path, 0.75 s,
+   cubic-bezier(.65, .05, 0, 1)). Click or tap does the same for touch screens. Contact links follow. */
+.dev-photo { cursor: pointer; touch-action: manipulation; }
+.dev-photo-main { transition: transform 750ms cubic-bezier(.65, .05, 0, 1); }
+.dev-photo .dev-photo-hover { position: absolute; inset: 0; z-index: 1; object-fit: contain; clip-path: ellipse(100% 0% at 50% 0); transform: scale(1.05); transition: clip-path 750ms cubic-bezier(.65, .05, 0, 1), transform 750ms cubic-bezier(.65, .05, 0, 1); will-change: clip-path; }
+.dev-photo-frame { position: absolute; inset: .7rem; z-index: 3; border: 1.5px solid #ffbf1f; border-radius: .9rem; opacity: 0; transition: opacity 750ms cubic-bezier(.65, .05, 0, 1); pointer-events: none; }
 .dev-photo::after { z-index: 3; }
 .dev-photo figcaption, .dev-photo-hint { z-index: 4; }
 .dev-photo-hint { position: absolute; right: .9rem; bottom: .9rem; padding: .3rem .7rem; border: 1px solid rgb(255 255 255 / 35%); border-radius: 999px; background: rgb(8 20 15 / 62%); color: #fff; font: 600 .7rem ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; pointer-events: none; }
 .dev-photo figcaption { right: auto; }
-@media (hover: hover) { .dev-photo:hover { --r: 9.5rem; } .dev-photo:hover::before { opacity: 1; } }
-.dev-photo.is-flipped { --r: 150vmax; cursor: pointer; }
-.dev-photo.is-flipped::before { opacity: 0; }
-@media (hover: none) { .dev-photo { cursor: pointer; } }
-:root[data-perf="lite"] .dev-photo-hover { clip-path: none; opacity: 0; transition: opacity 300ms ease; will-change: auto; }
+.dev-photo.is-flipped .dev-photo-hover { clip-path: ellipse(100% 120% at 50% 0%); transform: scale(1); }
+.dev-photo.is-flipped .dev-photo-main { transform: scale(1.1); }
+.dev-photo.is-flipped .dev-photo-frame { opacity: 1; }
+@media (hover: hover) {
+  .dev-photo:hover .dev-photo-hover { clip-path: ellipse(100% 120% at 50% 0%); transform: scale(1); }
+  .dev-photo:hover .dev-photo-main { transform: scale(1.1); }
+  .dev-photo:hover .dev-photo-frame { opacity: 1; }
+}
+:root[data-perf="lite"] .dev-photo .dev-photo-hover { clip-path: none; transform: none; opacity: 0; transition: opacity 300ms ease; will-change: auto; }
 :root[data-perf="lite"] .dev-photo.is-flipped .dev-photo-hover, :root[data-perf="lite"] .dev-photo:hover .dev-photo-hover { opacity: 1; }
-:root[data-perf="lite"] .dev-photo::before { display: none; }
-@media (prefers-reduced-motion: reduce) { .dev-photo-hover, .dev-photo::before { transition: none; } }
+:root[data-perf="lite"] .dev-photo-main { transition: none; transform: none !important; }
+@media (prefers-reduced-motion: reduce) { .dev-photo .dev-photo-hover, .dev-photo-main, .dev-photo-frame { transition: none; } }
 .dev-links { display: flex; flex-wrap: wrap; gap: .5rem; margin: .2rem 0 0; padding: 0; list-style: none; }
 .dev-link { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; padding: .45rem .95rem; border: 1px solid rgb(255 255 255 / 22%); border-radius: 999px; background: rgb(255 255 255 / 7%); color: #fff; font-weight: 700; font-size: .9rem; text-decoration: none; transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease, color 180ms ease; }
 .dev-link:hover { background: #ffbf1f; border-color: #ffbf1f; color: #10201a; transform: translateY(-2px); }

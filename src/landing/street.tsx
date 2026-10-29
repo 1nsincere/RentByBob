@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { text, type Language } from '../i18n'
 import './facade.css'
@@ -365,17 +365,13 @@ function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (engl
   }, [onClose])
   const t = (value: Bilingual) => text(language, value.en, value.bis)
   const [flipped, setFlipped] = useState(false)
-  const aim = (event: ReactPointerEvent<HTMLElement>) => {
-    const box = event.currentTarget.getBoundingClientRect()
-    event.currentTarget.style.setProperty('--x', `${Math.round(event.clientX - box.left)}px`)
-    event.currentTarget.style.setProperty('--y', `${Math.round(event.clientY - box.top)}px`)
-  }
   return createPortal(<div className="dev-backdrop" onClick={event => { if (event.target === event.currentTarget) onClose() }}>
     <section id="lp-dev-card" className="dev-card" role="dialog" aria-modal="true" aria-label={tr('Developer profile', 'Profile sa developer')}>
       <button type="button" className="dev-close" ref={closeRef} onClick={onClose} aria-label={tr('Close profile', 'Isira ang profile')}><span aria-hidden="true">×</span></button>
-      <figure className={`dev-photo${flipped ? ' is-flipped' : ''}`} onPointerEnter={aim} onPointerMove={aim} onClick={() => setFlipped(value => !value)}>
+      <figure className={`dev-photo${flipped ? ' is-flipped' : ''}`} onClick={() => setFlipped(value => !value)}>
         <img className="dev-photo-main" src={DEVELOPER.photo} alt={t(DEVELOPER.photoAlt)} width="520" height="780" />
         <img className="dev-photo-hover" src={DEVELOPER.photoHover} alt="" aria-hidden="true" width="520" height="780" />
+        <span className="dev-photo-frame" aria-hidden="true" />
         <span className="dev-photo-hint" aria-hidden="true">{flipped ? tr('Tap to go back', 'I-tap aron mobalik') : tr('Hover or tap me', 'I-hover o i-tap ko')}</span>
         <figcaption><span className="dev-tag">{t(DEVELOPER.note)}</span></figcaption>
       </figure>
