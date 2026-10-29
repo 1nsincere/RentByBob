@@ -320,7 +320,7 @@ export const DEVELOPER = {
   photoAlt: { en: 'AceGrant Kyamko standing in a night-lit garden path, head bowed, arms crossed', bis: 'Si AceGrant Kyamko nga nagbarog sa tigom nga dalan sa gabii, nakayuko ug naka-cross ang bukton' },
   role: { en: 'Developer of RentByBob', bis: 'Developer sa RentByBob' } as Bilingual,
   study: { en: 'Computer Engineering (CpE), 3rd–4th year · CIT University', bis: 'Computer Engineering (CpE), ika-3 hangtod ika-4 nga tuig · CIT University' } as Bilingual,
-  aim: { en: 'Aspiring network engineer', bis: 'Gusto mahimong network engineer' } as Bilingual,
+  aim: { en: 'Work in progress', bis: 'Gigtrabaho pa' } as Bilingual,
   note: { en: "Also a tenant at Bob's house", bis: 'Nag-abang sad sa balay ni Bob' } as Bilingual,
   groups: [
     { title: { en: 'Software', bis: 'Software' } as Bilingual, items: ['PHP', 'HTML', 'CSS', 'React', 'TypeScript', 'Supabase', 'and more'] },
@@ -355,7 +355,7 @@ function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (engl
     <section id="lp-dev-card" className="dev-card" role="dialog" aria-modal="true" aria-label={tr('Developer profile', 'Profile sa developer')}>
       <button type="button" className="dev-close" ref={closeRef} onClick={onClose} aria-label={tr('Close profile', 'Isira ang profile')}><span aria-hidden="true">×</span></button>
       <figure className="dev-photo">
-        <img src={DEVELOPER.photo} alt={t(DEVELOPER.photoAlt)} width="480" height="640" />
+        <img src={DEVELOPER.photo} alt={t(DEVELOPER.photoAlt)} width="520" height="780" />
         <figcaption><span className="dev-tag">{t(DEVELOPER.note)}</span></figcaption>
       </figure>
       <div className="dev-body">
