@@ -40,8 +40,8 @@ export function TrustedDevices({ language = 'en' }: { language?: Language }) {
       : <ul className="trusted-device-list">{devices.map(device => <li key={device.id}>
         <div><strong>{device.label}{device.current && <span className="status status--ready">{tr('This device', 'Kini nga device')}</span>}</strong>
           <small>{tr('Added', 'Gidugang')} {day(device.created_at)} · {tr('expires', 'matapos')} {day(device.expires_at)}{device.last_used_at ? ` · ${tr('last used', 'katapusang gamit')} ${day(device.last_used_at)}` : ''}</small></div>
-        <Button className="secondary-button" disabled={busy} aria-label={`${tr('Remove', 'Tangtanga')} ${device.label}`} onClick={() => void remove(device)}>{tr('Remove', 'Tangtanga')}</Button>
+        <Button variant="danger-quiet" size="sm" disabled={busy} aria-label={`${tr('Remove', 'Tangtanga')} ${device.label}`} onClick={() => void remove(device)}>{tr('Remove', 'Tangtanga')}</Button>
       </li>)}</ul>}
-    {remembered && <Button className="secondary-button" disabled={busy} onClick={() => void remove(null)}>{tr('Forget this device', 'Kalimti kini nga device')}</Button>}
+    {remembered && <Button variant="danger-quiet" disabled={busy} onClick={() => void remove(null)}>{tr('Forget this device', 'Kalimti kini nga device')}</Button>}
   </section>
 }

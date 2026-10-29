@@ -99,7 +99,8 @@ test('public listings expose only listed, unoccupied rooms; inquiries are write-
   // Move-out in the past returns a listed room to the public page; an upcoming agreement removes it.
   await as(owner)
   await db.query('select public.end_rental_agreement($1,$2,$3,$4,$5)', [prop, id(30), agreement, '2024-06-30', 'Moved out'])
-  await db.query('select public.create_rental_agreement($1,$2,$3,$4,$5,$6)', [prop, id(31), tenant, b2room, '2099-01-01', '4200.50'])
+  const upcoming = (await db.query<any>("select ((now() at time zone 'Asia/Manila')::date + 90)::text as d")).rows[0].d // within the allowed year ahead
+  await db.query('select public.create_rental_agreement($1,$2,$3,$4,$5,$6)', [prop, id(31), tenant, b2room, upcoming, '4200.50'])
   await anonymous()
   assert.deepEqual((await publicView()).properties[0].buildings.map((b: any) => [b.label, b.rooms.map((r: any) => r.room)]), [['Building 1', ['Room 01', 'Room 02']]])
 

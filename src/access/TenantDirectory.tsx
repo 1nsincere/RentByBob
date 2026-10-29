@@ -6,7 +6,7 @@ import { currentTenantRooms, filterTenantDirectory, type TenantKindFilter, type 
 import { copy, text, type Language } from '../i18n'
 
 // Real tenant directory with the preview's tools: search by name or room, filters (status, type, building), sorting,
-// and card actions. Rooms come from staff-authorized agreement data; archiving is owner-only and needs a reason.
+// and card actions. Rooms come from staff-authorized agreement data; archiving and removing need a reason and any signed-in staff member may do them.
 export function TenantDirectory({ propertyId, tenants: allTenants, renterLinks, owner, active, addTenant, openPayments, locateRoom, assignRoom, refresh, language = 'en' }: {
   propertyId: string; tenants: Tenant[]; renterLinks: string[]; owner: boolean; active: boolean
   addTenant: () => void; openPayments: (tenantId: string, tab?: 'months' | 'history' | 'setup') => void; locateRoom: (unitId: string) => void
@@ -47,12 +47,14 @@ export function TenantDirectory({ propertyId, tenants: allTenants, renterLinks, 
   async function archive(tenant: Tenant) {
     if (!reason.trim()) { setNotice({ text: mode === 'remove' ? tr('Give a reason for removing.', 'Hatagi og rason ang pagtangtang.') : tr('Give a reason for archiving.', 'Hatagi og rason ang pag-archive.'), error: true }); return }
     setBusy(true)
-    const { error } = await supabase!.rpc(mode === 'remove' ? 'remove_tenant_with_room' : 'archive_tenant', { p_tenant_id: tenant.id, p_reason: reason.trim() })
-    setBusy(false)
+    let error: { code?: string; message: string } | null
+    try { error = (await supabase!.rpc(mode === 'remove' ? 'remove_tenant_with_room' : 'archive_tenant', { p_tenant_id: tenant.id, p_reason: reason.trim() })).error }
+    catch { error = { message: 'network' } }
+    finally { setBusy(false) }
     if (error) {
       setNotice({ error: true, text: /move-out/.test(error.message) ? tr('This tenant still has a room. Record the move-out in Payments → Room rent setup first; it can be archived from the day after.', 'Naa pay kwarto kini nga nag-abang. Irekord una ang pagbalhin sa Payments → Pagbutang sa abang; ma-archive kini sugod sa sunod nga adlaw.')
-        : error.code === '42501' ? tr('Only the owner (with the authenticator code) can archive or remove tenants. Nothing changed.', 'Ang tag-iya lang (uban ang authenticator code) ang maka-archive. Walay nausab.')
-        : mode === 'remove' ? tr('The tenant could not be removed. Nothing changed. Only the owner (with the authenticator code) can remove tenants; if the update was only just installed, reload and try again.', 'Wala matangtang ang nag-abang. Walay nausab. Ang tag-iya lang (uban ang authenticator code) ang makatangtang; kung bag-o lang na-install ang update, i-reload ug sulayi pag-usab.') : tr('The tenant could not be archived. Nothing changed; try again.', 'Wala ma-archive. Walay nausab; sulayi pag-usab.') })
+        : error.code === '42501' ? tr('Only signed-in staff (with the authenticator code) can archive or remove tenants. Nothing changed.', 'Ang staff lang nga naka-sign in (uban ang authenticator code) ang maka-archive o makatangtang. Walay nausab.')
+        : mode === 'remove' ? tr('The tenant could not be removed. Nothing changed. Your staff session may need the authenticator code again; if the update was only just installed, reload and try again.', 'Wala matangtang ang nag-abang. Walay nausab. Basin kinahanglan na usab ang authenticator code sa imong staff session; kung bag-o lang na-install ang update, i-reload ug sulayi pag-usab.') : tr('The tenant could not be archived. Nothing changed; try again.', 'Wala ma-archive. Walay nausab; sulayi pag-usab.') })
       return
     }
     setArchiving(null); setReason('')
@@ -99,14 +101,14 @@ export function TenantDirectory({ propertyId, tenants: allTenants, renterLinks, 
               {room && <Button className="secondary-button tenant-card-action" aria-label={`${tr('Locate room for', 'Pangitaa ang kwarto ni')} ${tenant.display_name}`} onClick={() => locateRoom(room.unitId)}>{tr('Locate room', 'Pangitaa ang kwarto')}</Button>}
               {room && <Button className="secondary-button tenant-card-action" aria-label={`${tr('Change room for', 'Usba ang kwarto ni')} ${tenant.display_name}`} onClick={() => openPayments(tenant.id, 'setup')}>{tr('Change room', 'Usba ang kwarto')}</Button>}
               {roomMap && !room && !tenant.archived_at && <Button className="secondary-button tenant-card-action" aria-label={`${tr('Assign a room to', 'Hatagi og kwarto si')} ${tenant.display_name}`} onClick={() => assignRoom(tenant)}>{tr('Assign a room', 'Hatagi og kwarto')}</Button>}
-              {owner && roomMap && !room && !tenant.archived_at && archiving !== tenant.id && <Button className="quiet-button tenant-card-action" aria-label={`${tr('Archive', 'I-archive')} ${tenant.display_name}`} onClick={() => { setMode('archive'); setArchiving(tenant.id); setReason(''); setNotice(null) }}>{tr('Archive', 'I-archive')}</Button>}
-              {owner && roomMap && archiving !== tenant.id && <Button className="quiet-button tenant-card-action" aria-label={`${tr('Remove', 'Tangtanga')} ${tenant.display_name}`} onClick={() => { setMode('remove'); setArchiving(tenant.id); setReason(''); setNotice(null) }}>{tr('Remove', 'Tangtanga')}</Button>}
+              {owner && roomMap && !room && !tenant.archived_at && archiving !== tenant.id && <Button variant="secondary" size="sm" className="tenant-card-action" aria-label={`${tr('Archive', 'I-archive')} ${tenant.display_name}`} onClick={() => { setMode('archive'); setArchiving(tenant.id); setReason(''); setNotice(null) }}>{tr('Archive', 'I-archive')}</Button>}
+              {owner && roomMap && archiving !== tenant.id && <Button variant="danger-quiet" size="sm" className="tenant-card-action" aria-label={`${tr('Remove', 'Tangtanga')} ${tenant.display_name}`} onClick={() => { setMode('remove'); setArchiving(tenant.id); setReason(''); setNotice(null) }}>{tr('Remove', 'Tangtanga')}</Button>}
             </div>
             {archiving === tenant.id && <form className="archive-tenant-form" onSubmit={event => { event.preventDefault(); void archive(tenant) }}>
               <label htmlFor={`archive-reason-${tenant.id}`}>{mode === 'remove' ? tr('Reason for removing (required)', 'Rason sa pagtangtang (kinahanglan)') : tr('Reason for archiving (required)', 'Rason sa pag-archive (kinahanglan)')}</label>
               <input id={`archive-reason-${tenant.id}`} value={reason} onChange={event => setReason(event.target.value)} maxLength={500} autoFocus />
               <p className="field-help">{mode === 'remove' ? (room ? tr('This tenant still has a room. Removing ends their room agreement (today, or on the move-in date if nothing was ever recorded) so the room can be given to someone else, and hides them from every list. Rent, payments and the audit log stay in the records; any unpaid rent stays on record but they will no longer appear in the lists.', 'Naa pay kwarto kini nga nag-abang. Ang pagtangtang mo-human sa ilang kasabutan sa kwarto (karon, o sa petsa sa pagsulod kung walay narekord) aron mahatag ang kwarto sa lain, ug itago sila sa tanang lista. Magpabilin ang abang, bayad ug audit log sa mga rekord; ang wala mabayri nga abang magpabilin sa rekord apan dili na sila makita sa lista.') : tr('Removed tenants disappear from every list. Their payment history stays in reports and the audit log.', 'Ang natangtang dili na makita sa bisan unsang lista. Magpabilin ang kasaysayan sa bayad sa mga report.')) : tr('Archived tenants are hidden from active lists. Their records and payment history are kept.', 'Ang gi-archive dili makita sa aktibo nga lista. Gitipigan ang ilang rekord ug kasaysayan sa bayad.')}</p>
-              <div className="person-actions"><Button className="primary" disabled={busy}>{busy ? tr('Saving…', 'Gi-save…') : mode === 'remove' ? tr('Remove tenant', 'Tangtanga ang nag-abang') : tr('Archive tenant', 'I-archive ang nag-abang')}</Button><Button type="button" disabled={busy} onClick={() => setArchiving(null)}>{tr('Cancel', 'Kanselahon')}</Button></div>
+              <div className="person-actions"><Button variant={mode === 'remove' ? 'danger' : 'primary'} disabled={busy}>{busy ? tr('Saving…', 'Gi-save…') : mode === 'remove' ? tr('Remove tenant', 'Tangtanga ang nag-abang') : tr('Archive tenant', 'I-archive ang nag-abang')}</Button><Button type="button" variant="secondary" disabled={busy} onClick={() => setArchiving(null)}>{tr('Cancel', 'Kanselahon')}</Button></div>
             </form>}
           </div>
           <span className={`status status--${tenant.archived_at ? 'archived' : 'ready'}`}>{tenant.archived_at ? t.archived : t.active}</span>

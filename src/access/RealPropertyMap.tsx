@@ -73,7 +73,7 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
     setBusy(true); setMessage(null)
     const { error } = await supabase!.rpc('manage_property_location', { p_property_id: propertyId, p_location_id: unitId, p_action: 'rename', p_label: newLabel.trim(), p_reason: renameReason.trim() })
     setBusy(false)
-    if (error) { setMessage({ text: error.code === '23505' ? tr('Another room in this building already has that name. Nothing changed.', 'Naa nay laing kwarto niini nga bilding nga ingon ana og ngalan. Walay nausab.') : error.code === '42501' ? tr('Only the owner with an active authenticator session can rename rooms.', 'Ang tag-iya lang nga naay aktibo nga authenticator ang makausab sa ngalan.') : tr('The room could not be renamed. Nothing changed.', 'Wala mausab ang ngalan sa kwarto. Walay nausab.'), error: true }); return }
+    if (error) { setMessage({ text: error.code === '23505' ? tr('Another room in this building already has that name. Nothing changed.', 'Naa nay laing kwarto niini nga bilding nga ingon ana og ngalan. Walay nausab.') : error.code === '42501' ? tr('Only staff with an active authenticator session can rename rooms.', 'Ang staff lang nga naay aktibo nga authenticator ang makausab sa ngalan.') : tr('The room could not be renamed. Nothing changed.', 'Wala mausab ang ngalan sa kwarto. Walay nausab.'), error: true }); return }
     setRenaming(false); setMessage({ text: `${tr('Room renamed to', 'Giilisan ang ngalan sa kwarto ngadto sa')} ${newLabel.trim()}.`, error: false })
     await load(); requestAnimationFrame(() => panelHeading.current?.focus())
   }
@@ -82,7 +82,7 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
     setBusy(true); setMessage(null)
     const { data, error } = await supabase!.rpc('setup_property_from_sketch', { p_property_id: propertyId })
     setBusy(false); setReviewing(false)
-    if (error) { setMessage({ text: error.code === '42501' ? tr('Only the owner with an active authenticator session can set up the layout.', 'Ang tag-iya lang nga naay aktibo nga authenticator ang maka-set up sa layout.') : tr('The layout could not be created. Nothing was changed.', 'Wala mahimo ang layout. Walay nausab.'), error: true }); return }
+    if (error) { setMessage({ text: error.code === '42501' ? tr('Only staff with an active authenticator session can set up the layout.', 'Ang staff lang nga naay aktibo nga authenticator ang maka-set up sa layout.') : tr('The layout could not be created. Nothing was changed.', 'Wala mahimo ang layout. Walay nausab.'), error: true }); return }
     setMessage({ text: tr(`Layout ready: ${data.buildings_created} buildings and ${data.units_created} rooms created; existing ones kept.`, `Andam na ang layout: ${data.buildings_created} ka bilding ug ${data.units_created} ka kwarto ang nahimo; gitipigan ang naa na.`), error: false })
     await load()
   }
@@ -111,7 +111,7 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
     {!placed.length && <div className="card layout-setup">
       <h3>{tr('Set up buildings and rooms from your sketch', 'I-set up ang mga bilding ug kwarto gikan sa imong drawing')}</h3>
       <p>{tr('Creates Building 1 (Apartment + Rooms 01–03 on the ground floor, Rooms 04–09 on the second), Building 2 (Gym + Rooms 01–03, Rooms 04–08), Bob\'s house (Rooms 01–06), House 1 (whole house), Yamaha property and Stores 1–3. Existing buildings and rooms with the same names are kept, never duplicated. You can rename rooms afterwards.', 'Mohimo sa Building 1, Building 2, balay ni Bob, House 1, Yamaha property ug Stores 1–3. Ang naa nang bilding ug kwarto nga parehas og ngalan dili doblehon. Mahimo nimong usbon ang ngalan sa kwarto human.')}</p>
-      {!owner ? <p className="field-help">{tr('Only the owner can set up the layout.', 'Ang tag-iya lang ang maka-set up sa layout.')}</p>
+      {!owner ? <p className="field-help">{tr('Only signed-in staff can set up the layout.', 'Ang staff ra nga naka-sign in ang maka-set up sa layout.')}</p>
         : !reviewing ? <Button className="primary" onClick={() => setReviewing(true)}>{tr('Review layout', 'Susiha ang layout')}</Button>
         : <div className="notice" role="group" aria-label={tr('Confirm layout setup', 'Kumpirmaha ang pag-setup')}><p><strong>{tr('Create these buildings and rooms now?', 'Himoon na kining mga bilding ug kwarto?')}</strong> {tr('This adds records to your saved property. It can be run again safely.', 'Modugang kini og rekord sa imong propiedad. Luwas kining usbon pagpadagan.')}</p>
           <div className="person-actions"><Button className="primary" disabled={busy} onClick={() => void runSetup()}>{busy ? tr('Creating…', 'Gihimo…') : tr('Create layout', 'Himoa ang layout')}</Button><Button disabled={busy} onClick={() => setReviewing(false)}>{tr('Cancel', 'Kanselahon')}</Button></div></div>}

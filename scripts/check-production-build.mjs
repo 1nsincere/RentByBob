@@ -43,9 +43,16 @@ for (const developmentOnlyMarker of [
 
 // Cloudflare Pages security headers ship with the build and keep their key protections.
 const headers = await readFile(path.join(outputDirectory, '_headers'), 'utf8')
-for (const required of ["script-src 'self'", "frame-ancestors 'none'", "object-src 'none'", 'X-Content-Type-Options: nosniff', 'Referrer-Policy:', 'Strict-Transport-Security:']) {
+for (const required of ["script-src 'self'", "frame-ancestors 'none'", "object-src 'none'", 'X-Content-Type-Options: nosniff', 'Referrer-Policy:', 'Strict-Transport-Security:', 'Cross-Origin-Resource-Policy: same-origin', 'Cross-Origin-Opener-Policy: same-origin']) {
   assert.ok(headers.includes(required), `dist/_headers must keep: ${required}`)
 }
+// Every HTML route must stay uncached so a new release (and any security fix) reaches everyone at once.
+for (const route of ['/', '/index.html', '/rooms', '/sign-in', '/auth/callback']) {
+  assert.ok(headers.includes(`\n${route}\n  Cache-Control: no-cache`), `dist/_headers must keep the HTML route ${route} uncached`)
+}
+// connect-src must name only the approved Supabase project, never a wildcard that lets script talk to any Supabase project.
+assert.ok(!headers.includes('*.supabase.co'), 'dist/_headers must not allow every Supabase project in connect-src')
+assert.ok(/connect-src[^;]*https:\/\/[a-z0-9]{20}\.supabase\.co/.test(headers), 'dist/_headers connect-src must name the approved Supabase project')
 assert.ok(!/unsafe-eval/.test(headers) && !/script-src[^;]*unsafe-inline/.test(headers), 'dist/_headers must not allow eval or inline scripts')
 assert.ok(!/<script(?![^>]*\bsrc=)[^>]*>/.test(html), 'index.html must not contain inline scripts (blocked by the CSP)')
 const redirects = await readFile(path.join(outputDirectory, '_redirects'), 'utf8')

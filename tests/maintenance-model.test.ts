@@ -22,3 +22,11 @@ test('maintenance data from the database is read strictly', () => {
   assert.throws(() => parseMaintenance([{ ...row, month: '2026-13' }]), /Unexpected/)
   assert.throws(() => parseMaintenance({}), /Unexpected/)
 })
+
+test('paid rent minus maintenance is exact and shows a shortfall as negative', async () => {
+  const { netAfterMaintenance } = await import('../src/access/maintenance-model.ts')
+  assert.deepEqual(netAfterMaintenance(910050n, ['1250.50', '0.10']), { maintenance: '1250.60', net: '7849.90', negative: false })
+  assert.deepEqual(netAfterMaintenance(10n, ['0.20']), { maintenance: '0.20', net: '0.10', negative: true }, 'maintenance above the cash received')
+  assert.deepEqual(netAfterMaintenance(0n, []), { maintenance: '0.00', net: '0.00', negative: false })
+  assert.deepEqual(netAfterMaintenance(100000000000n, ['999999999.99']), { maintenance: '999999999.99', net: '0.01', negative: false }, 'large amounts stay exact')
+})

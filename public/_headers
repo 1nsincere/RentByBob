@@ -2,15 +2,29 @@
 # The app loads only its own scripts/styles; data goes to Supabase over HTTPS/WSS. Keep in sync with
 # scripts/check-production-build.mjs, which fails the build if these protections are removed.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://hxkfuwqxpykckxvsbvbc.supabase.co wss://hxkfuwqxpykckxvsbvbc.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+
+# The HTML shell is never cached, so a new release (and any security fix) reaches everyone at once.
+/
+  Cache-Control: no-cache
 
 /index.html
+  Cache-Control: no-cache
+
+/rooms
+  Cache-Control: no-cache
+
+/sign-in
+  Cache-Control: no-cache
+
+/auth/callback
   Cache-Control: no-cache
 
 /assets/*

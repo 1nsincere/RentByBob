@@ -9,6 +9,8 @@ const publicAvailabilityPreview = import.meta.env.DEV &&
   !params.has('auth') &&
   !params.has('preview')
 
+// Developer style guide of the atoms (buttons, icon buttons, chips); development builds only.
+const atomsGallery = import.meta.env.DEV && params.has('atoms') && !params.has('auth')
 const renterPreview = import.meta.env.DEV && params.get('preview') === 'renter' && !params.has('auth')
 // Public, sign-in-free room listing (production route). Reads only listed rooms; inquiries are write-only.
 const publicRoomsPage = /^\/rooms\/?$/.test(location.pathname)
@@ -17,6 +19,11 @@ const hasSession = (() => { try { return Object.keys(sessionStorage).some(key =>
 const landingPage = location.pathname === '/' && !location.search && !hasSession
 
 async function startApp() {
+  if (atomsGallery) {
+    const { AtomsGallery } = await import('./components/AtomsGallery')
+    root.render(<React.StrictMode><AtomsGallery /></React.StrictMode>)
+    return
+  }
   if (publicRoomsPage && !publicAvailabilityPreview) {
     const { PublicRoomsPage } = await import('./access/PublicRooms')
     root.render(<React.StrictMode><PublicRoomsPage /></React.StrictMode>)

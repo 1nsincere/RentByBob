@@ -12,6 +12,8 @@ export type PaidRentDocumentData = {
   arrears: { id: string; renter: string; space: string; months: string; total: string }[]
   // Maintenance spending recorded for the report month (202610280003); absent when it could not be loaded.
   maintenance?: { items: { id: string; description: string; place: string; amount: string }[]; total: string }
+  // Optional last block: confirmed cash received minus maintenance (information only); absent when maintenance is unavailable.
+  net?: { received: string; maintenance: string; net: string; negative: boolean }
 }
 
 // Print-only document for "Save as PDF": a formal report layout (serif headings, sans-serif body, tabular figures)
@@ -43,7 +45,7 @@ export function PaidRentDocument({ data, language = 'en' }: { data: PaidRentDocu
 
     <section className="doc-section">
       <h2><span className="doc-number">1</span>{tr('Confirmed payments', 'Kumpirmadong mga bayad')}</h2>
-      <p className="doc-note">{tr('Cash confirmed by the designated verifier, by the date it was received. Pending cash and uncleared checks are not included.', 'Kwarta nga gikumpirma sa tigkumpirma, sumala sa petsa nga nadawat. Dili apil ang pending nga kwarta ug tseke nga wala pa ma-clear.')}</p>
+      <p className="doc-note">{tr('Cash confirmed by a clerk, by the date it was received. Pending cash and uncleared checks are not included.', 'Kwarta nga gikumpirma sa clerk, sumala sa petsa nga nadawat. Dili apil ang pending nga kwarta ug tseke nga wala pa ma-clear.')}</p>
       {data.confirmed.length ? <table className="doc-table">
         <thead><tr><th>{tr('Renter', 'Nag-abang')}</th><th>{tr('Rental space', 'Lugar')}</th><th>{tr('Received', 'Nadawat')}</th><th>{tr('Rent months', 'Mga bulan')}</th><th>{tr('Receipt no.', 'Resibo')}</th><th className="doc-money">{tr('Amount', 'Kantidad')}</th></tr></thead>
         <tbody>{data.confirmed.map(row => <tr key={row.id}><td>{row.renter}</td><td>{row.space}</td><td className="doc-date">{row.received}</td><td>{row.months}</td><td className="doc-code">{row.receipt}</td><td className="doc-money">{row.amount}</td></tr>)}</tbody>
@@ -77,6 +79,18 @@ export function PaidRentDocument({ data, language = 'en' }: { data: PaidRentDocu
         <tbody>{data.maintenance.items.map(row => <tr key={row.id}><td>{row.description}</td><td>{row.place || '—'}</td><td className="doc-money">{row.amount}</td></tr>)}</tbody>
         <tfoot><tr><th colSpan={2}>{tr('Total maintenance', 'Kinatibuk-ang maintenance')}</th><td className="doc-money">{data.maintenance.total}</td></tr></tfoot>
       </table> : <p className="doc-empty">{tr('No maintenance was recorded for this month.', 'Walay maintenance nga narekord niining bulana.')}</p>}
+    </section>}
+
+    {data.net && <section className="doc-section doc-optional" aria-label={tr('Optional summary', 'Opsyonal nga sumaryo')}>
+      <h2>{tr('Optional summary: paid rent minus maintenance', 'Opsyonal nga sumaryo: bayad sa abang gawas maintenance')}</h2>
+      <table className="doc-table doc-net">
+        <tbody>
+          <tr><th scope="row">{tr('Confirmed cash received', 'Kumpirmadong kwarta nga nadawat')} · {data.receiptMonth}</th><td className="doc-money">{data.net.received}</td></tr>
+          <tr><th scope="row">{tr('Less: maintenance spending', 'Gawas: gasto sa maintenance')}</th><td className="doc-money">{data.net.maintenance}</td></tr>
+        </tbody>
+        <tfoot><tr><th scope="row">{tr('Paid rent minus maintenance', 'Bayad sa abang gawas maintenance')}</th><td className="doc-money">{data.net.negative ? '−' : ''}{data.net.net}</td></tr></tfoot>
+      </table>
+      <p className="doc-note">{tr('For information only. Cash received is not profit and this is not an accounting statement; rent still due and other costs are not included.', 'Alang sa impormasyon lang. Ang kwarta nga nadawat dili ganansya ug dili kini accounting statement; dili apil ang abang nga nabilin ug uban pang gasto.')}</p>
     </section>}
 
     <footer className="doc-footer">

@@ -45,17 +45,18 @@ test('the owner can remove a tenant who still has a room; the room is freed and 
   await db.query('select public.add_rent_month($1,$2,$3,$4)', [prop, id(40), id(21), '2026-01-01'])
   await as(clerk); await db.query('select public.draft_rent_months($1,$2,$3::date[],$4)', [prop, id(20), ['2026-02-01'], 'Notebook'])
 
-  // Only the owner, with MFA, and a reason.
-  await assert.rejects(db.query('select public.remove_tenant_with_room($1,$2)', [id(10), 'Clerk attempt']), /Access denied/)
+  // Any staff member with MFA (the clerk runs the system), and a reason.
+  await assert.rejects(db.query('select public.remove_tenant_with_room($1,$2)', [id(10), '  ']), /reason/)
   await as(owner, 'aal1'); await assert.rejects(db.query('select public.remove_tenant_with_room($1,$2)', [id(10), 'No MFA']), /Staff MFA required|Access denied/)
   await as(owner); await assert.rejects(db.query('select public.remove_tenant_with_room($1,$2)', [id(10), '  ']), /reason/)
-  await assert.rejects(db.query('select public.remove_tenant_with_room($1,$2)', [id(99), 'Nobody']), /Tenant unavailable/)
+  await assert.rejects(db.query('select public.remove_tenant_with_room($1,$2)', [id(99), 'Nobody']), /Access denied/)
   // The old rule still protects the plain remove: it needs the move-out first.
   await assert.rejects(db.query('select public.remove_tenant($1,$2)', [id(10), 'Plain remove']), /move-out before removing/)
 
   await db.query('select public.remove_tenant_with_room($1,$2)', [id(10), 'Entered by mistake'])
   await db.query('select public.remove_tenant_with_room($1,$2)', [id(10), 'Entered by mistake'])
-  await db.query('select public.remove_tenant_with_room($1,$2)', [id(11), 'Moved away'])
+  await as(clerk); await db.query('select public.remove_tenant_with_room($1,$2)', [id(11), 'Moved away']) // a clerk may remove too
+  await as(owner)
   await db.exec('reset role')
   const tenants = await q('select id, removed_at is not null as removed, archived_at is not null as archived from public.tenants where id in ($1,$2,$3) order by id', [id(10), id(11), id(12)])
   assert.deepEqual(tenants.map(x => [x.removed, x.archived]), [[true, true], [true, true], [false, false]], 'the other tenant is untouched')
@@ -75,7 +76,7 @@ test('the owner can remove a tenant who still has a room; the room is freed and 
   assert.equal((await q("select count(*)::int as n from public.rental_agreements a join public.tenants t on t.id = a.tenant_id where t.removed_at is not null and (a.ended_on is null or a.ended_on > (now() at time zone 'Asia/Manila')::date)"))[0].n, 0)
 })
 
-test('maintenance expenses: staff record and void them, nothing touches balances, and access is limited', async t => {
+test('maintenance expenses: any staff member records and voids them, nothing touches balances, and access is limited', async t => {
   const { db, id, owner, clerk, clerk2, prop, stranger, as, q, room } = await setup(t)
   const thisMonth = (await q("select to_char(date_trunc('month', now() at time zone 'Asia/Manila'), 'YYYY-MM-01') as m"))[0].m as string
   const record = (eid: string, month: string, what: string, place: string | null, amount: string) => db.query('select public.record_maintenance_expense($1,$2,$3,$4,$5,$6)', [prop, eid, month, what, place, amount])
@@ -102,7 +103,7 @@ test('maintenance expenses: staff record and void them, nothing touches balances
   await assert.rejects(read('2020-01-01', '2026-01-01'), /up to 36 months/)
 
   // Voiding: owner, or whoever entered it; a reason is required; hidden afterwards; repeating is harmless.
-  await as(clerk2); await assert.rejects(db.query('select public.void_maintenance_expense($1,$2,$3)', [prop, id(50), 'Not mine']), /owner or the person/)
+  await as(clerk2); await db.query('select public.void_maintenance_expense($1,$2,$3)', [prop, id(50), 'Wrong amount']) // any staff member may void
   await as(clerk); await assert.rejects(db.query('select public.void_maintenance_expense($1,$2,$3)', [prop, id(50), ' ']), /reason/)
   await db.query('select public.void_maintenance_expense($1,$2,$3)', [prop, id(51), 'Entered twice'])
   await db.query('select public.void_maintenance_expense($1,$2,$3)', [prop, id(51), 'Entered twice'])

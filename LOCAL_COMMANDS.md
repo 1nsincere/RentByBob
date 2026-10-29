@@ -150,3 +150,22 @@ git push
 | Cannot connect to Docker | Open Docker Desktop and wait for "Engine running". |
 | No invite or reset email arrived | Check the local inbox at http://127.0.0.1:54324 (no real emails are sent locally). |
 | Need a clerk's account ID | Studio → Authentication → Users (http://127.0.0.1:54323), or just use the clerk's email in Payments → More tools → Setup. |
+
+---
+
+## Share the running app with ngrok (optional)
+
+One-time setup (your token is private: never paste it into chat, code or screenshots):
+
+1. Sign in at https://dashboard.ngrok.com/get-started/your-authtoken and copy your authtoken.
+2. In PowerShell run: `ngrok config add-authtoken PASTE_YOUR_TOKEN_HERE`
+
+Every time:
+
+| Step | Command |
+|---|---|
+| 1 | `npm.cmd run dev:local` (leave it open) |
+| 2 | In a second window: `npm.cmd run tunnel` |
+| 3 | Open the `https://...ngrok-free.app` address it prints (also at http://127.0.0.1:4040) |
+
+What works through the tunnel: the landing page and the fictional previews (`/?preview=1`, `/?preview=renter`). Sign-in and the live `/rooms` data will **not** work for other people, because they need your local database (127.0.0.1:54321), which the tunnel does not expose, and the app refuses to connect to any other database by design. Press Ctrl+C in the tunnel window to close it; anyone with the address can see the app while it is open.

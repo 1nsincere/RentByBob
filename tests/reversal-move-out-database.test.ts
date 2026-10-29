@@ -56,7 +56,7 @@ test('owner-only cash reversal reopens rent and keeps history; move-out stops ne
   assert.equal(await balance(), '4000.00')
 
   // Only an MFA owner may reverse, always with a reason, and only confirmed cash.
-  await assert.rejects(reverse(40, wrongCash, 'Clerk attempt'), /Owner MFA required/)
+  await assert.rejects(reverse(40, pendingCash, 'Clerk attempt'), /Only confirmed cash can be reversed/) // clerks may reverse; this cash was never confirmed
   await as(owner, 'aal1'); await assert.rejects(reverse(40, wrongCash, 'No MFA'), /Staff MFA required/)
   await as(owner)
   await assert.rejects(reverse(40, wrongCash, '   '), /reason is required/)
@@ -89,7 +89,7 @@ test('owner-only cash reversal reopens rent and keeps history; move-out stops ne
   assert.deepEqual(renterPayments.map((p: any) => p.id), [id(32)], 'renters do not see the reversed payment as paid')
 
   // Move-out: owner only, reason required, never before move-in, never after an existing later charge.
-  await as(james); await assert.rejects(endAgreement(50, '2024-03-20', 'Clerk attempt'), /Owner MFA required/)
+  await as(james); await assert.rejects(endAgreement(50, '2024-03-20', ''), /move-out date and reason are required/) // clerks pass the role gate and reach validation
   await as(owner)
   await assert.rejects(endAgreement(50, '2024-03-20', ''), /move-out date and reason are required/)
   await assert.rejects(endAgreement(50, '2024-01-10', 'Before move-in'), /on or after move-in/)

@@ -1,3 +1,11 @@
+## Sweep results and fixes - 28 Oct 2026
+
+See STATUS.md. Fixed in `202610280005_sweep_fixes.sql`: date and amount bounds, finite-date table checks, device revocation on access change, normalised public-inquiry limits plus a per-room cap, NaN amounts, reversed-receipt confirmation, double-check bypass, auth oracle and lock order on tenant removal, audit attribution. Headers: `Cross-Origin-Resource-Policy: same-origin` added; every HTML route is `no-cache`. **Open (owner/accounts):** Turnstile or WAF rate limit on `/rest/v1/rpc/submit_rental_inquiry`; pin CSP `connect-src` to the production Supabase host; hosted Auth settings; email invitations to real addresses are disabled by the `.invalid` guard (migration `202610160009` and the Edge Function) and need a reviewed change before use. Accepted risk (owner): one clerk may record and confirm cash and clear or reverse checks.
+
+## Role model change - 28 Oct 2026
+
+`202610280004_clerk_manages_operations.sql`: operational functions accept any staff role (`private.staff_role() is not null`, which still requires MFA or a remembered device). `confirm_rent_cash` requires the clerk role (no single designated verifier). Owner-only (unchanged): `set_staff_access`, `assign_account_access`, `prepare_account_invitation` (staff), invitation review functions, `read_access_audit`, `assign_cash_verifier`. A PGlite test proves a clerk cannot call them and that no one operates without MFA. Segregation of duties between recording and confirming cash is no longer enforced by the database (owner decision); the audit log records the actor for every step.
+
 ## Renter payment reports - 27 Oct 2026
 
 `renter_payment_reports` has RLS with a staff-only read policy; renters reach only their own rows through `read_my_payment_reports()`, which re-checks an active, unrevoked contact link and an unarchived tenant. `report_rent_payment` is SECURITY DEFINER (`search_path=''`), allowed only for the agreement's linked renter, idempotent by request id, rate-limited (5 waiting per room, 10 per person per day), date-bounded, and audited. Staff functions go through `private.cash_lock` (staff MFA or a trusted device); recording requires an existing cash record of the same agreement and property, so a report can never create or settle money on its own. Grants: `authenticated` only; anonymous calls are denied (PGlite and live tests).
@@ -124,11 +132,11 @@ The matrix combines implemented access controls with intended product permission
 | --- | --- | --- | --- |
 | Read records | Authorized tenant only | Assigned property | Owned property |
 | Report/withdraw pending claims | Own authorized tenant | Record/review | Review |
-| Verify cash receipt | No | Designated verifier only | No |
+| Verify (confirm) cash receipt | No | Yes, any clerk (since 28 Oct 2026; no single designated verifier) | No |
 | Record check receipt | No | Yes, under drafted migration | No |
-| Deposit, clear, return or reverse checks | No | No | Yes, under drafted migration |
-| Record collection handover | No | No | Yes, under drafted migration |
-| Manage staff roles / restricted terms | No | No | Yes |
+| Deposit, clear, return or reverse checks | No | Yes (since 28 Oct 2026) | Yes |
+| Record collection handover | No | Yes (since 28 Oct 2026) | Yes |
+| Manage staff roles / who may sign in / restricted terms | No | No | Yes (owner only, on purpose) |
 | Issue invitations | No | Renter invitations only, trusted Edge Function | Renter or staff invitations, trusted Edge Function |
 | Reconcile/export | Own statements only | Operational scope | Property scope |
 

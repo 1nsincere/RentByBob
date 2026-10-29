@@ -1,3 +1,11 @@
+## The clerk runs operations; the owner oversees - 28 Oct 2026 (owner decision)
+
+"The owner's login is just to see what is going on and the inventory; the clerk manages it all." Any staff member with MFA may do day-to-day operations that used to be owner-only (removal, move-out, reversal, check handling, handovers, switches, layout, room rename, voiding maintenance). Cash confirmation (the approval) is done by any clerk. The owner keeps all powers except confirming cash (clerks only) and alone controls who may sign in (invitations, access assignment, access history). Trade-off accepted by the owner: one person can now record and confirm cash; the audit log shows who did what.
+
+## Remove tenants with a room; maintenance in the monthly report - 28 Oct 2026 (owner requests)
+
+The owner may remove a tenant who still has a room in one step. The room agreement ends (on its move-in date if nothing was ever recorded against it and it began before this month, otherwise today) and the tenant is hidden from all lists; records, rent history and the audit log stay. Maintenance (what, where, amount, per month) is recorded by staff, voided rather than edited, and listed with a total in that month's PDF report. It is an expense record only and never changes a tenant balance. The owner asked (28 Oct 2026) for an optional "paid rent minus maintenance" line at the very bottom of the monthly report and PDF; it is added, labelled information only (cash received is not profit; rent still due and other costs are excluded), calculated exactly in centavos.
+
 ## Past months from the notebook need a double check - 28 Oct 2026 (owner decisions)
 
 Existing tenants predate the app and the only record is the paper notebook. Months entered from it are *waiting for a double check*, shown separately and **not counted as owed** (not in balances, the late-rent list or reminders) until a **different** staff member (clerk or owner) confirms them against the notebook; each entry must name the notes it came from. A best-guess move-in date is flagged and double checked the same way. Cash received meanwhile becomes advance credit, which pays the months automatically once they are confirmed.

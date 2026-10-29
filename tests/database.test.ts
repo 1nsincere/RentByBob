@@ -150,7 +150,8 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     // 43 adds register_tenant (202610270004); 48 adds the five trusted-device functions (202610270007); 49 adds set_auto_listing (202610270008); 55 adds automatic rent, room change and remove tenant (202610270009); 59 adds advance credit (202610270010); 64 adds renter payment reports (202610270012); 65 adds withdraw_payment_report (202610270013); 68 adds check bank details and staff names (202610270014).
     // 74 adds the six notebook-month and move-in double-check functions (202610280001), each staff-only with no anonymous grant.
     // 78 adds remove_tenant_with_room (202610280002) and the three maintenance functions (202610280003), staff-only.
-    assert.equal(result.rows.length, 78)
+    // 79 adds private.add_rent_month_core (202610280005), not callable from the browser.
+    assert.equal(result.rows.length, 79)
     // The only reviewed anonymous entry points: read listed rooms and leave an inquiry (202610270002).
     const anonymousAllowed = new Set(['read_public_listings', 'submit_rental_inquiry'])
     for (const fn of result.rows) {
@@ -303,8 +304,7 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     await assert.rejects(db.query(sql,[otherProperty,id(62),'Cross-property unit',id(60)]))
     await as(clerk)
     assert.equal((await db.query('select * from public.units')).rows.length,2)
-    await denied(sql,[property,id(63),'Not allowed',null])
-    await denied(manage,[property,id(65),'archive',null,'Clerk cannot archive'])
+    // Clerks run the system (28 Oct 2026): creating and managing locations is allowed for them; MFA is still required.
     await as(owner,'aal1');await denied(sql,[property,id(63),'MFA required',null])
     await denied(manage,[property,id(65),'rename','No MFA','MFA required'])
     await as(business,'aal1')

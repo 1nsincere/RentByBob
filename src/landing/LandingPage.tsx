@@ -5,13 +5,12 @@ import { Facade, SITE, StreetPlan, TOTAL_SPACES, statusText } from './street'
 import './landing.css'
 
 // Public landing page at "/" for visitors who are not signed in. Live vacancy comes only from the public listing
-// function (the same data as /rooms); nothing private is read. Phone and Messenger are PLACEHOLDERS for the owner
-// to replace before going public (docs/DEPLOYMENT.md).
+// function (the same data as /rooms); nothing private is read. The phone number is still a PLACEHOLDER for the owner
+// to replace before going public (docs/DEPLOYMENT.md); the Facebook page is the owner's real contact (28 Oct 2026).
 export const CONTACT = {
   phone: '0900 000 0000', // placeholder
   phoneHref: 'tel:+639000000000', // placeholder
-  messenger: 'm.me/rentbybob', // placeholder
-  messengerHref: 'https://m.me/rentbybob', // placeholder
+  facebookHref: 'https://www.facebook.com/jameslee.gica.1',
   address: '100A B. Zubiri St, Cebu City, 6000 Cebu',
   mapsHref: 'https://www.google.com/maps/search/?api=1&query=100A+B.+Zubiri+St,+Cebu+City,+6000+Cebu',
 }
@@ -366,7 +365,7 @@ export function LandingPage() {
             <div className="lp-contact">
               <a className="lp-pill lp-pill--amber lp-magnetic" href={CONTACT.mapsHref} target="_blank" rel="noopener noreferrer" data-cursor={tr('Map', 'Mapa')}>{tr('Directions', 'Direksyon')} <span aria-hidden="true">↗</span></a>
               <a className="lp-pill lp-pill--ghost lp-magnetic" href={CONTACT.phoneHref}>{tr('Call', 'Tawag')} {CONTACT.phone}</a>
-              <a className="lp-pill lp-pill--ghost lp-magnetic" href={CONTACT.messengerHref} target="_blank" rel="noopener noreferrer">Messenger</a>
+              <a className="lp-pill lp-pill--ghost lp-magnetic" href={CONTACT.facebookHref} target="_blank" rel="noopener noreferrer">Facebook<span className="visually-hidden"> ({tr('opens in a new tab', 'mo-abli sa bag-ong tab')})</span></a>
             </div>
           </div>
           <div className="lp-sketch-map lp-reveal" aria-hidden="true">

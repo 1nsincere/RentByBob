@@ -37,8 +37,7 @@ test('sketch setup creates the approved layout once, reuses existing buildings, 
   }
   const setup = async () => (await db.query<any>('select public.setup_property_from_sketch($1)', [prop])).rows[0].setup_property_from_sketch
 
-  await as(clerk); await assert.rejects(setup(), /Owner MFA required/)
-  await as(owner, 'aal1'); await assert.rejects(setup(), /Owner MFA required/)
+  await as(owner, 'aal1'); await assert.rejects(setup(), /Staff MFA required/)
   await as(owner)
   assert.deepEqual(await setup(), { buildings_created: 7, buildings_matched: 1, units_created: 30, units_existing: 0 })
   assert.deepEqual(await setup(), { buildings_created: 0, buildings_matched: 8, units_created: 0, units_existing: 30 }, 'running again changes nothing')

@@ -73,12 +73,11 @@ test('notebook months wait for a different staff member before they become rent 
   await db.query('select public.confirm_move_in_date($1,$2)', [prop, id(20)])
   assert.deepEqual((await review()).estimated, {})
 
-  // A month that got charged some other way while waiting must not be charged twice.
+  // A month that is waiting cannot be charged by hand (that would skip the second person); it must be confirmed or removed.
   await as(clerk); await draft(['2026-05-01'])
-  await as(owner); await db.query('select public.add_rent_month($1,$2,$3,$4)', [prop, id(40), id(20), '2026-05-01'])
+  await as(owner); await assert.rejects(db.query('select public.add_rent_month($1,$2,$3,$4)', [prop, id(40), id(20), '2026-05-01']), /waiting for a double check/)
   const late = (await review()).drafts[0].id
-  await assert.rejects(q('select public.confirm_rent_month_drafts($1,$2::uuid[])', [prop, [late]]), /already charged/)
-  await db.query('select public.remove_rent_month_drafts($1,$2::uuid[],$3)', [prop, [late], 'Already charged'])
+  await db.query('select public.remove_rent_month_drafts($1,$2::uuid[],$3)', [prop, [late], 'Not needed'])
 
   // Access: strangers, staff without MFA and anonymous callers get nothing; browser roles cannot touch the table.
   await as(stranger, 'aal1'); await assert.rejects(draft(['2026-01-01']), /Staff MFA required/)

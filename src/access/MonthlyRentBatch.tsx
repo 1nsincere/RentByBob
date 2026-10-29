@@ -40,7 +40,7 @@ export function MonthlyRentBatch({ data, tenants, busy, addMonth, language = 'en
     <div className="section-heading"><div><h3 id="monthly-rent-heading">{tr('Add monthly rent', 'Idugang ang binulan nga abang')}</h3>
       <p>{tr('Review which rooms are missing rent for a month, then add them together. Nothing is charged until you confirm.', 'Susiha kung unsang mga kwarto ang walay abang sa usa ka bulan, dayon idugang kini tanan. Walay masingil hangtod mokumpirma ka.')}</p></div></div>
     <label htmlFor="batch-month">{tr('Rent month', 'Bulan sa abang')}</label>
-    <input id="batch-month" type="month" value={month} disabled={busy} onChange={event => { setMonth(event.target.value); setConfirming(false); setResult('') }} />
+    <input id="batch-month" type="month" value={month} disabled={busy} onChange={event => { if (!event.target.value) return; setMonth(event.target.value); setConfirming(false); setResult('') }} />
     {result && <p className="notice" role="status">{result}</p>}
     {missing.length ? <>
       <ul className="monthly-rent-list">{missing.map(item => { const names = label(item.agreement.id); return <li key={item.agreement.id}>

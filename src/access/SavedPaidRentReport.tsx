@@ -6,7 +6,7 @@ import type { RentWorkspaceSnapshot } from './saved-payments-model'
 import { buildSavedPaidRentReport, moneyFromMinor } from './saved-paid-rent-report-model'
 import { PaidRentDocument, type PaidRentDocumentData } from './PaidRentDocument'
 import { supabase } from './client'
-import { maintenanceTotal, parseMaintenance, type MaintenanceExpense } from './maintenance-model.ts'
+import { maintenanceTotal, netAfterMaintenance, parseMaintenance, type MaintenanceExpense } from './maintenance-model.ts'
 import { text, type Language } from '../i18n'
 
 function currentPhilippineMonth() {
@@ -51,6 +51,9 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, propert
     const building = unit && report.buildingById.get(unit.building_id)
     return `${building?.label ?? tr('Building unavailable', 'Walay rekord sa bilding')} · ${unit?.label ?? tr('Room unavailable', 'Walay rekord sa kwarto')}`
   }
+  // Optional bottom line: confirmed cash received minus maintenance (exact, in centavos); only when maintenance loaded.
+  const net = Array.isArray(maintenance) ? netAfterMaintenance(report.cashTotal, maintenance.map(item => item.amount)) : undefined
+  const netText = net && { received: decimalPesos(moneyFromMinor(report.cashTotal)), maintenance: decimalPesos(net.maintenance), net: decimalPesos(net.net), negative: net.negative }
   // The PDF document gets exactly the figures shown on screen.
   const documentData: PaidRentDocumentData = {
     propertyName,
@@ -65,6 +68,7 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, propert
     }),
     outstanding: report.outstanding.map(({ charge, tenant, location: space }) => ({ id: charge.id, renter: tenant, space: space.replace(' / ', ' · '), due: formatDate(charge.due_date), charged: decimalPesos(charge.amount), remaining: decimalPesos(charge.remaining) })),
     maintenance: Array.isArray(maintenance) ? { items: maintenance.map(item => ({ id: item.id, description: item.description, place: item.place ?? '', amount: decimalPesos(item.amount) })), total: decimalPesos(maintenanceTotal(maintenance)) } : undefined,
+    net: netText,
     arrears: report.arrears.map(row => ({ id: row.id, renter: row.tenant, space: row.location.replace(' / ', ' · '), months: row.periods.map(formatMonth).join(', '), total: decimalPesos(moneyFromMinor(row.total)) })),
   }
   // Show only the report document while printing; the browser's "Save as PDF" names the file from the title.
@@ -82,7 +86,7 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, propert
     <PaidRentDocument data={documentData} language={language} />
     <div className="paid-report-heading"><div><p className="eyebrow">{tr('SAVED COLLECTION REPORT', 'GITIPIG NGA REPORT SA KOLEKSIYON')}</p><h3 id="saved-paid-rent-heading">{tr('Paid rent', 'Bayad sa abang')}</h3><p>{tr('Saved records only. Pending cash is not confirmed income.', 'Mga natipig nga rekord lang. Dili pa kumpirmadong kita ang pending nga kwarta.')}</p></div><span className="status status--ready">{tr('Live database report', 'Report gikan sa database')}</span></div>
     <section className="card paid-report-sheet" aria-label={tr('Confirmed rent payments report', 'Report sa kumpirmadong bayad sa abang')}>
-      <div className="paid-report-toolbar"><div><label htmlFor="saved-receipt-month">{tr('Cash received during', 'Kwarta nga nadawat niadtong')}</label><input id="saved-receipt-month" type="month" value={receiptMonth} onChange={event => setReceiptMonth(event.target.value)} /></div><span className="paid-report-period">{formatMonth(receiptMonth)}</span></div>
+      <div className="paid-report-toolbar"><div><label htmlFor="saved-receipt-month">{tr('Cash received during', 'Kwarta nga nadawat niadtong')}</label><input id="saved-receipt-month" type="month" value={receiptMonth} onChange={event => event.target.value && setReceiptMonth(event.target.value)} /></div><span className="paid-report-period">{formatMonth(receiptMonth)}</span></div>
       <div className="paid-report-metrics" aria-live="polite">
         <article><span>{tr('Confirmed cash received', 'Kumpirmadong kwarta nga nadawat')}</span><strong>{decimalPesos(moneyFromMinor(report.cashTotal))}</strong></article>
         <article><span>{tr('Renters who paid', 'Mga nag-abang nga mibayad')}</span><strong>{report.paidTenantIds.size}</strong></article>
@@ -106,7 +110,7 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, propert
         </div>}
     </section>
     <section className="card unpaid-report-sheet" aria-labelledby="saved-outstanding-heading">
-      <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('OUTSTANDING RENT', 'NAA PAY BAYRANAN SA ABANG')}</p><h4 id="saved-outstanding-heading">{tr('Renters with rent still due', 'Mga nag-abang nga naa pay balanse')}</h4><p>{tr('Only rent charges recorded for the selected rent month are included.', 'Apil lang ang bayranan nga narekord sa gipiling bulan sa abang.')}</p></div><div><label htmlFor="saved-rent-month">{tr('Rent month', 'Bulan sa abang')}</label><input id="saved-rent-month" type="month" value={rentMonth} onChange={event => setRentMonth(event.target.value)} /></div></div>
+      <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('OUTSTANDING RENT', 'NAA PAY BAYRANAN SA ABANG')}</p><h4 id="saved-outstanding-heading">{tr('Renters with rent still due', 'Mga nag-abang nga naa pay balanse')}</h4><p>{tr('Only rent charges recorded for the selected rent month are included.', 'Apil lang ang bayranan nga narekord sa gipiling bulan sa abang.')}</p></div><div><label htmlFor="saved-rent-month">{tr('Rent month', 'Bulan sa abang')}</label><input id="saved-rent-month" type="month" value={rentMonth} onChange={event => event.target.value && setRentMonth(event.target.value)} /></div></div>
       <div className="unpaid-report-total"><span>{report.outstanding.length} {tr('recorded charges with a remaining balance', 'ka narekord nga bayranan nga naa pay balanse')}</span><strong>{decimalPesos(moneyFromMinor(report.outstandingTotal))}</strong></div>
       {!report.outstanding.length ? <p className="paid-report-empty">{data.charges.some(charge => charge.rental_month.slice(0, 7) === rentMonth) ? tr('No remaining rent for this month.', 'Walay nabilin nga abang niining bulana.') : tr('No rent charges are recorded for this month. Missing setup does not mean rent is unpaid.', 'Walay bayranan sa abang nga narekord niining bulana. Ang walay rekord dili pasabot nga wala mabayri ang abang.')}</p> :
         <div className="paid-table-scroll" role="region" aria-label={tr('Outstanding rent table', 'Lamesa sa nabilin nga abang')} tabIndex={0}>
@@ -129,7 +133,7 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, propert
       <p className="field-help">{tr('This is based only on recorded charges; it cannot identify months without a charge or determine that rent is overdue.', 'Mga narekord nga bayranan lang ang basihan; dili niini makita ang bulan nga walay bayranan o matino nga overdue na ang abang.')}</p>
     </section>
     <section className="card maintenance-report-sheet" aria-labelledby="saved-maintenance-heading">
-      <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('UPKEEP', 'UPKEEP')}</p><h4 id="saved-maintenance-heading">{tr('Maintenance spending in', 'Gasto sa maintenance niadtong')} {formatMonth(receiptMonth)}</h4></div></div>
+      <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('UPKEEP', 'PAG-ATIMAN')}</p><h4 id="saved-maintenance-heading">{tr('Maintenance spending in', 'Gasto sa maintenance niadtong')} {formatMonth(receiptMonth)}</h4></div></div>
       {maintenance === 'loading' ? <p role="status">{tr('Loading maintenance…', 'Gikarga ang maintenance…')}</p>
         : maintenance === 'unavailable' ? <p className="notice notice--warning" role="status">{tr('Maintenance could not be loaded, so the PDF will not include it. Check your connection and staff session, then reopen this report.', 'Wala ma-load ang maintenance, busa dili kini apil sa PDF. Susiha ang koneksyon ug staff session, dayon abri pag-usab kini nga report.')}</p>
         : !maintenance.length ? <p className="paid-report-empty">{tr('No maintenance was recorded for this month. Add it from Maintenance in the menu.', 'Walay maintenance nga narekord niining bulana. Idugang gikan sa Maintenance sa menu.')}</p>
@@ -142,5 +146,15 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, propert
         </div>}
       <p className="field-help">{tr("Expenses only; they do not change any renter's balance. The PDF includes this table.", 'Gasto lang kini; dili mo-usab sa balanse sa nag-abang. Apil kini nga lamesa sa PDF.')}</p>
     </section>
+    {netText && <section className="card net-report-sheet" aria-labelledby="saved-net-heading">
+      <p className="eyebrow">{tr('OPTIONAL SUMMARY', 'OPSYONAL NGA SUMARYO')}</p>
+      <h4 id="saved-net-heading">{tr('Paid rent minus maintenance', 'Bayad sa abang gawas maintenance')} · {formatMonth(receiptMonth)}</h4>
+      <dl className="net-report-lines">
+        <div><dt>{tr('Confirmed cash received', 'Kumpirmadong kwarta nga nadawat')}</dt><dd>{netText.received}</dd></div>
+        <div><dt>{tr('Less: maintenance spending', 'Gawas: gasto sa maintenance')}</dt><dd>{netText.maintenance}</dd></div>
+        <div className="net-report-total"><dt>{tr('Paid rent minus maintenance', 'Bayad sa abang gawas maintenance')}</dt><dd>{netText.negative ? '−' : ''}{netText.net}</dd></div>
+      </dl>
+      <p className="field-help">{tr('For information only. Cash received is not profit and this is not an accounting statement; rent still due and other costs are not included. It is also in the PDF.', 'Alang sa impormasyon lang. Ang kwarta nga nadawat dili ganansya ug dili kini accounting statement; dili apil ang abang nga nabilin ug uban pang gasto. Naa usab kini sa PDF.')}</p>
+    </section>}
   </section>
 }

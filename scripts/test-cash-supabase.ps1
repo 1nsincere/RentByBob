@@ -21,9 +21,13 @@ function Invoke-Cli([string[]]$Arguments, [string]$FailureMessage, [switch]$Incl
   return $output
 }
 
+# Free only if it can be bound on loopback (a dev server listening there) and on every address (how Docker publishes ports).
 function Test-PortAvailable([int]$Port) {
-  $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $Port)
-  try { $listener.Start(); return $true } catch { return $false } finally { $listener.Stop() }
+  foreach ($address in @([System.Net.IPAddress]::Loopback, [System.Net.IPAddress]::Any)) {
+    $listener = [System.Net.Sockets.TcpListener]::new($address, $Port)
+    try { $listener.Start() } catch { return $false } finally { $listener.Stop() }
+  }
+  return $true
 }
 
 try {
@@ -45,7 +49,7 @@ try {
   $portMatches = [regex]::Matches($config, '(?m)^(\s*port\s*=\s*)(\d+)')
   $ports = @($portMatches | ForEach-Object { [int]$_.Groups[2].Value } | Sort-Object -Unique)
   $offset = $null
-  foreach ($candidate in 10000..20000) {
+  foreach ($candidate in (10000..20000 | Get-Random -Count 600)) {
     $candidatePorts = @($ports | ForEach-Object { $_ + $candidate })
     if (($candidatePorts | Where-Object { $_ -gt 65535 -or -not (Test-PortAvailable $_) }).Count -eq 0) {
       $offset = $candidate
@@ -90,6 +94,7 @@ try {
   $local = $statusText.Substring($jsonStart, $jsonEnd - $jsonStart + 1) | ConvertFrom-Json
   if ($local.API_URL -notmatch '^http://127\.0\.0\.1:\d+$') { throw 'Refusing a non-local cash API test target.' }
 
+  Write-Output "Disposable API at $($local.API_URL)"
   $env:CASH_TEST_API_URL = $local.API_URL
   $env:CASH_TEST_ANON_KEY = $local.ANON_KEY
   $env:CASH_TEST_SERVICE_KEY = $local.SERVICE_ROLE_KEY

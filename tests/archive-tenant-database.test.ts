@@ -4,7 +4,7 @@ import { readFile, readdir } from 'node:fs/promises'
 import { PGlite } from '@electric-sql/pglite'
 
 // Disposable PostgreSQL with every real migration; only Supabase's identity contract is stubbed.
-test('archiving a tenant requires the owner, a reason, and no current room agreement', async t => {
+test('archiving a tenant requires staff MFA, a reason, and no current room agreement', async t => {
   const db = new PGlite()
   t.after(() => db.close())
   await db.exec(`
@@ -52,7 +52,8 @@ test('archiving a tenant requires the owner, a reason, and no current room agree
   await as(owner)
   await assert.rejects(db.query('select public.archive_tenant($1,$2)', [id(11), '  ']), /reason/)
   await as(clerk)
-  await assert.rejects(db.query('select public.archive_tenant($1,$2)', [id(11), 'Clerk attempt']), /Access denied/)
+  // Clerks run the rental system (28 Oct 2026), so a clerk may archive; only a missing MFA session is refused.
+  await db.query('select public.archive_tenant($1,$2)', [id(11), 'Never moved in'])
   await as(owner, 'aal1')
   await assert.rejects(db.query('select public.archive_tenant($1,$2)', [id(11), 'No MFA']), /Access denied/)
   await as(owner)

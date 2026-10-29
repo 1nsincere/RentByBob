@@ -44,11 +44,9 @@ test('automatic listing shows vacant rooms, hides occupied or staff-hidden ones,
   const unit = async (building: string, label: string) => { await db.exec('reset role'); return (await db.query<any>('select u.id from public.units u join public.buildings b on b.id=u.building_id where b.label=$1 and u.label=$2', [building, label])).rows[0].id }
   const room1 = await unit("Bob's house", 'Room 01'), room2 = await unit("Bob's house", 'Room 02'), gym = await unit('Building 2', 'Gym')
 
-  // Off by default: nothing is public until listed or the owner turns automatic listing on (owner only).
+  // Off by default: nothing is public until listed or staff turn automatic listing on.
   assert.deepEqual(await names(), [])
-  await as(clerk)
-  await assert.rejects(db.query('select public.set_auto_listing($1,true)', [prop]), /Owner MFA required/)
-  await as(owner)
+  await as(clerk) // the clerk runs the system and may switch automatic listing on
   await db.query('select public.set_auto_listing($1,true)', [prop])
   const all = await names()
   assert.equal(all.length, 25, 'every rentable room is shown automatically (30 spaces minus the shared gym and the 4 private commercial spaces)')

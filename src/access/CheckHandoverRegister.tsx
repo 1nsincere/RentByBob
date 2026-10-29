@@ -45,7 +45,7 @@ export function CheckHandoverRegister({propertyId,data,tenants,owner,canRecordCh
  return <>
   <section className="card" aria-labelledby="checks-heading">
    <h3 id="checks-heading">{tr('Check register','Lista sa mga tseke')}</h3>
-   <p>{tr('Reference numbers are generated in order. A check does not reduce rent until the owner marks it cleared after bank confirmation.','Sunod-sunod ang mga reference number. Dili moubos ang abang tungod sa tseke hangtod kumpirmahon sa tag-iya ang clearance sa bangko.')}</p>
+   <p>{tr('Reference numbers are generated in order. A check does not reduce rent until staff mark it cleared after bank confirmation.','Sunod-sunod ang mga reference number. Dili moubos ang abang tungod sa tseke hangtod kumpirmahon sa staff ang clearance sa bangko.')}</p>
    {canRecordCheck&&data.agreements.length>0&&<form className="rent-setup" onSubmit={event=>{event.preventDefault();const form=new FormData(event.currentTarget);const bank=String(form.get('bank')??'').trim(),number=String(form.get('number')??'').trim();void mutate('record_rent_check',{p_agreement_id:String(form.get('agreement')),p_amount:String(form.get('amount')),p_received_on:String(form.get('date')),p_check_date:String(form.get('checkDate')),p_collector:String(form.get('collector'))}).then(ref=>{if(typeof ref==='string'&&(bank||number))void mutate('record_check_details',{p_reference:ref,p_bank_name:bank||null,p_check_number:number||null},false)})}}>
     <h4>{tr('Record check received','Irekord ang nadawat nga tseke')}</h4>
     <label htmlFor="check-agreement">{tr('Tenant / room','Nag-abang / kwarto')}</label><select id="check-agreement" name="agreement" required><option value="">{tr('Choose an agreement','Pagpili og kasabotan')}</option>{data.agreements.map(a=><option key={a.id} value={a.id}>{tenants.find(t=>t.id===a.tenant_id)?.display_name??tr('Tenant unavailable','Wala makita ang rekord sa nag-abang')} / {roomName(data,a.unit_id,tr('Room unavailable','Wala makita ang kwarto'))}</option>)}</select>
@@ -68,10 +68,10 @@ export function CheckHandoverRegister({propertyId,data,tenants,owner,canRecordCh
      {owner&&check.status!=='returned'&&check.status!=='reversed'&&<div className="rent-setup">
       <label htmlFor={`check-reason-${check.id}`}>{tr('Owner note (reason required for reversal)','Nota sa tag-iya (kinahanglan og rason sa pagbawi)')}</label><input id={`check-reason-${check.id}`} value={reason[check.id]??''} onChange={event=>setReason(value=>({...value,[check.id]:event.target.value}))} maxLength={500} />
       <div className="person-actions">
-       {check.status==='received'&&<Button disabled={busy} onClick={()=>void transition(check,'deposited')}>{tr('Record deposit','Irekord ang deposito')}</Button>}
-       {check.status==='deposited'&&<Button disabled={busy} onClick={()=>void transition(check,'cleared')}>{tr('Confirm bank clearance','Kumpirmaha ang clearance sa bangko')}</Button>}
-       <Button disabled={busy} onClick={()=>void transition(check,'returned')}>{tr('Record returned','Irekord nga gibalik')}</Button>
-       {check.status==='cleared'&&<Button disabled={busy} onClick={()=>void transition(check,'reversed')}>{tr('Reverse cleared check','Bawiha ang kumpirmadong tseke')}</Button>}
+       {check.status==='received'&&<Button variant="secondary" disabled={busy} onClick={()=>void transition(check,'deposited')}>{tr('Record deposit','Irekord ang deposito')}</Button>}
+       {check.status==='deposited'&&<Button variant="approve" disabled={busy} onClick={()=>void transition(check,'cleared')}>{tr('Confirm bank clearance','Kumpirmaha ang clearance sa bangko')}</Button>}
+       <Button variant="danger-quiet" disabled={busy} onClick={()=>void transition(check,'returned')}>{tr('Record returned','Irekord nga gibalik')}</Button>
+       {check.status==='cleared'&&<Button variant="danger-quiet" disabled={busy} onClick={()=>void transition(check,'reversed')}>{tr('Reverse cleared check','Bawiha ang kumpirmadong tseke')}</Button>}
       </div>
      </div>}
     </article>

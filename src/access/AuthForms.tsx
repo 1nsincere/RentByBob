@@ -54,12 +54,15 @@ export function SignIn({ language = 'en' }: { language?: Language }) {
   </section>
 }
 
-export function PasswordSetup({ done, language = 'en' }: { done: () => void; language?: Language }) {
+// email: the account this link signed the person into. A forged invite or recovery link could sign someone into an
+// attacker's account (login CSRF), so the screen says whose account it is and tells them to stop if it is not theirs.
+export function PasswordSetup({ done, email = '', language = 'en' }: { done: () => void; email?: string; language?: Language }) {
   const t = copy[language]
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   return <section className="card auth-card"><h2>{t.setupPassword}</h2><p>{t.setPasswordHelp}</p>
+    {email && <p className="notice" role="status">{tr('You are setting a password for', 'Nagbutang ka og password para sa')} <strong>{email}</strong>. {tr('If this is not your email address, close this page and do not continue; ask the owner for a new link.', 'Kung dili kini imong email address, sirad-i kini nga panid ug ayaw ipadayon; pangayo og bag-ong link sa tag-iya.')}</p>}
     <Feedback message={message} error />
     <form onSubmit={async e => {
       e.preventDefault(); const form = new FormData(e.currentTarget)

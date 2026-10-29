@@ -6,7 +6,7 @@ export const stagingUrl: string | null = null
 
 // Owner-approved live project (the client trial and later production). Same rule: the exact address in a reviewed
 // commit; while null, production builds cannot connect anywhere. See docs/TRIAL_LAUNCH.md.
-export const productionUrl: string | null = null
+export const productionUrl: string | null = 'https://hxkfuwqxpykckxvsbvbc.supabase.co'
 
 const supabaseProjectUrl = /^https:\/\/[a-z0-9]{20}\.supabase\.co$/
 

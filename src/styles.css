@@ -47,6 +47,11 @@
   --warning: #8a5a00;
   --warning-surface: #fff5d6;
   --focus: #1f6b4f;
+  /* Action colours (button atoms): danger = removal, approve = approval / double check, info = neutral notice. White text on each solid passes 4.5:1. */
+  --on-solid: #fff;
+  --danger: #b42318; --danger-hover: #912018; --danger-pressed: #7a1912;
+  --approve: #157347; --approve-hover: #0f5c38; --approve-pressed: #0b4a2d;
+  --info: #1d4f91; --info-surface: #e6f0fb; --info-border: #b9d2ee;
   --radius: 1rem;
   --radius-small: 0.7rem;
   --shadow-card: 0 1px 2px rgb(20 38 30 / 5%), 0 4px 14px rgb(20 38 30 / 6%);
@@ -86,6 +91,10 @@
   --error: #ffaaa2; --error-surface: #3d2224;
   --success: #8fdcb0; --success-surface: #12332a;
   --warning: #f5d166; --warning-surface: #3a3014;
+  --on-solid: #fff;
+  --danger: #d92d20; --danger-hover: #b42318; --danger-pressed: #912018;
+  --approve: #1a7f55; --approve-hover: #15694a; --approve-pressed: #105438;
+  --info: #9cc4f5; --info-surface: #14273d; --info-border: #2d4a6e;
   --nav-surface: linear-gradient(180deg, #12291f 0%, #0b1a13 100%);
   --nav-text: #cfe3d7; --nav-label: #92b3a1; --nav-hover: #1a3a2c;
   --tone-blue: #7ed6ae; --tone-blue-bg: #1c3a2c; --tone-teal: #6fd9c5; --tone-teal-bg: #12302f;
@@ -1647,3 +1656,71 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
 .maintenance-void { grid-column: 1 / -1; display: grid; gap: 0.4rem; }
 .maintenance-form { display: grid; gap: 0.35rem; }
 @media (max-width: 40rem) { .maintenance-row { grid-template-columns: minmax(0, 1fr); } }
+
+/* ===== Button system (atoms) =====
+   Variants: primary, secondary, ghost, approve, danger, danger-quiet. Sizes: lg, md (default), sm. Older class names
+   (.primary, .secondary-button, .quiet-button) share these looks. Every size keeps a 44px minimum target. */
+.button { border-radius: 999px; }
+.button.primary, .button--primary { box-shadow: 0 6px 14px -8px rgb(21 83 60 / 70%); }
+.button--secondary { border-color: var(--control-border); background: var(--surface); color: var(--text); }
+.button--secondary:hover:not(:disabled) { border-color: var(--brand); color: var(--brand); }
+.button--ghost { min-height: 2.6rem; border-color: transparent; background: transparent; color: var(--brand); }
+.button--ghost:hover:not(:disabled) { background: var(--brand-tint); border-color: transparent; }
+.button--primary { border-color: var(--action); background: var(--action); color: var(--on-action); }
+.button--primary:hover:not(:disabled) { border-color: var(--action-hover); background: var(--action-hover); color: var(--on-action); }
+.button--approve { border-color: var(--approve); background: var(--approve); color: var(--on-solid); box-shadow: 0 6px 14px -8px rgb(21 115 71 / 70%); }
+.button--approve::before { content: "\2713"; content: "\2713" / ""; font-weight: 800; } /* the check mark is decoration: empty alt text keeps it out of the button name */
+.button--approve:hover:not(:disabled) { border-color: var(--approve-hover); background: var(--approve-hover); color: var(--on-solid); }
+.button--approve:active:not(:disabled) { background: var(--approve-pressed); }
+.button--danger { border-color: var(--danger); background: var(--danger); color: var(--on-solid); box-shadow: 0 6px 14px -8px rgb(180 35 24 / 70%); }
+.button--danger:hover:not(:disabled) { border-color: var(--danger-hover); background: var(--danger-hover); color: var(--on-solid); }
+.button--danger:active:not(:disabled) { background: var(--danger-pressed); }
+.button--danger-quiet { border-color: var(--danger); background: var(--surface); color: var(--error); }
+.button--danger-quiet:hover:not(:disabled) { background: var(--error-surface); border-color: var(--danger-hover); color: var(--error); }
+.button--lg { min-height: 3.25rem; padding: 0.72rem 1.7rem; font-size: 1.1rem; }
+.button--sm { padding: 0.4rem 0.95rem; font-size: 0.92rem; }
+.button:disabled { box-shadow: none; }
+.button:disabled::before { opacity: .6; }
+
+.icon-button { display: inline-grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0; border: 1px solid var(--control-border); border-radius: 50%; background: var(--surface); color: var(--text); cursor: pointer; transition: background-color 130ms ease, border-color 130ms ease, color 130ms ease; }
+.icon-button:hover { border-color: var(--brand); color: var(--brand); }
+.icon-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.icon-button--white { border-color: transparent; box-shadow: 0 1px 3px rgb(20 38 30 / 18%); }
+.icon-button--brand { border-color: var(--action); background: var(--action); color: var(--on-action); }
+.icon-button--brand:hover { background: var(--action-hover); border-color: var(--action-hover); color: var(--on-action); }
+.icon-button--dark { border-color: #0f3d2e; background: #0f3d2e; color: #fff; }
+.icon-button--dark:hover { background: #0a2e22; border-color: #0a2e22; color: #fff; }
+
+.chip, .status { border-radius: 999px; }
+.chip { display: inline-flex; width: fit-content; align-items: center; gap: 0.4rem; padding: 0.28rem 0.75rem; border: 1px solid transparent; font-size: 0.9rem; font-weight: 650; line-height: 1.3; }
+.chip::before { content: ""; width: 0.48rem; height: 0.48rem; flex: 0 0 0.48rem; border-radius: 50%; background: currentColor; }
+.chip--success, .status--ready { color: var(--success); background: var(--success-surface); border-color: var(--success-border); }
+.chip--warning, .status--pending, .status--warning { color: var(--warning); background: var(--warning-surface); border-color: var(--warning-border); }
+.chip--info, .status--info { color: var(--info); background: var(--info-surface); border-color: var(--info-border); }
+.chip--danger { color: var(--error); background: var(--error-surface); border-color: var(--error-border); }
+.chip--neutral { color: var(--text-secondary); background: var(--support); border-color: var(--border); }
+.chip--brand { color: var(--on-action); background: var(--action); border-color: var(--action); }
+.status--info::before, .status--brand::before { content: ""; width: 0.48rem; height: 0.48rem; flex: 0 0 0.48rem; border-radius: 50%; background: currentColor; }
+.status--brand { color: var(--on-action); background: var(--action); }
+
+.atoms-gallery { max-width: 72rem; margin: 0 auto; padding: 2rem 1rem 4rem; display: grid; gap: 2rem; }
+.atoms-gallery h1 { margin: 0; font-size: 2.4rem; }
+.atoms-gallery h2 { margin: 0 0 0.8rem; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); }
+.atoms-table { width: 100%; border-collapse: collapse; }
+.atoms-table th, .atoms-table td { padding: 0.7rem 0.6rem; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--border); }
+.atoms-table td:last-child { color: var(--text-secondary); max-width: 18rem; }
+.atoms-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; padding: 1rem; border-radius: 1rem; background: var(--support); }
+@media (max-width: 52rem) { .atoms-gallery { overflow-x: auto; } }
+
+/* Optional bottom line of the monthly report: paid rent minus maintenance. */
+.net-report-sheet { display: grid; gap: 0.5rem; }
+.net-report-lines { display: grid; gap: 0.4rem; margin: 0; }
+.net-report-lines > div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.45rem 0; border-bottom: 1px solid var(--border); }
+.net-report-lines dt, .net-report-lines dd { margin: 0; }
+.net-report-lines dd { font-variant-numeric: tabular-nums; font-weight: 650; }
+.net-report-total { border-bottom: 0 !important; font-size: 1.15rem; font-weight: 800; }
+.net-report-total dd { font-weight: 800; }
+.doc-optional { margin-top: 6mm; padding-top: 4mm; border-top: 1px dashed var(--doc-line); }
+.doc-optional h2 { font-size: 11pt; }
+.doc-net th { text-align: left; font-weight: 600; }
+.doc-net tfoot th, .doc-net tfoot td { font-weight: 700; border-top: 1.5px solid var(--doc-ink); }

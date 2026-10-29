@@ -23,3 +23,11 @@ export function parseMaintenance(value: unknown): MaintenanceExpense[] {
     return { id: row.id, month: row.month, description: row.description, place: row.place as string | null, amount: row.amount, recordedBy: row.recorded_by, recordedAt: row.recorded_at }
   })
 }
+
+// Optional summary at the bottom of the monthly report: confirmed cash received minus maintenance spending, exact in
+// centavos. Information only (cash received is not profit); negative when maintenance is more than the cash received.
+export function netAfterMaintenance(receivedCentavos: bigint, maintenanceAmounts: readonly string[]): { maintenance: string; net: string; negative: boolean } {
+  const spent = maintenanceAmounts.reduce((sum, amount) => sum + toCentavos(amount), 0n)
+  const net = receivedCentavos - spent
+  return { maintenance: fromCentavos(spent), net: fromCentavos(net < 0n ? -net : net), negative: net < 0n }
+}
