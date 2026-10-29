@@ -166,14 +166,14 @@
 /* Traffic. Each lane wrapper spans its road; the vehicle rides at its leading edge. Reduced motion parks them at --rest. */
 .lp-lane { position: absolute; z-index: 2; pointer-events: none; }
 .lp-lane svg { display: block; overflow: visible; filter: drop-shadow(0 2px 2px rgb(0 0 0 / 45%)); }
-.lp-lane--e, .lp-lane--w { left: 0; width: 100%; height: 4.6%; transform: translateX(var(--rest)); }
+.lp-lane--e, .lp-lane--w { left: 0; width: 100%; height: 5.4%; transform: translateX(var(--rest)); }
 .lp-lane--e svg, .lp-lane--w svg { height: 100%; width: auto; }
-.lp-lane--e { top: 59%; animation: lp-east var(--dur) linear var(--delay) infinite; }
-.lp-lane--w { top: 52.6%; animation: lp-west var(--dur) linear var(--delay) infinite; }
-.lp-lane--n, .lp-lane--s { top: 64%; height: 36%; width: 2.9%; transform: translateY(var(--rest)); }
+.lp-lane--e { top: 58.3%; animation: lp-east var(--dur) linear var(--delay) infinite; }
+.lp-lane--w { top: 52.3%; animation: lp-west var(--dur) linear var(--delay) infinite; }
+.lp-lane--n, .lp-lane--s { top: 64%; height: 36%; width: 3.4%; transform: translateY(var(--rest)); }
 .lp-lane--n svg, .lp-lane--s svg { width: 100%; height: auto; }
-.lp-lane--n { left: 18.5%; animation: lp-north var(--dur) linear var(--delay) infinite; }
-.lp-lane--s { left: 14.6%; animation: lp-south var(--dur) linear var(--delay) infinite; }
+.lp-lane--n { left: 18.3%; animation: lp-north var(--dur) linear var(--delay) infinite; }
+.lp-lane--s { left: 14.7%; animation: lp-south var(--dur) linear var(--delay) infinite; }
 @keyframes lp-east { from { transform: translateX(-12%); } to { transform: translateX(108%); } }
 @keyframes lp-west { from { transform: translateX(108%); } to { transform: translateX(-12%); } }
 @keyframes lp-north { 0% { transform: translateY(105%); opacity: 1; } 82% { transform: translateY(2%); opacity: 1; } 100% { transform: translateY(-16%); opacity: 0; } }
@@ -204,6 +204,24 @@
 .v-hitch { stroke: #1c2a23; stroke-width: 1.2; }
 .v-vendor { fill: #f4f4ee; }
 .v-hair { fill: #2a1f1a; }
+.v-hub { fill: #56635c; }
+.v-stripe { fill: #e53935; }
+.v-seat { fill: #101312; }
+.v-fork { stroke: #7a857f; stroke-width: 1.5; stroke-linecap: round; }
+.v-mirror { fill: #98a39d; }
+.v-tail { fill: #ff5a4f; }
+.v-arm { stroke: #26332e; stroke-width: 2; stroke-linecap: round; }
+.v-pants { fill: #2f3a46; }
+.v-jacket-m { fill: #222a27; stroke: #0e1311; stroke-width: 0.5; }
+.v-jacket-jt { fill: #c8161d; stroke: #7d0e12; stroke-width: 0.5; }
+.v-helmet--dark { fill: #23272b; stroke: #0c0e10; }
+.v-visor { fill: #0f1a22; }
+.v-cart-jt { fill: #15181a; stroke: #3d444a; stroke-width: 0.9; }
+.v-cart-floor { fill: #0a0c0d; }
+.v-jtbox { fill: #2a2f33; stroke: #4c545a; stroke-width: 0.5; }
+.v-jtbox--b { fill: #202427; }
+.v-jtbox--c { fill: #343a3f; }
+.v-jttape { stroke: #6f787f; stroke-width: 0.7; }
 
 /* Bob strolls the shoulder in front of his house (his figure is a little larger than true scale so he can be seen). */
 .lp-bob { position: absolute; z-index: 5; left: 70%; top: 67.2%; width: 5.4%; transform: translate(-50%, -50%); animation: lp-stroll 46s ease-in-out infinite; cursor: help; }
@@ -227,6 +245,54 @@
 @keyframes lp-stroll { 0%, 6% { left: 70%; } 38%, 48% { left: 93%; } 88%, 100% { left: 70%; } }
 @keyframes lp-turn { 0%, 38% { transform: rotate(0deg); } 42%, 88% { transform: rotate(180deg); } 92%, 100% { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .lp-bob { left: 82%; } }
+/* The student (the developer, also a tenant): down Mariano Abella St, along the front of Bob's house, in through the
+   door, a pause inside, then out and back the same way. Facing east in the drawing; --st-door is the door's x. */
+.lp-student { appearance: none; padding: 0; border: 0; background: none; font: inherit; --st-door: 32.3%; position: absolute; z-index: 5; left: 18.5%; top: 74%; width: 4.4%; transform: translate(-50%, -50%); opacity: 0; animation: lp-student-walk 48s linear infinite; cursor: pointer; }
+.lp-student::before { content: ""; position: absolute; inset: -.55rem; }
+.lp-student:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; border-radius: 50%; }
+.lp-student.is-open, .lp-student.is-open svg, .lp-student:focus-visible, .lp-student:focus-visible svg { animation-play-state: paused; }
+.lp-student:focus-visible .lp-bob-bubble { opacity: 1; transform: translate(-50%, 0); }
+.lp-student svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-student-turn 48s linear infinite; }
+.lp-student:hover, .lp-student:hover svg { animation-play-state: paused; }
+.lp-student:hover .lp-bob-bubble { opacity: 1; transform: translate(-50%, 0); }
+.st-leg { fill: #3b3f45; }
+.st-polo { fill: #8d939b; stroke: #646a72; stroke-width: 0.6; }
+.st-collar { fill: none; stroke: #646a72; stroke-width: 0.7; stroke-linecap: round; }
+.st-hand { fill: #e2b48a; }
+.st-hair { fill: #14110f; stroke: #000; stroke-width: 0.4; }
+.st-hair-shine { fill: rgb(255 255 255 / 22%); }
+/* Legend (top left) and the developer's profile card. */
+.lp-legend:not([open]) { padding-bottom: .35rem; }
+.lp-legend { position: absolute; z-index: 6; left: .5rem; top: .5rem; max-width: 52%; padding: .35rem .6rem .45rem; border: 1.5px solid rgb(255 255 255 / 25%); border-radius: .7rem; background: rgb(12 32 24 / 88%); color: #eef6f0; font-size: clamp(.5rem, .8vw, .7rem); line-height: 1.15; }
+.lp-legend summary { cursor: pointer; font: 700 clamp(.5rem, .85vw, .68rem) var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgb(238 246 240 / 78%); }
+.lp-legend ul { display: grid; grid-template-columns: repeat(2, auto); justify-content: start; gap: .12rem .9rem; margin: .25rem 0 0; padding: 0; list-style: none; }
+.lp-legend li { display: flex; align-items: center; gap: .4rem; font-weight: 600; white-space: nowrap; }
+.lp-legend-icon { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 2.2em; }
+.lp-legend-icon--wide { width: 3.4em; }
+.lp-legend-icon svg { display: block; width: 100%; height: auto; overflow: visible; }
+.lp-legend-dev { display: flex; align-items: center; gap: .45rem; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--amber); text-underline-offset: 3px; }
+.lp-legend-dev:focus-visible, .lp-legend summary:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: .3rem; }
+@media (max-width: 47.99rem) { .lp-legend { max-width: 92%; padding: .25rem .4rem .3rem; } .lp-legend ul { grid-template-columns: 1fr; gap: .15rem; } }
+@media (prefers-reduced-motion: reduce) { .lp-student { left: 18.5%; top: 90%; opacity: 1; visibility: visible; animation: none; } .lp-student svg { animation: none; transform: rotate(90deg); } }
+@keyframes lp-student-walk {
+  0% { left: 18.5%; top: 74%; opacity: 0; visibility: hidden; }
+  2% { left: 18.5%; top: 76%; opacity: 1; visibility: visible; }
+  13% { left: 18.5%; top: 96.8%; opacity: 1; }
+  30% { left: var(--st-door); top: 96.8%; opacity: 1; }
+  31% { left: var(--st-door); top: 96.8%; opacity: 0; visibility: hidden; }
+  60% { left: var(--st-door); top: 96.8%; opacity: 0; visibility: hidden; }
+  61% { left: var(--st-door); top: 96.8%; opacity: 1; visibility: visible; }
+  77% { left: 18.5%; top: 96.8%; opacity: 1; }
+  90% { left: 18.5%; top: 76%; opacity: 1; }
+  92% { left: 18.5%; top: 74%; opacity: 0; visibility: visible; }
+  93%, 100% { left: 18.5%; top: 74%; opacity: 0; visibility: hidden; }
+}
+@keyframes lp-student-turn {
+  0%, 13% { transform: rotate(90deg); }
+  15%, 60% { transform: rotate(0deg); }
+  60.1%, 77% { transform: rotate(180deg); }
+  79%, 100% { transform: rotate(270deg); }
+}
 /* Homes on the plan */
 .lp-plot { position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: .3rem; color: #fff; text-decoration: none; transition: transform 260ms var(--ease); }
 .lp-plot-tag { flex: none; display: grid; justify-items: center; max-width: 100%; padding: .2rem .6rem; border: 1.5px solid rgb(255 255 255 / 30%); border-radius: .6rem; background: rgb(12 32 24 / 82%); line-height: 1.15; transition: border-color 220ms ease, background-color 220ms ease; }
@@ -410,3 +476,34 @@
 .lp-sim { position: fixed; left: 50%; bottom: 1rem; z-index: 75; display: flex; align-items: center; gap: .4rem; max-width: calc(100% - 2rem); margin: 0; padding: 0 1.1rem; border-radius: 999px; background: var(--amber); color: var(--ink); font-weight: 700; box-shadow: 0 10px 30px -10px rgb(0 0 0 / 50%); transform: translateX(-50%); flex-wrap: wrap; justify-content: center; }
 .lp-sim a { display: inline-flex; align-items: center; min-height: 2.75rem; color: var(--ink) !important; text-decoration: underline; text-underline-offset: .2em; }
 .lp-sim a:focus-visible { outline-color: var(--ink); }
+
+/* Developer profile: a full-page card over the whole screen, so it is never cut off by the street plan. It sits outside
+   the landing root (a portal on the page body), so colours are written out here instead of using the landing variables. */
+.dev-backdrop { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: max(.75rem, env(safe-area-inset-top)) max(.75rem, env(safe-area-inset-right)) max(.75rem, env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left)); background: rgb(5 15 11 / 78%); backdrop-filter: blur(6px); animation: dev-fade 200ms ease both; }
+.dev-card { position: relative; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); width: min(52rem, 100%); max-height: calc(100dvh - 1.5rem); overflow: auto; overscroll-behavior: contain; border: 1.5px solid #ffbf1f; border-radius: 1.4rem; background: linear-gradient(160deg, #123327, #0b1f17 70%); color: #fff; box-shadow: 0 40px 90px -20px rgb(0 0 0 / 80%); animation: dev-rise 260ms cubic-bezier(.2, .8, .2, 1) both; }
+.dev-close { position: absolute; z-index: 2; right: .6rem; top: .6rem; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 1.5px solid rgb(255 255 255 / 35%); border-radius: 50%; background: rgb(8 22 16 / 78%); color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+.dev-close:hover { background: rgb(255 191 31 / 25%); }
+.dev-close:focus-visible { outline: 3px solid #ffbf1f; outline-offset: 2px; }
+.dev-photo { position: relative; min-height: 100%; margin: 0; overflow: hidden; background: #0b1f17; }
+.dev-photo img { display: block; width: 100%; height: 100%; min-height: 20rem; object-fit: contain; object-position: 50% 50%; }
+.dev-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgb(8 20 15 / 78%)); pointer-events: none; }
+.dev-photo figcaption { position: absolute; z-index: 1; left: .9rem; right: .9rem; bottom: .9rem; }
+.dev-tag { display: inline-block; padding: .35rem .8rem; border-radius: 999px; background: #ffbf1f; color: #10201a; font-weight: 800; font-size: .85rem; }
+.dev-body { display: grid; align-content: start; gap: .7rem; padding: 1.6rem 1.6rem 1.8rem; }
+.dev-eyebrow { margin: 0; color: #ffbf1f; font: 700 .78rem ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em; text-transform: uppercase; }
+.dev-card .dev-name { color: #fff; margin: 0; padding-right: 2.5rem; font-size: clamp(1.7rem, 4.5vw, 2.4rem); font-weight: 900; line-height: 1.05; letter-spacing: -.03em; }
+.dev-study { margin: 0; color: #dbece1; font-weight: 600; }
+.dev-aim { width: fit-content; margin: 0; padding: .3rem .75rem; border: 1px solid rgb(255 191 31 / 55%); border-radius: 999px; color: #ffe08a; font-weight: 700; font-size: .9rem; }
+.dev-group { display: grid; gap: .4rem; padding-top: .8rem; border-top: 1px solid rgb(255 255 255 / 14%); }
+.dev-card .dev-group h3 { margin: 0; color: #a9bfb3; font: 700 .72rem ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.dev-group ul { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+.dev-group li { padding: .28rem .7rem; border-radius: 999px; background: rgb(255 255 255 / 10%); font-weight: 600; font-size: .9rem; }
+@keyframes dev-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dev-rise { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (max-width: 44rem) {
+  .dev-card { grid-template-columns: 1fr; }
+  .dev-photo { min-height: 0; height: min(56dvh, 28rem); }
+  .dev-photo img { min-height: 0; }
+  .dev-body { padding: 1.2rem 1.2rem 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) { .dev-backdrop, .dev-card { animation: none; } }
