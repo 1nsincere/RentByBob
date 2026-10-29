@@ -5,7 +5,7 @@ const file = require('path').join(__dirname, '..', 'index.html')
 // Editorial intro: near-black green, film grain, a slow gold light, a large wordmark that rises out of masked lines, fine
 // hairlines and small monospace captions, an outlined marquee of the street, and a three-digit counter.
 const word = [['R', 0], ['e', 0], ['n', 0], ['t', 0], ['B', 1], ['y', 1], ['B', 0], ['o', 0], ['b', 0]]
-const letters = word.map(([ch, gold], i) => `<span class="in-l${gold ? ' in-it' : ''}"><b style="--i:${i}">${ch}</b></span>`).join('')
+const letters = word.map(([ch, gold], i) => `<span class="in-l${gold ? ' in-it' : ''}" style="--i:${i}"><b style="--i:${i}">${ch}</b></span>`).join('')
 const counterStrip = Array.from({ length: 101 }, (_, i) => `<i>${String(i).padStart(3, '0')}</i>`).join('')
 const marquee = 'Rooms for rent — B. Zubiri St. — Labangon — Cebu City — '.repeat(3)
 const grain = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")`
@@ -21,7 +21,12 @@ const html = `<!doctype html>
    part is transform or opacity. data-phase="dusk" (3 pm to 4 am, Cebu time) warms the light toward rose. */
 #intro { position: fixed; inset: 0; z-index: 2000; overflow: hidden; background: #07130e; color: #f3efe2; pointer-events: none; contain: layout paint; font-family: Inter, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
 #intro::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #ffbf1f; box-shadow: 0 0 30px 6px rgb(255 191 31 / 45%); opacity: 0; pointer-events: none; }
-#intro.is-leaving { transform: translate3d(0, -101%, 0); transition: transform 900ms ${ease}; }
+#intro.is-leaving { transform: translate3d(0, -101%, 0); transition: transform 900ms ${ease} 280ms; }
+/* Exit: the name splits apart from the middle and the logo lifts away, then the curtain rises. */
+#intro.is-leaving .in-l { transform: translateX(calc((var(--i) - 4) * 7vw)) scale(1.12); opacity: 0; transition: transform 800ms ${ease}, opacity 500ms ease 150ms; }
+#intro.is-leaving .in-it { transform: scale(1.5); }
+#intro.is-leaving .in-mark { transform: translateY(-12vh) scale(1.4); opacity: 0; transition: transform 800ms ${ease}, opacity 500ms ease; }
+#intro.is-leaving .in-rule, #intro.is-leaving .in-cap, #intro.is-leaving .in-marquee { opacity: 0 !important; transition: opacity 300ms ease; }
 #intro.is-leaving::after { opacity: 1; }
 #intro .in-vignette { position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 45%, #0e2a1f 0%, #07130e 58%, #030805 100%); }
 #intro .in-light { position: absolute; left: 50%; top: 46%; width: 70vmax; aspect-ratio: 1; margin: -35vmax 0 0 -35vmax; border-radius: 50%; background: radial-gradient(circle, rgb(255 191 31 / 22%) 0%, rgb(255 191 31 / 7%) 32%, transparent 62%); opacity: 0; animation: in-fade 2.4s ease 300ms forwards, in-drift 9s ease-in-out infinite alternate; }
@@ -38,7 +43,7 @@ const html = `<!doctype html>
 #intro .in-count-strip i { display: block; height: 1.25em; line-height: 1.25em; font-style: normal; }
 #intro .in-bar { position: absolute; left: clamp(.9rem, 2.4vw, 1.8rem); right: clamp(.9rem, 2.4vw, 1.8rem); bottom: clamp(.9rem, 2.4vw, 1.8rem); height: 1px; background: #ffbf1f; transform-origin: 0 50%; transform: scaleX(0); animation: in-load 3.8s cubic-bezier(.55, 0, .25, 1) 400ms forwards; box-shadow: 0 0 12px rgb(255 191 31 / 60%); }
 #intro .in-center { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: clamp(1rem, 2.6vh, 1.6rem); padding: 0 1rem; }
-#intro .in-mark { width: clamp(2.8rem, 6vw, 3.6rem); height: auto; overflow: visible; }
+#intro .in-mark { width: clamp(4.4rem, 9vw, 6.2rem); height: auto; overflow: visible; filter: drop-shadow(0 0 18px rgb(255 191 31 / 35%)); }
 #intro .in-mark path { fill: none; stroke: #ffbf1f; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 100; }
 #intro .in-roof { stroke-width: 3.6; animation: in-draw 1s ${ease} 400ms forwards; }
 #intro .in-b { stroke-width: 4; animation: in-draw 1.1s ${ease} 900ms forwards; }
@@ -54,7 +59,7 @@ const html = `<!doctype html>
 #intro .in-rule::before { transform-origin: 100% 50%; }
 #intro .in-rule::after { transform-origin: 0 50%; }
 #intro .in-rule span { white-space: nowrap; opacity: 0; animation: in-fade 900ms ease 2.4s forwards; }
-#intro .in-marquee { position: absolute; left: 0; bottom: clamp(4.6rem, 15vh, 9rem); white-space: nowrap; font-weight: 800; font-size: clamp(2.4rem, 8vw, 6rem); letter-spacing: -.04em; text-transform: uppercase; color: transparent; -webkit-text-stroke: 1px rgb(243 239 226 / 9%); opacity: 0; animation: in-fade 1.6s ease 1.4s forwards, in-marquee 40s linear infinite; }
+#intro .in-marquee { position: absolute; left: 0; bottom: clamp(4.6rem, 15vh, 9rem); white-space: nowrap; font-weight: 800; font-size: clamp(1.4rem, 4.2vw, 3.2rem); letter-spacing: -.02em; text-transform: uppercase; color: transparent; -webkit-text-stroke: 1px rgb(243 239 226 / 5%); opacity: 0; animation: in-fade 1.6s ease 1.4s forwards, in-marquee 40s linear infinite; }
 @keyframes in-fade { to { opacity: 1; } }
 @keyframes in-draw { to { stroke-dashoffset: 0; } }
 @keyframes in-up { to { transform: none; } }
@@ -81,6 +86,7 @@ const html = `<!doctype html>
   #intro .in-frame { clip-path: none; }
   #intro .in-count-strip { transform: translateY(-99.0099%); }
   #intro.is-leaving { transform: none; opacity: 0; transition: opacity 250ms ease; }
+  #intro.is-leaving .in-l, #intro.is-leaving .in-mark { transform: none; transition: none; }
 }
 </style></head><body>
 <div id="intro" aria-hidden="true">

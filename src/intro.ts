@@ -51,7 +51,7 @@ export function finishIntro() {
     const ms = quick ? QUICK_WIPE_MS : wipeMs
     if (!reduced) intro.style.transitionDuration = `${ms}ms`
     intro.classList.add('is-leaving')
-    window.setTimeout(() => { intro.remove(); window.removeEventListener('pointermove', move) }, reduced ? 300 : ms + 60)
+    window.setTimeout(() => { intro.remove(); window.removeEventListener('pointermove', move) }, reduced ? 300 : ms + 340) // the curtain waits 280 ms for the name to split
   }
   skip?.addEventListener('click', () => leave(true))
 
