@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { text, type Language } from '../i18n'
 import './facade.css'
 
@@ -238,16 +238,12 @@ function Motorbike({ x, pillion, jt }: { x: number; pillion?: boolean; jt?: bool
   </g>
 }
 
-function Vehicle({ ride }: { ride: Ride }) {
-  const L = LENGTH[ride.kind]
-  const vertical = ride.heading === 'n' || ride.heading === 's'
-  const turn = { e: undefined, w: `translate(${L},0) scale(-1,1)`, n: `translate(0,${L}) rotate(-90)`, s: `translate(20,0) rotate(90)` }[ride.heading]
-  return <span className={`lp-lane lp-lane--${ride.heading}`} style={{ '--dur': `${ride.duration}s`, '--delay': `${ride.delay}s`, '--rest': `${ride.rest}%` } as CSSProperties}>
-    <svg viewBox={vertical ? `2 0 16 ${L}` : `0 2 ${L} 16`} aria-hidden="true" focusable="false"><g transform={turn}>
-      {ride.kind === 'moveit' && <>
-        <Motorbike x={0} pillion={ride.pillion} />
+function RideArt({ kind, pillion }: { kind: Ride['kind']; pillion?: boolean }) {
+  return <>
+      {kind === 'moveit' && <>
+        <Motorbike x={0} pillion={pillion} />
       </>}
-      {ride.kind === 'jt' && <>
+      {kind === 'jt' && <>
         <rect className="v-cart-jt" x="1" y="1.5" width="24" height="17" rx="1.6" />
         <rect className="v-cart-floor" x="2.6" y="3.1" width="20.8" height="13.8" rx="1" />
         <rect className="v-jtbox" x="4" y="4.4" width="8" height="5.4" rx="0.8" /><line className="v-jttape" x1="8" y1="4.4" x2="8" y2="9.8" />
@@ -257,7 +253,7 @@ function Vehicle({ ride }: { ride: Ride }) {
         <line className="v-hitch" x1="25" y1="10" x2="30" y2="10" />
         <Motorbike x={22} jt />
       </>}
-      {ride.kind === 'pandesal' && <>
+      {kind === 'pandesal' && <>
         <circle className="v-tank" cx="3.6" cy="5.6" r="3.2" /><circle className="v-tank" cx="3.6" cy="14.4" r="3.2" />
         <rect className="v-cart" x="7" y="1.5" width="28" height="17" rx="2" />
         {[11, 15, 19, 23, 27, 31].map(x => <line key={x} className="v-rib" x1={x} y1="2.5" x2={x} y2="17.5" />)}
@@ -269,16 +265,23 @@ function Vehicle({ ride }: { ride: Ride }) {
         <ellipse className="v-vendor" cx="49" cy="10" rx="3.6" ry="5.2" /><circle className="v-hair" cx="50.4" cy="10" r="2.9" />
         <circle className="v-light" cx="59" cy="10" r="1.2" />
       </>}
+  </>
+}
+
+function Vehicle({ ride }: { ride: Ride }) {
+  const L = LENGTH[ride.kind]
+  const vertical = ride.heading === 'n' || ride.heading === 's'
+  const turn = { e: undefined, w: `translate(${L},0) scale(-1,1)`, n: `translate(0,${L}) rotate(-90)`, s: `translate(20,0) rotate(90)` }[ride.heading]
+  return <span className={`lp-lane lp-lane--${ride.heading}`} style={{ '--dur': `${ride.duration}s`, '--delay': `${ride.delay}s`, '--rest': `${ride.rest}%` } as CSSProperties}>
+    <svg viewBox={vertical ? `2 0 16 ${L}` : `0 2 ${L} 16`} aria-hidden="true" focusable="false"><g transform={turn}>
+      <RideArt kind={ride.kind} pillion={ride.pillion} />
     </g></svg>
   </span>
 }
 
 // Bob: short, bald and always with his sungkod (walking stick). Drawn from above, facing east; he strolls the shoulder
 // in front of his house, stopping now and then to look around.
-function Bob({ label }: { label: string }) {
-  return <span className="lp-bob" tabIndex={0} role="img" aria-label={label}>
-    <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
-    <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false">
+const BobArt = () => <>
       <ellipse className="bob-shadow" cx="12" cy="11" rx="10" ry="8.5" />
       <ellipse className="bob-foot bob-foot--a" cx="11" cy="6.6" rx="3" ry="1.7" /><ellipse className="bob-foot bob-foot--b" cx="11" cy="13.4" rx="3" ry="1.7" />
       <ellipse className="bob-shirt" cx="12" cy="10" rx="4.2" ry="7.6" />
@@ -286,16 +289,19 @@ function Bob({ label }: { label: string }) {
       <g className="bob-cane"><line x1="14" y1="17" x2="25" y2="17" /><circle cx="25" cy="17" r="0.9" /><circle className="bob-hand" cx="14" cy="17" r="1.5" /></g>
       <circle className="bob-ear" cx="12.6" cy="5.9" r="1.1" /><circle className="bob-ear" cx="12.6" cy="14.1" r="1.1" />
       <circle className="bob-head" cx="13" cy="10" r="4.4" /><ellipse className="bob-shine" cx="11.8" cy="8.4" rx="1.8" ry="1.1" />
+</>
+function Bob({ label }: { label: string }) {
+  return <span className="lp-bob" tabIndex={0} role="img" aria-label={label}>
+    <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
+    <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false">
+      <BobArt />
     </svg>
   </span>
 }
 
 // The developer, who is also a tenant: a student with black hair, a gray polo and dark gray pants. He walks down Mariano
 // Abella St, along the front of Bob's house, goes in through the door, and later comes back out the same way.
-function Student({ label }: { label: string }) {
-  return <span className="lp-student" role="img" aria-label={label}>
-    <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
-    <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false">
+const StudentArt = () => <>
       <ellipse className="bob-shadow" cx="12" cy="11" rx="10" ry="8.5" />
       <ellipse className="st-leg bob-foot bob-foot--a" cx="11" cy="7" rx="4.2" ry="2.1" /><ellipse className="st-leg bob-foot bob-foot--b" cx="11" cy="13" rx="4.2" ry="2.1" />
       <ellipse className="st-polo" cx="12" cy="10" rx="4" ry="7.4" />
@@ -303,8 +309,56 @@ function Student({ label }: { label: string }) {
       <circle className="st-hand" cx="14.6" cy="3.6" r="1.1" /><circle className="st-hand" cx="14.6" cy="16.4" r="1.1" />
       <path className="st-collar" d="M14.4 7 L16 10 L14.4 13" />
       <circle className="st-hair" cx="13" cy="10" r="4.4" /><ellipse className="st-hair-shine" cx="11.8" cy="8.6" rx="1.7" ry="1" />
+</>
+
+// The developer's profile card. Add rows to credentials to show more; with none, only the name and role show.
+export const DEVELOPER = {
+  name: 'AceGrant Kyamko',
+  initials: 'AK',
+  role: { en: 'Developer of RentByBob', bis: 'Developer sa RentByBob' },
+  note: { en: "Also a tenant at Bob's house", bis: 'Nag-abang sad sa balay ni Bob' },
+  credentials: [] as { label: { en: string; bis: string }; value: string }[],
+}
+
+function Student({ label, open, onToggle, tr }: { label: string; open: boolean; onToggle: () => void; tr: (english: string, bisaya: string) => string }) {
+  return <button type="button" className={`lp-student${open ? ' is-open' : ''}`} aria-label={`${label}. ${tr('Show profile', 'Ipakita ang profile')}`} aria-expanded={open} aria-controls="lp-dev-card" onClick={onToggle}>
+    <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
+    <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false">
+      <StudentArt />
     </svg>
-  </span>
+  </button>
+}
+
+function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (english: string, bisaya: string) => string; language: Language }) {
+  return <section id="lp-dev-card" className="lp-dev-card" aria-label={tr('Developer profile', 'Profile sa developer')}>
+    <button type="button" className="lp-dev-close" onClick={onClose} aria-label={tr('Close profile', 'Isira ang profile')}><span aria-hidden="true">×</span></button>
+    <div className="lp-dev-top">
+      <span className="lp-dev-avatar" aria-hidden="true">{DEVELOPER.initials}</span>
+      <div><strong className="lp-dev-name">{DEVELOPER.name}</strong><span className="lp-dev-role">{text(language, DEVELOPER.role.en, DEVELOPER.role.bis)}</span></div>
+    </div>
+    <p className="lp-dev-note">{text(language, DEVELOPER.note.en, DEVELOPER.note.bis)}</p>
+    {DEVELOPER.credentials.length > 0 && <dl className="lp-dev-creds">
+      {DEVELOPER.credentials.map(row => <div key={row.value}><dt>{text(language, row.label.en, row.label.bis)}</dt><dd>{row.value}</dd></div>)}
+    </dl>}
+  </section>
+}
+
+// Who is who on the street, drawn with the same pictures that move on the plan.
+function Legend({ tr, onDeveloper }: { tr: (english: string, bisaya: string) => string; onDeveloper: () => void }) {
+  const bike = (kind: Ride['kind'], width: number, pillion?: boolean) => <svg viewBox={`0 2 ${width} 16`} aria-hidden="true" focusable="false"><RideArt kind={kind} pillion={pillion} /></svg>
+  const person = (art: ReactNode) => <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false">{art}</svg>
+  // Open on wide screens; collapsed on phones, where the plan is too small to spare the room.
+  const [open, setOpen] = useState(() => typeof window === 'undefined' || !window.matchMedia || window.matchMedia('(min-width: 48rem)').matches)
+  return <details className="lp-legend" open={open} onToggle={event => setOpen(event.currentTarget.open)}>
+    <summary>{tr('Who is who', 'Kinsa-kinsa')}</summary>
+    <ul>
+      <li><span className="lp-legend-icon">{bike('moveit', 36, true)}</span>{tr('Move It rider', 'Move It rider')}</li>
+      <li><span className="lp-legend-icon lp-legend-icon--wide">{bike('jt', 58)}</span>{tr('J&T rider with parcels', 'J&T rider nga naay parcel')}</li>
+      <li><span className="lp-legend-icon lp-legend-icon--wide">{bike('pandesal', 60)}</span>{tr('Pandesal cart', 'Karton sa pandesal')}</li>
+      <li><span className="lp-legend-icon">{person(<BobArt />)}</span>{tr('Bob, with his sungkod', 'Si Bob, naay sungkod')}</li>
+      <li><button type="button" className="lp-legend-dev" onClick={onDeveloper}><span className="lp-legend-icon">{person(<StudentArt />)}</span>{tr('Developer and tenant (tap)', 'Developer ug nag-abang (i-tap)')}</button></li>
+    </ul>
+  </details>
 }
 
 const TREES = [[1, 71, 9], [6, 86, 6], [70, 70, 7], [79, 79, 10], [90, 68, 7], [89, 87, 7], [71, 87, 5]]
@@ -315,7 +369,14 @@ export const statusText = (language: Language, known: boolean, lit: number) => !
 // The whole street: roads, lamps, trees, traffic and the four homes (each a link to the open rooms).
 export function StreetPlan({ openByBuilding, known, active, setActive, language }: { openByBuilding: Map<string, string[]>; known: boolean; active: string; setActive: (label: string) => void; language: Language }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
-  return <div className="lp-plan" role="group" aria-label={tr('Site plan on B. Zubiri St and Mariano Abella St. Glowing doors and windows are spaces open now. Choose a home to see rooms.', 'Plano sa B. Zubiri St ug Mariano Abella St. Ang nagsiga nga pultahan ug bintana bakante karon. Pilia ang balay aron makita ang kwarto.')}>
+  const [profile, setProfile] = useState(false)
+  useEffect(() => {
+    if (!profile) return
+    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setProfile(false) }
+    window.addEventListener('keydown', close)
+    return () => window.removeEventListener('keydown', close)
+  }, [profile])
+  return <div className={`lp-plan${profile ? ' has-profile' : ''}`} role="group" aria-label={tr('Site plan on B. Zubiri St and Mariano Abella St. Glowing doors and windows are spaces open now. Choose a home to see rooms.', 'Plano sa B. Zubiri St ug Mariano Abella St. Ang nagsiga nga pultahan ug bintana bakante karon. Pilia ang balay aron makita ang kwarto.')}>
     <span className="lp-plan-road lp-plan-road--main" aria-hidden="true"><b>B. ZUBIRI ST.</b></span>
     <span className="lp-plan-road lp-plan-road--side" aria-hidden="true"><b><span className="lp-road-long">MARIANO ABELLA ST.</span><span className="lp-road-short">M. ABELLA ST.</span></b></span>
     {LAMPS.map(([left, side]) => <span key={`${left}${side}`} className={`lp-lamp lp-lamp--${side}`} style={{ left: `${left}%` } as CSSProperties} aria-hidden="true" />)}
@@ -325,7 +386,9 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
     </svg>)}
     {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} />)}
     <Bob label={tr('This is Bob', 'Kini si Bob')} />
-    <Student label={tr('The developer, and a tenant here too', 'Ang developer, ug nag-abang sad dinhi')} />
+    <Student label={tr('The developer, and a tenant here too', 'Ang developer, ug nag-abang sad dinhi')} open={profile} onToggle={() => setProfile(open => !open)} tr={tr} />
+    <Legend tr={tr} onDeveloper={() => setProfile(true)} />
+    {profile && <ProfileCard onClose={() => setProfile(false)} tr={tr} language={language} />}
     {SITE.map(site => {
       const open = (openByBuilding.get(site.label) ?? []).slice(0, site.spaces)
       const lit = open.length

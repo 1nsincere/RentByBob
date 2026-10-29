@@ -244,10 +244,14 @@
 @keyframes lp-step { from { transform: translateX(-2.2px); } to { transform: translateX(2.2px); } }
 @keyframes lp-stroll { 0%, 6% { left: 70%; } 38%, 48% { left: 93%; } 88%, 100% { left: 70%; } }
 @keyframes lp-turn { 0%, 38% { transform: rotate(0deg); } 42%, 88% { transform: rotate(180deg); } 92%, 100% { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .lp-bob { left: 82%; } .lp-student { display: none; } }
+@media (prefers-reduced-motion: reduce) { .lp-bob { left: 82%; } }
 /* The student (the developer, also a tenant): down Mariano Abella St, along the front of Bob's house, in through the
    door, a pause inside, then out and back the same way. Facing east in the drawing; --st-door is the door's x. */
-.lp-student { --st-door: 32.3%; position: absolute; z-index: 5; left: 18.5%; top: 74%; width: 4.4%; transform: translate(-50%, -50%); opacity: 0; animation: lp-student-walk 48s linear infinite; cursor: help; }
+.lp-student { appearance: none; padding: 0; border: 0; background: none; font: inherit; --st-door: 32.3%; position: absolute; z-index: 5; left: 18.5%; top: 74%; width: 4.4%; transform: translate(-50%, -50%); opacity: 0; animation: lp-student-walk 48s linear infinite; cursor: pointer; }
+.lp-student::before { content: ""; position: absolute; inset: -.55rem; }
+.lp-student:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; border-radius: 50%; }
+.lp-student.is-open, .lp-student.is-open svg, .lp-student:focus-visible, .lp-student:focus-visible svg { animation-play-state: paused; }
+.lp-student:focus-visible .lp-bob-bubble { opacity: 1; transform: translate(-50%, 0); }
 .lp-student svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-student-turn 48s linear infinite; }
 .lp-student:hover, .lp-student:hover svg { animation-play-state: paused; }
 .lp-student:hover .lp-bob-bubble { opacity: 1; transform: translate(-50%, 0); }
@@ -257,18 +261,44 @@
 .st-hand { fill: #e2b48a; }
 .st-hair { fill: #14110f; stroke: #000; stroke-width: 0.4; }
 .st-hair-shine { fill: rgb(255 255 255 / 22%); }
+/* Legend (top left) and the developer's profile card. */
+.lp-legend:not([open]) { padding-bottom: .35rem; }
+.lp-legend { position: absolute; z-index: 6; left: .5rem; top: .5rem; max-width: 52%; padding: .35rem .6rem .45rem; border: 1.5px solid rgb(255 255 255 / 25%); border-radius: .7rem; background: rgb(12 32 24 / 88%); color: #eef6f0; font-size: clamp(.5rem, .8vw, .7rem); line-height: 1.15; }
+.lp-legend summary { cursor: pointer; font: 700 clamp(.5rem, .85vw, .68rem) var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgb(238 246 240 / 78%); }
+.lp-legend ul { display: grid; grid-template-columns: repeat(2, auto); justify-content: start; gap: .12rem .9rem; margin: .25rem 0 0; padding: 0; list-style: none; }
+.lp-legend li { display: flex; align-items: center; gap: .4rem; font-weight: 600; white-space: nowrap; }
+.lp-legend-icon { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 2.2em; }
+.lp-legend-icon--wide { width: 3.4em; }
+.lp-legend-icon svg { display: block; width: 100%; height: auto; overflow: visible; }
+.lp-legend-dev { display: flex; align-items: center; gap: .45rem; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--amber); text-underline-offset: 3px; }
+.lp-legend-dev:focus-visible, .lp-legend summary:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: .3rem; }
+.lp-dev-card { position: absolute; z-index: 8; right: 3%; top: 5%; width: min(19rem, 86%); padding: 1rem 1.1rem 1.1rem; border: 1.5px solid var(--amber); border-radius: 1rem; background: rgb(12 32 24 / 97%); color: #fff; box-shadow: 0 24px 50px -16px rgb(0 0 0 / 70%); animation: lp-card-in 220ms ease both; }
+.lp-dev-top { display: flex; align-items: center; gap: .8rem; padding-right: 2rem; }
+.lp-dev-avatar { display: grid; flex: none; place-items: center; width: 3.2rem; height: 3.2rem; border: 2px solid var(--amber); border-radius: 50%; background: #14110f; color: #fff; font: 800 1.05rem var(--mono); }
+.lp-dev-name { display: block; font-weight: 900; font-size: 1.1rem; line-height: 1.15; }
+.lp-dev-role { display: block; margin-top: .15rem; color: var(--amber); font-weight: 700; font-size: .85rem; }
+.lp-dev-note { margin: .7rem 0 0; color: rgb(238 246 240 / 86%); font-size: .9rem; }
+.lp-dev-creds { display: grid; gap: .5rem; margin: .8rem 0 0; padding-top: .7rem; border-top: 1px solid rgb(255 255 255 / 18%); }
+.lp-dev-creds dt { font: 600 .68rem var(--mono); text-transform: uppercase; letter-spacing: .1em; color: rgb(238 246 240 / 65%); }
+.lp-dev-creds dd { margin: .1rem 0 0; font-weight: 700; font-size: .95rem; }
+.lp-dev-close { position: absolute; right: .35rem; top: .35rem; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 0; border-radius: 50%; background: none; color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+.lp-dev-close:hover { background: rgb(255 255 255 / 12%); }
+.lp-dev-close:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+@keyframes lp-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 47.99rem) { .lp-legend { max-width: 92%; padding: .25rem .4rem .3rem; } .lp-legend ul { grid-template-columns: 1fr; gap: .15rem; } .lp-dev-card { right: 4%; left: 4%; width: auto; } }
+@media (prefers-reduced-motion: reduce) { .lp-dev-card { animation: none; } .lp-student { left: 18.5%; top: 90%; opacity: 1; visibility: visible; animation: none; } .lp-student svg { animation: none; transform: rotate(90deg); } }
 @keyframes lp-student-walk {
-  0% { left: 18.5%; top: 74%; opacity: 0; }
-  2% { left: 18.5%; top: 76%; opacity: 1; }
+  0% { left: 18.5%; top: 74%; opacity: 0; visibility: hidden; }
+  2% { left: 18.5%; top: 76%; opacity: 1; visibility: visible; }
   13% { left: 18.5%; top: 96.8%; opacity: 1; }
   30% { left: var(--st-door); top: 96.8%; opacity: 1; }
-  31% { left: var(--st-door); top: 96.8%; opacity: 0; }
-  60% { left: var(--st-door); top: 96.8%; opacity: 0; }
-  61% { left: var(--st-door); top: 96.8%; opacity: 1; }
+  31% { left: var(--st-door); top: 96.8%; opacity: 0; visibility: hidden; }
+  60% { left: var(--st-door); top: 96.8%; opacity: 0; visibility: hidden; }
+  61% { left: var(--st-door); top: 96.8%; opacity: 1; visibility: visible; }
   77% { left: 18.5%; top: 96.8%; opacity: 1; }
   90% { left: 18.5%; top: 76%; opacity: 1; }
-  92% { left: 18.5%; top: 74%; opacity: 0; }
-  100% { left: 18.5%; top: 74%; opacity: 0; }
+  92% { left: 18.5%; top: 74%; opacity: 0; visibility: visible; }
+  93%, 100% { left: 18.5%; top: 74%; opacity: 0; visibility: hidden; }
 }
 @keyframes lp-student-turn {
   0%, 13% { transform: rotate(90deg); }
