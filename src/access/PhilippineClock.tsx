@@ -15,7 +15,7 @@ const iso = (year: number, month: number, day: number) => `${year}-${String(mont
 // unpaid rent due are marked (staff-only rent data; nothing is shown if it cannot be read).
 export function PhilippineClock({ propertyId, language = 'en' }: { propertyId?: string; language?: Language }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
-  const locale = language === 'ceb' ? 'fil-PH' : 'en-PH'
+  const locale = language === 'fil' ? 'fil-PH' : 'en-PH'
   const [now, setNow] = useState(() => new Date())
   useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), 1000); return () => window.clearInterval(timer) }, [])
   const today = manilaParts(now)
@@ -48,16 +48,16 @@ export function PhilippineClock({ propertyId, language = 'en' }: { propertyId?: 
 
   return <section className="card ph-clock" aria-labelledby="ph-clock-heading">
     <div className="ph-clock-now">
-      <p className="eyebrow" id="ph-clock-heading">{tr('PHILIPPINE TIME', 'ORAS SA PILIPINAS')}</p>
+      <p className="eyebrow" id="ph-clock-heading">{tr('PHILIPPINE TIME', 'ORAS NG PILIPINAS')}</p>
       <time className="ph-clock-time" dateTime={now.toISOString()} aria-live="off">{time}</time>
       <p className="ph-clock-date">{date}</p>
-      <p className="field-help">{tr('All dates in this app use Philippine time.', 'Ang tanang petsa niini nga app naggamit sa oras sa Pilipinas.')}{propertyId && dueThisMonth > 0 ? ` ${dueThisMonth} ${tr(dueThisMonth === 1 ? 'unpaid rent due date this month.' : 'unpaid rent due dates this month.', 'ka wala pa mabayri nga petsa sa abang karong bulana.')}` : ''}</p>
+      <p className="field-help">{tr('All dates in this app use Philippine time.', 'Ang lahat ng petsa sa app na ito ay gumagamit ng oras ng Pilipinas.')}{propertyId && dueThisMonth > 0 ? ` ${dueThisMonth} ${tr(dueThisMonth === 1 ? 'unpaid rent due date this month.' : 'unpaid rent due dates this month.', 'hindi pa nababayarang takdang petsa ng upa ngayong buwan.')}` : ''}</p>
     </div>
     <div className="ph-calendar">
       <div className="ph-calendar-head">
-        <button type="button" className="button quiet-button" onClick={() => shift(-1)} aria-label={tr('Previous month', 'Miaging bulan')}>‹</button>
+        <button type="button" className="button quiet-button" onClick={() => shift(-1)} aria-label={tr('Previous month', 'Nakaraang buwan')}>‹</button>
         <strong aria-live="polite">{monthName}</strong>
-        <button type="button" className="button quiet-button" onClick={() => shift(1)} aria-label={tr('Next month', 'Sunod nga bulan')}>›</button>
+        <button type="button" className="button quiet-button" onClick={() => shift(1)} aria-label={tr('Next month', 'Susunod na buwan')}>›</button>
       </div>
       <table>
         <caption className="sr-only">{monthName}</caption>
@@ -68,12 +68,12 @@ export function PhilippineClock({ propertyId, language = 'en' }: { propertyId?: 
           const isToday = isCurrentMonth && day === today.day
           const count = due[key] ?? 0
           return <td key={column} className={`${isToday ? 'is-today' : ''}${count ? ' has-due' : ''}`} aria-current={isToday ? 'date' : undefined}
-            aria-label={`${day}${isToday ? `, ${tr('today', 'karon')}` : ''}${count ? `, ${count} ${tr(count === 1 ? 'rent due' : 'rents due', 'ka abang bayranan')}` : ''}`}>
+            aria-label={`${day}${isToday ? `, ${tr('today', 'ngayon')}` : ''}${count ? `, ${count} ${tr(count === 1 ? 'rent due' : 'rents due', 'upang babayaran')}` : ''}`}>
             <span>{day}</span>{count > 0 && <i aria-hidden="true" />}
           </td>
         })}</tr>)}</tbody>
       </table>
-      {!isCurrentMonth && <button type="button" className="button quiet-button ph-today" onClick={() => setView({ year: today.year, month: today.month })}>{tr('Back to today', 'Balik karon')}</button>}
+      {!isCurrentMonth && <button type="button" className="button quiet-button ph-today" onClick={() => setView({ year: today.year, month: today.month })}>{tr('Back to today', 'Bumalik sa ngayon')}</button>}
     </div>
   </section>
 }

@@ -41,50 +41,50 @@ function LocationMaintenance({
       })
       if (error) {
         setError(error.code === '23505'
-          ? tr('That active name is already in use. Choose another location name.', 'Gigamit na ang maong aktibong ngalan. Pagpili og laing ngalan.')
+          ? tr('That active name is already in use. Choose another location name.', 'Ginagamit na ang aktibong pangalang iyon. Pumili ng ibang pangalan.')
           : error.code === '42501'
-            ? tr('Owner access and MFA are required to change locations.', 'Kinahanglan ang access sa tag-iya ug MFA aron usbon ang lokasyon.')
-            : tr('Change could not be confirmed. Refresh the directory before retrying; archived records cannot be changed.', 'Wala makumpirma ang kausaban. I-refresh una ang lista; dili mausab ang gi-archive nga rekord.'))
+            ? tr('Owner access and MFA are required to change locations.', 'Kailangan ang access ng may-ari at MFA para baguhin ang lokasyon.')
+            : tr('Change could not be confirmed. Refresh the directory before retrying; archived records cannot be changed.', 'Hindi makumpirma ang pagbabago. I-refresh muna ang listahan; hindi mababago ang naka-archive na talaan.'))
         return
       }
       setReason('')
-      setMessage(action === 'rename' ? tr('Location renamed.', 'Gi-usab ang ngalan sa lokasyon.') : tr('Location archived; its history is retained.', 'Gi-archive ang lokasyon ug gipabilin ang kasaysayan niini.'))
+      setMessage(action === 'rename' ? tr('Location renamed.', 'Binago ang pangalan ng lokasyon.') : tr('Location archived; its history is retained.', 'Na-archive ang lokasyon at pinanatili ang kasaysayan nito.'))
       onSaved()
     } catch {
-      setError(tr('Change could not be confirmed. Refresh the directory before retrying; archived records cannot be changed.', 'Wala makumpirma ang kausaban. I-refresh una ang lista; dili mausab ang gi-archive nga rekord.'))
+      setError(tr('Change could not be confirmed. Refresh the directory before retrying; archived records cannot be changed.', 'Hindi makumpirma ang pagbabago. I-refresh muna ang listahan; hindi mababago ang naka-archive na talaan.'))
     } finally {
       setConfirmArchive(false)
       setBusy(false)
     }
   }
 
-  if (archivedAt) return <p className="small">{tr('Archived; retained for history.', 'Gi-archive; gipabilin ang kasaysayan.')}</p>
+  if (archivedAt) return <p className="small">{tr('Archived; retained for history.', 'Na-archive; pinanatili ang kasaysayan.')}</p>
 
   const nameId = `location-name-${locationId}`
   const reasonId = `location-reason-${locationId}`
-  const labelForKind = building ? tr('building or section', 'bilding o seksyon') : tr('unit', 'kwarto')
+  const labelForKind = building ? tr('building or section', 'gusali o seksyon') : tr('unit', 'kuwarto')
 
   return <div className="divider">
     <Feedback message={error} error />
     <Feedback message={message} />
-    <label htmlFor={nameId}>{tr('Location name', 'Ngalan sa lokasyon')}</label>
+    <label htmlFor={nameId}>{tr('Location name', 'Pangalan ng lokasyon')}</label>
     <input id={nameId} value={name} maxLength={200} onChange={event => { setName(event.target.value); setConfirmArchive(false) }} />
-    <label htmlFor={reasonId}>{tr('Reason for this change', 'Rason sa kausaban')}</label>
+    <label htmlFor={reasonId}>{tr('Reason for this change', 'Dahilan ng pagbabago')}</label>
     <input id={reasonId} value={reason} maxLength={500} onChange={event => { setReason(event.target.value); setConfirmArchive(false) }} required />
     <Button disabled={busy || !name.trim() || !reason.trim()} onClick={() => void save('rename')}>
-      {busy ? tr('Saving…', 'Gi-save…') : `${tr('Save', 'I-save')} ${labelForKind} ${tr('name', 'nga ngalan')}`}
+      {busy ? tr('Saving…', 'Sine-save…') : `${tr('Save', 'I-save')} ${labelForKind} ${tr('name', 'na pangalan')}`}
     </Button>
-    {confirmArchive && <div className="notice archive-confirmation" role="group" aria-label={tr('Archive confirmation', 'Kumpirmasyon sa pag-archive')}>
-      <h3>{tr('Confirm archive:', 'Kumpirmaha ang pag-archive:')} {label}</h3>
+    {confirmArchive && <div className="notice archive-confirmation" role="group" aria-label={tr('Archive confirmation', 'Kumpirmasyon ng pag-archive')}>
+      <h3>{tr('Confirm archive:', 'Kumpirmahin ang pag-archive:')} {label}</h3>
       <p>{building
-        ? `${tr('This will archive', 'I-archive niini ang')} “${label}” ${tr('and every unit within it. The building, units and their history remain in the directory. This cannot be undone in the app.', 'ug tanang kwarto niini. Magpabilin sa lista ang bilding, mga kwarto ug kasaysayan niini. Dili kini ma-undo sa app.')}`
-        : `${tr('This will archive', 'I-archive niini ang')} “${label}”. ${tr('The unit and its history remain in the directory. This cannot be undone in the app.', 'Magpabilin sa lista ang kwarto ug kasaysayan niini. Dili kini ma-undo sa app.')}`}</p>
+        ? `${tr('This will archive', 'Ia-archive nito ang')} “${label}” ${tr('and every unit within it. The building, units and their history remain in the directory. This cannot be undone in the app.', 'at lahat ng kuwarto nito. Mananatili sa listahan ang gusali, mga kuwarto at kasaysayan nito. Hindi ito ma-undo sa app.')}`
+        : `${tr('This will archive', 'Ia-archive nito ang')} “${label}”. ${tr('The unit and its history remain in the directory. This cannot be undone in the app.', 'Mananatili sa listahan ang kuwarto at kasaysayan nito. Hindi ito ma-undo sa app.')}`}</p>
     </div>}
     <Button disabled={busy || !reason.trim()} onClick={() => {
       if (confirmArchive) void save('archive')
       else setConfirmArchive(true)
     }}>
-      {confirmArchive ? tr('Confirm archive', 'Kumpirmaha ang pag-archive') : building ? tr('Archive building and all its units', 'I-archive ang bilding ug tanang kwarto niini') : tr('Archive unit', 'I-archive ang kwarto')}
+      {confirmArchive ? tr('Confirm archive', 'Kumpirmahin ang pag-archive') : building ? tr('Archive building and all its units', 'I-archive ang gusali at lahat ng kuwarto nito') : tr('Archive unit', 'I-archive ang kuwarto')}
     </Button>
   </div>
 }
@@ -119,7 +119,7 @@ export function PropertyDirectory({ propertyId, owner, language = 'en' }: { prop
     } catch {
       setBuildings([])
       setUnits([])
-      setError(text(languageRef.current, 'Property directory could not be loaded. No sample locations are substituted.', 'Wala makarga ang lista sa propiedad. Walay sample nga gipuli.'))
+      setError(text(languageRef.current, 'Property directory could not be loaded. No sample locations are substituted.', 'Hindi ma-load ang listahan ng property. Walang halimbawang ipinalit.'))
       setLoaded(false)
     } finally {
       setLoading(false)
@@ -130,31 +130,31 @@ export function PropertyDirectory({ propertyId, owner, language = 'en' }: { prop
   const visibleLocationCount = countPropertyLocations(visibleBuildings)
 
   return <section className="card form-card" aria-labelledby="property-locations-heading">
-    <p className="eyebrow">{language === 'ceb' ? 'LISTA SA PROPIEDAD' : 'PROPERTY DIRECTORY'}</p>
+    <p className="eyebrow">{language === 'fil' ? 'LISTAHAN NG PROPERTY' : 'PROPERTY DIRECTORY'}</p>
     <h2 id="property-locations-heading">{t.buildings}</h2>
     <p>{t.propertyDirectory}</p>
     <Feedback message={error} error />
     <Feedback message={message} />
-    {loading && !loaded && !error && <LoadingSkeleton label={tr('Loading property locations…', 'Gikarga ang mga lokasyon…')} rows={3} />}
-    <Button className="secondary-button" disabled={loading} onClick={() => void load()}>{loading ? tr('Refreshing locations…', 'Gi-refresh ang mga lokasyon…') : tr('Refresh locations', 'I-refresh ang mga lokasyon')}</Button>
+    {loading && !loaded && !error && <LoadingSkeleton label={tr('Loading property locations…', 'Nilo-load ang mga lokasyon…')} rows={3} />}
+    <Button className="secondary-button" disabled={loading} onClick={() => void load()}>{loading ? tr('Refreshing locations…', 'Nire-refresh ang mga lokasyon…') : tr('Refresh locations', 'I-refresh ang mga lokasyon')}</Button>
     {loaded && buildings.length > 0 && <div className="property-directory-search">
-      <label htmlFor="property-location-search">{tr('Search buildings and units', 'Pangitaa ang mga bilding ug kwarto')}</label>
+      <label htmlFor="property-location-search">{tr('Search buildings and units', 'Hanapin ang mga gusali at kuwarto')}</label>
       <input id="property-location-search" type="search" value={search} onChange={event => setSearch(event.target.value)} autoComplete="off" aria-describedby="property-location-search-help" />
-      <p className="field-help" id="property-location-search-help">{tr('Search by location label. Archived locations remain searchable.', 'Pangitaa pinaagi sa ngalan sa lokasyon. Mahimong pangitaon gihapon ang gi-archive nga mga lokasyon.')}</p>
-      <p className="field-help" aria-live="polite">{tr('Showing', 'Nagpakita og')} {visibleLocationCount} {tr('locations', 'ka lokasyon')} {search.trim() ? `${tr('matching', 'nga katugbang sa')} “${search.trim()}”` : ''}.</p>
+      <p className="field-help" id="property-location-search-help">{tr('Search by location label. Archived locations remain searchable.', 'Hanapin gamit ang pangalan ng lokasyon. Mahahanap pa rin ang mga naka-archive na lokasyon.')}</p>
+      <p className="field-help" aria-live="polite">{tr('Showing', 'Ipinapakita ang')} {visibleLocationCount} {tr('locations', 'lokasyon')} {search.trim() ? `${tr('matching', 'na tugma sa')} “${search.trim()}”` : ''}.</p>
     </div>}
     {loaded && visibleBuildings.length > 0 && <ul className="records">{visibleBuildings.map(building => {
       const children = building.units
       return <li key={building.id}><article className={`location-record ${building.archived_at ? 'location-record--archived' : ''}`}>
         <div className="location-heading">
         <strong>{building.label}</strong>
-        <span className={`status status--${building.archived_at ? 'archived' : 'ready'}`}>{building.archived_at ? tr('Archived building or section', 'Gi-archive nga bilding o seksyon') : tr('Active building or section', 'Aktibong bilding o seksyon')}</span>
+        <span className={`status status--${building.archived_at ? 'archived' : 'ready'}`}>{building.archived_at ? tr('Archived building or section', 'Naka-archive na gusali o seksyon') : tr('Active building or section', 'Aktibong gusali o seksyon')}</span>
         </div>
         {children.length > 0
           ? <ul className="unit-list">{children.map(unit => <li key={unit.id} className={unit.archived_at ? 'location-record--archived' : ''}>
             <div className="unit-heading">
               <strong>{unit.label}</strong>
-              <span className={`status status--${unit.archived_at ? 'archived' : 'ready'}`}>{unit.archived_at ? tr('Archived unit', 'Gi-archive nga kwarto') : tr('Active unit', 'Aktibong kwarto')}</span>
+              <span className={`status status--${unit.archived_at ? 'archived' : 'ready'}`}>{unit.archived_at ? tr('Archived unit', 'Naka-archive na kuwarto') : tr('Active unit', 'Aktibong kuwarto')}</span>
               {owner && <LocationMaintenance
                 propertyId={propertyId}
                 locationId={unit.id}
@@ -166,7 +166,7 @@ export function PropertyDirectory({ propertyId, owner, language = 'en' }: { prop
               />}
             </div>
           </li>)}</ul>
-          : <p>{tr('No units recorded in this building/section.', 'Walay kwarto nga narekord niini nga bilding/seksyon.')}</p>}
+          : <p>{tr('No units recorded in this building/section.', 'Walang naitalang kuwarto sa gusali/seksyong ito.')}</p>}
         {owner && <LocationMaintenance
           propertyId={propertyId}
           locationId={building.id}
@@ -179,13 +179,13 @@ export function PropertyDirectory({ propertyId, owner, language = 'en' }: { prop
       </article></li>
     })}</ul>}
     {loaded && buildings.length === 0 && <div className="empty-state">
-      <h3>{tr('No locations recorded yet', 'Wala pay lokasyon nga narekord')}</h3>
-      <p>{tr('Add a building or section when you are ready to organize this property directory. Locations do not define occupancy or rent.', 'Idugang ang bilding o seksyon kung andam na nga ihan-ay ang lista. Ang lokasyon wala magbuot sa nagpuyo o abang.')}</p>
+      <h3>{tr('No locations recorded yet', 'Wala pang naitalang lokasyon')}</h3>
+      <p>{tr('Add a building or section when you are ready to organize this property directory. Locations do not define occupancy or rent.', 'Magdagdag ng gusali o seksyon kapag handa nang ayusin ang listahan. Ang lokasyon ay hindi nagtatakda ng nakatira o upa.')}</p>
     </div>}
     {loaded && buildings.length > 0 && visibleBuildings.length === 0 && <div className="empty-state">
-      <h3>{tr('No matching locations', 'Walay lokasyon nga katugbang')}</h3>
-      <p>{tr('No building or unit label matches this search. Archived locations remain in the directory.', 'Walay ngalan sa bilding o kwarto nga katugbang sa pangita. Magpabilin sa lista ang gi-archive nga mga lokasyon.')}</p>
-      <Button className="secondary-button" onClick={() => setSearch('')}>{tr('Clear search', 'Hawani ang pangita')}</Button>
+      <h3>{tr('No matching locations', 'Walang tugmang lokasyon')}</h3>
+      <p>{tr('No building or unit label matches this search. Archived locations remain in the directory.', 'Walang pangalan ng gusali o kuwarto na tugma sa hinahanap. Mananatili sa listahan ang mga naka-archive na lokasyon.')}</p>
+      <Button className="secondary-button" onClick={() => setSearch('')}>{tr('Clear search', 'Burahin ang hinahanap')}</Button>
     </div>}
     {owner && <form onSubmit={async event => {
       event.preventDefault()
@@ -205,34 +205,34 @@ export function PropertyDirectory({ propertyId, owner, language = 'en' }: { prop
         if (error) throw error
         requestId.current = crypto.randomUUID()
         form.reset()
-        setMessage(tr('Location saved without occupancy or billing rules.', 'Na-save ang lokasyon nga walay lagda sa nagpuyo o bayranan.'))
+        setMessage(tr('Location saved without occupancy or billing rules.', 'Na-save ang lokasyon nang walang patakaran sa nakatira o singil.'))
         await load()
       } catch {
-        setError(tr('Save could not be confirmed. Keep the same details when retrying; duplicate labels and archived buildings are rejected.', 'Wala makumpirma ang pag-save. Gamita gihapon ang mao nga detalye kung mosulay pag-usab; dili dawaton ang ngalan nga doble o gi-archive nga bilding.'))
+        setError(tr('Save could not be confirmed. Keep the same details when retrying; duplicate labels and archived buildings are rejected.', 'Hindi makumpirma ang pag-save. Gamitin pa rin ang parehong detalye kung susubukan ulit; hindi tatanggapin ang dobleng pangalan o naka-archive na gusali.'))
       } finally {
         setBusy(false)
       }
     }}>
       <fieldset disabled={busy} className="form-section">
-      <legend>{tr('Add a location', 'Idugang ang lokasyon')}</legend>
-      <label htmlFor="location-kind">{tr('Location type', 'Klase sa lokasyon')}</label>
+      <legend>{tr('Add a location', 'Magdagdag ng lokasyon')}</legend>
+      <label htmlFor="location-kind">{tr('Location type', 'Uri ng lokasyon')}</label>
       <select id="location-kind" value={kind} onChange={event => setKind(event.target.value)}>
-        <option value="building">{tr('Building or section', 'Bilding o seksyon')}</option>
-        <option value="unit">{tr('Unit within a building/section', 'Kwarto sulod sa bilding/seksyon')}</option>
+        <option value="building">{tr('Building or section', 'Gusali o seksyon')}</option>
+        <option value="unit">{tr('Unit within a building/section', 'Kuwarto sa loob ng gusali/seksyon')}</option>
       </select>
-      {kind === 'unit' && <><label htmlFor="building-id">{tr('Parent building or section', 'Gikanan nga bilding o seksyon')}</label>
+      {kind === 'unit' && <><label htmlFor="building-id">{tr('Parent building or section', 'Pinagmulang gusali o seksyon')}</label>
         <select id="building-id" name="building-id" required>
-          <option value="">{tr('Choose an active building/section', 'Pagpili og aktibong bilding/seksyon')}</option>
+          <option value="">{tr('Choose an active building/section', 'Pumili ng aktibong gusali/seksyon')}</option>
           {buildings.filter(building => !building.archived_at).map(building =>
             <option key={building.id} value={building.id}>{building.label}</option>)}
         </select>
         {buildings.every(building => building.archived_at) &&
-          <p>{tr('Create an active building or section before adding a unit.', 'Paghimo og aktibong bilding o seksyon una magdugang og kwarto.')}</p>}
+          <p>{tr('Create an active building or section before adding a unit.', 'Gumawa muna ng aktibong gusali o seksyon bago magdagdag ng kuwarto.')}</p>}
       </>}
-      <label htmlFor="location-label">{tr('Location label', 'Ngalan sa lokasyon')}</label>
+      <label htmlFor="location-label">{tr('Location label', 'Pangalan ng lokasyon')}</label>
       <input id="location-label" name="location-label" maxLength={200} required />
       </fieldset>
-      <Button className="primary" disabled={busy}>{busy ? tr('Saving location…', 'Gi-save ang lokasyon…') : tr('Create location', 'Paghimo og lokasyon')}</Button>
+      <Button className="primary" disabled={busy}>{busy ? tr('Saving location…', 'Sine-save ang lokasyon…') : tr('Create location', 'Gumawa ng lokasyon')}</Button>
     </form>}
   </section>
 }

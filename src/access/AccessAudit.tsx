@@ -58,7 +58,7 @@ export function AccessAudit({ propertyId, language = 'en' }: { propertyId: strin
     } catch {
       setEvents([])
       setLoaded(false)
-      setError(text(languageRef.current, 'Access history could not be loaded. Owner access and MFA are required; refresh and try again.', 'Wala makarga ang kasaysayan sa access. Kinahanglan ang access sa tag-iya ug MFA; i-refresh ug sulayi pag-usab.'))
+      setError(text(languageRef.current, 'Access history could not be loaded. Owner access and MFA are required; refresh and try again.', 'Hindi ma-load ang kasaysayan ng access. Kailangan ang access ng may-ari at MFA; i-refresh at subukan ulit.'))
     } finally {
       setLoading(false)
     }
@@ -67,31 +67,31 @@ export function AccessAudit({ propertyId, language = 'en' }: { propertyId: strin
   useEffect(() => { void load() }, [load])
 
   return <section className="card" aria-labelledby="access-history-heading">
-    <p className="eyebrow">{tr('OWNER AUDIT HISTORY', 'KASAYSAYAN SA TAG-IYA')}</p>
-    <h2 id="access-history-heading">{tr('Recent account and contact access history', 'Bag-ong kasaysayan sa access sa account')}</h2>
-    <p>{tr('Shows up to 100 recent access changes and invitation dispatch events for this property. Times are shown in Philippine time.', 'Nagpakita hangtod 100 ka bag-ong kausaban sa access ug mga panghitabo sa imbitasyon niining propiedad. Oras sa Pilipinas ang gipakita.')}</p>
+    <p className="eyebrow">{tr('OWNER AUDIT HISTORY', 'KASAYSAYAN NG MAY-ARI')}</p>
+    <h2 id="access-history-heading">{tr('Recent account and contact access history', 'Pinakabagong kasaysayan ng access sa account')}</h2>
+    <p>{tr('Shows up to 100 recent access changes and invitation dispatch events for this property. Times are shown in Philippine time.', 'Ipinapakita hanggang 100 pinakabagong pagbabago sa access at mga pangyayari sa imbitasyon sa property na ito. Oras ng Pilipinas ang nakikita.')}</p>
     <Feedback message={error} error />
-    <Button className="secondary-button" disabled={loading} onClick={() => void load()}>{loading ? tr('Refreshing history…', 'Gi-refresh ang kasaysayan…') : tr('Refresh access history', 'I-refresh ang kasaysayan sa access')}</Button>
-    {!loaded && !error && <LoadingSkeleton label={tr('Loading access history…', 'Gikarga ang kasaysayan sa access…')} rows={3} />}
-    {loaded && events.length === 0 && <div className="empty-state"><h3>{tr('No access changes recorded', 'Walay kausaban sa access')}</h3><p>{tr('Invitation and account changes for this property will appear here when recorded.', 'Makita dinhi ang mga imbitasyon ug kausaban sa account kung marekord na.')}</p></div>}
+    <Button className="secondary-button" disabled={loading} onClick={() => void load()}>{loading ? tr('Refreshing history…', 'Nire-refresh ang kasaysayan…') : tr('Refresh access history', 'I-refresh ang kasaysayan ng access')}</Button>
+    {!loaded && !error && <LoadingSkeleton label={tr('Loading access history…', 'Nilo-load ang kasaysayan ng access…')} rows={3} />}
+    {loaded && events.length === 0 && <div className="empty-state"><h3>{tr('No access changes recorded', 'Walang pagbabago sa access')}</h3><p>{tr('Invitation and account changes for this property will appear here when recorded.', 'Makikita rito ang mga imbitasyon at pagbabago sa account kapag naitala na.')}</p></div>}
     {loaded && events.length > 0 && <ol className="records">{events.map(event => <li key={event.event_id}>
       <div>
-        <strong>{language === 'ceb' ? ({
-          contact_enabled: 'Gihatagan og access ang contact sa nag-abang', contact_revoked: 'Gikuha ang access sa contact sa nag-abang',
-          staff_revoked: 'Gikuha ang access sa staff', staff_role_owner: 'Gihatag ang access sa tag-iya', staff_role_clerk: 'Gihatag ang access sa clerk',
-          tenant_archived: 'Gi-archive ang nag-abang ug gitapos ang access sa contact', account_invitation_requested: 'Gihangyo ang imbitasyon sa account',
-          account_invitation_sent: 'Miingon ang sistema nga gipadala ang imbitasyon', account_invitation_failed: 'Napakyas ang pagpadala sa imbitasyon',
-          account_invitation_dispatch_started: 'Posibleng nagsugod ang pagpadala sa imbitasyon', account_invitation_provider_issued: 'Gikumpirma sa provider ang paghimo; wala makumpirma ang pag-abot sa email',
-          account_invitation_provider_rejected: 'Gibalibaran sa provider ang hangyo sa imbitasyon', account_invitation_outcome_uncertain: 'Wala masiguro ang resulta sa imbitasyon',
-          account_invitation_accepted: 'Gikumpirma sa account ang email', account_invitation_reviewed: 'Gisusi sa tag-iya ang hangyo sa imbitasyon',
+        <strong>{language === 'fil' ? ({
+          contact_enabled: 'Binigyan ng access ang contact ng umuupa', contact_revoked: 'Inalis ang access ng contact ng umuupa',
+          staff_revoked: 'Gikuha ang access sa staff', staff_role_owner: 'Ibinigay ang access ng may-ari', staff_role_clerk: 'Gihatag ang access sa clerk',
+          tenant_archived: 'Na-archive ang umuupa at tinapos ang access ng contact', account_invitation_requested: 'Gihangyo ang imbitasyon sa account',
+          account_invitation_sent: 'Sinabi ng sistema na naipadala ang imbitasyon', account_invitation_failed: 'Napakyas ang pagpadala sa imbitasyon',
+          account_invitation_dispatch_started: 'Posibleng nagsugod ang pagpadala sa imbitasyon', account_invitation_provider_issued: 'Kinumpirma ng provider ang paggawa; hindi nakumpirma ang pagdating ng email',
+          account_invitation_provider_rejected: 'Tinanggihan ng provider ang kahilingan ng imbitasyon', account_invitation_outcome_uncertain: 'Hindi tiyak ang resulta ng imbitasyon',
+          account_invitation_accepted: 'Kinumpirma ng account ang email', account_invitation_reviewed: 'Sinuri ng may-ari ang kahilingan ng imbitasyon',
         } as Record<string, string>)[event.action] ?? 'Hitabo sa access sa account' : actionLabels[event.action] ?? 'Account access event'}</strong>
-        <p><time dateTime={event.occurred_at}>{eventTime.format(new Date(event.occurred_at))} {tr('Philippine time', 'Oras sa Pilipinas')}</time></p>
-        <p>{tr('Changed by:', 'Gi-usab ni:')} {event.actor_email}</p>
+        <p><time dateTime={event.occurred_at}>{eventTime.format(new Date(event.occurred_at))} {tr('Philippine time', 'Oras ng Pilipinas')}</time></p>
+        <p>{tr('Changed by:', 'Binago ni:')} {event.actor_email}</p>
         {event.target_email && <p>{tr('Account:', 'Account:')} {event.target_email}</p>}
-        {event.tenant_name && <p>{tr('Tenant:', 'Nag-abang:')} {event.tenant_name}</p>}
-        <p>{tr('Reason:', 'Rason:')} {event.reason}</p>
+        {event.tenant_name && <p>{tr('Tenant:', 'Umuupa:')} {event.tenant_name}</p>}
+        <p>{tr('Reason:', 'Dahilan:')} {event.reason}</p>
       </div>
     </li>)}</ol>}
-    {loaded && events.length === 100 && <p>{tr('Showing the most recent 100 events.', 'Gipakita ang pinakabag-ong 100 ka hitabo.')}</p>}
+    {loaded && events.length === 100 && <p>{tr('Showing the most recent 100 events.', 'Ipinapakita ang 100 pinakabagong pangyayari.')}</p>}
   </section>
 }

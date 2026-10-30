@@ -328,16 +328,16 @@ export const DEVELOPER = {
     { kind: 'email', label: 'acegrantk@gmail.com', href: 'mailto:acegrantk@gmail.com' },
     { kind: 'github', label: 'GitHub', href: 'https://github.com/1nsincere' },
   ] as { kind: 'facebook' | 'email' | 'github'; label: string; href: string }[],
-  photoAlt: { en: 'Ace Grant Kyamko standing in a night-lit garden path, head bowed, arms crossed', bis: 'Si AceGrant Kyamko nga nagbarog sa tigom nga dalan sa gabii, nakayuko ug naka-cross ang bukton' },
-  role: { en: 'Developer of RentByBob', bis: 'Developer sa RentByBob' } as Bilingual,
+  photoAlt: { en: 'Ace Grant Kyamko standing in a night-lit garden path, head bowed, arms crossed', bis: 'Si Ace Grant Kyamko na nakatayo sa daan sa hardin sa gabi, nakayuko at naka-cross ang braso' },
+  role: { en: 'Developer of RentByBob', bis: 'Developer ng RentByBob' } as Bilingual,
   study: { en: 'Computer Engineer · CIT University', bis: 'Computer Engineer · CIT University' } as Bilingual,
-  aim: { en: 'Work in progress', bis: 'Gigtrabaho pa' } as Bilingual,
-  note: { en: "Also a tenant at Bob's house", bis: 'Nag-abang sad sa balay ni Bob' } as Bilingual,
+  aim: { en: 'Work in progress', bis: 'Ginagawa pa' } as Bilingual,
+  note: { en: "Also a tenant at Bob's house", bis: 'Umuupa rin sa bahay ni Bob' } as Bilingual,
   groups: [
     { title: { en: 'Software', bis: 'Software' } as Bilingual, items: ['PHP', 'HTML', 'CSS', 'React', 'TypeScript', 'Supabase', 'JS', 'Node.js', 
 'Git' ] },
-    { title: { en: 'Hardware and networking', bis: 'Hardware ug networking' } as Bilingual, items: ['Mimosa P2P', 'Ubuntu Server', 'PfSense Server', 'Ubiquiti', 'Internet Service Technician'] },
-    { title: { en: 'Off the clock', bis: 'Kalingawan' } as Bilingual, items: ['Gym', 'Gaming', 'Guitar', 'Hiking', 'Cooking', 'and more'] },
+    { title: { en: 'Hardware and networking', bis: 'Hardware at networking' } as Bilingual, items: ['Mimosa P2P', 'Ubuntu Server', 'PfSense Server', 'Ubiquiti', 'Internet Service Technician'] },
+    { title: { en: 'Off the clock', bis: 'Libangan' } as Bilingual, items: ['Gym', 'Gaming', 'Guitar', 'Hiking', 'Cooking', 'and more'] },
   ],
 }
 
@@ -373,7 +373,7 @@ function Student({ label, open, onToggle, tr }: { label: string; open: boolean; 
     <span className="lp-say lp-say--buy" aria-hidden="true">{tr('Papalita ko ya!', 'Papalita ko ya!')}</span>
     <span className="lp-say lp-say--hello" aria-hidden="true">{tr('Pandesal, Sir Bob?', 'Pandesal, Sir Bob?')}</span>
     <span className="lp-say lp-say--ace-hi" aria-hidden="true">{tr('Hi Kuya James! Kuya Jake!', 'Uy Kuya James! Kuya Jake!')}</span>
-    <span className="lp-say lp-say--ace-bye" aria-hidden="true">{tr('Drive safe, Kuyas!', 'Amping, mga Kuya!')}</span>
+    <span className="lp-say lp-say--ace-bye" aria-hidden="true">{tr('Drive safe, Kuyas!', 'Ingat, mga Kuya!')}</span>
   </div>
 }
 
@@ -508,15 +508,15 @@ function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (engl
   const trailRef = useRef<HTMLCanvasElement>(null)
   useTrailReveal(photoRef, trailRef, DEVELOPER.photoHover, flipped)
   return createPortal(<div className="dev-backdrop" onClick={event => { if (event.target === event.currentTarget) onClose() }}>
-    <section id="lp-dev-card" className="dev-card" role="dialog" aria-modal="true" aria-label={tr('Developer profile', 'Profile sa developer')}>
-      <button type="button" className="dev-close" ref={closeRef} onClick={onClose} aria-label={tr('Close profile', 'Isira ang profile')}><span aria-hidden="true">×</span></button>
+    <section id="lp-dev-card" className="dev-card" role="dialog" aria-modal="true" aria-label={tr('Developer profile', 'Profile ng developer')}>
+      <button type="button" className="dev-close" ref={closeRef} onClick={onClose} aria-label={tr('Close profile', 'Isara ang profile')}><span aria-hidden="true">×</span></button>
       <figure ref={photoRef} className={`dev-photo${flipped ? ' is-flipped' : ''}`} onClick={() => setFlipped(value => !value)}>
         <img className="dev-photo-main" src={DEVELOPER.photo} alt={t(DEVELOPER.photoAlt)} width="520" height="780" />
         <img className="dev-photo-ghost" src={DEVELOPER.photoHover} alt="" aria-hidden="true" width="520" height="780" />
         <img className="dev-photo-hover" src={DEVELOPER.photoHover} alt="" aria-hidden="true" width="520" height="780" />
         <canvas ref={trailRef} className="dev-photo-trail" aria-hidden="true" />
         <span className="dev-photo-frame" aria-hidden="true" />
-        <span className="dev-photo-hint" aria-hidden="true">{flipped ? tr('Tap to go back', 'I-tap aron mobalik') : tr('Hover or tap me', 'I-hover o i-tap ko')}</span>
+        <span className="dev-photo-hint" aria-hidden="true">{flipped ? tr('Tap to go back', 'I-tap para bumalik') : tr('Hover or tap me', 'I-hover o i-tap ako')}</span>
         <figcaption><span className="dev-tag">{t(DEVELOPER.note)}</span></figcaption>
       </figure>
       <div className="dev-body">
@@ -524,14 +524,14 @@ function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (engl
         <h2 className="dev-name">{DEVELOPER.name}</h2>
         <p className="dev-study">{t(DEVELOPER.study)}</p>
         <p className="dev-aim">{t(DEVELOPER.aim)}</p>
-        <ul className="dev-links" aria-label={tr('Find me online', 'Pangita ko online')}>
+        <ul className="dev-links" aria-label={tr('Find me online', 'Hanapin ako online')}>
           {DEVELOPER.links.map(link => <li key={link.kind}><a href={link.href} className={`dev-link dev-link--${link.kind}`} {...(link.kind === 'email' ? {} : { target: '_blank', rel: 'noopener noreferrer' })}>
-            <LinkIcon kind={link.kind} /><span>{link.label}</span>{link.kind !== 'email' && <span className="visually-hidden"> ({tr('opens in a new tab', 'mo-abli sa bag-ong tab')})</span>}
+            <LinkIcon kind={link.kind} /><span>{link.label}</span>{link.kind !== 'email' && <span className="visually-hidden"> ({tr('opens in a new tab', 'magbubukas sa bagong tab')})</span>}
           </a></li>)}
         </ul>
         {DEVELOPER.groups.map(group => <div key={group.title.en} className="dev-group">
           <h3>{t(group.title)}</h3>
-          <ul>{group.items.map(item => <li key={item}>{item === 'and more' ? tr('and more', 'ug uban pa') : item}</li>)}</ul>
+          <ul>{group.items.map(item => <li key={item}>{item === 'and more' ? tr('and more', 'at iba pa') : item}</li>)}</ul>
         </div>)}
       </div>
     </section>
@@ -542,8 +542,8 @@ function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (engl
 // sidewalk to him and greet him with "Mano po", then drive off again (one 60 s loop with everyone else, landing.css).
 // Their photos and Facebook pages are public here, shared by the owner (30 Oct 2026).
 export const HELPERS = {
-  james: { name: 'James', photo: '/james.jpg', facebook: 'https://www.facebook.com/jameslee.gica.1', alt: { en: 'James at the beach in sunglasses and a black sleeveless shirt', bis: 'Si James sa baybayon, naka-sunglasses ug itom nga sleeveless' } as Bilingual },
-  jake: { name: 'Jake', photo: '/jake.jpg', facebook: 'https://www.facebook.com/ja.ke.477316', alt: { en: 'Jake taking a selfie with a peace sign', bis: 'Si Jake nag-selfie nga naay peace sign' } as Bilingual },
+  james: { name: 'James', photo: '/james.jpg', facebook: 'https://www.facebook.com/jameslee.gica.1', alt: { en: 'James at the beach in sunglasses and a black sleeveless shirt', bis: 'Si James sa beach, naka-sunglasses at itim na sleeveless' } as Bilingual },
+  jake: { name: 'Jake', photo: '/jake.jpg', facebook: 'https://www.facebook.com/ja.ke.477316', alt: { en: 'Jake taking a selfie with a peace sign', bis: 'Si Jake na nagse-selfie na may peace sign' } as Bilingual },
 }
 type HelperId = keyof typeof HELPERS
 
@@ -578,7 +578,7 @@ function Wigo() {
 
 function Helper({ who, label, line, extra, open, onOpen, tr }: { who: HelperId; label: string; line: string; extra: { name: string; text: string }[]; open: boolean; onOpen: () => void; tr: (english: string, bisaya: string) => string }) {
   return <div className={`lp-roam lp-roam--${who}`}>
-    <button type="button" className={`lp-student lp-helper${open ? ' is-open' : ''}`} aria-label={`${label}. ${tr('Show contact', 'Ipakita ang kontak')}`} aria-haspopup="dialog" onClick={onOpen}>
+    <button type="button" className={`lp-student lp-helper${open ? ' is-open' : ''}`} aria-label={`${label}. ${tr('Show contact', 'Ipakita ang contact')}`} aria-haspopup="dialog" onClick={onOpen}>
       <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
       <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false"><HelperArt who={who} /></svg>
     </button>
@@ -598,15 +598,15 @@ function HelperCard({ who, onClose, tr, language }: { who: HelperId; onClose: ()
     return () => { window.removeEventListener('keydown', keys); opener?.focus?.() }
   }, [onClose])
   return createPortal(<div className="dev-backdrop" onClick={event => { if (event.target === event.currentTarget) onClose() }}>
-    <section className="dev-card helper-card" role="dialog" aria-modal="true" aria-label={`${helper.name} · ${tr('contact', 'kontak')}`}>
-      <button type="button" className="dev-close" ref={closeRef} onClick={onClose} aria-label={tr('Close', 'Isira')}><span aria-hidden="true">×</span></button>
+    <section className="dev-card helper-card" role="dialog" aria-modal="true" aria-label={`${helper.name} · ${tr('contact', 'contact')}`}>
+      <button type="button" className="dev-close" ref={closeRef} onClick={onClose} aria-label={tr('Close', 'Isara')}><span aria-hidden="true">×</span></button>
       <figure className="dev-photo helper-photo"><img src={helper.photo} alt={text(language, helper.alt.en, helper.alt.bis)} width="520" height="780" /></figure>
       <div className="dev-body">
         <p className="dev-eyebrow">{tr('RentByBob team · Property assistant', 'RentByBob team · Property assistant')}</p>
         <h2 className="dev-name">{helper.name}</h2>
-        <p className="dev-study">{tr("Part of the team that keeps Sir Bob's homes running: he welcomes new tenants, keeps the rent records and gets repairs done. Message him on Facebook about rooms, payments or anything that needs fixing.", 'Kauban sa team nga nagpadagan sa mga balay ni Sir Bob: siya ang moabiabi sa bag-ong nag-abang, nagdumala sa rekord sa abang ug nagpaayo sa guba. Mensahe siya sa Facebook bahin sa kwarto, bayad o bisan unsa nga ayuhon.')}</p>
-        <ul className="dev-links" aria-label={tr('Contact', 'Kontak')}>
-          <li><a href={helper.facebook} className="dev-link dev-link--facebook" target="_blank" rel="noopener noreferrer"><LinkIcon kind="facebook" /><span>{tr('Message on Facebook', 'Mensahe sa Facebook')}</span><span className="visually-hidden"> ({tr('opens in a new tab', 'mo-abli sa bag-ong tab')})</span></a></li>
+        <p className="dev-study">{tr("Part of the team that keeps Sir Bob's homes running: he welcomes new tenants, keeps the rent records and gets repairs done. Message him on Facebook about rooms, payments or anything that needs fixing.", 'Bahagi ng team na nagpapatakbo sa mga bahay ni Sir Bob: siya ang sumasalubong sa bagong umuupa, nag-aasikaso ng talaan ng upa at nagpapaayos ng sira. Mag-message sa kanya sa Facebook tungkol sa kuwarto, bayad o anumang kailangang ayusin.')}</p>
+        <ul className="dev-links" aria-label={tr('Contact', 'Contact')}>
+          <li><a href={helper.facebook} className="dev-link dev-link--facebook" target="_blank" rel="noopener noreferrer"><LinkIcon kind="facebook" /><span>{tr('Message on Facebook', 'Mag-message sa Facebook')}</span><span className="visually-hidden"> ({tr('opens in a new tab', 'magbubukas sa bagong tab')})</span></a></li>
         </ul>
       </div>
     </section>
@@ -620,16 +620,16 @@ function Legend({ tr, onDeveloper, onHelper }: { tr: (english: string, bisaya: s
   // Open on wide screens; collapsed on phones, where the plan is too small to spare the room.
   const [open, setOpen] = useState(() => typeof window === 'undefined' || !window.matchMedia || window.matchMedia('(min-width: 48rem)').matches)
   return <details className="lp-legend" open={open} onToggle={event => setOpen(event.currentTarget.open)}>
-    <summary>{tr('Who is who', 'Kinsa-kinsa')}</summary>
+    <summary>{tr('Who is who', 'Sino-sino')}</summary>
     <ul>
       <li><span className="lp-legend-icon">{bike('moveit', 36, true)}</span>{tr('Move It rider', 'Move It rider')}</li>
-      <li><span className="lp-legend-icon lp-legend-icon--wide">{bike('jt', 58)}</span>{tr('J&T rider with parcels', 'J&T rider nga naay parcel')}</li>
-      <li><span className="lp-legend-icon lp-legend-icon--wide">{bike('pandesal', 60)}</span>{tr('Malunggay pandesal cart', 'Karton sa malunggay pandesal')}</li>
-      <li><span className="lp-legend-icon">{person(<BobArt />)}</span>{tr('Bob, with his sungkod', 'Si Bob, naay sungkod')}</li>
-      <li><span className="lp-legend-icon">{person(<DogArt />)}</span>{tr('Bantay, the street dog', 'Si Bantay, ang iro sa dalan')}</li>
+      <li><span className="lp-legend-icon lp-legend-icon--wide">{bike('jt', 58)}</span>{tr('J&T rider with parcels', 'J&T rider na may parcel')}</li>
+      <li><span className="lp-legend-icon lp-legend-icon--wide">{bike('pandesal', 60)}</span>{tr('Malunggay pandesal cart', 'Kariton ng malunggay pandesal')}</li>
+      <li><span className="lp-legend-icon">{person(<BobArt />)}</span>{tr('Bob, with his sungkod', 'Si Bob, may tungkod')}</li>
+      <li><span className="lp-legend-icon">{person(<DogArt />)}</span>{tr('Bantay, the street dog', 'Si Bantay, ang aso sa kalye')}</li>
       <li><button type="button" className="lp-legend-dev" onClick={() => onHelper('james')}><span className="lp-legend-icon">{person(<HelperArt who="james" />)}</span>{tr('James (tap)', 'Si James (i-tap)')}</button></li>
       <li><button type="button" className="lp-legend-dev" onClick={() => onHelper('jake')}><span className="lp-legend-icon">{person(<HelperArt who="jake" />)}</span>{tr('Jake (tap)', 'Si Jake (i-tap)')}</button></li>
-      <li><button type="button" className="lp-legend-dev" onClick={onDeveloper}><span className="lp-legend-icon">{person(<StudentArt />)}</span>{tr('Developer and tenant (tap)', 'Developer ug nag-abang (i-tap)')}</button></li>
+      <li><button type="button" className="lp-legend-dev" onClick={onDeveloper}><span className="lp-legend-icon">{person(<StudentArt />)}</span>{tr('Developer and tenant (tap)', 'Developer at umuupa (i-tap)')}</button></li>
     </ul>
   </details>
 }
@@ -637,7 +637,7 @@ function Legend({ tr, onDeveloper, onHelper }: { tr: (english: string, bisaya: s
 const TREES = [[1, 71, 9], [6, 86, 6], [70, 70, 7], [79, 79, 10], [90, 68, 7], [89, 87, 7], [71, 87, 5]]
 const LAMPS = [[9, 'top'], [33, 'top'], [66, 'top'], [96, 'top'], [25, 'bottom'], [52, 'bottom'], [78, 'bottom']] as const
 
-export const statusText = (language: Language, known: boolean, lit: number) => !known ? text(language, 'Checking…', 'Gisusi…') : lit ? `${lit} ${text(language, 'open now', 'bakante karon')}` : text(language, 'Full right now', 'Puno karon')
+export const statusText = (language: Language, known: boolean, lit: number) => !known ? text(language, 'Checking…', 'Sinusuri…') : lit ? `${lit} ${text(language, 'open now', 'bakante ngayon')}` : text(language, 'Full right now', 'Puno ngayon')
 
 // The whole street: roads, lamps, trees, traffic and the four homes (each a link to the open rooms).
 export function StreetPlan({ openByBuilding, known, active, setActive, language }: { openByBuilding: Map<string, string[]>; known: boolean; active: string; setActive: (label: string) => void; language: Language }) {
@@ -665,8 +665,8 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
     <Legend tr={tr} onDeveloper={() => setProfile(true)} onHelper={setHelper} />
     {helper && <HelperCard who={helper} onClose={() => setHelper(null)} tr={tr} language={language} />}
     {profile && <ProfileCard onClose={() => setProfile(false)} tr={tr} language={language} />}
-    <div className="lp-plan-scroll" tabIndex={0} role="region" aria-label={tr('Street map. Scroll sideways to see all of it on a small screen.', 'Mapa sa dalan. I-scroll pa-sidlakan aron makita tanan sa gamay nga screen.')}>
-    <div ref={planRef} className={`lp-plan${profile ? ' has-profile' : ''}`} role="group" aria-label={tr('Site plan on B. Zubiri St and Mariano Abella St. Glowing doors and windows are spaces open now. Choose a home to see rooms.', 'Plano sa B. Zubiri St ug Mariano Abella St. Ang nagsiga nga pultahan ug bintana bakante karon. Pilia ang balay aron makita ang kwarto.')}>
+    <div className="lp-plan-scroll" tabIndex={0} role="region" aria-label={tr('Street map. Scroll sideways to see all of it on a small screen.', 'Mapa ng kalye. I-scroll pakanan para makita lahat sa maliit na screen.')}>
+    <div ref={planRef} className={`lp-plan${profile ? ' has-profile' : ''}`} role="group" aria-label={tr('Site plan on B. Zubiri St and Mariano Abella St. Glowing doors and windows are spaces open now. Choose a home to see rooms.', 'Plano ng B. Zubiri St at Mariano Abella St. Bakante ngayon ang umiilaw na pinto at bintana. Piliin ang bahay para makita ang kuwarto.')}>
     <span className="lp-plan-road lp-plan-road--main" aria-hidden="true"><b>B. ZUBIRI ST.</b></span>
     <span className="lp-plan-road lp-plan-road--side" aria-hidden="true"><b><span className="lp-road-long">MARIANO ABELLA ST.</span><span className="lp-road-short">M. ABELLA ST.</span></b></span>
     {LAMPS.map(([left, side]) => <span key={`${left}${side}`} className={`lp-lamp lp-lamp--${side}`} style={{ left: `${left}%` } as CSSProperties} aria-hidden="true" />)}
@@ -675,18 +675,18 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
       <circle className="lp-tree-leaf" cx="14" cy="15" r="7" /><circle className="lp-tree-leaf" cx="25" cy="23" r="6" /><circle className="lp-tree-leaf" cx="15" cy="26" r="5" />
     </svg>)}
     {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} extra={index >= 4} vendorLine={tr('Malunggay Pandesal, init pa with cheese, tag singko lang!', 'Malunggay Pandesal, init pa with cheese, tag singko lang!')} />)}
-    <Bob label={tr('This is Bob', 'Kini si Bob')} line={tr('Thank you, iho!', "Salamat, 'do!")} bless={tr('God bless you both!', 'Kaloy-an mo sa Ginoo!')} farewell={tr('Take care, you two!', 'Amping mo, mga ‘do!')} />
+    <Bob label={tr('This is Bob', 'Ito si Bob')} line={tr('Thank you, iho!', "Salamat, iho!")} bless={tr('God bless you both!', 'Pagpalain kayo ng Diyos!')} farewell={tr('Take care, you two!', 'Ingat kayo, mga iho!')} />
     <Dog heart="♥" bark={tr('Arf!', 'Aw aw!')} />
     <span className="lp-driveway" aria-hidden="true" />
     <Wigo />
-    <Helper who="james" label={tr('James, RentByBob team', 'Si James, RentByBob team')} line={tr('Mano po, Sir Bob!', 'Mano po, Sir Bob!')} extra={[{ name: 'james-ace', text: tr('Hey Ace! How is the code?', 'Uy Ace! Kumusta ang code?') }, { name: 'james-bye', text: tr('See you, Sir Bob!', 'Babay, Sir Bob!') }]} open={helper === 'james'} onOpen={() => setHelper('james')} tr={tr} />
-    <Helper who="jake" label={tr('Jake, RentByBob team', 'Si Jake, RentByBob team')} line={tr('Mano po!', 'Mano po!')} extra={[{ name: 'jake-ace', text: tr('Pandesal for us too?', 'Naa pay pandesal para namo?') }]} open={helper === 'jake'} onOpen={() => setHelper('jake')} tr={tr} />
-    <Student label={tr('The developer, and a tenant here too', 'Ang developer, ug nag-abang sad dinhi')} open={profile} onToggle={() => setProfile(open => !open)} tr={tr} />
+    <Helper who="james" label={tr('James, RentByBob team', 'Si James, RentByBob team')} line={tr('Mano po, Sir Bob!', 'Mano po, Sir Bob!')} extra={[{ name: 'james-ace', text: tr('Hey Ace! How is the code?', 'Uy Ace! Kumusta ang code?') }, { name: 'james-bye', text: tr('See you, Sir Bob!', 'Paalam, Sir Bob!') }]} open={helper === 'james'} onOpen={() => setHelper('james')} tr={tr} />
+    <Helper who="jake" label={tr('Jake, RentByBob team', 'Si Jake, RentByBob team')} line={tr('Mano po!', 'Mano po!')} extra={[{ name: 'jake-ace', text: tr('Pandesal for us too?', 'May pandesal pa ba para sa amin?') }]} open={helper === 'jake'} onOpen={() => setHelper('jake')} tr={tr} />
+    <Student label={tr('The developer, and a tenant here too', 'Ang developer, at umuupa rin dito')} open={profile} onToggle={() => setProfile(open => !open)} tr={tr} />
     {SITE.map(site => {
       const open = (openByBuilding.get(site.label) ?? []).slice(0, site.spaces)
       const lit = open.length
       const status = statusText(language, known, lit)
-      return <a key={site.label} className={`lp-plot lp-plot--${site.kind}${active === site.label ? ' is-active' : ''}${lit ? ' has-open' : ''}`} href="/rooms" data-cursor={tr('Rooms', 'Kwarto')}
+      return <a key={site.label} className={`lp-plot lp-plot--${site.kind}${active === site.label ? ' is-active' : ''}${lit ? ' has-open' : ''}`} href="/rooms" data-cursor={tr('Rooms', 'Kuwarto')}
         aria-label={`${site.label}: ${status}`} onMouseEnter={() => setActive(site.label)} onFocus={() => setActive(site.label)}
         style={{ left: `${site.x}%`, top: `${site.y}%`, width: `${site.w}%`, height: `${site.h}%` } as CSSProperties}>
         <span className="lp-plot-tag" aria-hidden="true"><span className="lp-plot-name">{site.label}</span><span className={`lp-plot-status${lit ? ' is-open' : ''}`}>{status}</span></span>
@@ -702,7 +702,7 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
 
 // The same four homes as plain buttons under the map: easy to tap on a phone, and they light up with the map.
 export function StreetSummary({ openByBuilding, known, active, setActive, language }: { openByBuilding: Map<string, string[]>; known: boolean; active: string; setActive: (label: string) => void; language: Language }) {
-  return <ul className="lp-plan-chips" aria-label={text(language, 'Homes on the street', 'Mga balay sa dalan')}>
+  return <ul className="lp-plan-chips" aria-label={text(language, 'Homes on the street', 'Mga bahay sa kalye')}>
     {SITE.map(site => {
       const lit = (openByBuilding.get(site.label) ?? []).slice(0, site.spaces).length
       return <li key={site.label}><a href="/rooms" className={`lp-chip${active === site.label ? ' is-active' : ''}${lit ? ' has-open' : ''}`} onMouseEnter={() => setActive(site.label)} onFocus={() => setActive(site.label)}>

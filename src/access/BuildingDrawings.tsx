@@ -64,7 +64,7 @@ function facadeRows(building: Building, floor: Floor, index: number, perRow: num
 const rowWidth = (row: FacadeItem[]) => row.reduce((sum, item) => sum + itemWidth(item), 0) + GAP * Math.max(0, row.length - 1)
 
 export function BuildingFacade({ building, selectedRoom, language = 'en', isOccupied, pickable, onPick }: { building: Building; selectedRoom: string; language?: Language; isOccupied: (roomId: string) => boolean; pickable?: (roomId: string) => boolean; onPick?: (roomId: string) => void }) {
-  const tr = (en: string, ceb: string) => language === 'ceb' ? ceb : en
+  const tr = (en: string, ceb: string) => language === 'fil' ? ceb : en
   // Each drawing needs its own gradient ids: a shared id breaks when the first copy on the page is hidden.
   const uid = useId().replace(/:/g, '')
   const perRow = 10, doorWidth = DOOR_W, doorHeight = 100, rowHeight = 148, storyTop = 42
@@ -81,13 +81,13 @@ export function BuildingFacade({ building, selectedRoom, language = 'en', isOccu
     .map(story => { const top = cursor; cursor += story.height; return { ...story, top } })
   const wallBottom = cursor
   const describe = (floor: Floor) => {
-    if (floor.count === null && !floor.rooms.length) return tr('room count not set', 'wala pa matino ang ihap sa kwarto')
+    if (floor.count === null && !floor.rooms.length) return tr('room count not set', 'hindi pa tiyak ang bilang ng kuwarto')
     const rentable = floor.rooms.filter(isRentalRoom).length
     const others = floor.rooms.filter(room => !isRentalRoom(room)).map(room => room.label)
     const occupied = floor.rooms.filter(room => isOccupied(room.id)).length
-    return [`${rentable} ${tr(rentable === 1 ? 'rentable room' : 'rentable rooms', 'ka kwarto nga paabangan')}`, ...others, `${occupied} ${tr('occupied', 'giokupahan')}`].join(', ')
+    return [`${rentable} ${tr(rentable === 1 ? 'rentable room' : 'rentable rooms', 'kuwartong paupahan')}`, ...others, `${occupied} ${tr('occupied', 'okupado')}`].join(', ')
   }
-  const label = `${building.name}, ${tr('illustrative front view', 'hulagway sa atubangan')}: ${building.floors.map(floor => `${floor.label}: ${describe(floor)}`).join('; ')}`
+  const label = `${building.name}, ${tr('illustrative front view', 'larawan ng harapan')}: ${building.floors.map(floor => `${floor.label}: ${describe(floor)}`).join('; ')}`
   return <svg className="facade-art" viewBox={`0 0 ${width} ${wallBottom + 34}`} role="img" aria-label={label}>
     <defs>
       <linearGradient id={`${uid}-wall`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" className="facade-wall-stop-top" /><stop offset="1" className="facade-wall-stop-bottom" /></linearGradient>
@@ -112,7 +112,7 @@ export function BuildingFacade({ building, selectedRoom, language = 'en', isOccu
         <text className="facade-floor-label" x={left + 22} y={top + 28}>{floor.label}</text>
         {!spaces.length && <g className="facade-unset">
           <rect x={left + 40} y={top + storyTop} width={wallWidth - 80} height={rowHeight - 40} rx="12" />
-          <text x={centre} y={top + storyTop + (rowHeight - 40) / 2 + 6} textAnchor="middle">{floor.count === null ? tr('Room count not set', 'Wala pa matino ang ihap') : tr('No spaces yet', 'Wala pay lugar')}</text>
+          <text x={centre} y={top + storyTop + (rowHeight - 40) / 2 + 6} textAnchor="middle">{floor.count === null ? tr('Room count not set', 'Hindi pa tiyak ang bilang') : tr('No spaces yet', 'Wala pang lugar')}</text>
         </g>}
         {layout[index].map((row, rowIndex) => {
           const y = top + storyTop + rowIndex * rowHeight
@@ -128,7 +128,7 @@ export function BuildingFacade({ building, selectedRoom, language = 'en', isOccu
           return <g key={rowIndex}>
             {runs.map(run => <g key={run.x} className="facade-inside">
               <rect x={run.x - 16} y={y - 22} width={run.end - run.x + 32} height={doorHeight + 50} rx="8" />
-              <text x={run.x - 6} y={y - 6}>{run.rooms ? sketch.ground === 'gate' ? tr('Inside, past the gate', 'Sa sulod, lapas sa ganghaan') : tr('Inside, past the hall door', 'Sa sulod, lapas sa pultahan') : tr('Inside', 'Sa sulod')}</text>
+              <text x={run.x - 6} y={y - 6}>{run.rooms ? sketch.ground === 'gate' ? tr('Inside, past the gate', 'Sa loob, lampas sa gate') : tr('Inside, past the hall door', 'Sa loob, lampas sa pinto') : tr('Inside', 'Sa loob')}</text>
             </g>)}
             {placedItems.map(({ item, x: ix }) => {
               // Building 1's stairs rise to the left (towards the gate side rooms); Building 2's rise to the right.
@@ -142,13 +142,13 @@ export function BuildingFacade({ building, selectedRoom, language = 'en', isOccu
               if (item.type === 'entry') return <g key={`entry-${item.label}`} className="facade-entry" transform={`translate(${ix} ${y})`}>
                 <rect width={doorWidth} height={doorHeight} rx="9" />
                 <circle cx={doorWidth - 15} cy={doorHeight * 0.58} r="3" />
-                <text className="facade-door-label" x={doorWidth / 2} y={doorHeight + 24} textAnchor="middle">{item.label === 'stairs' ? tr('Door', 'Pultahan') : tr('Hall', 'Pasilyo')}</text>
+                <text className="facade-door-label" x={doorWidth / 2} y={doorHeight + 24} textAnchor="middle">{item.label === 'stairs' ? tr('Door', 'Pinto') : tr('Hall', 'Pasilyo')}</text>
               </g>
               if (item.type === 'gate') return <g key="gate" className="facade-gate" transform={`translate(${ix} ${y})`}>
                 <rect y={doorHeight - 120} width={GATE_W} height={120} rx="6" />
                 {Array.from({ length: 12 }, (_, b) => <path key={b} className="facade-gate-bar" d={`M${12 + b * 11.5} ${doorHeight - 112}V${doorHeight - 8}`} />)}
                 <path className="facade-gate-split" d={`M${GATE_W / 2} ${doorHeight - 120}V${doorHeight}`} />
-                <text className="facade-door-label" x={GATE_W / 2} y={doorHeight + 24} textAnchor="middle">{tr('Gate', 'Ganghaan')}</text>
+                <text className="facade-door-label" x={GATE_W / 2} y={doorHeight + 24} textAnchor="middle">{tr('Gate', 'Gate')}</text>
               </g>
               const room = item.room
               const kind = isRentalRoom(room) ? 'room' : room.kind === 'Shared space' ? 'shared' : 'unit'

@@ -158,7 +158,7 @@ const signedInHere = (() => { try { return Object.keys(sessionStorage).some(key 
 
 export function LandingPage() {
   const signedIn = signedInHere
-  const [language, setLanguage] = useState<Language>(() => { try { return localStorage.getItem('rentbybob-language') === 'ceb' ? 'ceb' : 'en' } catch { return 'en' } })
+  const [language, setLanguage] = useState<Language>(() => { try { return localStorage.getItem('rentbybob-language') === 'fil' ? 'fil' : 'en' } catch { return 'en' } })
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [listings, setListings] = useState<PublicListings | null>(null)
   const [unavailable, setUnavailable] = useState(false)
@@ -183,7 +183,7 @@ export function LandingPage() {
   useReveal()
   useScrollScenes(root)
   usePointerEffects(root, ring)
-  useEffect(() => { document.documentElement.lang = language === 'ceb' ? 'ceb' : 'en'; try { localStorage.setItem('rentbybob-language', language) } catch { /* not remembered */ } }, [language])
+  useEffect(() => { document.documentElement.lang = language === 'fil' ? 'fil' : 'en'; try { localStorage.setItem('rentbybob-language', language) } catch { /* not remembered */ } }, [language])
   useEffect(() => { document.title = 'RentByBob | Rooms for rent on B. Zubiri St, Cebu City' }, [])
   useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), 15000); return () => window.clearInterval(timer) }, [])
   // Live: read the public listing now, every 30 seconds while visible, and when the tab comes back.
@@ -227,35 +227,35 @@ export function LandingPage() {
     window.scrollTo({ top: top + (section.offsetHeight - window.innerHeight) * index / (SITE.length - 1) })
   }
   const homeFacts: Record<string, [string, string]> = {
-    'Building 1': [tr('10 rooms · 2 floors', '10 ka kwarto · 2 ka andana'), tr('Six rooms upstairs on a balcony walk; the apartment, and three rooms inside past the gate.', 'Unom ka kwarto sa taas sa balkonahe; ang apartment, ug tulo ka kwarto sa sulod lapas sa ganghaan.')],
-    'Building 2': [tr('8 rooms · 2 floors', '8 ka kwarto · 2 ka andana'), tr('Five rooms upstairs, one in its own wing; the gym and three rooms below.', 'Lima ka kwarto sa taas, usa sa kaugalingong pako; ang gym ug tulo ka kwarto sa ubos.')],
-    'House 1': [tr('1 whole house', '1 ka tibuok balay'), tr('A house of its own, rented as one.', 'Usa ka balay, abangan isip usa.')],
-    "Bob's house": [tr('6 rooms · 2 floors', '6 ka kwarto · 2 ka andana'), tr('Across the road, beside Mariano Abella St.', 'Tabok sa dalan, tupad sa Mariano Abella St.')],
+    'Building 1': [tr('10 rooms · 2 floors', '10 kuwarto · 2 palapag'), tr('Six rooms upstairs on a balcony walk; the apartment, and three rooms inside past the gate.', 'Anim na kuwarto sa itaas sa balkonahe; ang apartment, at tatlong kuwarto sa loob lampas sa gate.')],
+    'Building 2': [tr('8 rooms · 2 floors', '8 kuwarto · 2 palapag'), tr('Five rooms upstairs, one in its own wing; the gym and three rooms below.', 'Limang kuwarto sa itaas, isa sa sariling pakpak; ang gym at tatlong kuwarto sa ibaba.')],
+    'House 1': [tr('1 whole house', '1 buong bahay'), tr('A house of its own, rented as one.', 'Isang bahay, inuupahan bilang isa.')],
+    "Bob's house": [tr('6 rooms · 2 floors', '6 kuwarto · 2 palapag'), tr('Across the road, beside Mariano Abella St.', 'Tawid ng kalye, katabi ng Mariano Abella St.')],
   }
   const facts: [number | null, string, string][] = [
-    [SITE.length, tr('homes on one corner', 'ka balay sa usa ka kanto'), tr('B. Zubiri St and Mariano Abella St', 'B. Zubiri St ug Mariano Abella St')],
-    [TOTAL_SPACES, tr('rooms and spaces', 'ka kwarto ug luna'), tr('Boarding rooms, an apartment and a house', 'Boarding nga kwarto, apartment ug balay')],
-    [listings ? totalOpen : null, day ? tr('open today', 'bakante karon') : tr('open tonight', 'bakante karong gabii'), tr('Live from the property records', 'Live gikan sa rekord sa propiedad')],
-    [2, tr('languages', 'ka pinulongan'), tr('English and Bisaya, on every page', 'English ug Bisaya, sa matag panid')],
+    [SITE.length, tr('homes on one corner', 'bahay sa isang kanto'), tr('B. Zubiri St and Mariano Abella St', 'B. Zubiri St at Mariano Abella St')],
+    [TOTAL_SPACES, tr('rooms and spaces', 'kuwarto at espasyo'), tr('Boarding rooms, an apartment and a house', 'Boarding na kuwarto, apartment at bahay')],
+    [listings ? totalOpen : null, day ? tr('open today', 'bakante ngayon') : tr('open tonight', 'bakante ngayong gabi'), tr('Live from the property records', 'Live mula sa talaan ng property')],
+    [2, tr('languages', 'wika'), tr('English and Filipino, on every page', 'English at Filipino, sa bawat pahina')],
   ]
 
   return <div className="lp" ref={root} data-phase={phase}>
     <div className="lp-progress" aria-hidden="true" />
     <div className="lp-grain" aria-hidden="true" />
     <div className="lp-cursor" ref={ring} hidden aria-hidden="true"><span /></div>
-    {simulated !== null && <p className="lp-sim" role="status">{tr('Simulated Cebu time', 'Gisundog nga oras')} {clock} · <a href="#" onClick={event => { event.preventDefault(); history.replaceState(null, '', location.pathname); setSimulated(null) }}>{tr('Back to live time', 'Balik sa tinuod nga oras')}</a></p>}
-    <a className="lp-skip" href="#lp-main">{tr('Skip to content', 'Lakaw sa sulod')}</a>
+    {simulated !== null && <p className="lp-sim" role="status">{tr('Simulated Cebu time', 'Simulated na oras')} {clock} · <a href="#" onClick={event => { event.preventDefault(); history.replaceState(null, '', location.pathname); setSimulated(null) }}>{tr('Back to live time', 'Bumalik sa tunay na oras')}</a></p>}
+    <a className="lp-skip" href="#lp-main">{tr('Skip to content', 'Pumunta sa nilalaman')}</a>
     <header className="lp-nav">
       <a className="lp-brand" href="/" aria-label="RentByBob home"><LogoMark size={34} /><span>Rent<i>By</i>Bob</span></a>
-      <nav aria-label={tr('Main', 'Panguna')}>
-        <a href="#street">{tr('The street', 'Ang dalan')}</a>
-        <a href="#homes">{tr('Homes', 'Mga balay')}</a>
-        <a href="#how">{tr('How it works', 'Unsaon')}</a>
-        <a href="#visit">{tr('Find us', 'Asa mi')}</a>
+      <nav aria-label={tr('Main', 'Pangunahin')}>
+        <a href="#street">{tr('The street', 'Ang kalye')}</a>
+        <a href="#homes">{tr('Homes', 'Mga bahay')}</a>
+        <a href="#how">{tr('How it works', 'Paano')}</a>
+        <a href="#visit">{tr('Find us', 'Nasaan kami')}</a>
       </nav>
       <div className="lp-nav-actions">
-        <button type="button" className="lp-lang" aria-label={language === 'en' ? 'Gamita ang Bisaya' : 'Use English'} onClick={() => setLanguage(language === 'en' ? 'ceb' : 'en')}><span className={language === 'en' ? 'is-on' : ''}>EN</span><span className={language === 'ceb' ? 'is-on' : ''}>CEB</span></button>
-        <a className="lp-pill lp-pill--light" href="/sign-in">{signedIn ? tr('Open my account', 'Ablihi ang akong account') : tr('Sign in', 'Sulod')}</a>
+        <button type="button" className="lp-lang" aria-label={language === 'en' ? 'Gamitin ang Filipino' : 'Use English'} onClick={() => setLanguage(language === 'en' ? 'fil' : 'en')}><span className={language === 'en' ? 'is-on' : ''}>EN</span><span className={language === 'fil' ? 'is-on' : ''}>FIL</span></button>
+        <a className="lp-pill lp-pill--light" href="/sign-in">{signedIn ? tr('Open my account', 'Buksan ang aking account') : tr('Sign in', 'Mag-sign in')}</a>
       </div>
     </header>
 
@@ -266,26 +266,26 @@ export function LandingPage() {
           : <><span className="lp-stars" aria-hidden="true" /><span className="lp-moon" aria-hidden="true" /></>}
         {!day && <span className="lp-hero-lamps" aria-hidden="true" />}
         <div className="lp-hero-top">
-          <p>{tr('Labangon, Cebu City', 'Labangon, Dakbayan sa Sugbo')}</p>
-          <p><span className="lp-dot" aria-hidden="true" /> {tr('Cebu time', 'Oras sa Sugbo')} {clock}</p>
+          <p>{tr('Labangon, Cebu City', 'Labangon, Lungsod ng Cebu')}</p>
+          <p><span className="lp-dot" aria-hidden="true" /> {tr('Cebu time', 'Oras sa Cebu')} {clock}</p>
         </div>
-        <h1 id="lp-title"><span className="lp-h1-line"><Words>{tr('Rooms for rent', 'Kwarto nga paabangan')}</Words></span><span className="lp-h1-line lp-serif"><Words start={3}>{tr('on B. Zubiri St.', 'sa B. Zubiri St.')}</Words></span></h1>
+        <h1 id="lp-title"><span className="lp-h1-line"><Words>{tr('Rooms for rent', 'Mga kuwartong paupahan')}</Words></span><span className="lp-h1-line lp-serif"><Words start={3}>{tr('on B. Zubiri St.', 'sa B. Zubiri St.')}</Words></span></h1>
         <div className="lp-hero-foot">
-          <p className="lp-lede">{day ? tr('Rooms and a whole house in Labangon, Cebu City. Every glowing window on our street is a space open today; ask in one message and the owner replies.', 'Limpyo nga mga kwarto ug tibuok balay sa Labangon, Dakbayan sa Sugbo. Ang matag nagsiga nga bintana sa among dalan bakante karon; pangutana sa usa ka mensahe ug motubag ang tag-iya.') : tr('Clean rooms and a whole house in Labangon, Cebu City. Every lit window on our street is a space open tonight; ask in one message and the owner replies.', 'Limpyo nga mga kwarto ug tibuok balay sa Labangon, Dakbayan sa Sugbo. Ang matag nagsiga nga bintana sa among dalan bakante karong gabii; pangutana sa usa ka mensahe ug motubag ang tag-iya.')}</p>
+          <p className="lp-lede">{day ? tr('Rooms and a whole house in Labangon, Cebu City. Every glowing window on our street is a space open today; ask in one message and the owner replies.', 'Malilinis na kuwarto at buong bahay sa Labangon, Lungsod ng Cebu. Bawat umiilaw na bintana sa aming kalye ay bakante ngayon; magtanong sa isang mensahe at sasagot ang may-ari.') : tr('Clean rooms and a whole house in Labangon, Cebu City. Every lit window on our street is a space open tonight; ask in one message and the owner replies.', 'Malilinis na kuwarto at buong bahay sa Labangon, Lungsod ng Cebu. Bawat umiilaw na bintana sa aming kalye ay bakante ngayong gabi; magtanong sa isang mensahe at sasagot ang may-ari.')}</p>
           <div className="lp-hero-count">
-            <SplitFlap value={listings ? totalOpen : null} label={listings ? `${totalOpen} ${day ? tr('spaces open today', 'ka bakante karon') : tr('spaces open tonight', 'ka bakante karong gabii')}` : tr('Checking open spaces', 'Gisusi ang bakante')} />
-            <p>{day ? tr('open today', 'bakante karon') : tr('open tonight', 'bakante karong gabii')}<br /><span>{tr('of', 'sa')} {TOTAL_SPACES} {tr('spaces', 'ka luna')}</span></p>
+            <SplitFlap value={listings ? totalOpen : null} label={listings ? `${totalOpen} ${day ? tr('spaces open today', 'bakante ngayon') : tr('spaces open tonight', 'bakante ngayong gabi')}` : tr('Checking open spaces', 'Sinusuri ang bakante')} />
+            <p>{day ? tr('open today', 'bakante ngayon') : tr('open tonight', 'bakante ngayong gabi')}<br /><span>{tr('of', 'sa')} {TOTAL_SPACES} {tr('spaces', 'espasyo')}</span></p>
           </div>
           <div className="lp-cta">
-            <a className="lp-pill lp-pill--amber lp-magnetic" href="/rooms" data-cursor={tr('Look', 'Tan-aw')}>{tr('See open rooms', 'Tan-awa ang bakante')} <span aria-hidden="true">→</span></a>
-            <a className="lp-pill lp-pill--ghost lp-magnetic" href="/sign-in">{tr('I already rent here', 'Nag-abang na ko diri')}</a>
+            <a className="lp-pill lp-pill--amber lp-magnetic" href="/rooms" data-cursor={tr('Look', 'Tingnan')}>{tr('See open rooms', 'Tingnan ang bakante')} <span aria-hidden="true">→</span></a>
+            <a className="lp-pill lp-pill--ghost lp-magnetic" href="/sign-in">{tr('I already rent here', 'Umuupa na ako rito')}</a>
           </div>
         </div>
         <div className="lp-skyline" aria-hidden="true">{SITE.map(site => <div key={site.label} className={`lp-skyline-home lp-skyline-home--${site.kind}`}><Facade site={site} open={openRooms(site.label)} width={100} /></div>)}</div>
-        <a className="lp-scroll-cue" href="#street"><span>{tr('Walk down the street', 'Lakaw sa dalan')}</span><i aria-hidden="true" /></a>
+        <a className="lp-scroll-cue" href="#street"><span>{tr('Walk down the street', 'Libutin ang kalye')}</span><i aria-hidden="true" /></a>
       </section>
 
-      <section className="lp-facts" aria-label={tr('At a glance', 'Sa usa ka tan-aw')}>
+      <section className="lp-facts" aria-label={tr('At a glance', 'Sa isang tingin')}>
         <ul>{facts.map(([value, label, line], index) => <li key={index} className="lp-reveal" style={{ '--i': index } as CSSProperties}>
           <strong>{value === null ? '–' : <CountUp value={value} />}</strong>
           <span className="lp-facts-label">{label}</span>
@@ -296,23 +296,23 @@ export function LandingPage() {
       <section className="lp-street" id="street" data-scene data-steps="3" aria-labelledby="lp-street-title">
         <div className="lp-street-pin">
           <div className="lp-street-copy">
-            <p className="lp-label">{tr('Live street', 'Live nga dalan')}{checked && <span className="lp-live"><span className="lp-dot" aria-hidden="true" /> {tr('updated', 'na-update')} {checked}</span>}</p>
-            <h2 id="lp-street-title" className="lp-visually-hidden">{tr('Our street, live', 'Among dalan, live')}</h2>
+            <p className="lp-label">{tr('Live street', 'Live na kalye')}{checked && <span className="lp-live"><span className="lp-dot" aria-hidden="true" /> {tr('updated', 'na-update')} {checked}</span>}</p>
+            <h2 id="lp-street-title" className="lp-visually-hidden">{tr('Our street, live', 'Ang aming kalye, live')}</h2>
             <ol className="lp-steps">
-              <li><span className="lp-step-no">01</span><h3>{tr('This is B. Zubiri St.', 'Kini ang B. Zubiri St.')}</h3><p>{tr('Four homes on one street in Labangon, with Mariano Abella St at the corner.', 'Upat ka balay sa usa ka dalan sa Labangon, ug ang Mariano Abella St sa kanto.')}</p></li>
-              <li><span className="lp-step-no">02</span><h3>{day ? tr('The street wakes up.', 'Nagmata ang dalan.') : tr('Evening comes.', 'Mogabii na.')}</h3><p>{day ? tr(`Jeepneys and motorbikes start running. Every window is a space we rent out: ${TOTAL_SPACES} in all.`, `Nagsugod na ang mga jeep ug motor. Ang matag bintana usa ka luna nga among paabangan: ${TOTAL_SPACES} tanan.`) : tr(`The lamps come on. Every window is a space we rent out: ${TOTAL_SPACES} in all.`, `Mosiga ang mga suga. Ang matag bintana usa ka luna nga among paabangan: ${TOTAL_SPACES} tanan.`)}</p></li>
-              <li><span className="lp-step-no">03</span><h3>{tr('Lit windows are open.', 'Ang nagsiga, bakante.')}</h3><p>{known ? `${totalOpen} ${day ? tr('open today. The street checks again every 30 seconds.', 'bakante karon. Mosusi pag-usab matag 30 segundos.') : tr('open tonight. The street checks again every 30 seconds.', 'bakante karong gabii. Mosusi pag-usab matag 30 segundos.')}` : tr('The street checks for open rooms every 30 seconds.', 'Mosusi ang dalan sa bakante matag 30 segundos.')}</p></li>
+              <li><span className="lp-step-no">01</span><h3>{tr('This is B. Zubiri St.', 'Ito ang B. Zubiri St.')}</h3><p>{tr('Four homes on one street in Labangon, with Mariano Abella St at the corner.', 'Apat na bahay sa isang kalye sa Labangon, at ang Mariano Abella St sa kanto.')}</p></li>
+              <li><span className="lp-step-no">02</span><h3>{day ? tr('The street wakes up.', 'Gising na ang kalye.') : tr('Evening comes.', 'Gumagabi na.')}</h3><p>{day ? tr(`Jeepneys and motorbikes start running. Every window is a space we rent out: ${TOTAL_SPACES} in all.`, `Umaandar na ang mga jeep at motor. Bawat bintana ay isang espasyong paupahan namin: ${TOTAL_SPACES} lahat.`) : tr(`The lamps come on. Every window is a space we rent out: ${TOTAL_SPACES} in all.`, `Umiilaw na ang mga ilaw. Bawat bintana ay isang espasyong paupahan namin: ${TOTAL_SPACES} lahat.`)}</p></li>
+              <li><span className="lp-step-no">03</span><h3>{tr('Lit windows are open.', 'Ang umiilaw, bakante.')}</h3><p>{known ? `${totalOpen} ${day ? tr('open today. The street checks again every 30 seconds.', 'bakante ngayon. Susuriin ulit bawat 30 segundo.') : tr('open tonight. The street checks again every 30 seconds.', 'bakante ngayong gabi. Susuriin ulit bawat 30 segundo.')}` : tr('The street checks for open rooms every 30 seconds.', 'Susuriin ng kalye ang bakante bawat 30 segundo.')}</p></li>
             </ol>
             <dl className="lp-street-facts">
-              <div><dt>{tr('Rent from', 'Abang gikan')}</dt><dd>{lowestRent ? `₱${lowestRent.toLocaleString('en-PH')}/${tr('mo', 'bulan')}` : tr('ask us', 'pangutana')}</dd></div>
+              <div><dt>{tr('Rent from', 'Upa mula')}</dt><dd>{lowestRent ? `₱${lowestRent.toLocaleString('en-PH')}/${tr('mo', 'buwan')}` : tr('ask us', 'tanong')}</dd></div>
               <div><dt>{tr('Selected', 'Napili')}</dt><dd aria-live="polite">{active} · {listings ? (openAt(active) ? `${openAt(active)} ${tr('open', 'bakante')}` : tr('full', 'puno')) : '…'}</dd></div>
             </dl>
-            {unavailable && <p className="lp-note">{tr('The live street is not connected right now. Message us and we will tell you what is open.', 'Dili konektado karon ang live nga dalan. Mensahe mi ug among isulti kung unsay bakante.')}</p>}
+            {unavailable && <p className="lp-note">{tr('The live street is not connected right now. Message us and we will tell you what is open.', 'Hindi konektado ngayon ang live na kalye. Mag-message sa amin at sasabihin namin kung ano ang bakante.')}</p>}
           </div>
           <div className="lp-street-stage">
             <div className="lp-plan-frame"><StreetPlan openByBuilding={openByBuilding} known={known} active={active} setActive={setActive} language={language} /></div>
             <StreetSummary openByBuilding={openByBuilding} known={known} active={active} setActive={setActive} language={language} />
-            <p className="lp-plan-note">{tr('Not to scale. Hover or tap a home to see its rooms.', 'Dili sukod. I-hover o i-tap ang balay aron makita ang kwarto.')}<span className="lp-swipe-hint"> {tr('Swipe sideways to see the whole street.', 'I-swipe pa-sidlakan aron makita ang tibuok dalan.')}</span></p>
+            <p className="lp-plan-note">{tr('Not to scale. Hover or tap a home to see its rooms.', 'Hindi sukat. I-hover o i-tap ang bahay para makita ang kuwarto.')}<span className="lp-swipe-hint"> {tr('Swipe sideways to see the whole street.', 'I-swipe pakanan para makita ang buong kalye.')}</span></p>
           </div>
         </div>
       </section>
@@ -320,8 +320,8 @@ export function LandingPage() {
       <section className="lp-homes" id="homes" ref={homes} data-scene data-hscroll aria-labelledby="lp-homes-title">
         <div className="lp-homes-pin">
           <div className="lp-homes-head lp-reveal">
-            <p className="lp-label">{tr('The homes', 'Ang mga balay')}</p>
-            <h2 id="lp-homes-title">{tr('Four homes.', 'Upat ka balay.')} <span className="lp-serif">{tr(`${TOTAL_SPACES} spaces.`, `${TOTAL_SPACES} ka luna.`)}</span></h2>
+            <p className="lp-label">{tr('The homes', 'Ang mga bahay')}</p>
+            <h2 id="lp-homes-title">{tr('Four homes.', 'Apat na bahay.')} <span className="lp-serif">{tr(`${TOTAL_SPACES} spaces.`, `${TOTAL_SPACES} ka luna.`)}</span></h2>
           </div>
           <div className="lp-homes-viewport">
             <ul className="lp-homes-track" data-track>
@@ -329,7 +329,7 @@ export function LandingPage() {
                 const lit = openAt(site.label)
                 const [facts, line] = homeFacts[site.label]
                 return <li key={site.label}>
-                  <a className={`lp-home${lit ? ' has-open' : ''}`} href="/rooms" data-cursor={tr('Rooms', 'Kwarto')} onFocus={() => revealCard(index)}>
+                  <a className={`lp-home${lit ? ' has-open' : ''}`} href="/rooms" data-cursor={tr('Rooms', 'Kuwarto')} onFocus={() => revealCard(index)}>
                     <span className="lp-home-no" aria-hidden="true">0{index + 1}</span>
                     <span className="lp-home-art"><Facade site={site} open={openRooms(site.label)} width={site.kind === 'house' && site.spaces === 1 ? 56 : 94} /></span>
                     <span className="lp-home-body">
@@ -348,39 +348,39 @@ export function LandingPage() {
       </section>
 
       <section className="lp-how" id="how" aria-labelledby="lp-how-title">
-        <div className="lp-how-head lp-reveal"><p className="lp-label">{tr('How it works', 'Unsaon')}</p><h2 id="lp-how-title">{tr('Renting here,', 'Pag-abang diri,')} <span className="lp-serif">{tr('in three steps.', 'sa tulo ka lakang.')}</span></h2></div>
+        <div className="lp-how-head lp-reveal"><p className="lp-label">{tr('How it works', 'Paano')}</p><h2 id="lp-how-title">{tr('Renting here,', 'Umupa rito,')} <span className="lp-serif">{tr('in three steps.', 'sa tatlong hakbang.')}</span></h2></div>
         <ol className="lp-how-list">
-          <li className="lp-reveal"><span className="lp-how-no">01</span><h3>{tr('Look at the street.', 'Tan-awa ang dalan.')}</h3><p>{tr('Every lit window is open today. Occupied rooms never show.', 'Ang matag nagsiga nga bintana bakante karon. Ang naay nagpuyo dili makita.')}</p></li>
-          <li className="lp-reveal"><span className="lp-how-no">02</span><h3>{tr('Send one message.', 'Usa ka mensahe.')}</h3><p>{tr('Leave your name and number on the room you like. The owner replies, usually the same day.', 'Ibilin ang ngalan ug numero sa kwarto nga gusto nimo. Motubag ang tag-iya, kasagaran sa samang adlaw.')}</p></li>
-          <li className="lp-reveal"><span className="lp-how-no">03</span><h3>{tr('Visit, agree, move in.', 'Bisita, pagkasabot, sulod.')}</h3><p>{tr('Rent is the same amount, due on the same day each month.', 'Pareho ang abang ug sa parehong adlaw matag bulan.')}</p></li>
+          <li className="lp-reveal"><span className="lp-how-no">01</span><h3>{tr('Look at the street.', 'Tingnan ang kalye.')}</h3><p>{tr('Every lit window is open today. Occupied rooms never show.', 'Bawat umiilaw na bintana ay bakante ngayon. Hindi makikita ang may nakatira.')}</p></li>
+          <li className="lp-reveal"><span className="lp-how-no">02</span><h3>{tr('Send one message.', 'Isang mensahe.')}</h3><p>{tr('Leave your name and number on the room you like. The owner replies, usually the same day.', 'Iwanan ang pangalan at numero ng kuwartong gusto mo. Sasagot ang may-ari, kadalasan sa parehong araw.')}</p></li>
+          <li className="lp-reveal"><span className="lp-how-no">03</span><h3>{tr('Visit, agree, move in.', 'Bisita, kasunduan, lipat.')}</h3><p>{tr('Rent is the same amount, due on the same day each month.', 'Pareho ang upa at sa parehong araw bawat buwan.')}</p></li>
         </ol>
       </section>
 
       <section className="lp-tenant" aria-labelledby="lp-tenant-title">
         <div className="lp-tenant-copy lp-reveal">
-          <p className="lp-label">{tr('Already renting here?', 'Nag-abang na diri?')}</p>
-          <h2 id="lp-tenant-title">{tr('Your rent,', 'Ang imong abang,')} <span className="lp-serif">{tr('written down.', 'nakasulat.')}</span></h2>
-          <p>{tr('Sign in to see what is left to pay, which months are settled, and every acknowledgment. You can tell us when you have paid. You still pay your collector in person; this site never asks for card details.', 'Sulod aron makita ang nabilin nga bayranan, mga bulan nga bayad na, ug tanang resibo. Mahimo nimong isulti kanamo kon nakabayad ka na. Personal gihapon ang pagbayad; dili mangayo ang site og detalye sa card.')}</p>
-          <a className="lp-pill lp-pill--cream lp-magnetic" href="/sign-in">{tr('Tenant sign-in', 'Sulod sa nag-abang')} <span aria-hidden="true">→</span></a>
+          <p className="lp-label">{tr('Already renting here?', 'Umuupa na rito?')}</p>
+          <h2 id="lp-tenant-title">{tr('Your rent,', 'Ang iyong upa,')} <span className="lp-serif">{tr('written down.', 'nakasulat.')}</span></h2>
+          <p>{tr('Sign in to see what is left to pay, which months are settled, and every acknowledgment. You can tell us when you have paid. You still pay your collector in person; this site never asks for card details.', 'Mag-sign in para makita ang natitirang singil, mga buwang bayad na, at lahat ng resibo. Maaari mong sabihin sa amin kung nakapagbayad ka na. Personal pa rin ang pagbabayad; hindi hihingi ang site ng detalye ng card.')}</p>
+          <a className="lp-pill lp-pill--cream lp-magnetic" href="/sign-in">{tr('Tenant sign-in', 'Sign-in ng umuupa')} <span aria-hidden="true">→</span></a>
         </div>
         <div className="lp-receipt lp-reveal" aria-hidden="true">
-          <p className="lp-receipt-head">RENTBYBOB<br /><small>{tr('your account', 'imong account')}</small></p>
-          {[[tr('Rent left to pay', 'Nabilin nga abang'), tr('shown', 'makita')], [tr('Months settled', 'Bayad nga bulan'), tr('listed', 'gilista')], [tr('Acknowledgments', 'Mga resibo'), tr('kept', 'gitipigan')], [tr('Report a payment', 'Ireport ang bayad'), tr('yes', 'oo')], [tr('Language', 'Pinulongan'), 'EN / CEB']].map(([label, value], index) =>
+          <p className="lp-receipt-head">RENTBYBOB<br /><small>{tr('your account', 'iyong account')}</small></p>
+          {[[tr('Rent left to pay', 'Natitirang upa'), tr('shown', 'makikita')], [tr('Months settled', 'Mga bayad na buwan'), tr('listed', 'nakalista')], [tr('Acknowledgments', 'Mga resibo'), tr('kept', 'nakatabi')], [tr('Report a payment', 'Iulat ang bayad'), tr('yes', 'oo')], [tr('Language', 'Wika'), 'EN / CEB']].map(([label, value], index) =>
             <p key={label} className="lp-receipt-row" style={{ '--i': index } as CSSProperties}><span>{label}</span><span>{value}</span></p>)}
-          <p className="lp-receipt-foot">{tr('* pending cash is never counted as paid', '* ang pending nga kwarta dili giihap nga bayad')}</p>
+          <p className="lp-receipt-foot">{tr('* pending cash is never counted as paid', '* hindi binibilang na bayad ang nakabinbing cash')}</p>
         </div>
       </section>
 
       <section className="lp-visit" id="visit" aria-labelledby="lp-visit-title">
-        <p className="lp-label lp-reveal">{tr('Find us', 'Asa mi')}</p>
-        <h2 id="lp-visit-title" className="lp-visit-title"><span className="lp-h1-line"><Words>{tr('Come home', 'Uli na')}</Words></span><span className="lp-h1-line lp-serif"><Words start={2}>{tr('to B. Zubiri.', 'sa B. Zubiri.')}</Words></span></h2>
+        <p className="lp-label lp-reveal">{tr('Find us', 'Nasaan kami')}</p>
+        <h2 id="lp-visit-title" className="lp-visit-title"><span className="lp-h1-line"><Words>{tr('Come home', 'Umuwi na')}</Words></span><span className="lp-h1-line lp-serif"><Words start={2}>{tr('to B. Zubiri.', 'sa B. Zubiri.')}</Words></span></h2>
         <div className="lp-visit-grid">
           <div className="lp-reveal">
             <address>100A B. Zubiri St<br />Cebu City, 6000 Cebu</address>
             <div className="lp-contact">
               <a className="lp-pill lp-pill--amber lp-magnetic" href={CONTACT.mapsHref} target="_blank" rel="noopener noreferrer" data-cursor={tr('Map', 'Mapa')}>{tr('Directions', 'Direksyon')} <span aria-hidden="true">↗</span></a>
-              {CONTACT.phone && CONTACT.phoneHref && <a className="lp-pill lp-pill--ghost lp-magnetic" href={CONTACT.phoneHref}>{tr('Call', 'Tawag')} {CONTACT.phone}</a>}
-              <a className="lp-pill lp-pill--ghost lp-magnetic" href={CONTACT.facebookHref} target="_blank" rel="noopener noreferrer">Facebook<span className="visually-hidden"> ({tr('opens in a new tab', 'mo-abli sa bag-ong tab')})</span></a>
+              {CONTACT.phone && CONTACT.phoneHref && <a className="lp-pill lp-pill--ghost lp-magnetic" href={CONTACT.phoneHref}>{tr('Call', 'Tumawag')} {CONTACT.phone}</a>}
+              <a className="lp-pill lp-pill--ghost lp-magnetic" href={CONTACT.facebookHref} target="_blank" rel="noopener noreferrer">Facebook<span className="visually-hidden"> ({tr('opens in a new tab', 'magbubukas sa bagong tab')})</span></a>
             </div>
           </div>
           <div className="lp-sketch-map lp-reveal" aria-hidden="true">
@@ -393,7 +393,7 @@ export function LandingPage() {
             </svg>
             <span className="lp-sketch-label lp-sketch-label--street">B. Zubiri St</span>
             <span className="lp-sketch-label lp-sketch-label--side">Mariano Abella St</span>
-            <span className="lp-sketch-label lp-sketch-label--here">{tr('we are here', 'ari mi')}</span>
+            <span className="lp-sketch-label lp-sketch-label--here">{tr('we are here', 'nandito kami')}</span>
           </div>
         </div>
       </section>
@@ -402,8 +402,8 @@ export function LandingPage() {
     <footer className="lp-footer">
       <p className="lp-wordmark" aria-hidden="true">Rent<i>By</i>Bob</p>
       <div className="lp-footer-row">
-        <span>RentByBob · 100A B. Zubiri St, Cebu City · {tr('Cebu time', 'Oras sa Sugbo')} {clock}</span>
-        <nav aria-label={tr('Footer', 'Ubos')}><a href="/rooms">{tr('Open rooms', 'Bakante nga kwarto')}</a><a href="/sign-in">{tr('Tenant & staff sign-in', 'Sulod sa nag-abang ug staff')}</a><a href="#lp-main">{tr('Back to top', 'Balik sa taas')} ↑</a></nav>
+        <span>RentByBob · 100A B. Zubiri St, Cebu City · {tr('Cebu time', 'Oras sa Cebu')} {clock}</span>
+        <nav aria-label={tr('Footer', 'Ibaba')}><a href="/rooms">{tr('Open rooms', 'Bakanteng kuwarto')}</a><a href="/sign-in">{tr('Tenant & staff sign-in', 'Sign-in ng umuupa at staff')}</a><a href="#lp-main">{tr('Back to top', 'Bumalik sa itaas')} ↑</a></nav>
       </div>
     </footer>
   </div>

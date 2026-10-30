@@ -38,5 +38,5 @@ test('reminder text contains only the renter\'s own figures in the chosen langua
   const english = reminderText(row, 'en', pesos, month => month, day => day)
   assert.match(english, /^Hi Sample Renter 1, .*Building 1 · Room 01 of PHP 4500.50 \(2026-09, 2026-10\).*due 2026-09-05/)
   assert.doesNotMatch(english, /Sample Renter [234]|500\.25/)
-  assert.match(reminderText(row, 'ceb', pesos, month => month, day => day), /pahinumdom gikan sa RentByBob/)
+  assert.match(reminderText(row, 'fil', pesos, month => month, day => day), /paalala mula sa RentByBob/)
 })

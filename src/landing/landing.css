@@ -78,7 +78,7 @@
 .lp-hero h1 { position: relative; align-self: center; margin: clamp(1.5rem, 5vh, 3.5rem) 0 clamp(1.25rem, 3vh, 2rem); font-weight: 900; font-size: clamp(3.1rem, 10.4vw, 11rem); line-height: .86; letter-spacing: -.055em; }
 .lp-h1-line { display: block; }
 .lp-hero h1 .lp-serif { color: var(--amber); font-size: .92em; letter-spacing: -.035em; padding-left: clamp(0rem, 8vw, 9rem); }
-.lp-word { display: inline-block; overflow: hidden; vertical-align: top; padding: .02em .02em .1em; margin: -.02em 0 -.1em; }
+.lp-word { display: inline-block; overflow: hidden; vertical-align: top; padding: .02em .02em .22em; margin: -.02em 0 -.22em; }
 .lp-word > span { display: inline-block; transform: translateY(105%); animation: lp-rise 900ms var(--ease) forwards; animation-delay: calc(var(--i, 0) * 70ms + 80ms); }
 @keyframes lp-rise { to { transform: none; } }
 .lp-hero-foot { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1.2fr) auto auto; align-items: end; gap: 1.5rem clamp(1.5rem, 4vw, 4rem); padding-bottom: clamp(1.5rem, 4vh, 2.5rem); }

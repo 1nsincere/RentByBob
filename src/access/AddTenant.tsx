@@ -67,11 +67,11 @@ export function AddTenant({ propertyId, preselect, assignTenant, done, openDirec
   const building = buildings.find(item => item.id === draft.building)
   const edit = (patch: Partial<Draft>) => { setDraft(previous => ({ ...previous, ...patch })); setError('') }
   function problem() {
-    if (!draft.name.trim()) return tr('Enter the tenant or business name.', 'Isulod ang ngalan sa nag-abang o negosyo.')
-    if (existing && !unit) return tr('Choose the building and vacant room for this tenant.', 'Pilia ang bilding ug bakante nga kwarto para niini nga nag-abang.')
-    if (draft.building && !unit) return tr('Choose a vacant room, or choose "Assign a room later".', 'Pagpili og bakante nga kwarto, o pilia ang "I-assign unya".')
-    if (unit && !/^\d{4}-\d{2}-\d{2}$/.test(draft.moveIn)) return tr('Choose the move-in date.', 'Pilia ang petsa sa pagsulod.')
-    if (unit && (!/^\d{1,12}(\.\d{1,2})?$/.test(draft.rent.trim()) || Number(draft.rent) <= 0)) return tr('Enter the monthly rent, for example 3500 or 3500.50.', 'Isulod ang binulan nga abang, pananglitan 3500 o 3500.50.')
+    if (!draft.name.trim()) return tr('Enter the tenant or business name.', 'Ilagay ang pangalan ng umuupa o negosyo.')
+    if (existing && !unit) return tr('Choose the building and vacant room for this tenant.', 'Piliin ang gusali at bakanteng kuwarto para sa umuupang ito.')
+    if (draft.building && !unit) return tr('Choose a vacant room, or choose "Assign a room later".', 'Pumili ng bakanteng kuwarto, o piliin ang "I-assign mamaya".')
+    if (unit && !/^\d{4}-\d{2}-\d{2}$/.test(draft.moveIn)) return tr('Choose the move-in date.', 'Piliin ang petsa ng paglipat.')
+    if (unit && (!/^\d{1,12}(\.\d{1,2})?$/.test(draft.rent.trim()) || Number(draft.rent) <= 0)) return tr('Enter the monthly rent, for example 3500 or 3500.50.', 'Ilagay ang buwanang upa, halimbawa 3500 o 3500.50.')
     return ''
   }
   async function save() {
@@ -86,62 +86,62 @@ export function AddTenant({ propertyId, preselect, assignTenant, done, openDirec
     if (!rpcError && unit && draft.guess) flagFailed = !!(await supabase!.rpc('flag_move_in_estimate', { p_property_id: propertyId, p_agreement_id: ids.current.agreement })).error
     setBusy(false)
     if (rpcError) {
-      setError(rpcError.code === '42501' ? tr('Your staff session needs the authenticator code again. Nothing was saved.', 'Kinahanglan na usab ang authenticator code. Walay na-save.')
-        : /already has an agreement/.test(rpcError.message) ? tr('That room was just taken by another agreement. Nothing was saved; choose another room.', 'Naay laing kasabotan sa maong kwarto. Walay na-save; pagpili og lain.')
-        : tr('The tenant could not be saved. Nothing was changed; check the details and try again.', 'Wala ma-save ang nag-abang. Walay nausab; susiha ang detalye ug sulayi pag-usab.'))
+      setError(rpcError.code === '42501' ? tr('Your staff session needs the authenticator code again. Nothing was saved.', 'Kailangan ulit ang authenticator code. Walang na-save.')
+        : /already has an agreement/.test(rpcError.message) ? tr('That room was just taken by another agreement. Nothing was saved; choose another room.', 'May ibang kasunduan na sa kuwartong iyon. Walang na-save; pumili ng iba.')
+        : tr('The tenant could not be saved. Nothing was changed; check the details and try again.', 'Hindi na-save ang umuupa. Walang nabago; suriin ang detalye at subukan ulit.'))
       setStep('form'); return
     }
-    if (flagFailed) setError(tr('The tenant was saved, but the move-in date could not be marked as a best guess. Mark it from Payments > Rent by month.', 'Na-save ang nag-abang, apan wala mamarkahan nga hinuhaan ang petsa sa pagsulod. Markahi sa Payments > Abang kada bulan.'))
+    if (flagFailed) setError(tr('The tenant was saved, but the move-in date could not be marked as a best guess. Mark it from Payments > Rent by month.', 'Na-save ang umuupa, pero hindi namarkahang tantiya ang petsa ng paglipat. Markahan ito sa Payments > Upa kada buwan.'))
     setStep('saved'); done(); void load()
   }
   function reset() { setExisting(null); setDraft(empty()); setStep('form'); setError(''); ids.current = { tenant: crypto.randomUUID(), agreement: crypto.randomUUID() } }
 
-  if (state === 'failed') return <p className="notice notice--error" role="alert">{tr('Rooms could not be loaded. Check your connection and staff session, then reload.', 'Wala ma-load ang mga kwarto. Susiha ang koneksyon ug staff session, dayon i-reload.')}</p>
-  if (state === 'loading') return <LoadingSkeleton label={tr('Loading rooms…', 'Gikarga ang mga kwarto…')} rows={3} />
+  if (state === 'failed') return <p className="notice notice--error" role="alert">{tr('Rooms could not be loaded. Check your connection and staff session, then reload.', 'Hindi ma-load ang mga kuwarto. Suriin ang koneksyon at staff session, saka i-reload.')}</p>
+  if (state === 'loading') return <LoadingSkeleton label={tr('Loading rooms…', 'Nilo-load ang mga kuwarto…')} rows={3} />
   return <section className="add-tenant-preview add-tenant" aria-labelledby="add-tenant-heading">
-    <div className="section-heading"><div><p className="eyebrow">{tr('DIRECTORY MANAGEMENT', 'PAGDUMALA SA LISTA')}</p><h2 id="add-tenant-heading">{existing ? tr('Assign a room', 'Hatagi og kwarto') : tr('Add tenant record', 'Idugang ang nag-abang')}</h2><p>{existing ? tr('Choose the vacant room, move-in date and monthly rent for this tenant.', 'Pilia ang bakante nga kwarto, petsa sa pagsulod ug binulan nga abang para niini nga nag-abang.') : tr('Add the person or business and, if they are moving in, their room and rent in one step.', 'Idugang ang tawo o negosyo ug, kon mosulod na, ang ilang kwarto ug abang sa usa ka lakang.')}</p></div></div>
-    <ol className="form-progress" aria-label={tr('Form progress', 'Pag-uswag sa porma')}>
-      <li aria-current={step === 'form' ? 'step' : undefined}><span>1</span>{tr('Tenant & room', 'Nag-abang ug kwarto')}</li>
-      <li aria-current={step === 'review' ? 'step' : undefined}><span>2</span>{tr('Review details', 'Susiha ang detalye')}</li>
-      <li aria-current={step === 'saved' ? 'step' : undefined}><span>3</span>{tr('Added', 'Nadugang')}</li>
+    <div className="section-heading"><div><p className="eyebrow">{tr('DIRECTORY MANAGEMENT', 'PAMAMAHALA NG LISTAHAN')}</p><h2 id="add-tenant-heading">{existing ? tr('Assign a room', 'Bigyan ng kuwarto') : tr('Add tenant record', 'Magdagdag ng umuupa')}</h2><p>{existing ? tr('Choose the vacant room, move-in date and monthly rent for this tenant.', 'Piliin ang bakanteng kuwarto, petsa ng paglipat at buwanang upa para sa umuupang ito.') : tr('Add the person or business and, if they are moving in, their room and rent in one step.', 'Idagdag ang tao o negosyo at, kung lilipat na, ang kanilang kuwarto at upa sa isang hakbang.')}</p></div></div>
+    <ol className="form-progress" aria-label={tr('Form progress', 'Progreso ng form')}>
+      <li aria-current={step === 'form' ? 'step' : undefined}><span>1</span>{tr('Tenant & room', 'Umuupa at kuwarto')}</li>
+      <li aria-current={step === 'review' ? 'step' : undefined}><span>2</span>{tr('Review details', 'Suriin ang detalye')}</li>
+      <li aria-current={step === 'saved' ? 'step' : undefined}><span>3</span>{tr('Added', 'Naidagdag')}</li>
     </ol>
     <div ref={panel} tabIndex={-1} className="form-feedback">{error && <p role="alert" className="notice notice--error">{error}</p>}</div>
-    {step === 'saved' ? <section className="card tenant-success"><span className="success-mark" aria-hidden="true">✓</span><h3>{existing ? tr('Room assigned', 'Na-assign ang kwarto') : tr('Tenant added', 'Nadugang ang nag-abang')}</h3>
-      <p><strong>{draft.name.trim()}</strong> {unit ? `${tr('is now in', 'naa na sa')} ${building?.label} · ${unit.label}, ${tr('rent', 'abang')} ${decimalPesos(draft.rent.trim())} ${tr('per month from', 'matag bulan sugod')} ${draft.moveIn}.` : tr('was added without a room. Assign a room any time from here or the property map.', 'nadugang nga walay kwarto. Mahimong i-assign unya dinhi o sa mapa.')}</p>
-      <div className="person-actions"><Button className="primary" onClick={reset}>{tr('Add another tenant', 'Idugang og lain')}</Button><Button onClick={openDirectory}>{tr('View tenant directory', 'Tan-awa ang lista')}</Button>{unit && <Button onClick={openPayments}>{tr('Go to payments', 'Adto sa bayad')}</Button>}</div>
-    </section> : step === 'review' ? <section className="card tenant-review" aria-labelledby="tenant-review-heading"><h3 id="tenant-review-heading">{tr('Review tenant details', 'Susiha ang detalye sa nag-abang')}</h3>
-      <dl><><dt>{tr('Name', 'Ngalan')}</dt><dd>{draft.name.trim()}</dd></><><dt>{tr('Type', 'Klase')}</dt><dd>{draft.kind === 'business' ? tr('Business', 'Negosyo') : tr('Individual', 'Indibidwal')}</dd></>
-        <><dt>{tr('Room', 'Kwarto')}</dt><dd>{unit ? `${building?.label} · ${unit.label}${unit.floor_label ? ` (${unit.floor_label})` : ''}` : tr('Assign later', 'I-assign unya')}</dd></>
-        {unit && <><><dt>{tr('Move-in date', 'Petsa sa pagsulod')}</dt><dd>{draft.moveIn}{draft.guess && ` (${tr('best guess, needs a double check', 'hinuhaan, kinahanglan og double check')})`}</dd></><><dt>{tr('Monthly rent', 'Binulan nga abang')}</dt><dd>{decimalPesos(draft.rent.trim())}</dd></></>}</dl>
-      {unit && <p className="field-help">{tr('Saving creates the tenant and their room agreement together. Monthly rent is then added from Payments; nothing is charged yet.', 'Ang pag-save mohimo sa nag-abang ug sa kasabotan sa kwarto. Idugang ang binulan nga abang sa Payments; walay masingil pa.')}</p>}
-      <div className="form-actions"><Button className="secondary-button" disabled={busy} onClick={() => setStep('form')}>{tr('Edit details', 'Usba ang detalye')}</Button><Button className="primary" disabled={busy} onClick={() => void save()}>{busy ? tr('Saving…', 'Gi-save…') : existing ? tr('Confirm and assign room', 'Kumpirmaha ug i-assign') : tr('Confirm and add tenant', 'Kumpirmaha ug idugang')}</Button></div>
+    {step === 'saved' ? <section className="card tenant-success"><span className="success-mark" aria-hidden="true">✓</span><h3>{existing ? tr('Room assigned', 'Na-assign ang kuwarto') : tr('Tenant added', 'Naidagdag ang umuupa')}</h3>
+      <p><strong>{draft.name.trim()}</strong> {unit ? `${tr('is now in', 'nasa')} ${building?.label} · ${unit.label}, ${tr('rent', 'upa')} ${decimalPesos(draft.rent.trim())} ${tr('per month from', 'bawat buwan simula')} ${draft.moveIn}.` : tr('was added without a room. Assign a room any time from here or the property map.', 'naidagdag nang walang kuwarto. Maaaring i-assign mamaya rito o sa mapa.')}</p>
+      <div className="person-actions"><Button className="primary" onClick={reset}>{tr('Add another tenant', 'Magdagdag ng iba')}</Button><Button onClick={openDirectory}>{tr('View tenant directory', 'Tingnan ang listahan')}</Button>{unit && <Button onClick={openPayments}>{tr('Go to payments', 'Pumunta sa bayad')}</Button>}</div>
+    </section> : step === 'review' ? <section className="card tenant-review" aria-labelledby="tenant-review-heading"><h3 id="tenant-review-heading">{tr('Review tenant details', 'Suriin ang detalye ng umuupa')}</h3>
+      <dl><><dt>{tr('Name', 'Pangalan')}</dt><dd>{draft.name.trim()}</dd></><><dt>{tr('Type', 'Uri')}</dt><dd>{draft.kind === 'business' ? tr('Business', 'Negosyo') : tr('Individual', 'Indibidwal')}</dd></>
+        <><dt>{tr('Room', 'Kuwarto')}</dt><dd>{unit ? `${building?.label} · ${unit.label}${unit.floor_label ? ` (${unit.floor_label})` : ''}` : tr('Assign later', 'I-assign mamaya')}</dd></>
+        {unit && <><><dt>{tr('Move-in date', 'Petsa ng paglipat')}</dt><dd>{draft.moveIn}{draft.guess && ` (${tr('best guess, needs a double check', 'tantiya, kailangan ng double check')})`}</dd></><><dt>{tr('Monthly rent', 'Buwanang upa')}</dt><dd>{decimalPesos(draft.rent.trim())}</dd></></>}</dl>
+      {unit && <p className="field-help">{tr('Saving creates the tenant and their room agreement together. Monthly rent is then added from Payments; nothing is charged yet.', 'Ang pag-save ay gagawa ng umuupa at ng kasunduan sa kuwarto. Idagdag ang buwanang upa sa Payments; wala pang sisingilin.')}</p>}
+      <div className="form-actions"><Button className="secondary-button" disabled={busy} onClick={() => setStep('form')}>{tr('Edit details', 'Baguhin ang detalye')}</Button><Button className="primary" disabled={busy} onClick={() => void save()}>{busy ? tr('Saving…', 'Sine-save…') : existing ? tr('Confirm and assign room', 'Kumpirmahin at i-assign') : tr('Confirm and add tenant', 'Kumpirmahin at idagdag')}</Button></div>
     </section> : <div className="tenant-form-layout"><form className="card tenant-entry-form" onSubmit={e => { e.preventDefault(); const message = problem(); if (message) { setError(message); return } setStep('review') }}>
-      <fieldset><legend><span>01</span> {tr('Tenant details', 'Detalye sa nag-abang')}</legend>
-        {existing ? <><p className="existing-tenant"><strong>{existing.name}</strong> · {tr('existing tenant record', 'naa nay rekord')}</p><Button type="button" className="secondary-button" onClick={reset}>{tr('Add a new tenant instead', 'Idugang hinuon og bag-ong nag-abang')}</Button></> : <>
-        <label htmlFor="tenant-name">{tr('Tenant or business name', 'Ngalan sa nag-abang o negosyo')} <span className="required-label">{tr('Required', 'Kinahanglan')}</span></label>
-        <input id="tenant-name" value={draft.name} onChange={e => edit({ name: e.target.value })} maxLength={200} autoComplete="off" placeholder={tr('Example: Juan Dela Cruz or Barbershop', 'Pananglitan: Juan Dela Cruz o Barbershop')} />
-        <label htmlFor="tenant-kind">{tr('Record type', 'Klase sa rekord')}</label>
+      <fieldset><legend><span>01</span> {tr('Tenant details', 'Detalye ng umuupa')}</legend>
+        {existing ? <><p className="existing-tenant"><strong>{existing.name}</strong> · {tr('existing tenant record', 'may talaan na')}</p><Button type="button" className="secondary-button" onClick={reset}>{tr('Add a new tenant instead', 'Magdagdag na lang ng bagong umuupa')}</Button></> : <>
+        <label htmlFor="tenant-name">{tr('Tenant or business name', 'Pangalan ng umuupa o negosyo')} <span className="required-label">{tr('Required', 'Kailangan')}</span></label>
+        <input id="tenant-name" value={draft.name} onChange={e => edit({ name: e.target.value })} maxLength={200} autoComplete="off" placeholder={tr('Example: Juan Dela Cruz or Barbershop', 'Halimbawa: Juan Dela Cruz o Barbershop')} />
+        <label htmlFor="tenant-kind">{tr('Record type', 'Uri ng talaan')}</label>
         <select id="tenant-kind" value={draft.kind} onChange={e => edit({ kind: e.target.value as Draft['kind'] })}><option value="individual">{tr('Individual', 'Indibidwal')}</option><option value="business">{tr('Business (store or shop)', 'Negosyo (tindahan)')}</option></select>
         </>}
       </fieldset>
-      <fieldset><legend><span>02</span> {tr('Room', 'Kwarto')}</legend>
-        <p className="field-help">{existing ? tr('Choose the building, then a glowing (vacant) door or room.', 'Pilia ang bilding, dayon ang nagsiga (bakante) nga pultahan o kwarto.') : tr('Choose the building, then a glowing (vacant) door or room. Or assign a room later.', 'Pilia ang bilding, dayon ang nagsiga (bakante) nga pultahan o kwarto. O i-assign unya.')}</p>
+      <fieldset><legend><span>02</span> {tr('Room', 'Kuwarto')}</legend>
+        <p className="field-help">{existing ? tr('Choose the building, then a glowing (vacant) door or room.', 'Piliin ang gusali, saka ang umiilaw (bakante) na pinto o kuwarto.') : tr('Choose the building, then a glowing (vacant) door or room. Or assign a room later.', 'Piliin ang gusali, saka ang umiilaw (bakante) na pinto o kuwarto. O i-assign mamaya.')}</p>
         <RoomPicker buildings={buildings} units={units} occupied={occupied} building={draft.building} room={draft.room} allowLater={!existing} language={language} onChange={(building, room) => edit({ building, room })} />
         {draft.building && <>
-          {unit && <div className="form-grid"><div><label htmlFor="tenant-move-in">{tr('Move-in date', 'Petsa sa pagsulod')}</label><input id="tenant-move-in" type="date" value={draft.moveIn} onChange={e => edit({ moveIn: e.target.value })} /></div>
-            <div><label htmlFor="tenant-rent">{tr('Monthly rent (PHP)', 'Binulan nga abang (PHP)')}</label><input id="tenant-rent" inputMode="decimal" value={draft.rent} onChange={e => edit({ rent: e.target.value })} placeholder="3500.00" /></div></div>}
-          {unit && <><label className="duplicate-warning" htmlFor="tenant-guess"><input id="tenant-guess" type="checkbox" checked={draft.guess} onChange={e => edit({ guess: e.target.checked })} /> {tr('I do not know the exact move-in date (it is a best guess)', 'Wala ko kahibalo sa eksaktong petsa sa pagsulod (hinuhaan lang)')}</label>
-            {draft.guess && <p className="field-help">{tr('Choose the earliest date they could have moved in. Another staff member will double check it later. Unpaid months from the notebook are added afterwards in Payments, and also wait for a double check.', 'Pilia ang pinakaaga nga petsa nga pwede silang misulod. Susihon unya sa laing staff. Ang mga wala mabayri nga bulan gikan sa kuwaderno idugang sa Payments, ug maghulat usab og double check.')}</p>}</>}
-          <p className="field-help">{tr('Rent is due on the same day each month as the move-in date (the last day in shorter months).', 'Ang abang bayran sa parehong adlaw matag bulan sama sa petsa sa pagsulod (kataposang adlaw sa mubo nga bulan).')}</p>
+          {unit && <div className="form-grid"><div><label htmlFor="tenant-move-in">{tr('Move-in date', 'Petsa ng paglipat')}</label><input id="tenant-move-in" type="date" value={draft.moveIn} onChange={e => edit({ moveIn: e.target.value })} /></div>
+            <div><label htmlFor="tenant-rent">{tr('Monthly rent (PHP)', 'Buwanang upa (PHP)')}</label><input id="tenant-rent" inputMode="decimal" value={draft.rent} onChange={e => edit({ rent: e.target.value })} placeholder="3500.00" /></div></div>}
+          {unit && <><label className="duplicate-warning" htmlFor="tenant-guess"><input id="tenant-guess" type="checkbox" checked={draft.guess} onChange={e => edit({ guess: e.target.checked })} /> {tr('I do not know the exact move-in date (it is a best guess)', 'Hindi ko alam ang eksaktong petsa ng paglipat (tantiya lang)')}</label>
+            {draft.guess && <p className="field-help">{tr('Choose the earliest date they could have moved in. Another staff member will double check it later. Unpaid months from the notebook are added afterwards in Payments, and also wait for a double check.', 'Piliin ang pinakamaagang petsang maaaring lumipat sila. Susuriin ito mamaya ng ibang staff. Ang mga hindi nabayarang buwan mula sa kuwaderno ay idagdag sa Payments, at maghihintay rin ng double check.')}</p>}</>}
+          <p className="field-help">{tr('Rent is due on the same day each month as the move-in date (the last day in shorter months).', 'Babayaran ang upa sa parehong araw bawat buwan gaya ng petsa ng paglipat (huling araw sa maikling buwan).')}</p>
         </>}
       </fieldset>
-      <div className="form-actions"><Button className="secondary-button" type="button" onClick={openDirectory}>{tr('Back to directory', 'Balik sa lista')}</Button><Button className="primary">{tr('Review tenant record', 'Susiha ang rekord')}</Button></div>
+      <div className="form-actions"><Button className="secondary-button" type="button" onClick={openDirectory}>{tr('Back to directory', 'Bumalik sa listahan')}</Button><Button className="primary">{tr('Review tenant record', 'Suriin ang talaan')}</Button></div>
     </form>
-    <aside className="card tenant-live-preview" aria-label={tr('Record preview', 'Sample sa rekord')}><p className="eyebrow">{tr('RECORD PREVIEW', 'SAMPLE SA REKORD')}</p><span className="tenant-avatar"><WorkspaceIcon kind="people" /></span>
-      <h3>{draft.name.trim() || tr('New tenant', 'Bag-ong nag-abang')}</h3><p>{draft.kind === 'business' ? tr('Business record', 'Rekord sa negosyo') : tr('Individual record', 'Indibidwal nga rekord')}</p>
-      <div className="tenant-place"><WorkspaceIcon kind="building" /><div><strong>{building?.label ?? tr('Building not selected', 'Wala pay bilding')}</strong><span>{unit ? `${unit.label}${unit.floor_label ? ` · ${unit.floor_label}` : ''}` : tr('Room assignment pending', 'Naghulat og kwarto')}</span></div></div>
-      {unit && draft.rent && <p><strong>{/^\d{1,12}(\.\d{1,2})?$/.test(draft.rent.trim()) ? decimalPesos(draft.rent.trim()) : '—'}</strong> {tr('per month', 'matag bulan')}</p>}
-      <p className="field-help">{tr('A tenant record does not create a sign-in account. Invite the renter separately if they should see their payments.', 'Ang rekord sa nag-abang dili mohimo og account. Dapita sila nga bulag kon gusto nila makita ang ilang bayad.')}</p>
+    <aside className="card tenant-live-preview" aria-label={tr('Record preview', 'Halimbawang talaan')}><p className="eyebrow">{tr('RECORD PREVIEW', 'HALIMBAWANG TALAAN')}</p><span className="tenant-avatar"><WorkspaceIcon kind="people" /></span>
+      <h3>{draft.name.trim() || tr('New tenant', 'Bagong umuupa')}</h3><p>{draft.kind === 'business' ? tr('Business record', 'Talaan ng negosyo') : tr('Individual record', 'Indibidwal na talaan')}</p>
+      <div className="tenant-place"><WorkspaceIcon kind="building" /><div><strong>{building?.label ?? tr('Building not selected', 'Wala pang gusali')}</strong><span>{unit ? `${unit.label}${unit.floor_label ? ` · ${unit.floor_label}` : ''}` : tr('Room assignment pending', 'Naghihintay ng kuwarto')}</span></div></div>
+      {unit && draft.rent && <p><strong>{/^\d{1,12}(\.\d{1,2})?$/.test(draft.rent.trim()) ? decimalPesos(draft.rent.trim()) : '—'}</strong> {tr('per month', 'bawat buwan')}</p>}
+      <p className="field-help">{tr('A tenant record does not create a sign-in account. Invite the renter separately if they should see their payments.', 'Ang talaan ng umuupa ay hindi gagawa ng account. Imbitahan sila nang hiwalay kung gusto nilang makita ang kanilang bayad.')}</p>
     </aside></div>}
   </section>
 }
