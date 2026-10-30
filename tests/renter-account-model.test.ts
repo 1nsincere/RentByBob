@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { chargeStatus, dueStatus, paidPercent, parseRenterAccount, summarizeAgreement } from '../src/access/renter-account-model.ts'
+import { advancePart, chargeStatus, dueStatus, paidPercent, parseRenterAccount, summarizeAgreement } from '../src/access/renter-account-model.ts'
 
 const id = (n: number) => `30000000-0000-4000-8000-${String(n).padStart(12, '0')}`
 const acknowledgment = {
@@ -55,7 +55,7 @@ test('malformed or inconsistent renter data is rejected rather than displayed', 
     ['three decimals', value => { value.tenants[0].agreements[0].charges[1].remaining = '3500.001' }],
     ['balance not matching charges', value => { value.tenants[0].agreements[0].balance = '3400.00' }],
     ['remaining above charge', value => { value.tenants[0].agreements[0].charges[0].remaining = '5000.01' }],
-    ['payment months not adding up', value => { value.tenants[0].agreements[0].payments[1].months[0].amount = '1400.00' }],
+    ['payment months adding up to more than the payment', value => { value.tenants[0].agreements[0].payments[1].months[0].amount = '1600.00' }],
     ['unconfirmed payment listed as paid', value => { value.tenants[0].agreements[0].payments[1].confirmed_at = null }],
     ['acknowledgment amount mismatch', value => { value.tenants[0].agreements[0].payments[0].acknowledgment.amount = '4000.00' }],
     ['unknown check status', value => { value.tenants[0].agreements[0].unconfirmed[1].status = 'cleared' }],
@@ -79,4 +79,11 @@ test('due status and paid share describe the oldest unpaid month in Philippine c
   assert.deepEqual(dueStatus({ ...agreement, charges: agreement.charges.map(charge => ({ ...charge, remaining: '0.00' })) }, '2024-04-14'), { kind: 'clear' })
   assert.deepEqual(agreement.charges.map(paidPercent), [100, 30])
   assert.equal(paidPercent({ ...agreement.charges[0], amount: '3.00', remaining: '2.99' }), 0, 'rounds down so a month never looks more paid than it is')
+})
+
+test('a payment larger than the months it paid keeps the rest as advance credit and is still shown', () => {
+  const payment = { kind: 'check' as const, id: '00000000-0000-4000-8000-000000000001', reference: 'CHK-0001', amount: '7000.00', received_on: '2026-08-12', confirmed_at: '2026-08-12T02:00:00+00:00', months: [{ month: '2026-08-01', amount: '3500.00' }] }
+  assert.equal(advancePart(payment), '3500.00')
+  assert.equal(advancePart({ ...payment, months: [] }), '7000.00', 'paid before any month was added: all of it is credit')
+  assert.equal(advancePart({ ...payment, months: [{ month: '2026-08-01', amount: '7000.00' }] }), null)
 })

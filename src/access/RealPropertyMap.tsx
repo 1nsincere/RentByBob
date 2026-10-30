@@ -44,11 +44,13 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
       if (rent.error) setOccupied(null)
       else {
         const today = philippineToday()
+        const names = await supabase!.from('tenants').select('id,display_name,removed_at').eq('property_id', propertyId)
+        // A removed tenant never holds a room: it is free as soon as they are removed (same rule as the database).
+        const removed = new Set((names.data ?? []).filter(row => row.removed_at).map(row => row.id as string))
         const current = (rent.data.agreements as { unit_id: string; tenant_id: string; move_in: string; ended_on?: string | null }[])
-          .filter(agreement => agreement.move_in <= today && (!agreement.ended_on || agreement.ended_on >= today))
+          .filter(agreement => agreement.move_in <= today && (!agreement.ended_on || agreement.ended_on >= today) && !removed.has(agreement.tenant_id))
         setOccupied(new Set(current.map(agreement => agreement.unit_id)))
         setTenantByUnit(Object.fromEntries(current.map(agreement => [agreement.unit_id, agreement.tenant_id])))
-        const names = await supabase!.from('tenants').select('id,display_name').eq('property_id', propertyId)
         const nameOf = new Map((names.data ?? []).map(row => [row.id as string, row.display_name as string]))
         setRenterByUnit(Object.fromEntries((current as unknown as { unit_id: string; tenant_id: string; rent: string }[]).map(agreement => [agreement.unit_id, { name: nameOf.get(agreement.tenant_id) ?? tr('Tenant', 'Nag-abang'), rent: agreement.rent }])))
       }

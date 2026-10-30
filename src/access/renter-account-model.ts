@@ -45,10 +45,12 @@ function money(value: unknown, allowZero: boolean): value is string {
 }
 const centavos = (value: string) => toCentavos(value) as bigint
 
+// The months a payment paid add up to at most its amount: the rest is advance credit (202610270010), which pays later
+// months as they are added. Requiring an exact match rejected every account with an advance payment.
 function validMonths(value: unknown, amount: string): value is RenterMonthAllocation[] {
   return Array.isArray(value) &&
     value.every(item => record(item) && date(item.month) && item.month.endsWith('-01') && money(item.amount, false)) &&
-    value.reduce((total, item) => total + centavos(item.amount), 0n) === centavos(amount)
+    value.reduce((total, item) => total + centavos(item.amount), 0n) <= centavos(amount)
 }
 
 function validCharge(value: unknown): value is RenterCharge {
@@ -87,6 +89,13 @@ export function parseRenterAccount(value: unknown): RenterAccount {
     throw new Error('Invalid renter account response')
   }
   return value as RenterAccount
+}
+
+// The part of a confirmed payment not yet used for any month: kept as advance credit. Null when the payment is fully used.
+export function advancePart(payment: RenterPayment): string | null {
+  const used = payment.months.reduce((total, month) => total + centavos(month.amount), 0n)
+  const left = centavos(payment.amount) - used
+  return left > 0n ? fromCentavos(left) : null
 }
 
 export function chargeStatus(charge: RenterCharge): ChargeStatus {

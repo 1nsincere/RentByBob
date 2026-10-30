@@ -342,7 +342,7 @@ export function App() {
               <span className="signed-in-label">{dashboardPreview ? translateText(language, 'Workspace mode', 'Lugar sa trabaho') : role ? (role === 'owner' ? translateText(language, 'Owner', 'Tag-iya') : translateText(language, 'Clerk', 'Clerk')) : translateText(language, 'Signed in as', 'Nakasulod isip')}</span>
               <span className="account-email">{dashboardPreview ? translateText(language, 'Fictional sample account', 'Hinimo-himong sample nga account') : session.user.email}</span>
             </div>
-            {!dashboardPreview && <Button className="appbar-signout" onClick={() => void signOut()}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10" /></svg>{t.signOut}</Button>}
+            {!dashboardPreview && <Button className="appbar-signout" title={t.signOut} onClick={() => void signOut()}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10" /></svg>{t.signOut}</Button>}
           </div>}
         </div>
       </div>

@@ -147,7 +147,7 @@
 .lp-plan-scroll:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .lp-swipe-hint { display: none; }
 /* The plan always fits the screen width (no sideways scrolling). */
-.lp-plan { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-radius: .6rem; color: #eef6f0;
+.lp-plan { position: relative; container-type: size; aspect-ratio: 16 / 10; overflow: hidden; border-radius: .6rem; color: #eef6f0;
   background: radial-gradient(120% 80% at 30% 0%, #2a6a50 0%, #1d4d3b 55%, #163d2e 100%); }
 .lp-plan::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgb(255 255 255 / 6%) 1px, transparent 1.4px); background-size: 14px 14px; }
 .lp-plan-road { position: absolute; z-index: 1; background: #1f2b25; }
@@ -254,16 +254,16 @@
    as map coordinates and only the compositor moves them. Their paths keep to sidewalks and yards; only the cart uses the
    road. Each animation is written out in full (the CSS minifier drops a duration set apart from the name). Hovering or
    opening anyone pauses the whole cast together so they stay in step. */
-.lp-roam { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
-.lp-roam--student { animation: lp-roam-student 60s linear infinite both; }
+.lp-roam { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 5; pointer-events: none; }
+.lp-roam--student { width: 4.4cqw; animation: lp-roam-student 60s linear infinite both; } /* the button takes this width (buttons ignore container units) */
 .lp-roam--dog { z-index: 4; animation: lp-roam-dog 60s linear infinite both; }
 .lp-lane--e.lp-lane--stop { top: 58.3%; animation: lp-cart-stop 60s linear infinite both; }
-.lp-student { appearance: none; position: absolute; left: 0; top: 0; width: 4.4%; padding: 0; border: 0; background: none; font: inherit; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; }
+.lp-student { appearance: none; position: absolute; left: 0; top: 0; width: 100%; padding: 0; border: 0; background: none; font: inherit; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; }
 .lp-student::before { content: ""; position: absolute; inset: -.55rem; }
 .lp-student:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; border-radius: 50%; }
 .lp-student:hover .lp-bob-bubble, .lp-student:focus-visible .lp-bob-bubble { opacity: 1; transform: translate(-50%, 0); }
 .lp-student svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-face-student 60s linear infinite both; }
-.lp-dog { position: absolute; left: 0; top: 0; width: 3.3%; transform: translate(-50%, -50%); }
+.lp-dog { position: absolute; left: 0; top: 0; width: 3.3cqw; transform: translate(-50%, -50%); }
 .lp-dog svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-face-dog 60s linear infinite both; }
 .lp-plan:has(.lp-student:hover, .lp-student:focus-visible, .lp-student.is-open, .lp-bob:hover, .lp-bob:focus-visible) :is(.lp-roam, .lp-roam svg, .lp-bob, .lp-bob svg, .lp-say, .lp-lane--stop) { animation-play-state: paused; }
 .dog-body { fill: #b97a43; }
@@ -302,21 +302,21 @@
 /* The student's minute. Points (x%, y% of the plan): door 38.9,96.5; yard corner 53,96.5; side path 53,69; by the cart
    50,67.6; by Bob 64,68.5. Hidden while inside the house. */
 @keyframes lp-roam-student {
-  0% { translate: 38.9% 96.5%; opacity: 0; visibility: hidden; }
-  3.9% { translate: 38.9% 96.5%; opacity: 0; visibility: visible; }
-  5% { translate: 40.5% 96.5%; opacity: 1; }
-  9% { translate: 53% 96.5%; }
-  15% { translate: 53% 69%; }
-  22% { translate: 53% 69%; }
-  27% { translate: 50% 67.6%; }
-  42% { translate: 50% 67.6%; }
-  55% { translate: 64% 68.5%; }
-  68% { translate: 64% 68.5%; }
-  76% { translate: 53% 69%; }
-  84% { translate: 53% 96.5%; }
-  88% { translate: 40.5% 96.5%; opacity: 1; }
-  89% { translate: 38.9% 96.5%; opacity: 0; visibility: visible; }
-  89.1%, 100% { translate: 38.9% 96.5%; opacity: 0; visibility: hidden; }
+  0% { translate: 38.9cqw 96.5cqh; opacity: 0; visibility: hidden; }
+  3.9% { translate: 38.9cqw 96.5cqh; opacity: 0; visibility: visible; }
+  5% { translate: 40.5cqw 96.5cqh; opacity: 1; }
+  9% { translate: 53cqw 96.5cqh; }
+  15% { translate: 53cqw 69cqh; }
+  22% { translate: 53cqw 69cqh; }
+  27% { translate: 50cqw 67.6cqh; }
+  42% { translate: 50cqw 67.6cqh; }
+  55% { translate: 64cqw 68.5cqh; }
+  68% { translate: 64cqw 68.5cqh; }
+  76% { translate: 53cqw 69cqh; }
+  84% { translate: 53cqw 96.5cqh; }
+  88% { translate: 40.5cqw 96.5cqh; opacity: 1; }
+  89% { translate: 38.9cqw 96.5cqh; opacity: 0; visibility: visible; }
+  89.1%, 100% { translate: 38.9cqw 96.5cqh; opacity: 0; visibility: hidden; }
 }
 @keyframes lp-face-student {
   0%, 8.5% { transform: rotate(0deg); }
@@ -332,14 +332,14 @@
 }
 /* Bantay: naps in the yard, runs to the student, sits by him at the cart and at Bob's, then trots home. */
 @keyframes lp-roam-dog {
-  0%, 13% { translate: 57% 90%; }
-  15% { translate: 57.5% 70.5%; }
-  22% { translate: 57.5% 70.5%; }
-  28% { translate: 54% 68.4%; }
-  42% { translate: 54% 68.4%; }
-  55% { translate: 60% 69.5%; }
-  68% { translate: 60% 69.5%; }
-  80%, 100% { translate: 57% 90%; }
+  0%, 13% { translate: 57cqw 90cqh; }
+  15% { translate: 57.5cqw 70.5cqh; }
+  22% { translate: 57.5cqw 70.5cqh; }
+  28% { translate: 54cqw 68.4cqh; }
+  42% { translate: 54cqw 68.4cqh; }
+  55% { translate: 60cqw 69.5cqh; }
+  68% { translate: 60cqw 69.5cqh; }
+  80%, 100% { translate: 57cqw 90cqh; }
 }
 @keyframes lp-face-dog {
   0%, 13% { transform: rotate(180deg); }
@@ -372,7 +372,7 @@
 @media (prefers-reduced-motion: reduce) {
   .lp-roam--student, .lp-roam--dog, .lp-student svg, .lp-dog svg, .dog-tail, .lp-say, .lp-lane--stop { animation: none; }
   .lp-lane--e.lp-lane--stop { transform: translateX(45.5%); }
-  .lp-roam--student { translate: 53% 69%; } .lp-roam--dog { translate: 57.5% 70.5%; }
+  .lp-roam--student { translate: 53cqw 69cqh; } .lp-roam--dog { translate: 57.5cqw 70.5cqh; }
   .lp-dog svg { transform: rotate(180deg); }
   .lp-say { display: none; }
 }
@@ -663,3 +663,6 @@
 /* The student's order sits below him so the parked cart stays visible. */
 .lp-say--buy { transform: translate(-50%, 1.4em); }
 .lp-say--buy::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #fffdf4; }
+
+/* Memory: sections below the fold are not drawn until they come near the screen. */
+.lp-how, .lp-tenant, .lp-visit, .lp-footer, .lp-facts { content-visibility: auto; contain-intrinsic-size: auto 800px; }

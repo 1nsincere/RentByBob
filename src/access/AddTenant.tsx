@@ -35,15 +35,17 @@ export function AddTenant({ propertyId, preselect, assignTenant, done, openDirec
 
   const load = useCallback(async () => {
     try {
-      const [b, u, rent] = await Promise.all([
+      const [b, u, rent, gone] = await Promise.all([
         supabase!.from('buildings').select('id,label').eq('property_id', propertyId).is('archived_at', null).order('label'),
         supabase!.from('units').select('id,label,building_id,floor_label,kind').eq('property_id', propertyId).is('archived_at', null).order('label'),
         supabase!.rpc('read_rent_workspace', { p_property_id: propertyId }),
+        supabase!.from('tenants').select('id').eq('property_id', propertyId).not('removed_at', 'is', null),
       ])
       if (b.error || u.error || rent.error) throw b.error || u.error || rent.error
+      const removed = new Set((gone.data ?? []).map(row => row.id as string)) // removed tenants free their room at once
       const today = philippineToday()
       setBuildings(b.data); setUnits(u.data as Unit[])
-      setOccupied(new Set((rent.data.agreements as { unit_id: string; ended_on?: string | null }[]).filter(a => !a.ended_on || a.ended_on >= today).map(a => a.unit_id)))
+      setOccupied(new Set((rent.data.agreements as { unit_id: string; tenant_id: string; ended_on?: string | null }[]).filter(a => (!a.ended_on || a.ended_on >= today) && !removed.has(a.tenant_id)).map(a => a.unit_id)))
       setState('ready')
     } catch { setState('failed') }
   }, [propertyId])

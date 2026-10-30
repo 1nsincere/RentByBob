@@ -68,10 +68,24 @@ test('the owner can remove a tenant who still has a room; the room is freed and 
   assert.equal((await q("select count(*)::int as n from public.rent_month_drafts where agreement_id = $1 and status = 'waiting'", [id(20)]))[0].n, 0, 'waiting notebook months are dropped')
   assert.equal((await q("select count(*)::int as n from public.audit_events where action = 'tenant_removed'"))[0].n, 2, 'the repeat is a no-op')
 
-  // The freed room can take a new tenant the same day; the used room only from tomorrow.
+  // A removed tenant never holds a room (202610300001): both freed rooms take a new tenant the same day, even the one
+  // whose agreement ends today, while the room of a tenant who is still renting stays taken.
   await as(owner)
   await db.query('select public.register_tenant($1,$2,$3,$4,$5,$6,$7,$8)', [prop, id(13), 'Sample New Renter', 'individual', id(23), r4, today, '3200.00'])
-  await assert.rejects(db.query('select public.register_tenant($1,$2,$3,$4,$5,$6,$7,$8)', [prop, id(14), 'Sample Too Soon', 'individual', id(24), r5, today, '3200.00']), /already has an agreement|unavailable|taken/i)
+  await db.query('select public.register_tenant($1,$2,$3,$4,$5,$6,$7,$8)', [prop, id(14), 'Sample Same Day', 'individual', id(24), r5, today, '3200.00'])
+  await assert.rejects(db.query('select public.register_tenant($1,$2,$3,$4,$5,$6,$7,$8)', [prop, id(15), 'Sample Too Soon', 'individual', id(25), r6, today, '3200.00']), /already has an agreement/i)
+  const rooms = await q('select public.read_rental_inquiries($1) as r', [prop])
+  const occupiedOf = (unit: string) => (rooms[0].r.rooms as { unit_id: string; occupied: boolean }[]).find(x => x.unit_id === unit)?.occupied
+  assert.equal(occupiedOf(r6), true, 'a current tenant still occupies their room')
+  // Remove the two new renters again: their rooms read as free immediately, including in the public availability check.
+  await db.query('select public.remove_tenant_with_room($1,$2)', [id(14), 'Changed their mind'])
+  const after = await q('select public.read_rental_inquiries($1) as r', [prop])
+  assert.equal((after[0].r.rooms as { unit_id: string; occupied: boolean }[]).find(x => x.unit_id === r5)?.occupied, false, 'removed today, free today')
+  await db.exec('reset role')
+  await db.exec('update public.properties set auto_list_vacant = true')
+  assert.equal((await q('select private.unit_publicly_available($1) as v', [r5]))[0].v, true, 'and it is listed as open right away')
+  assert.equal((await q('select private.unit_publicly_available($1) as v', [r6]))[0].v, false)
+  await as(owner)
   // Removed tenants no longer appear as the renter of that room's open agreement.
   assert.equal((await q("select count(*)::int as n from public.rental_agreements a join public.tenants t on t.id = a.tenant_id where t.removed_at is not null and (a.ended_on is null or a.ended_on > (now() at time zone 'Asia/Manila')::date)"))[0].n, 0)
 })

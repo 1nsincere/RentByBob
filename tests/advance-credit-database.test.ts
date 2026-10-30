@@ -2,6 +2,8 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile, readdir } from 'node:fs/promises'
 import { PGlite } from '@electric-sql/pglite'
+import { parseRentWorkspaceSnapshot } from '../src/access/saved-payments-model.ts'
+import { parseRenterAccount } from '../src/access/renter-account-model.ts'
 
 // Disposable PostgreSQL with every real migration; only Supabase's identity contract is stubbed.
 test('overpayment becomes advance credit that pays the next months automatically, and reversal reopens them', async t => {
@@ -92,6 +94,13 @@ test('overpayment becomes advance credit that pays the next months automatically
   assert.deepEqual((await q('select public.read_renter_credits() as c'))[0].c, { [id(20)]: '11000.00' })
   await as(owner)
   assert.deepEqual((await q('select public.read_renter_credits() as c'))[0].c, {}, 'staff are not renters: no credit leak through the renter reader')
+  // With advance credit on the account, staff and the renter can still open every record (the app's own readers).
+  await as(clerk)
+  const workspace = (await q('select public.read_rent_workspace($1) as w', [prop]))[0].w
+  assert.doesNotThrow(() => parseRentWorkspaceSnapshot(workspace), 'staff Payments screen reads an account that has advance credit')
+  await as(renter)
+  const account = (await q('select public.read_renter_account() as a'))[0].a
+  assert.doesNotThrow(() => parseRenterAccount(account), 'the renter portal reads an account that has advance credit')
   await db.exec('reset role'); await db.exec('set role anon')
   await assert.rejects(db.query('select public.read_agreement_credits($1)', [prop]), /permission denied/)
 })
