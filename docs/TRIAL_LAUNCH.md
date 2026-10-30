@@ -15,7 +15,7 @@ What you will end up with: one live website (Cloudflare Pages) connected to one 
 4. Put the database structure in (from this folder):
    - `npx.cmd supabase login`
    - `npx.cmd supabase link --project-ref <the 20 letters>`
-   - `npx.cmd supabase db push` - review the list: it must end with `202610300002_list_access_candidates.sql`.
+   - `npx.cmd supabase db push` - review the list: it must end with `202610300003_clerks_manage_access.sql`.
    - `npx.cmd supabase functions deploy invite-account`
    - `npx.cmd supabase secrets set APP_ORIGIN=https://<your-site>.pages.dev` (after step 3 gives you the address; you can come back to this)
 5. Authentication > Sign In / Providers: **signups off**, anonymous sign-ins off. Authentication > Settings: minimum password length **12**, secure password change on. Authentication > Multi-Factor: **TOTP on**. On Pro, also turn on leaked-password protection and session limits (timebox 12 h, inactivity 2 h).

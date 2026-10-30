@@ -70,7 +70,7 @@ export function Invitations({ propertyId, owner, language = 'en' }: { propertyId
   </section>
 }
 
-export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: { propertyId: string; tenants: Tenant[]; changed: () => void; language?: Language }) {
+export function ManageAccess({ propertyId, tenants, changed, owner = true, language = 'en' }: { propertyId: string; tenants: Tenant[]; changed: () => void; owner?: boolean; language?: Language }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [account, setAccount] = useState<Account | null>(null); const [email, setEmail] = useState('')
   const [kind, setKind] = useState('contact'); const [role, setRole] = useState('clerk'); const [tenant, setTenant] = useState('')
@@ -119,7 +119,7 @@ export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: 
     setAccount(data as Account | null)
     return data
   }
-  return <section className="card form-card" aria-labelledby="manage-access-heading"><p className="eyebrow">{tr('OWNER APPROVAL', 'APROBADO SA TAG-IYA')}</p><h2 id="manage-access-heading">{tr('Assign or disable account access', 'Ihatag o tangtangon ang access sa account')}</h2>
+  return <section className="card form-card" aria-labelledby="manage-access-heading"><p className="eyebrow">{owner ? tr('OWNER APPROVAL', 'APROBADO SA TAG-IYA') : tr('STAFF ACCESS', 'ACCESS SA STAFF')}</p>{!owner && <p className="notice">{tr('As a clerk you can give or remove tenant access and clerk access. Owner access, and your own access, can only be changed by the owner. Every change is kept in the access history.', 'Isip klerk, mahimo nimong ihatag o tangtangon ang access sa nag-abang ug sa klerk. Ang access sa tag-iya ug ang imong kaugalingong access, ang tag-iya ra ang makausab. Ang matag kausaban gitipigan sa kasaysayan sa access.')}</p>}<h2 id="manage-access-heading">{tr('Assign or disable account access', 'Ihatag o tangtangon ang access sa account')}</h2>
     <p>{tr('Confirm the intended person’s email with them outside this app. Look up that exact address, review the account and target below, then retype the email. A verified email proves mailbox access, not a person’s real-world identity.', 'Kumpirmaha ang email sa tawo gawas niining app. Pangitaa ang eksaktong email, susiha ang account ug target, dayon isulat pag-usab ang email. Nagpamatuod lang ang email nga makagamit siya sa mailbox, dili sa iyang tinuod nga identidad.')}</p>
     <Feedback message={message} error={error} />
     {candidates && candidates.length > 0 && <div className="access-candidates">
@@ -168,7 +168,7 @@ export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: 
       }}>
         <fieldset disabled={busy || review}><legend>{tr('Choose access','Pagpili og access')}</legend>
           <label htmlFor="assignment-kind">{tr('Access type','Klase sa access')}</label><select id="assignment-kind" value={kind} onChange={e => setKind(e.target.value)}><option value="contact">{tr('Tenant/contact','Nag-abang/contact')}</option><option value="staff">{tr('Property staff','Staff sa propiedad')}</option></select>
-          {kind === 'contact' ? <TenantPicker label={tr('Tenant record','Rekord sa nag-abang')} tenants={activeTenants} value={tenant} onChange={setTenant} rooms={rooms} language={language} /> : <><label htmlFor="assignment-role">{tr('Staff role','Tahom sa staff')}</label><select id="assignment-role" value={role} onChange={e => setRole(e.target.value)}><option value="clerk">{tr('Clerk','Klerk')}</option><option value="owner">{tr('Owner','Tag-iya')}</option></select></>}
+          {kind === 'contact' ? <TenantPicker label={tr('Tenant record','Rekord sa nag-abang')} tenants={activeTenants} value={tenant} onChange={setTenant} rooms={rooms} language={language} /> : <><label htmlFor="assignment-role">{tr('Staff role','Tahom sa staff')}</label><select id="assignment-role" value={role} onChange={e => setRole(e.target.value)}><option value="clerk">{tr('Clerk','Klerk')}</option>{owner && <option value="owner">{tr('Owner','Tag-iya')}</option>}</select></>}
           <label htmlFor="assignment-action">{tr('Action','Aksyon')}</label><select id="assignment-action" value={enabled ? 'enable' : 'disable'} onChange={e => setEnabled(e.target.value === 'enable')}><option value="enable">{tr('Enable access','Ihatag ang access')}</option><option value="disable">{tr('Disable access','Tangtanga ang access')}</option></select>
           <label htmlFor="assignment-reason">{tr('Reason for this change','Rason sa kausaban')}</label><input id="assignment-reason" value={reason} onChange={e => setReason(e.target.value)} required maxLength={500} aria-describedby="assignment-reason-help" />
           <p className="field-help" id="assignment-reason-help">{tr('This reason is retained in the property access history.','Magpabilin kini nga rason sa kasaysayan sa access sa propiedad.')}</p>

@@ -4,7 +4,7 @@ import { readFile, readdir } from 'node:fs/promises'
 import { PGlite } from '@electric-sql/pglite'
 
 // The owner's list of sign-in accounts (202610300002), on a disposable database with every real migration.
-test('owners see waiting and own-property accounts, never another property\'s users; clerks cannot list', async t => {
+test('owners see waiting and own-property accounts, never another property\'s users; clerks see it too', async t => {
   const db = new PGlite()
   t.after(() => db.close())
   await db.exec(`
@@ -40,9 +40,9 @@ test('owners see waiting and own-property accounts, never another property\'s us
   assert.ok(!seen.some(r => r.email.includes('-b@')), "property B's owner and tenant stay private")
   assert.equal(seen.find(r => r.email === 'new@example.invalid')?.confirmed, false)
 
-  await as(clerkA); await assert.rejects(list(propA), /Owner MFA required/)
-  await as(ownerA, 'aal1'); await assert.rejects(list(propA), /Owner MFA required/)
-  await as(ownerA); await assert.rejects(list(propB), /Owner MFA required/, 'not the owner of B')
+  await as(clerkA); assert.equal((await list(propA)).length, seen.length, 'clerks see the same list (202610300003)')
+  await as(ownerA, 'aal1'); await assert.rejects(list(propA), /MFA required/)
+  await as(ownerA); await assert.rejects(list(propB), /MFA required/, 'not the owner of B')
   await db.exec('reset role'); await db.exec('set role anon')
   await assert.rejects(list(propA), /permission denied/)
 })

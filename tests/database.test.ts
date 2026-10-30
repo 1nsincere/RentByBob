@@ -84,7 +84,7 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     await as(clerk)
     await denied("update public.staff_memberships set role='owner' where user_id=$1", [clerk])
     await denied(staffSql, [property, clerk, 'owner', 'attempt'])
-    await denied(contactSql.replace('$3,$4','true,$3'), [tenant, outsider, 'attempt'])
+    await denied(staffSql, [property, owner, null, 'attempt']) // a clerk may not remove owner access (202610300003)
     await denied('delete from public.tenants where id=$1', [tenant])
     await denied('insert into public.audit_events(property_id,actor_id,action,target_id,reason) values ($1,$2,$3,$4,$5)', [property, clerk, 'forged', tenant, 'attempt'])
   })
@@ -256,7 +256,7 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     await db.exec('reset role')
     await db.query('update auth.users set email_confirmed_at=now() where id=$1',[outsider])
     await as(owner,'aal1'); await denied(sql,args)
-    await as(clerk); await denied(sql,args)
+    await as(clerk,'aal1'); await denied(sql,args) // clerks may assign tenant access (202610300003), but never without MFA
     await denied('select public.find_account_for_assignment($1,$2)',[property,`${outsider}@example.invalid`])
     await as(owner)
     await db.query(sql,args)
