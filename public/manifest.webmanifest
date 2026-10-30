@@ -2,7 +2,7 @@
   "name": "RentByBob",
   "short_name": "RentByBob",
   "description": "Rent records and rooms for Sir Bob's homes on B. Zubiri St, Labangon, Cebu City.",
-  "start_url": "/sign-in",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
