@@ -312,7 +312,7 @@ export function LandingPage() {
           <div className="lp-street-stage">
             <div className="lp-plan-frame"><StreetPlan openByBuilding={openByBuilding} known={known} active={active} setActive={setActive} language={language} /></div>
             <StreetSummary openByBuilding={openByBuilding} known={known} active={active} setActive={setActive} language={language} />
-            <p className="lp-plan-note">{tr('Not to scale. Hover or tap a home to see its rooms.', 'Hindi sukat. I-hover o i-tap ang bahay para makita ang kuwarto.')}<span className="lp-swipe-hint"> {tr('Swipe sideways to see the whole street.', 'I-swipe pakanan para makita ang buong kalye.')}</span></p>
+            <p className="lp-plan-note">{tr('Not to scale. Tap a home to see what is open; use the buttons below to see the rooms.', 'Hindi sukat. I-tap ang bahay para makita kung ano ang bakante; gamitin ang mga button sa ibaba para makita ang mga kuwarto.')}<span className="lp-swipe-hint"> {tr('Swipe sideways to see the whole street.', 'I-swipe pakanan para makita ang buong kalye.')}</span></p>
           </div>
         </div>
       </section>
