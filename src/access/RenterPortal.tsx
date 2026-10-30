@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { Button, LoadingSkeleton } from '../components/atoms'
 import { WorkspaceIcon } from '../components/WorkspaceIcon'
 import { CashAcknowledgment, decimalPesos, type CashAcknowledgmentData } from './CashAcknowledgment'
-import { chargeStatus, dueStatus, paidPercent, parseRenterAccount, summarizeAgreement, toCentavos, type RenterAccount, type RenterAgreement, type RenterTenant } from './renter-account-model.ts'
+import { advancePart, chargeStatus, dueStatus, paidPercent, parseRenterAccount, summarizeAgreement, toCentavos, type RenterAccount, type RenterAgreement, type RenterTenant } from './renter-account-model.ts'
 import { earliestReportDate, parsePaymentReports, reportDraftError, type PaidTo, type PaymentReport, type ReportDraft } from './payment-reports-model.ts'
 import { manilaDate } from '../domain/payment-report'
 import { Facade, SITE } from '../landing/street'
@@ -92,7 +92,7 @@ function AgreementView({ agreement, language, preview, openAcknowledgment, credi
             <div className="renter-payment-copy">
               <strong>{decimalPesos(payment.amount)}</strong>
               <span>{payment.kind === 'cash' ? tr('Cash', 'Kwarta') : `${tr('Check', 'Tseke')} ${payment.reference}`} · {tr('received', 'nadawat')} {dayName(payment.received_on)}</span>
-              <small>{tr('For', 'Para sa')} {payment.months.map(month => monthName(month.month)).join(', ')}</small>
+              <small>{payment.months.length > 0 && <>{tr('For', 'Para sa')} {payment.months.map(month => monthName(month.month)).join(', ')}</>}{advancePart(payment) && <>{payment.months.length > 0 && ' · '}{decimalPesos(advancePart(payment)!)} {tr('paid ahead (advance credit)', 'abante nga bayad')}</>}</small>
             </div>
             {payment.kind === 'cash' && <Button className="secondary-button" onClick={() => openAcknowledgment(payment.acknowledgment)}>{tr('View acknowledgment', 'Tan-awa ang pamatuod')}</Button>}
           </li>)}</ul> : <p className="field-help">{tr('No confirmed payments yet.', 'Wala pay kumpirmadong bayad.')}</p>}
