@@ -686,12 +686,14 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
       const open = (openByBuilding.get(site.label) ?? []).slice(0, site.spaces)
       const lit = open.length
       const status = statusText(language, known, lit)
-      return <a key={site.label} className={`lp-plot lp-plot--${site.kind}${active === site.label ? ' is-active' : ''}${lit ? ' has-open' : ''}`} href="/rooms" data-cursor={tr('Rooms', 'Kuwarto')}
-        aria-label={`${site.label}: ${status}`} onMouseEnter={() => setActive(site.label)} onFocus={() => setActive(site.label)}
+      // Homes on the map are for looking and playing, not links (owner request 30 Oct 2026): pointing, tapping or
+      // focusing one selects it (its status shows beside the map). The buttons under the map and See open rooms still go to the rooms page.
+      return <div key={site.label} role="img" tabIndex={0} className={`lp-plot lp-plot--${site.kind}${active === site.label ? ' is-active' : ''}${lit ? ' has-open' : ''}`}
+        aria-label={`${site.label}: ${status}`} onMouseEnter={() => setActive(site.label)} onFocus={() => setActive(site.label)} onClick={() => setActive(site.label)}
         style={{ left: `${site.x}%`, top: `${site.y}%`, width: `${site.w}%`, height: `${site.h}%` } as CSSProperties}>
         <span className="lp-plot-tag" aria-hidden="true"><span className="lp-plot-name">{site.label}</span><span className={`lp-plot-status${lit ? ' is-open' : ''}`}>{status}</span></span>
         <Facade site={site} open={open} />
-      </a>
+      </div>
     })}
     <span className="lp-cloud lp-cloud--a" aria-hidden="true" /><span className="lp-cloud lp-cloud--b" aria-hidden="true" />
     <span className="lp-compass" aria-hidden="true">N</span>

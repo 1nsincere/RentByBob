@@ -223,10 +223,12 @@ export function App() {
   useEffect(() => { if (previousRoute.current === 'sign-in' && route !== 'sign-in' && route !== 'loading') setIdleNotice(false); previousRoute.current = route }, [route])
 
   // Staff idle sign-out: keep a ref to the latest signOut so the timer callback stays stable.
-  const signOutRef = useRef<() => Promise<void>>(async () => {})
+  const signOutRef = useRef<(toLanding?: boolean) => Promise<void>>(async () => {})
   const [idleNotice, setIdleNotice] = useState(false)
-  const expireIdle = useCallback(() => { setIdleNotice(true); void signOutRef.current() }, [])
-  async function signOut() {
+  const expireIdle = useCallback(() => { setIdleNotice(true); void signOutRef.current(false) }, [])
+  // Signing out returns to the intro and landing page (owner request 30 Oct 2026). An idle sign-out stays on the
+  // sign-in form so its "signed out after 30 minutes" notice can be read.
+  async function signOut(toLanding = true) {
     if (dashboardPreview) { location.href = '/?auth=1'; return }
     generation.current++
     setSnapshot(null)
@@ -240,6 +242,11 @@ export function App() {
     setCallbackError('')
     setBackup(false)
     setError('')
+    if (toLanding) {
+      try { sessionStorage.removeItem('rentbybob-intro') } catch { /* the full intro may be skipped */ }
+      location.assign('/')
+      return
+    }
     history.replaceState(null, '', '/sign-in')
   }
 
@@ -380,7 +387,7 @@ export function App() {
           {import.meta.env.PROD ? <p>{translate('The app cannot reach its records right now. Please try again later, or contact the property owner.', 'Hindi makakonekta ang app sa mga talaan ngayon. Subukan ulit mamaya, o kontakin ang may-ari.')}</p>
             : <p>{translate('Start local development with', 'Simulan ang local development gamit ang')} <code>npm.cmd run dev:local</code>{translate(', or the configured hosted development environment with', ', o ang naka-set up na hosted development gamit ang')} <code>npm.cmd run dev:hosted</code>. {translate('No prototype records are substituted.', 'Walang prototype na talaang ipapalit.')}</p>}
         </section>
-          : callbackError ? <><Feedback message={appError(language, callbackError)} error /><Button className="primary" onClick={() => { setCallbackError(''); void signOut() }}>{t.returnSignIn}</Button></>
+          : callbackError ? <><Feedback message={appError(language, callbackError)} error /><Button className="primary" onClick={() => { setCallbackError(''); void signOut(false) }}>{t.returnSignIn}</Button></>
             : !session ? <>{idleNotice && <p className="notice" role="status">{translate('You were signed out after 30 minutes without activity. Sign in again to continue.', 'Na-sign out ka pagkatapos ng 30 minutong walang galaw. Mag-sign in ulit para magpatuloy.')}</p>}<SignIn language={language} /></>
               : <>
                 <Feedback message={appError(language, error)} error />

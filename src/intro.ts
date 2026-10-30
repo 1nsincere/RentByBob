@@ -27,6 +27,9 @@ export function finishIntro() {
   if (navigator.webdriver) { intro.remove(); skip?.remove(); return }
   let seen = false
   try { seen = sessionStorage.getItem('rentbybob-intro') === '1'; sessionStorage.setItem('rentbybob-intro', '1') } catch { /* private mode: every load counts as a first visit */ }
+  // The installed app (home-screen icon) plays the full intro every time it is opened.
+  const launched = window.matchMedia?.('(display-mode: standalone)').matches && (performance.getEntriesByType?.('navigation')[0] as PerformanceNavigationTiming | undefined)?.type === 'navigate'
+  if (launched) seen = false
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
   const replay = new URLSearchParams(location.search).has('intro') // open /?intro to watch the full intro again in the same tab
   const full = !reduced && (!seen || replay) && location.pathname === '/'
