@@ -170,6 +170,11 @@ export function LandingPage() {
   const minutes = simulated ?? manilaMinutes(now)
   const phase = minutes >= 300 && minutes < 1080 ? 'day' : 'night'
   const day = phase === 'day'
+  // Sky over the hero follows the real Cebu hour: the sun (day) or moon (night) travels an arc left to right, and the
+  // sky tint changes for morning, noon and golden hour.
+  const sky = !day ? 'night' : minutes < 600 ? 'morning' : minutes < 900 ? 'noon' : 'golden'
+  const arc = day ? (minutes - 300) / 780 : (((minutes - 1080) % 1440) + 1440) % 1440 / 660
+  const skyStyle = { '--arc-x': `${(60 + Math.min(1, arc) * 32).toFixed(1)}%`, '--arc-y': `${(10 + Math.sin(Math.PI * Math.min(1, arc)) * 26).toFixed(1)}%` } as CSSProperties
   const clock = simulated === null ? manilaTime(now) : clockText(simulated)
   const [active, setActive] = useState(SITE[0].label)
   const root = useRef<HTMLDivElement>(null)
@@ -255,9 +260,11 @@ export function LandingPage() {
     </header>
 
     <main id="lp-main" tabIndex={-1}>
-      <section className="lp-hero" aria-labelledby="lp-title">
+      <section className="lp-hero" data-sky={sky} style={skyStyle} aria-labelledby="lp-title">
         <div className="lp-hero-light" aria-hidden="true" />
-        {day && <div className="lp-sun" aria-hidden="true" />}
+        {day ? <><div className="lp-sun" aria-hidden="true" /><span className="lp-cloud-sky lp-cloud-sky--a" aria-hidden="true" /><span className="lp-cloud-sky lp-cloud-sky--b" aria-hidden="true" /></>
+          : <><span className="lp-stars" aria-hidden="true" /><span className="lp-moon" aria-hidden="true" /></>}
+        {!day && <span className="lp-hero-lamps" aria-hidden="true" />}
         <div className="lp-hero-top">
           <p>{tr('Labangon, Cebu City', 'Labangon, Dakbayan sa Sugbo')}</p>
           <p><span className="lp-dot" aria-hidden="true" /> {tr('Cebu time', 'Oras sa Sugbo')} {clock}</p>
