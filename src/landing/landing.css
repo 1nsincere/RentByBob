@@ -78,7 +78,7 @@
 .lp-hero h1 { position: relative; align-self: center; margin: clamp(1.5rem, 5vh, 3.5rem) 0 clamp(1.25rem, 3vh, 2rem); font-weight: 900; font-size: clamp(3.1rem, 10.4vw, 11rem); line-height: .86; letter-spacing: -.055em; }
 .lp-h1-line { display: block; }
 .lp-hero h1 .lp-serif { color: var(--amber); font-size: .92em; letter-spacing: -.035em; padding-left: clamp(0rem, 8vw, 9rem); }
-.lp-word { display: inline-block; overflow: hidden; vertical-align: top; padding: .02em .02em .1em; margin: -.02em 0 -.1em; }
+.lp-word { display: inline-block; overflow: hidden; vertical-align: top; padding: .02em .02em .22em; margin: -.02em 0 -.22em; }
 .lp-word > span { display: inline-block; transform: translateY(105%); animation: lp-rise 900ms var(--ease) forwards; animation-delay: calc(var(--i, 0) * 70ms + 80ms); }
 @keyframes lp-rise { to { transform: none; } }
 .lp-hero-foot { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1.2fr) auto auto; align-items: end; gap: 1.5rem clamp(1.5rem, 4vw, 4rem); padding-bottom: clamp(1.5rem, 4vh, 2.5rem); }
@@ -247,7 +247,7 @@
 .bob-cane circle:not(.bob-hand) { fill: #2b2420; }
 @keyframes lp-step { from { transform: translateX(-2.2px); } to { transform: translateX(2.2px); } }
 @keyframes lp-stroll { 0%, 3% { translate: 0 0; } 25%, 33% { translate: 426% 0; } 50%, 100% { translate: 0 0; } }
-@keyframes lp-turn { 0%, 25% { transform: rotate(0deg); } 28%, 80% { transform: rotate(180deg); } 84%, 100% { transform: rotate(360deg); } }
+@keyframes lp-turn { 0%, 25% { transform: rotate(0deg); } 28%, 97% { transform: rotate(180deg); } 99.5%, 100% { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .lp-bob { left: 82%; } .lp-bob svg { animation: none; } }
 /* Roaming cast: the student (the developer, a tenant), Bantay the dog, Bob and the malunggay pandesal cart share one 60 s
    loop. The student and the dog are full-size layers whose translate is in percent of the street plan, so positions read
@@ -265,7 +265,7 @@
 .lp-student svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-face-student 60s linear infinite both; }
 .lp-dog { position: absolute; left: 0; top: 0; width: 3.3cqw; transform: translate(-50%, -50%); }
 .lp-dog svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-face-dog 60s linear infinite both; }
-.lp-plan:has(.lp-student:hover, .lp-student:focus-visible, .lp-student.is-open, .lp-bob:hover, .lp-bob:focus-visible) :is(.lp-roam, .lp-roam svg, .lp-bob, .lp-bob svg, .lp-say, .lp-lane--stop) { animation-play-state: paused; }
+.lp-plan:has(.lp-student:hover, .lp-student:focus-visible, .lp-student.is-open, .lp-bob:hover, .lp-bob:focus-visible) :is(.lp-roam, .lp-roam svg, .lp-bob, .lp-bob svg, .lp-say, .lp-lane--stop, .lp-car, .lp-car svg) { animation-play-state: paused; }
 .dog-body { fill: #b97a43; }
 .dog-back { fill: #8a5730; }
 .dog-ear { fill: #6e4325; }
@@ -666,3 +666,123 @@
 
 /* Memory: sections below the fold are not drawn until they come near the screen. */
 .lp-how, .lp-tenant, .lp-visit, .lp-footer, .lp-facts { content-visibility: auto; contain-intrinsic-size: auto 800px; }
+
+/* James, Jake and their Wigo. Points (x%, y% of the plan): Mariano Abella northbound lane x 20, southbound x 16.5; the
+   parking spot beside Bob's house 26.5,84 (car facing east); the strip beside the house x 26.5 / 29.3; the sidewalk
+   y 68.8 / 71.6; in front of Bob 65.5 / 66. They only walk on sidewalks and yards. */
+.lp-driveway { position: absolute; z-index: 2; left: 22.2%; top: 78%; width: 8.4%; height: 12%; border-radius: 3px; background: rgb(31 43 37 / 55%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%); }
+.lp-car { position: absolute; left: 0; top: 0; z-index: 4; width: 6.6cqw; animation: lp-car-drive 60s linear infinite both; }
+.lp-car svg { display: block; width: 100%; height: auto; transform: translate(-50%, -50%); animation: lp-car-face 60s linear infinite both; overflow: visible; filter: drop-shadow(0 2px 2px rgb(0 0 0 / 40%)); }
+.wigo-body { fill: #c8202b; stroke: #8b1119; stroke-width: 0.8; }
+.wigo-roof { fill: #d9343e; }
+.wigo-glass { fill: #1c2a33; }
+.wigo-line { stroke: #8b1119; stroke-width: 0.6; }
+.wigo-mirror { fill: #8b1119; }
+.wigo-lamp { fill: #fff3c4; }
+.wigo-tail { fill: #ff6b5a; }
+.wigo-grille { fill: #2a2f33; }
+.lp-roam--james { width: 4.4cqw; animation: lp-roam-james 60s linear infinite both; }
+.lp-roam--jake { width: 4.4cqw; animation: lp-roam-jake 60s linear infinite both; }
+.lp-roam--james .lp-student svg { animation: lp-face-james 60s linear infinite both; }
+.lp-roam--jake .lp-student svg { animation: lp-face-jake 60s linear infinite both; }
+.hp-shirt--james { fill: #16181b; stroke: #000; stroke-width: 0.5; }
+.hp-shirt--jake { fill: #23382c; stroke: #13211a; stroke-width: 0.5; }
+.hp-shades { fill: #4fb6d8; stroke: #0d1b22; stroke-width: 0.4; }
+.lp-say--mano-james { animation: lp-say-mano-james 60s linear infinite both; }
+.lp-say--mano-jake { transform: translate(-50%, 1.4em); animation: lp-say-mano-jake 60s linear infinite both; }
+.lp-say--mano-jake::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #fffdf4; }
+.lp-say--bless { left: 50%; transform: translate(-50%, calc(-100% - .4em)); animation: lp-say-bless 60s linear infinite both; }
+@keyframes lp-say-mano-james { 0%, 89.9% { opacity: 0; } 90%, 94% { opacity: 1; } 94.1%, 100% { opacity: 0; } }
+@keyframes lp-say-mano-jake { 0%, 91.4% { opacity: 0; } 91.5%, 95% { opacity: 1; } 95.1%, 100% { opacity: 0; } }
+@keyframes lp-say-bless { 0%, 94.9% { opacity: 0; } 95%, 99.5% { opacity: 1; } 99.6%, 100% { opacity: 0; } }
+/* The car: leaves at 12% (backs into the southbound lane, drives off the bottom), returns at 64% up the northbound lane,
+   turns into the parking spot and stays from 76%. */
+@keyframes lp-car-drive {
+  0%, 12% { translate: 26.5cqw 84cqh; }
+  14% { translate: 16.5cqw 84cqh; }
+  15% { translate: 16.5cqw 84cqh; }
+  20% { translate: 16.5cqw 116cqh; }
+  20.1%, 64% { translate: 20cqw 116cqh; }
+  72% { translate: 20cqw 84cqh; }
+  73% { translate: 20.5cqw 84cqh; }
+  76%, 100% { translate: 26.5cqw 84cqh; }
+}
+@keyframes lp-car-face { 0%, 14% { rotate: 0deg; } 15.5%, 20% { rotate: 90deg; } 20.1%, 72% { rotate: -90deg; } 73.5%, 100% { rotate: 0deg; } }
+/* James (driver side) and Jake (passenger side): out at 77%, along the sidewalk to Bob, "Mano po", then back to the car
+   from 97% and in by 10% of the next minute. */
+@keyframes lp-roam-james {
+  0% { translate: 55cqw 68.8cqh; opacity: 1; visibility: visible; }
+  6% { translate: 26.5cqw 69cqh; }
+  9% { translate: 26.5cqw 80.6cqh; opacity: 1; }
+  10% { translate: 26.5cqw 80.6cqh; opacity: 0; visibility: visible; }
+  10.1%, 76.9% { translate: 26.5cqw 80.6cqh; opacity: 0; visibility: hidden; }
+  77% { translate: 26.5cqw 80.6cqh; opacity: 0; visibility: visible; }
+  78% { translate: 26.5cqw 80.6cqh; opacity: 1; }
+  81% { translate: 26.5cqw 69cqh; }
+  89%, 97% { translate: 64cqw 67.4cqh; }
+  100% { translate: 55cqw 68.8cqh; opacity: 1; visibility: visible; }
+}
+@keyframes lp-face-james { 0%, 5.5% { transform: rotate(180deg); } 6.5%, 9% { transform: rotate(90deg); } 9.5%, 78% { transform: rotate(-90deg); } 81.5%, 88.5% { transform: rotate(0deg); } 89.5%, 96.5% { transform: rotate(0deg); } 97.5%, 100% { transform: rotate(180deg); } }
+@keyframes lp-roam-jake {
+  0% { translate: 56cqw 71.6cqh; opacity: 1; visibility: visible; }
+  6.5% { translate: 29.3cqw 71.6cqh; }
+  9% { translate: 29.3cqw 87.4cqh; }
+  10% { translate: 27cqw 87.4cqh; opacity: 1; }
+  10.5% { translate: 26.5cqw 87.4cqh; opacity: 0; visibility: visible; }
+  10.6%, 76.9% { translate: 26.5cqw 87.4cqh; opacity: 0; visibility: hidden; }
+  77% { translate: 26.5cqw 87.4cqh; opacity: 0; visibility: visible; }
+  78% { translate: 27cqw 87.4cqh; opacity: 1; }
+  79.5% { translate: 29.3cqw 87.4cqh; }
+  82.5% { translate: 29.3cqw 71.6cqh; }
+  90%, 97% { translate: 64.8cqw 75cqh; }
+  100% { translate: 56cqw 71.6cqh; opacity: 1; visibility: visible; }
+}
+@keyframes lp-face-jake { 0%, 6% { transform: rotate(180deg); } 7%, 8.5% { transform: rotate(90deg); } 9.5%, 10.5% { transform: rotate(180deg); } 10.6%, 78% { transform: rotate(0deg); } 79%, 79.5% { transform: rotate(0deg); } 80%, 82% { transform: rotate(-90deg); } 83%, 96.5% { transform: rotate(0deg); } 97.5%, 100% { transform: rotate(180deg); } }
+.helper-photo img { object-fit: cover; }
+@media (prefers-reduced-motion: reduce) {
+  .lp-car, .lp-car svg, .lp-roam--james, .lp-roam--jake, .lp-roam--james .lp-student svg, .lp-roam--jake .lp-student svg { animation: none; }
+  .lp-car { translate: 26.5cqw 84cqh; }
+  .lp-roam--james { translate: 64cqw 67.4cqh; } .lp-roam--jake { translate: 64.8cqw 75cqh; }
+}
+@media (min-width: 60rem) { .lp-legend { max-width: 70%; } .lp-legend ul { grid-template-columns: repeat(3, auto); } }
+
+/* More of the minute: Ace waves to James and Jake as they arrive, they answer; Bob sends them off; Ace waves them off. */
+.lp-say--ace-hi { animation: lp-say-ace-hi 60s linear infinite both; }
+.lp-say--james-ace { animation: lp-say-james-ace 60s linear infinite both; }
+.lp-say--jake-ace { transform: translate(-50%, 1.4em); animation: lp-say-jake-ace 60s linear infinite both; }
+.lp-say--jake-ace::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #fffdf4; }
+.lp-say--farewell { left: 50%; transform: translate(-50%, calc(-100% - .4em)); animation: lp-say-farewell 60s linear infinite both; }
+.lp-say--james-bye { animation: lp-say-james-bye 60s linear infinite both; }
+.lp-say--ace-bye { animation: lp-say-ace-bye 60s linear infinite both; }
+@keyframes lp-say-ace-hi { 0%, 78.4% { opacity: 0; } 78.5%, 82% { opacity: 1; } 82.1%, 100% { opacity: 0; } }
+@keyframes lp-say-james-ace { 0%, 81.4% { opacity: 0; } 81.5%, 85% { opacity: 1; } 85.1%, 100% { opacity: 0; } }
+@keyframes lp-say-jake-ace { 0%, 84.9% { opacity: 0; } 85%, 88.5% { opacity: 1; } 88.6%, 100% { opacity: 0; } }
+@keyframes lp-say-farewell { 0%, 0.9% { opacity: 0; } 1%, 4.5% { opacity: 1; } 4.6%, 100% { opacity: 0; } }
+@keyframes lp-say-james-bye { 0%, 4.9% { opacity: 0; } 5%, 8.5% { opacity: 1; } 8.6%, 100% { opacity: 0; } }
+@keyframes lp-say-ace-bye { 0%, 10.9% { opacity: 0; } 11%, 14.5% { opacity: 1; } 14.6%, 100% { opacity: 0; } }
+.lp-say--james-ace { transform: translate(-50%, 1.4em); }
+.lp-say--james-ace::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #fffdf4; }
+
+/* Hero sky (30 Oct 2026): the sun or moon follows an arc set from the real Cebu hour (--arc-x / --arc-y from LandingPage),
+   the sky tint changes with the time of day, clouds drift by day, stars twinkle and street lamps glow at night.
+   All motion is transform/opacity; reduced motion and lite phones keep a still sky. */
+.lp-hero .lp-sun { right: auto; left: var(--arc-x, 80%); bottom: var(--arc-y, 9%); translate: -50% 0; }
+.lp-hero[data-sky="noon"] { background: radial-gradient(50% 40% at var(--arc-x) 30%, rgb(255 236 170 / 35%), transparent 70%), linear-gradient(180deg, #14394a 0%, #245766 50%, #4f7b72 78%, #c6a06a 100%) !important; }
+.lp-hero[data-sky="golden"] { background: radial-gradient(60% 50% at var(--arc-x) 90%, rgb(255 166 82 / 60%), transparent 70%), linear-gradient(180deg, #1a2c3c 0%, #3b3f4f 42%, #8a5a4a 72%, #e08a4f 92%, #f3b56a 100%) !important; }
+.lp-hero[data-sky="golden"] .lp-sun { background: radial-gradient(circle, #fff0c4 0%, #ffad5a 45%, rgb(255 140 60 / 0%) 70%); }
+.lp-cloud-sky { position: absolute; z-index: 0; top: 14%; left: 0; width: clamp(9rem, 22vw, 18rem); aspect-ratio: 3.2; border-radius: 999px; pointer-events: none;
+  background: radial-gradient(closest-side at 30% 60%, rgb(255 255 255 / 22%), transparent), radial-gradient(closest-side at 62% 45%, rgb(255 255 255 / 26%), transparent), radial-gradient(closest-side at 80% 65%, rgb(255 255 255 / 18%), transparent);
+  filter: blur(2px); animation: lp-cloud-sky 95s linear infinite; }
+.lp-cloud-sky--b { top: 30%; width: clamp(7rem, 16vw, 13rem); opacity: .7; animation-duration: 140s; animation-delay: -70s; }
+@keyframes lp-cloud-sky { from { transform: translateX(-30vw); } to { transform: translateX(110vw); } }
+.lp-stars { position: absolute; left: 0; top: 0; width: 2px; height: 2px; border-radius: 50%; pointer-events: none; box-shadow: 0.0vw 38.7vh 0 0.2px rgb(255 255 255 / 51%),72.9vw 22.4vh 0 0.3px rgb(255 255 255 / 81%),75.5vw 22.8vh 0 0.5px rgb(255 255 255 / 74%),81.7vw 10.2vh 0 0.3px rgb(255 255 255 / 78%),69.8vw 2.3vh 0 0.5px rgb(255 255 255 / 65%),92.2vw 33.9vh 0 0.1px rgb(255 255 255 / 68%),92.3vw 28.9vh 0 0.5px rgb(255 255 255 / 71%),91.2vw 38.2vh 0 0.3px rgb(255 255 255 / 58%),83.7vw 14.0vh 0 0.1px rgb(255 255 255 / 56%),42.8vw 12.4vh 0 0.7px rgb(255 255 255 / 70%),72.9vw 36.9vh 0 0.0px rgb(255 255 255 / 55%),56.1vw 21.4vh 0 0.3px rgb(255 255 255 / 50%),90.9vw 2.3vh 0 0.3px rgb(255 255 255 / 58%),66.4vw 38.8vh 0 0.4px rgb(255 255 255 / 49%),40.6vw 11.9vh 0 0.3px rgb(255 255 255 / 63%),33.3vw 22.3vh 0 0.5px rgb(255 255 255 / 52%),90.6vw 19.2vh 0 0.7px rgb(255 255 255 / 74%),63.4vw 21.7vh 0 0.4px rgb(255 255 255 / 77%),94.0vw 16.7vh 0 0.6px rgb(255 255 255 / 53%),58.7vw 14.7vh 0 0.3px rgb(255 255 255 / 61%),79.5vw 36.9vh 0 0.1px rgb(255 255 255 / 85%),7.8vw 17.1vh 0 0.1px rgb(255 255 255 / 44%),99.6vw 9.2vh 0 0.5px rgb(255 255 255 / 47%),45.7vw 24.9vh 0 0.1px rgb(255 255 255 / 90%),88.5vw 37.4vh 0 0.7px rgb(255 255 255 / 89%),76.1vw 11.6vh 0 0.0px rgb(255 255 255 / 53%),7.6vw 0.1vh 0 0.5px rgb(255 255 255 / 52%),74.1vw 20.6vh 0 0.6px rgb(255 255 255 / 53%),88.2vw 9.9vh 0 0.3px rgb(255 255 255 / 89%),11.8vw 20.5vh 0 0.0px rgb(255 255 255 / 90%),63.7vw 38.7vh 0 0.0px rgb(255 255 255 / 89%),18.8vw 40.7vh 0 0.5px rgb(255 255 255 / 77%),26.6vw 9.4vh 0 0.2px rgb(255 255 255 / 71%),5.2vw 32.3vh 0 0.6px rgb(255 255 255 / 79%),49.8vw 1.4vh 0 0.1px rgb(255 255 255 / 90%),13.1vw 28.9vh 0 0.7px rgb(255 255 255 / 42%),88.3vw 36.2vh 0 0.8px rgb(255 255 255 / 92%),76.5vw 17.6vh 0 0.2px rgb(255 255 255 / 80%),88.2vw 16.7vh 0 0.2px rgb(255 255 255 / 62%),88.7vw 23.5vh 0 0.3px rgb(255 255 255 / 74%),73.5vw 14.1vh 0 0.6px rgb(255 255 255 / 63%),19.9vw 13.1vh 0 0.8px rgb(255 255 255 / 94%),63.2vw 36.6vh 0 0.7px rgb(255 255 255 / 50%),64.5vw 5.7vh 0 0.4px rgb(255 255 255 / 70%),77.1vw 39.7vh 0 0.4px rgb(255 255 255 / 50%),44.7vw 7.0vh 0 0.5px rgb(255 255 255 / 68%); animation: lp-twinkle 4s ease-in-out infinite alternate; }
+@keyframes lp-twinkle { from { opacity: .45; } to { opacity: 1; } }
+.lp-moon { position: absolute; left: var(--arc-x, 75%); bottom: calc(var(--arc-y, 40%) + 8%); translate: -50% 0; width: clamp(3.4rem, 6vw, 5rem); aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 38% 38%, #fffbe9 0%, #f0e6c4 55%, #d8cba0 100%); box-shadow: 0 0 40px 10px rgb(255 245 205 / 22%), inset -10px -6px 0 rgb(0 0 0 / 8%); }
+.lp-hero-lamps { position: absolute; left: 0; right: 0; bottom: 0; height: 22%; pointer-events: none;
+  background: radial-gradient(12% 60% at 12% 100%, rgb(255 205 110 / 22%), transparent 70%), radial-gradient(12% 60% at 38% 100%, rgb(255 205 110 / 18%), transparent 70%), radial-gradient(12% 60% at 62% 100%, rgb(255 205 110 / 20%), transparent 70%), radial-gradient(12% 60% at 88% 100%, rgb(255 205 110 / 22%), transparent 70%);
+  animation: lp-lamps 2.5s ease both; }
+@keyframes lp-lamps { from { opacity: 0; } }
+:root[data-perf="lite"] .lp-cloud-sky, :root[data-perf="lite"] .lp-stars { animation: none; }
+:root[data-perf="lite"] .lp-cloud-sky { display: none; }
+@media (prefers-reduced-motion: reduce) { .lp-cloud-sky, .lp-stars, .lp-hero-lamps { animation: none; } .lp-cloud-sky--a { transform: translateX(10vw); } .lp-cloud-sky--b { transform: translateX(55vw); } }

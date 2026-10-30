@@ -9,21 +9,21 @@ import { philippineToday } from './payment-preview-model'
 
 export function Invitations({ propertyId, owner, language = 'en' }: { propertyId: string; owner: boolean; language?: Language }) {
   const t = copy[language]
-  const invitationStatusText: Record<string, string> = language === 'ceb' ? {
-    prepared: 'Wala pa gipadala',
-    dispatching: 'Wala masiguro — posibleng giproseso sa provider',
-    issued: 'Gikumpirma sa Supabase Auth ang paghimo; wala makumpirma ang pag-abot sa email o access sa app',
-    rejected: 'Gisalikway sa Supabase Auth ang hangyo',
-    uncertain: 'Wala masiguro ang resulta; ayaw ipadala pag-usab ug hangyoa ang tag-iya nga mosusi',
-    accepted: 'Gikumpirma sa account ang email; lahi nga desisyon sa tag-iya ang access sa propiedad',
+  const invitationStatusText: Record<string, string> = language === 'fil' ? {
+    prepared: 'Hindi pa naipadala',
+    dispatching: 'Hindi tiyak — posibleng pinoproseso ng provider',
+    issued: 'Kinumpirma ng Supabase Auth ang paggawa; hindi nakumpirma ang pagdating ng email o access sa app',
+    rejected: 'Tinanggihan ng Supabase Auth ang kahilingan',
+    uncertain: 'Hindi tiyak ang resulta; huwag ipadala ulit at hilingin sa may-ari na suriin',
+    accepted: 'Kinumpirma ng account ang email; hiwalay na desisyon ng may-ari ang access sa property',
   } : {}
-  const invitationMessages: Record<string, string> = language === 'ceb' ? {
-    prepared: 'Na-save ang hangyo; wala pa gitawag ang provider.',
-    dispatching: 'Posibleng naproseso na kini sa provider. Ayaw ipadala pag-usab; hangyoa ang tag-iya nga mosusi.',
-    issued: 'Gikumpirma sa Supabase Auth ang paghimo. Wala kini magkumpirma nga niabot sa inbox o nga na-assign ang access.',
-    rejected: 'Gisalikway sa Supabase Auth ang hangyo. Susiha ang rason sa dili pa mangandam og laing imbitasyon.',
-    uncertain: 'Wala masiguro ang resulta sa provider. Ayaw ipadala pag-usab; kinahanglan susihon kini sa tag-iya.',
-    accepted: 'Gikumpirma sa account nga nalangkit sa imbitasyon ang email. Lahi nga desisyon sa tag-iya ang access sa propiedad.',
+  const invitationMessages: Record<string, string> = language === 'fil' ? {
+    prepared: 'Na-save ang kahilingan; hindi pa tinatawag ang provider.',
+    dispatching: 'Posibleng naproseso na ito ng provider. Huwag ipadala ulit; hilingin sa may-ari na suriin.',
+    issued: 'Kinumpirma ng Supabase Auth ang paggawa. Hindi nito kinukumpirma na dumating ito sa inbox o na-assign ang access.',
+    rejected: 'Tinanggihan ng Supabase Auth ang kahilingan. Suriin ang dahilan bago maghanda ng ibang imbitasyon.',
+    uncertain: 'Hindi tiyak ang resulta ng provider. Huwag ipadala ulit; kailangan itong suriin ng may-ari.',
+    accepted: 'Kinumpirma ng account na nakaugnay sa imbitasyon ang email. Hiwalay na desisyon ng may-ari ang access sa property.',
   } : {}
   const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [error, setError] = useState(false)
   const [attempted, setAttempted] = useState(false); const [email, setEmail] = useState('')
@@ -70,7 +70,7 @@ export function Invitations({ propertyId, owner, language = 'en' }: { propertyId
   </section>
 }
 
-export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: { propertyId: string; tenants: Tenant[]; changed: () => void; language?: Language }) {
+export function ManageAccess({ propertyId, tenants, changed, owner = true, language = 'en' }: { propertyId: string; tenants: Tenant[]; changed: () => void; owner?: boolean; language?: Language }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [account, setAccount] = useState<Account | null>(null); const [email, setEmail] = useState('')
   const [kind, setKind] = useState('contact'); const [role, setRole] = useState('clerk'); const [tenant, setTenant] = useState('')
@@ -87,35 +87,73 @@ export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: 
     }, () => undefined)
     return () => { live = false }
   }, [propertyId])
+  // Sign-in accounts the owner may act on (202610300002): pick one instead of typing the email. Optional: if the list
+  // cannot load (older database), typing the exact email still works.
+  type Candidate = { email: string; confirmed: boolean; last_sign_in_at: string | null; access: string }
+  const [candidates, setCandidates] = useState<Candidate[] | null>(null)
+  const [filter, setFilter] = useState('')
+  const loadCandidates = () => {
+    void supabase!.rpc('list_access_candidates', { p_property_id: propertyId })
+      .then(({ data, error }) => setCandidates(!error && Array.isArray(data) ? data as Candidate[] : null), () => setCandidates(null))
+  }
+  useEffect(loadCandidates, [propertyId])
+  const accessLabel = (access: string) => ({ owner: tr('Owner', 'May-ari'), clerk: tr('Clerk', 'Clerk'), tenant: tr('Tenant', 'Umuupa'), disabled: tr('Access off', 'Naka-off'), none: tr('No access yet', 'Wala pang access') } as Record<string, string>)[access] ?? access
+  const signedIn = (c: Candidate) => {
+    if (!c.confirmed) return tr('Email not confirmed', 'Hindi nakumpirma ang email')
+    if (!c.last_sign_in_at) return tr('Never signed in', 'Hindi pa nakapag-sign in')
+    const when = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Manila' }).format(new Date(c.last_sign_in_at))
+    return `${tr('Last sign-in', 'Huling pag-sign in')} ${when}`
+  }
+  async function choose(candidate: Candidate) {
+    setEmail(candidate.email); setReview(false); setConfirmation(''); setMessage(''); setBusy(true)
+    try {
+      const { data, error } = await supabase!.rpc('find_account_for_assignment', { p_property_id: propertyId, p_email: candidate.email })
+      if (error) throw error
+      setAccount(data as Account | null); setError(false)
+    } catch { setError(true); setMessage(tr('Account lookup failed. Owner access and MFA are required. No assignment was made.', 'Nabigo ang paghahanap ng account. Kailangan ang access ng may-ari at MFA. Walang access na na-assign.')) }
+    finally { setBusy(false) }
+  }
   async function lookup() {
     const { data, error } = await supabase!.rpc('find_account_for_assignment', { p_property_id: propertyId, p_email: email.trim() })
     if (error) throw error
     setAccount(data as Account | null)
     return data
   }
-  return <section className="card form-card" aria-labelledby="manage-access-heading"><p className="eyebrow">{tr('OWNER APPROVAL', 'APROBADO SA TAG-IYA')}</p><h2 id="manage-access-heading">{tr('Assign or disable account access', 'Ihatag o tangtangon ang access sa account')}</h2>
-    <p>{tr('Confirm the intended person’s email with them outside this app. Look up that exact address, review the account and target below, then retype the email. A verified email proves mailbox access, not a person’s real-world identity.', 'Kumpirmaha ang email sa tawo gawas niining app. Pangitaa ang eksaktong email, susiha ang account ug target, dayon isulat pag-usab ang email. Nagpamatuod lang ang email nga makagamit siya sa mailbox, dili sa iyang tinuod nga identidad.')}</p>
+  return <section className="card form-card" aria-labelledby="manage-access-heading"><p className="eyebrow">{owner ? tr('OWNER APPROVAL', 'PAG-APRUBA NG MAY-ARI') : tr('STAFF ACCESS', 'ACCESS NG STAFF')}</p>{!owner && <p className="notice">{tr('As a clerk you can give or remove tenant access and clerk access. Owner access, and your own access, can only be changed by the owner. Every change is kept in the access history.', 'Bilang clerk, maaari mong ibigay o tanggalin ang access ng umuupa at ng clerk. Ang access ng may-ari at ang sarili mong access ay ang may-ari lang ang makapagbabago. Bawat pagbabago ay nakatala sa kasaysayan ng access.')}</p>}<h2 id="manage-access-heading">{tr('Assign or disable account access', 'Ibigay o tanggalin ang access sa account')}</h2>
+    <p>{tr('Confirm the intended person’s email with them outside this app. Look up that exact address, review the account and target below, then retype the email. A verified email proves mailbox access, not a person’s real-world identity.', 'Kumpirmahin ang email ng tao sa labas ng app na ito. Hanapin ang eksaktong email, suriin ang account at target, saka isulat ulit ang email. Pinatutunayan lang ng email na nagagamit niya ang mailbox, hindi ang tunay niyang pagkakakilanlan.')}</p>
     <Feedback message={message} error={error} />
+    {candidates && candidates.length > 0 && <div className="access-candidates">
+      <h3>{tr('Accounts that can sign in', 'Mga account na makakapag-sign in')}</h3>
+      <p className="field-help">{tr('Newest sign-in first. People waiting for access show "No access yet". Choose one to review it below.', 'Pinakabagong nag-sign in muna. Ang naghihintay ng access ay "Wala pang access". Piliin para masuri sa ibaba.')}</p>
+      {candidates.length > 6 && <><label htmlFor="candidate-filter">{tr('Filter by email', 'Hanapin gamit ang email')}</label><input id="candidate-filter" type="search" value={filter} onChange={e => setFilter(e.target.value)} autoComplete="off" /></>}
+      <ul className="access-candidate-list">
+        {candidates.filter(c => c.email.toLowerCase().includes(filter.trim().toLowerCase())).map(c => <li key={c.email}>
+          <span className="access-candidate-email">{c.email}</span>
+          <span className="access-candidate-meta"><span className={`status status--${c.access === 'none' ? 'pending' : c.access === 'disabled' ? 'archived' : 'ready'}`}>{accessLabel(c.access)}</span> {signedIn(c)}</span>
+          <Button variant="secondary" size="sm" disabled={busy} aria-label={`${tr('Choose', 'Piliin')} ${c.email}`} onClick={() => void choose(c)}>{tr('Choose', 'Piliin')}</Button>
+        </li>)}
+      </ul>
+    </div>}
     <form onSubmit={async e => {
       e.preventDefault(); if (busy) return
       setBusy(true); setMessage(''); setAccount(null); setReview(false); setConfirmation('')
-      try { const data = await lookup(); setError(false); if (!data) setMessage(tr('No account matches this exact email. Check the address or invite the intended person first.', 'Walay account nga katugbang sa eksaktong email. Susiha ang address o imbitaha una ang tawo.')) }
-      catch { setError(true); setMessage(tr('Account lookup failed. Owner access and MFA are required. No assignment was made.', 'Napakyas ang pagpangita sa account. Kinahanglan ang access sa tag-iya ug MFA. Walay access nga gi-assign.')) }
+      try { const data = await lookup(); setError(false); if (!data) setMessage(tr('No account matches this exact email. Check the address or invite the intended person first.', 'Walang account na tugma sa eksaktong email. Suriin ang address o imbitahan muna ang tao.')) }
+      catch { setError(true); setMessage(tr('Account lookup failed. Owner access and MFA are required. No assignment was made.', 'Nabigo ang paghahanap ng account. Kailangan ang access ng may-ari at MFA. Walang access na na-assign.')) }
       finally { setBusy(false) }
-    }}><label htmlFor="lookup-email">{tr('Exact account email', 'Eksaktong email sa account')}</label><input id="lookup-email" type="email" autoComplete="email" required value={email} onChange={e => { setEmail(e.target.value); setAccount(null); setReview(false) }} /><Button className="secondary-button" disabled={busy}>{busy ? tr('Searching…', 'Gipangita…') : tr('Find account', 'Pangitaa ang account')}</Button></form>
-    {account && <div className="divider"><h3>{tr('Matched account', 'Nakit-an nga account')}</h3>
+    }}><label htmlFor="lookup-email">{tr('Exact account email', 'Eksaktong email ng account')}</label><input id="lookup-email" type="email" autoComplete="email" required value={email} onChange={e => { setEmail(e.target.value); setAccount(null); setReview(false) }} /><Button className="secondary-button" disabled={busy}>{busy ? tr('Searching…', 'Hinahanap…') : tr('Find account', 'Hanapin ang account')}</Button></form>
+    {account && <div className="divider"><h3>{tr('Matched account', 'Nakitang account')}</h3>
       <div className="notice" role="status">
-        <strong>{tr('Assignment summary', 'Kinatibuk-ang summary sa assignment')}</strong>
-        <p>{tr('Email matched:', 'Katugbang nga email:')} <strong>{account.email}</strong></p>
-        <p>{tr('Access state:', 'Kahimtang sa access:')} <strong>{language === 'ceb' ? ({pending:'Naghulat',disabled:'Gipalong',unassigned:'Wala ma-assign',ready:'Andam'} as Record<string,string>)[account.state] ?? tr('Unknown access state','Wala mailhi nga kahimtang sa access') : stateLabels[account.state] ?? tr('Unknown access state','Wala mailhi nga kahimtang sa access')}</strong></p>
-        <p>{tr('Invitation status:', 'Kahimtang sa imbitasyon:')} <strong>{account.accepted ? tr('Accepted', 'Gidawat') : tr('Still waiting for acceptance', 'Naghulat pa sa pagdawat')}</strong></p>
+        <strong>{tr('Assignment summary', 'Buod ng assignment')}</strong>
+        <p>{tr('Email matched:', 'Katugmang email:')} <strong>{account.email}</strong></p>
+        <p>{tr('Access state:', 'Katayuan ng access:')} <strong>{language === 'fil' ? ({pending:'Naghihintay',disabled:'Naka-off',unassigned:'Hindi na-assign',ready:'Handa'} as Record<string,string>)[account.state] ?? tr('Unknown access state','Hindi kilalang katayuan ng access') : stateLabels[account.state] ?? tr('Unknown access state','Hindi kilalang katayuan ng access')}</strong></p>
+        <p>{tr('Invitation status:', 'Katayuan ng imbitasyon:')} <strong>{account.accepted ? tr('Accepted', 'Tinanggap') : tr('Still waiting for acceptance', 'Naghihintay pa ng pagtanggap')}</strong></p>
       </div>
-      <p>{tr('Current staff access:', 'Karon nga access sa staff:')} {account.staff_role ? (language === 'ceb' ? account.staff_role === 'owner' ? 'Tag-iya' : 'Klerk' : account.staff_role) : tr('None', 'Wala')}</p>
-      <ul>{account.contacts.map(c => <li key={c.tenant_id}>{c.name}: {c.enabled ? tr('Enabled', 'Aktibo') : tr('Disabled', 'Gipalong')}</li>)}</ul>
-      {!account.accepted ? <p>{tr('Wait for invitation acceptance before assigning access.', 'Hulata nga dawaton una ang imbitasyon sa dili pa mo-assign og access.')}</p> : <form onSubmit={async e => {
+      <p>{tr('Current staff access:', 'Kasalukuyang access ng staff:')} {account.staff_role ? (language === 'fil' ? account.staff_role === 'owner' ? 'Tag-iya' : 'Klerk' : account.staff_role) : tr('None', 'Wala')}</p>
+      <ul>{account.contacts.map(c => <li key={c.tenant_id}>{c.name}: {c.enabled ? tr('Enabled', 'Aktibo') : tr('Disabled', 'Naka-off')}</li>)}</ul>
+      {!account.accepted ? <p>{tr('Wait for invitation acceptance before assigning access.', 'Hintaying tanggapin muna ang imbitasyon bago mag-assign ng access.')}</p> : <form onSubmit={async e => {
         e.preventDefault(); if (busy) return
-        if (!review && kind === 'contact' && !tenant) { setError(true); setMessage(tr('Choose the tenant record first.', 'Pilia una ang rekord sa nag-abang.')); return }
-        if (!review) { setReview(true); setMessage(tr('Review the assignment and retype the matched email before confirming.', 'Susiha ang assignment ug isulat pag-usab ang email sa account sa dili pa mokumpirma.')); setError(false); return }
+        if (!review && kind === 'contact' && !tenant) { setError(true); setMessage(tr('Choose the tenant record first.', 'Piliin muna ang talaan ng umuupa.')); return }
+        if (!review) { setReview(true); setMessage(tr('Review the assignment and retype the matched email before confirming.', 'Suriin ang assignment at isulat ulit ang email ng account bago kumpirmahin.')); setError(false); return }
         setBusy(true); setMessage('')
         try {
           const { error } = await supabase!.rpc('assign_account_access', {
@@ -124,21 +162,21 @@ export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: 
             p_role: kind === 'staff' && enabled ? role : null, p_enabled: enabled, p_reason: reason.trim(),
           })
           if (error) throw error
-          setError(false); setMessage(tr('Access change saved. The account’s next access check will use the new permissions.', 'Na-save ang kausaban sa access. Gamiton sa sunod nga pagsusi sa account ang bag-ong permiso.')); setReview(false); setConfirmation(''); await lookup(); changed()
-        } catch { setError(true); setMessage(tr('Access was not confirmed. Refresh the account before retrying. Check the verified email, owner MFA, target tenant and last-owner protection.', 'Wala makumpirma ang access. I-refresh una ang account. Susiha ang kumpirmadong email, MFA sa tag-iya, nag-abang nga gipili ug proteksyon sa kataposang tag-iya.')); setReview(false) }
+          setError(false); setMessage(tr('Access change saved. The account’s next access check will use the new permissions.', 'Na-save ang pagbabago sa access. Gagamitin sa susunod na pagsusuri ng account ang bagong pahintulot.')); setReview(false); setConfirmation(''); await lookup(); loadCandidates(); changed()
+        } catch { setError(true); setMessage(tr('Access was not confirmed. Refresh the account before retrying. Check the verified email, owner MFA, target tenant and last-owner protection.', 'Hindi makumpirma ang access. I-refresh muna ang account. Suriin ang kumpirmadong email, MFA ng staff, napiling umuupa at proteksyon ng huling may-ari.')); setReview(false) }
         finally { setBusy(false) }
       }}>
-        <fieldset disabled={busy || review}><legend>{tr('Choose access','Pagpili og access')}</legend>
-          <label htmlFor="assignment-kind">{tr('Access type','Klase sa access')}</label><select id="assignment-kind" value={kind} onChange={e => setKind(e.target.value)}><option value="contact">{tr('Tenant/contact','Nag-abang/contact')}</option><option value="staff">{tr('Property staff','Staff sa propiedad')}</option></select>
-          {kind === 'contact' ? <TenantPicker label={tr('Tenant record','Rekord sa nag-abang')} tenants={activeTenants} value={tenant} onChange={setTenant} rooms={rooms} language={language} /> : <><label htmlFor="assignment-role">{tr('Staff role','Tahom sa staff')}</label><select id="assignment-role" value={role} onChange={e => setRole(e.target.value)}><option value="clerk">{tr('Clerk','Klerk')}</option><option value="owner">{tr('Owner','Tag-iya')}</option></select></>}
-          <label htmlFor="assignment-action">{tr('Action','Aksyon')}</label><select id="assignment-action" value={enabled ? 'enable' : 'disable'} onChange={e => setEnabled(e.target.value === 'enable')}><option value="enable">{tr('Enable access','Ihatag ang access')}</option><option value="disable">{tr('Disable access','Tangtanga ang access')}</option></select>
-          <label htmlFor="assignment-reason">{tr('Reason for this change','Rason sa kausaban')}</label><input id="assignment-reason" value={reason} onChange={e => setReason(e.target.value)} required maxLength={500} aria-describedby="assignment-reason-help" />
-          <p className="field-help" id="assignment-reason-help">{tr('This reason is retained in the property access history.','Magpabilin kini nga rason sa kasaysayan sa access sa propiedad.')}</p>
+        <fieldset disabled={busy || review}><legend>{tr('Choose access','Pagpili ng access')}</legend>
+          <label htmlFor="assignment-kind">{tr('Access type','Uri ng access')}</label><select id="assignment-kind" value={kind} onChange={e => setKind(e.target.value)}><option value="contact">{tr('Tenant/contact','Umuupa/contact')}</option><option value="staff">{tr('Property staff','Staff ng property')}</option></select>
+          {kind === 'contact' ? <TenantPicker label={tr('Tenant record','Talaan ng umuupa')} tenants={activeTenants} value={tenant} onChange={setTenant} rooms={rooms} language={language} /> : <><label htmlFor="assignment-role">{tr('Staff role','Tungkulin ng staff')}</label><select id="assignment-role" value={role} onChange={e => setRole(e.target.value)}><option value="clerk">{tr('Clerk','Clerk')}</option>{owner && <option value="owner">{tr('Owner','May-ari')}</option>}</select></>}
+          <label htmlFor="assignment-action">{tr('Action','Aksyon')}</label><select id="assignment-action" value={enabled ? 'enable' : 'disable'} onChange={e => setEnabled(e.target.value === 'enable')}><option value="enable">{tr('Enable access','Ibigay ang access')}</option><option value="disable">{tr('Disable access','Tanggalin ang access')}</option></select>
+          <label htmlFor="assignment-reason">{tr('Reason for this change','Dahilan ng pagbabago')}</label><input id="assignment-reason" value={reason} onChange={e => setReason(e.target.value)} required maxLength={500} aria-describedby="assignment-reason-help" />
+          <p className="field-help" id="assignment-reason-help">{tr('This reason is retained in the property access history.','Mananatili ang dahilang ito sa kasaysayan ng access ng property.')}</p>
         </fieldset>
-        {review && <div className="notice access-review" aria-labelledby="access-review-heading"><h3 id="access-review-heading">{tr('Review before saving','Susiha una mosave')}</h3><p>{enabled ? tr('Enable','Ihatag') : tr('Disable','Tangtangon')} {kind === 'contact' ? `${tr('contact access to','ang access sa contact alang kang')} ${activeTenants.find(t => t.id === tenant)?.display_name}` : `${role === 'owner' ? tr('owner','tag-iya') : tr('clerk','clerk')} ${tr('access to this property','nga access niini nga propiedad')}`} {tr('for','para sa')} <strong>{account.email}</strong>.</p>
-          {!enabled && <p>{tr('Disabling removes this selected access. Other tenant or property memberships are unchanged; access history is retained. An owner can enable access again with a new reviewed change.','Tangtangon ang napiling access. Dili mausab ang laing pagtugot sa nag-abang o propiedad; magpabilin ang kasaysayan. Mahimong ihatag pag-usab sa tag-iya human sa laing pagsusi.')}</p>}
-          <p>{tr('Reason:', 'Rason:')} {reason}</p><label htmlFor="confirm-email">{tr('Retype the matched account email','Isulat pag-usab ang email sa account')}</label><input id="confirm-email" type="email" required value={confirmation} onChange={e => setConfirmation(e.target.value)} autoComplete="off" aria-describedby="confirm-email-help" /><p className="field-help" id="confirm-email-help">{tr('This extra check helps prevent changes to the wrong account.','Kini nga dugang pagsusi makatabang nga malikayan ang pag-usab sa sayop nga account.')}</p><Button type="button" className="secondary-button" onClick={() => { setReview(false); setMessage('') }}>{tr('Edit assignment','Usba ang assignment')}</Button></div>}
-        <Button className="primary" disabled={busy}>{busy ? tr('Saving…','Gi-save…') : review ? tr('Confirm access change','Kumpirmaha ang kausaban sa access') : tr('Review assignment','Susiha ang assignment')}</Button>
+        {review && <div className="notice access-review" aria-labelledby="access-review-heading"><h3 id="access-review-heading">{tr('Review before saving','Suriin muna bago i-save')}</h3><p>{enabled ? tr('Enable','Ibigay') : tr('Disable','Tanggalin')} {kind === 'contact' ? `${tr('contact access to','ang access sa contact para kay')} ${activeTenants.find(t => t.id === tenant)?.display_name}` : `${role === 'owner' ? tr('owner','may-ari') : tr('clerk','clerk')} ${tr('access to this property','na access sa property na ito')}`} {tr('for','para sa')} <strong>{account.email}</strong>.</p>
+          {!enabled && <p>{tr('Disabling removes this selected access. Other tenant or property memberships are unchanged; access history is retained. An owner can enable access again with a new reviewed change.','Tatanggalin ang napiling access. Hindi mababago ang ibang pahintulot ng umuupa o property; mananatili ang kasaysayan. Maaaring ibigay ulit pagkatapos ng panibagong pagsusuri.')}</p>}
+          <p>{tr('Reason:', 'Dahilan:')} {reason}</p><label htmlFor="confirm-email">{tr('Retype the matched account email','Isulat ulit ang email ng account')}</label><input id="confirm-email" type="email" required value={confirmation} onChange={e => setConfirmation(e.target.value)} autoComplete="off" aria-describedby="confirm-email-help" /><p className="field-help" id="confirm-email-help">{tr('This extra check helps prevent changes to the wrong account.','Nakakatulong ang dagdag na pagsusuring ito para hindi mabago ang maling account.')}</p><Button type="button" className="secondary-button" onClick={() => { setReview(false); setMessage('') }}>{tr('Edit assignment','Baguhin ang assignment')}</Button></div>}
+        <Button className="primary" disabled={busy}>{busy ? tr('Saving…','Sine-save…') : review ? tr('Confirm access change','Kumpirmahin ang pagbabago sa access') : tr('Review assignment','Suriin ang assignment')}</Button>
       </form>}
     </div>}
   </section>

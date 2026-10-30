@@ -20,18 +20,18 @@ function InquiryDialog({ building, room, language, submit, close }: { building: 
   useEffect(() => { opener.current = document.activeElement as HTMLElement | null; dialog.current?.showModal() }, [])
   // Close the modal first, then return focus to the button that opened it, then unmount.
   const finish = () => { dialog.current?.close(); opener.current?.focus(); close() }
-  const failure = state === 'limit' ? tr('Too many messages were sent recently. Please try again later.', 'Daghan na kaayong mensahe karong bag-o. Palihug sulayi pag-usab unya.')
-    : state === 'unlisted' ? tr('Sorry, this room is no longer listed. Please choose another room.', 'Pasensya, wala na nalista kini nga kwarto. Palihug pagpili og lain.')
-    : state === 'error' ? tr('Your message could not be sent. Check your connection and try again.', 'Wala mapadala ang imong mensahe. Susiha ang koneksyon ug sulayi pag-usab.') : ''
+  const failure = state === 'limit' ? tr('Too many messages were sent recently. Please try again later.', 'Masyadong maraming mensahe kamakailan. Pakisubukan ulit mamaya.')
+    : state === 'unlisted' ? tr('Sorry, this room is no longer listed. Please choose another room.', 'Paumanhin, hindi na nakalista ang kuwartong ito. Pakipili ng iba.')
+    : state === 'error' ? tr('Your message could not be sent. Check your connection and try again.', 'Hindi naipadala ang iyong mensahe. Suriin ang koneksyon at subukan ulit.') : ''
   return <dialog ref={dialog} className="inquiry-dialog" aria-labelledby="inquiry-heading" onCancel={e => { e.preventDefault(); finish() }}>
     <div className="inquiry-dialog__head">
-      <div><p className="inquiry-dialog__where">{building}</p><h2 id="inquiry-heading">{tr('Ask about', 'Pangutana bahin sa')} {room.room}</h2><p className="inquiry-rent">{room.asking_rent ? `${decimalPesos(room.asking_rent)} ${tr('per month', 'matag bulan')}` : tr('Ask for the price', 'Pangutana sa presyo')}</p></div>
-      <Button type="button" className="secondary-button" onClick={finish}>{tr('Close', 'Sirado')}</Button>
+      <div><p className="inquiry-dialog__where">{building}</p><h2 id="inquiry-heading">{tr('Ask about', 'Tanong tungkol sa')} {room.room}</h2><p className="inquiry-rent">{room.asking_rent ? `${decimalPesos(room.asking_rent)} ${tr('per month', 'bawat buwan')}` : tr('Ask for the price', 'Tanong sa presyo')}</p></div>
+      <Button type="button" className="secondary-button" onClick={finish}>{tr('Close', 'Isara')}</Button>
     </div>
     {state === 'sent' ? <div className="inquiry-sent" role="status">
       <span className="inquiry-sent__mark" aria-hidden="true">✓</span>
-      <p><strong>{tr('Message sent. Thank you!', 'Napadala na ang mensahe. Salamat!')}</strong> {tr('The property staff will contact you at', 'Kontakon ka sa staff sa propiedad pinaagi sa')} {sentTo}.</p>
-      <Button className="primary" onClick={finish}>{tr('Done', 'Human na')}</Button>
+      <p><strong>{tr('Message sent. Thank you!', 'Naipadala na ang mensahe. Salamat!')}</strong> {tr('The property staff will contact you at', 'Kokontakin ka ng staff ng property sa pamamagitan ng')} {sentTo}.</p>
+      <Button className="primary" onClick={finish}>{tr('Done', 'Tapos na')}</Button>
     </div> : <form onSubmit={async e => {
       e.preventDefault()
       const form = new FormData(e.currentTarget)
@@ -44,25 +44,25 @@ function InquiryDialog({ building, room, language, submit, close }: { building: 
       setState(result)
     }}>
       {failure && <p className="notice notice--error" role="alert">{failure}</p>}
-      <label htmlFor="inquiry-name">{tr('Your name', 'Imong ngalan')}</label>
+      <label htmlFor="inquiry-name">{tr('Your name', 'Iyong pangalan')}</label>
       <input id="inquiry-name" name="name" autoComplete="name" required maxLength={100} />
-      <label htmlFor="inquiry-contact">{tr('Phone number or Messenger name', 'Numero sa telepono o ngalan sa Messenger')}</label>
+      <label htmlFor="inquiry-contact">{tr('Phone number or Messenger name', 'Numero ng telepono o pangalan sa Messenger')}</label>
       <input id="inquiry-contact" name="contact" autoComplete="tel" required minLength={3} maxLength={120} aria-describedby="inquiry-contact-help" />
-      <p className="field-help" id="inquiry-contact-help">{tr('Staff will use this only to reply about the room.', 'Gamiton lang kini sa staff aron motubag bahin sa kwarto.')}</p>
+      <p className="field-help" id="inquiry-contact-help">{tr('Staff will use this only to reply about the room.', 'Gagamitin lang ito ng staff para sumagot tungkol sa kuwarto.')}</p>
       <label htmlFor="inquiry-message">{tr('Message', 'Mensahe')}</label>
-      <textarea id="inquiry-message" name="message" maxLength={1000} defaultValue={tr(`Hi, is ${room.room} in ${building} still available? When can I visit?`, `Hi, available pa ba ang ${room.room} sa ${building}? Kanus-a ko makabisita?`)} />
+      <textarea id="inquiry-message" name="message" maxLength={1000} defaultValue={tr(`Hi, is ${room.room} in ${building} still available? When can I visit?`, `Hi, available pa ba ang ${room.room} sa ${building}? Kailan ako puwedeng bumisita?`)} />
       <div className="inquiry-trap" aria-hidden="true"><label htmlFor="inquiry-website">Website</label><input id="inquiry-website" name="website" tabIndex={-1} autoComplete="off" /></div>
-      <p className="field-help">{tr('Your message is kept for up to 90 days and is seen only by the property staff.', 'Ang imong mensahe tipigan hangtod 90 ka adlaw ug makita lang sa staff sa propiedad.')}</p>
-      <Button className="primary" disabled={state === 'sending'}>{state === 'sending' ? tr('Sending…', 'Gipadala…') : tr('Send message', 'Ipadala ang mensahe')}</Button>
+      <p className="field-help">{tr('Your message is kept for up to 90 days and is seen only by the property staff.', 'Itatago ang iyong mensahe hanggang 90 araw at makikita lang ng staff ng property.')}</p>
+      <Button className="primary" disabled={state === 'sending'}>{state === 'sending' ? tr('Sending…', 'Ipinapadala…') : tr('Send message', 'Ipadala ang mensahe')}</Button>
     </form>}
   </dialog>
 }
 
-const placeText = (place: RoomPlace | null, tr: (english: string, bisaya: string) => string) => place === 'upstairs' ? tr('Upstairs, on the balcony walk', 'Sa taas, sa balkonahe')
-  : place === 'wing' ? tr('Upstairs, in the wing', 'Sa taas, sa pako')
-    : place === 'inside' ? tr('Ground floor, inside past the door', 'Sa ubos, sa sulod lapas sa pultahan')
-      : place === 'street' ? tr('Ground floor, its own street door', 'Sa ubos, kaugalingong pultahan sa dalan')
-        : place === 'house' ? tr('Inside the house', 'Sa sulod sa balay') : null
+const placeText = (place: RoomPlace | null, tr: (english: string, bisaya: string) => string) => place === 'upstairs' ? tr('Upstairs, on the balcony walk', 'Sa itaas, sa balkonahe')
+  : place === 'wing' ? tr('Upstairs, in the wing', 'Sa itaas, sa pakpak')
+    : place === 'inside' ? tr('Ground floor, inside past the door', 'Sa ibaba, sa loob lampas sa pinto')
+      : place === 'street' ? tr('Ground floor, its own street door', 'Sa ibaba, sariling pinto sa kalye')
+        : place === 'house' ? tr('Inside the house', 'Sa loob ng bahay') : null
 
 // Building tabs (each drawn with its open rooms lit), the selected building large, and its room cards. Clicking a lit
 // room in the drawing jumps to its card; pointing at a card lights its room. Cards and buttons are the keyboard path.
@@ -77,7 +77,7 @@ export function PublicRoomsView({ listings, language, submit }: { listings: Publ
   const building = buildings[Math.min(active, Math.max(0, buildings.length - 1))]
   const site = building && SITE.find(item => item.label === building.label)
   const total = roomCount(listings)
-  if (!total) return <div className="pr-empty"><h2>{tr('No rooms are listed right now', 'Walay kwarto nga nalista karon')}</h2><p>{tr('Please check again soon. Rooms appear here as soon as they become available.', 'Palihug susiha pag-usab unya. Makita dinhi ang kwarto inig ka-available niini.')}</p></div>
+  if (!total) return <div className="pr-empty"><h2>{tr('No rooms are listed right now', 'Walang kuwartong nakalista ngayon')}</h2><p>{tr('Please check again soon. Rooms appear here as soon as they become available.', 'Pakitingnan ulit mamaya. Makikita rito ang kuwarto kapag available na ito.')}</p></div>
   const pick = (label: string) => {
     setPicked(label)
     const card = [...(cards.current?.querySelectorAll<HTMLElement>('.public-room-card') ?? [])].find(item => item.dataset.room === label)
@@ -85,21 +85,21 @@ export function PublicRoomsView({ listings, language, submit }: { listings: Publ
     card?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true })
   }
   return <div className="public-rooms">
-    <div className="public-building-tabs" role="tablist" aria-label={tr('Buildings', 'Mga bilding')}>
+    <div className="public-building-tabs" role="tablist" aria-label={tr('Buildings', 'Mga gusali')}>
       {buildings.map((item, index) => {
         const drawn = SITE.find(entry => entry.label === item.label)
         return <button key={item.label} type="button" role="tab" id={`building-tab-${index}`} aria-controls="building-rooms" aria-selected={item === building} tabIndex={item === building ? 0 : -1} className="public-building-tab"
           onClick={() => { setActive(index); setPicked(undefined) }}
           onKeyDown={event => { if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { const next = (index + (event.key === 'ArrowRight' ? 1 : buildings.length - 1)) % buildings.length; setActive(next); setPicked(undefined); document.getElementById(`building-tab-${next}`)?.focus() } }}>
           {drawn && <span className="public-building-tab__art" aria-hidden="true"><Facade site={drawn} open={item.rooms.map(room => room.room)} width={100} /></span>}
-          <strong>{item.label}</strong><span>{item.rooms.length} {tr(item.rooms.length === 1 ? 'room available' : 'rooms available', 'ka kwarto nga available')}</span>
+          <strong>{item.label}</strong><span>{item.rooms.length} {tr(item.rooms.length === 1 ? 'room available' : 'rooms available', 'kuwartong available')}</span>
         </button>
       })}
     </div>
     <section id="building-rooms" role="tabpanel" aria-labelledby={`building-tab-${buildings.indexOf(building)}`} className={`pr-panel${site ? '' : ' pr-panel--plain'}`}>
       {site && <figure className="pr-stage">
         <div className="pr-stage__art"><Facade site={site} open={building.rooms.map(room => room.room)} width={100} onPick={pick} focus={hover ?? picked} /></div>
-        <figcaption>{tr('Glowing doors and windows are open. Tap one to jump to its room.', 'Ang nagsiga nga pultahan ug bintana bakante. I-tap aron moadto sa kwarto.')}</figcaption>
+        <figcaption>{tr('Glowing doors and windows are open. Tap one to jump to its room.', 'Bakante ang umiilaw na pinto at bintana. I-tap para pumunta sa kuwarto.')}</figcaption>
       </figure>}
       <div className="public-room-grid" ref={cards}>
         {building.rooms.map(room => {
@@ -108,9 +108,9 @@ export function PublicRoomsView({ listings, language, submit }: { listings: Publ
             onMouseEnter={() => setHover(room.room)} onMouseLeave={() => setHover(undefined)} onFocus={() => setHover(room.room)} onBlur={() => setHover(undefined)}>
             <div className="public-room-card__top"><h3>{room.room}</h3><span className="status status--ready">{tr('Available', 'Available')}</span></div>
             {place && <p className="public-room-place">{place}</p>}
-            <p className="public-room-rent">{room.asking_rent ? <><strong>{decimalPesos(room.asking_rent)}</strong> <span>{tr('per month', 'matag bulan')}</span></> : <strong>{tr('Ask for the price', 'Pangutana sa presyo')}</strong>}</p>
+            <p className="public-room-rent">{room.asking_rent ? <><strong>{decimalPesos(room.asking_rent)}</strong> <span>{tr('per month', 'bawat buwan')}</span></> : <strong>{tr('Ask for the price', 'Tanong sa presyo')}</strong>}</p>
             {room.description && <p className="public-room-description">{room.description}</p>}
-            <Button className="primary" onClick={() => setAsking({ building: building.label, room })}>{tr('Ask about this room', 'Pangutana bahin niini')}</Button>
+            <Button className="primary" onClick={() => setAsking({ building: building.label, room })}>{tr('Ask about this room', 'Magtanong tungkol dito')}</Button>
           </article>
         })}
       </div>
@@ -123,22 +123,22 @@ export function PublicRoomsView({ listings, language, submit }: { listings: Publ
 export function PublicRoomsFrame({ propertyName, notice, children, language, setLanguage, open }: { propertyName: string; notice?: string; children: ReactNode; language: Language; setLanguage: (language: Language) => void; open?: number | null }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   return <div className="pr-shell">
-    <a className="skip-link" href="#rooms-main">{tr('Skip to rooms', 'Lakaw sa mga kwarto')}</a>
+    <a className="skip-link" href="#rooms-main">{tr('Skip to rooms', 'Libutin ang mga kuwarto')}</a>
     {notice && <div className="environment-note" role="status">{notice}</div>}
     <header className="pr-nav">
-      <a className="pr-brand" href="/" aria-label={tr('RentByBob home', 'Panimalay sa RentByBob')}><span className="pr-brand-mark" aria-hidden="true" /><span>Rent<i>By</i>Bob</span></a>
-      <Button className="pr-lang" aria-pressed={language === 'ceb'} onClick={() => setLanguage(language === 'en' ? 'ceb' : 'en')}>{language === 'en' ? 'English · Bisaya' : 'Bisaya · English'}</Button>
+      <a className="pr-brand" href="/" aria-label={tr('RentByBob home', 'Home ng RentByBob')}><span className="pr-brand-mark" aria-hidden="true" /><span>Rent<i>By</i>Bob</span></a>
+      <Button className="pr-lang" aria-pressed={language === 'fil'} onClick={() => setLanguage(language === 'en' ? 'fil' : 'en')}>{language === 'en' ? 'English · Filipino' : 'Filipino · English'}</Button>
     </header>
     <main id="rooms-main" tabIndex={-1}>
       <section className="pr-hero">
         <p className="pr-hero__place">{propertyName} · B. Zubiri St, Cebu City</p>
-        <h1>{tr('Rooms for rent', 'Mga kwarto nga paabangan')}</h1>
-        <p className="pr-hero__lede">{tr('Choose a building, pick a glowing room, then send one message. Staff will reply even if no one is at the office right now.', 'Pagpili og bilding, pilia ang nagsiga nga kwarto, dayon pagpadala og usa ka mensahe. Motubag ang staff bisan walay tawo sa opisina karon.')}</p>
-        {typeof open === 'number' && <p className="pr-hero__count"><strong>{open}</strong> {tr(open === 1 ? 'space open right now' : 'spaces open right now', 'ka luna nga bakante karon')}</p>}
+        <h1>{tr('Rooms for rent', 'Mga kuwartong paupahan')}</h1>
+        <p className="pr-hero__lede">{tr('Choose a building, pick a glowing room, then send one message. Staff will reply even if no one is at the office right now.', 'Pumili ng gusali, piliin ang umiilaw na kuwarto, saka magpadala ng isang mensahe. Sasagot ang staff kahit walang tao sa opisina ngayon.')}</p>
+        {typeof open === 'number' && <p className="pr-hero__count"><strong>{open}</strong> {tr(open === 1 ? 'space open right now' : 'spaces open right now', 'espasyong bakante ngayon')}</p>}
       </section>
       <div className="pr-body">
         {children}
-        <p className="pr-footnote">{tr('Listings are updated by the property staff. Viewing is free; no account or payment is needed to ask.', 'Ang staff sa propiedad ang nag-update sa lista. Libre ang pagtan-aw; walay account o bayad nga kinahanglan aron mangutana.')} <a href="/">{tr('Back to the street', 'Balik sa dalan')}</a></p>
+        <p className="pr-footnote">{tr('Listings are updated by the property staff. Viewing is free; no account or payment is needed to ask.', 'Ang staff ng property ang nag-a-update ng listahan. Libre ang pagtingin; walang account o bayad na kailangan para magtanong.')} <a href="/">{tr('Back to the street', 'Bumalik sa kalye')}</a></p>
       </div>
     </main>
   </div>
@@ -146,10 +146,10 @@ export function PublicRoomsFrame({ propertyName, notice, children, language, set
 
 // Live public page at /rooms: anonymous, read-only listing plus write-only inquiries.
 export function PublicRoomsPage() {
-  const [language, setLanguage] = useState<Language>(() => { try { return localStorage.getItem('rentbybob-language') === 'ceb' ? 'ceb' : 'en' } catch { return 'en' } })
+  const [language, setLanguage] = useState<Language>(() => { try { return localStorage.getItem('rentbybob-language') === 'fil' ? 'fil' : 'en' } catch { return 'en' } })
   const [listings, setListings] = useState<PublicListings | null>(null)
   const [failed, setFailed] = useState(false)
-  useEffect(() => { document.documentElement.lang = language === 'ceb' ? 'ceb' : 'en'; try { localStorage.setItem('rentbybob-language', language) } catch { /* not remembered */ } }, [language])
+  useEffect(() => { document.documentElement.lang = language === 'fil' ? 'fil' : 'en'; try { localStorage.setItem('rentbybob-language', language) } catch { /* not remembered */ } }, [language])
   useEffect(() => { document.title = 'Rooms for rent | RentByBob' }, [])
   useEffect(() => {
     void (async () => {
@@ -172,8 +172,8 @@ export function PublicRoomsPage() {
   }
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   return <PublicRoomsFrame propertyName={listings?.properties[0]?.name ?? 'RentByBob'} language={language} setLanguage={setLanguage} open={listings ? roomCount(listings) : null}>
-    {failed ? <p className="notice notice--error" role="alert">{tr('Room listings could not be loaded. Please try again later.', 'Wala ma-load ang lista sa kwarto. Palihug sulayi pag-usab unya.')}</p>
-      : !listings ? <LoadingSkeleton label={tr('Loading rooms…', 'Gikarga ang mga kwarto…')} rows={3} />
+    {failed ? <p className="notice notice--error" role="alert">{tr('Room listings could not be loaded. Please try again later.', 'Hindi ma-load ang listahan ng kuwarto. Pakisubukan ulit mamaya.')}</p>
+      : !listings ? <LoadingSkeleton label={tr('Loading rooms…', 'Nilo-load ang mga kuwarto…')} rows={3} />
       : <PublicRoomsView listings={listings} language={language} submit={submit} />}
   </PublicRoomsFrame>
 }

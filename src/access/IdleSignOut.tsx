@@ -47,9 +47,9 @@ export function IdleSignOut({ expire, language = 'en' }: { expire: () => void; l
   function keep() { const now = Date.now(); last.current = now; write(now); setState('active') }
   const minutes = Math.floor(left / 60), seconds = String(left % 60).padStart(2, '0')
   return <dialog ref={dialog} className="inquiry-dialog idle-dialog" aria-labelledby="idle-heading" aria-describedby="idle-text" onCancel={event => { event.preventDefault(); keep() }}>
-    <h2 id="idle-heading">{tr('Are you still there?', 'Naa pa ka?')}</h2>
-    <p id="idle-text">{tr('For safety, you will be signed out after 30 minutes without activity.', 'Para sa kaluwasan, ma-sign out ka human sa 30 minutos nga walay lihok.')} <strong role="timer" aria-live="off">{tr('Signing out in', 'Ma-sign out sa')} {minutes}:{seconds}</strong></p>
-    <p className="field-help">{tr('Anything not yet saved will be lost when you are signed out.', 'Ang wala pa ma-save mawala inig sign out.')}</p>
-    <div className="person-actions"><button type="button" ref={stay} className="button primary" onClick={keep}>{tr('Stay signed in', 'Magpabilin nga naka-sign in')}</button><Button onClick={() => { expired.current = true; expire() }}>{tr('Sign out now', 'Sign out karon')}</Button></div>
+    <h2 id="idle-heading">{tr('Are you still there?', 'Nandiyan ka pa ba?')}</h2>
+    <p id="idle-text">{tr('For safety, you will be signed out after 30 minutes without activity.', 'Para sa kaligtasan, masa-sign out ka pagkatapos ng 30 minutong walang galaw.')} <strong role="timer" aria-live="off">{tr('Signing out in', 'Masa-sign out sa')} {minutes}:{seconds}</strong></p>
+    <p className="field-help">{tr('Anything not yet saved will be lost when you are signed out.', 'Mawawala ang hindi pa na-save kapag nag-sign out.')}</p>
+    <div className="person-actions"><button type="button" ref={stay} className="button primary" onClick={keep}>{tr('Stay signed in', 'Manatiling naka-sign in')}</button><Button onClick={() => { expired.current = true; expire() }}>{tr('Sign out now', 'Mag-sign out ngayon')}</Button></div>
   </dialog>
 }

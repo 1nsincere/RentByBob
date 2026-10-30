@@ -84,7 +84,7 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     await as(clerk)
     await denied("update public.staff_memberships set role='owner' where user_id=$1", [clerk])
     await denied(staffSql, [property, clerk, 'owner', 'attempt'])
-    await denied(contactSql.replace('$3,$4','true,$3'), [tenant, outsider, 'attempt'])
+    await denied(staffSql, [property, owner, null, 'attempt']) // a clerk may not remove owner access (202610300003)
     await denied('delete from public.tenants where id=$1', [tenant])
     await denied('insert into public.audit_events(property_id,actor_id,action,target_id,reason) values ($1,$2,$3,$4,$5)', [property, clerk, 'forged', tenant, 'attempt'])
   })
@@ -151,7 +151,8 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     // 74 adds the six notebook-month and move-in double-check functions (202610280001), each staff-only with no anonymous grant.
     // 78 adds remove_tenant_with_room (202610280002) and the three maintenance functions (202610280003), staff-only.
     // 79 adds private.add_rent_month_core (202610280005), not callable from the browser.
-    assert.equal(result.rows.length, 79)
+    // 80 adds public.list_access_candidates (202610300002), owner-only.
+    assert.equal(result.rows.length, 80)
     // The only reviewed anonymous entry points: read listed rooms and leave an inquiry (202610270002).
     const anonymousAllowed = new Set(['read_public_listings', 'submit_rental_inquiry'])
     for (const fn of result.rows) {
@@ -255,7 +256,7 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     await db.exec('reset role')
     await db.query('update auth.users set email_confirmed_at=now() where id=$1',[outsider])
     await as(owner,'aal1'); await denied(sql,args)
-    await as(clerk); await denied(sql,args)
+    await as(clerk,'aal1'); await denied(sql,args) // clerks may assign tenant access (202610300003), but never without MFA
     await denied('select public.find_account_for_assignment($1,$2)',[property,`${outsider}@example.invalid`])
     await as(owner)
     await db.query(sql,args)

@@ -27,15 +27,15 @@ export function TenantPicker({ label, tenants, value, onChange, rooms = {}, name
       <div className="tenant-picker-chosen" aria-labelledby={`${id}-label`}>
         <span className="tenant-picker-avatar" aria-hidden="true">{chosen.display_name.trim().slice(0, 1).toLocaleUpperCase()}</span>
         <span><strong>{chosen.display_name}</strong><small>{kind(chosen)}{rooms[chosen.id] ? ` · ${rooms[chosen.id]}` : ''}</small></span>
-        <Button type="button" className="secondary-button" aria-label={`${tr('Change', 'Usba')} ${label.toLocaleLowerCase()}`} onClick={() => { onChange(''); setQuery('') }}>{tr('Change', 'Usba')}</Button>
+        <Button type="button" className="secondary-button" aria-label={`${tr('Change', 'Baguhin')} ${label.toLocaleLowerCase()}`} onClick={() => { onChange(''); setQuery('') }}>{tr('Change', 'Baguhin')}</Button>
       </div>
     </> : <>
       <label htmlFor={`${id}-search`}>{label}</label>
-      <input id={`${id}-search`} type="search" value={query} onChange={event => setQuery(event.target.value)} autoComplete="off" aria-controls={`${id}-results`} aria-describedby={`${id}-count`} placeholder={tr('Type a name or room', 'Isulat ang ngalan o kwarto')} />
-      <p className="field-help" id={`${id}-count`} aria-live="polite">{matches.length ? `${matches.length} ${tr(matches.length === 1 ? 'tenant found' : 'tenants found', 'ka nag-abang nakit-an')}${matches.length > shownAtOnce ? ` · ${tr('showing the first', 'gipakita ang unang')} ${shownAtOnce}; ${tr('keep typing to narrow', 'padayon pagsulat aron mopiho')}` : ''}` : tr('No tenants match. Check the spelling.', 'Walay katugbang. Susiha ang spelling.')}</p>
+      <input id={`${id}-search`} type="search" value={query} onChange={event => setQuery(event.target.value)} autoComplete="off" aria-controls={`${id}-results`} aria-describedby={`${id}-count`} placeholder={tr('Type a name or room', 'Isulat ang pangalan o kuwarto')} />
+      <p className="field-help" id={`${id}-count`} aria-live="polite">{matches.length ? `${matches.length} ${tr(matches.length === 1 ? 'tenant found' : 'tenants found', 'umuupang nakita')}${matches.length > shownAtOnce ? ` · ${tr('showing the first', 'ipinapakita ang unang')} ${shownAtOnce}; ${tr('keep typing to narrow', 'magpatuloy sa pagsulat para paliitin')}` : ''}` : tr('No tenants match. Check the spelling.', 'Walang tugma. Suriin ang spelling.')}</p>
       <ul className="tenant-picker-results" id={`${id}-results`}>
         {matches.slice(0, shownAtOnce).map(tenant => <li key={tenant.id}>
-          <button type="button" onClick={() => onChange(tenant.id)} aria-label={`${tr('Choose', 'Pilia')} ${tenant.display_name}`}>
+          <button type="button" onClick={() => onChange(tenant.id)} aria-label={`${tr('Choose', 'Piliin')} ${tenant.display_name}`}>
             <span className="tenant-picker-avatar" aria-hidden="true">{tenant.display_name.trim().slice(0, 1).toLocaleUpperCase()}</span>
             <span><strong>{tenant.display_name}</strong><small>{kind(tenant)}{rooms[tenant.id] ? ` · ${rooms[tenant.id]}` : ''}</small></span>
           </button>

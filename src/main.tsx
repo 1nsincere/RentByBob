@@ -61,8 +61,8 @@ function StartupFailure() {
   return <main className="card" style={{ maxWidth: '40rem', margin: '2rem auto' }}>
     <div role="alert" className="notice notice--error">
       <p><strong>The app did not open.</strong> Check your internet connection, then reload the page.</p>
-      <p lang="ceb"><strong>Wala maablihi ang app.</strong> Susiha ang imong koneksyon sa internet, dayon i-reload ang panid.</p>
-      <button type="button" className="button" onClick={() => window.location.reload()}>Reload page / I-reload ang panid</button>
+      <p lang="fil"><strong>Hindi nabuksan ang app.</strong> Suriin ang iyong koneksyon sa internet, saka i-reload ang pahina.</p>
+      <button type="button" className="button" onClick={() => window.location.reload()}>Reload page / I-reload ang pahina</button>
     </div>
   </main>
 }

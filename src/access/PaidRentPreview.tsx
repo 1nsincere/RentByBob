@@ -15,7 +15,7 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
   addRentMonth: (tenantId: string, month: string) => string
   language?: Language
 }) {
-  const bi = language === 'ceb'
+  const bi = language === 'fil'
   const tr = (en: string, ceb: string) => bi ? ceb : en
   const [receipt, setReceipt] = useState<CashAcknowledgmentData|null>(null)
   const { tenants, buildings } = useProperty()
@@ -51,7 +51,7 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
     if (!renter) continue
     const property = buildings.find(item => item.floors.some(floor => floor.rooms.some(itemRoom => itemRoom.id === charge.room)))
     const rentedSpace = property?.floors.flatMap(floor => floor.rooms).find(itemRoom => itemRoom.id === charge.room)
-    const summary = arrearsByTenant.get(renter.id) ?? { tenant: renter, building: property?.name ?? tr('Building unavailable','Walay rekord sa bilding'), room: rentedSpace?.label ?? tr('Room unavailable','Walay rekord sa kwarto'), months: new Set<string>(), total: 0n }
+    const summary = arrearsByTenant.get(renter.id) ?? { tenant: renter, building: property?.name ?? tr('Building unavailable','Walang talaan ng gusali'), room: rentedSpace?.label ?? tr('Room unavailable','Walang talaan ng kuwarto'), months: new Set<string>(), total: 0n }
     summary.months.add(charge.period)
     summary.total += due
     arrearsByTenant.set(renter.id, summary)
@@ -68,89 +68,89 @@ export function PaidRentPreview({ charges, receipts, acknowledgments = {}, rentT
   const getLocation = (roomId: string) => {
     const property = buildings.find(item => item.floors.some(floor => floor.rooms.some(itemRoom => itemRoom.id === roomId)))
     const rentedSpace = property?.floors.flatMap(floor => floor.rooms).find(itemRoom => itemRoom.id === roomId)
-    return `${property?.name ?? tr('Building unavailable', 'Walay rekord sa bilding')} / ${rentedSpace?.label ?? tr('Room unavailable', 'Walay rekord sa kwarto')}`
+    return `${property?.name ?? tr('Building unavailable', 'Walang talaan ng gusali')} / ${rentedSpace?.label ?? tr('Room unavailable', 'Walang talaan ng kuwarto')}`
   }
   return <section className="paid-rent-summary" aria-labelledby="paid-rent-heading">
-    <div className="paid-report-heading"><div><p className="eyebrow">{tr('MONTHLY COLLECTION REPORT','REPORT SA KOLEKSIYON KADA BULAN')}</p><h3 id="paid-rent-heading">{tr('Paid rent','Bayad sa abang')}</h3><p>{tr('Confirmed rent payments with outstanding rent listed below.','Mga kumpirmadong bayad sa abang ug ang nahibilin nga bayranan sa ubos.')}</p></div><span className="preview-pill">{tr('Fictional preview · Resets on reload','Sample lang · Mawala inig abli pag-usab')}</span></div>
-    <section className="card paid-report-sheet" aria-label={tr('Confirmed rent payments report','Report sa kumpirmadong bayad sa abang')}>
-      <div className="paid-report-toolbar"><div><label htmlFor="paid-month">{tr('Cash received during','Kwarta nga nadawat niining panahona')}</label><input id="paid-month" type="month" value={month} onChange={event => setMonth(event.target.value)} /></div><span className="paid-report-period">{validBusinessDate(month + '-01') ? formatMonth(month) : tr('Select a valid month','Pilia ang hustong bulan')}</span></div>
+    <div className="paid-report-heading"><div><p className="eyebrow">{tr('MONTHLY COLLECTION REPORT','BUWANANG ULAT NG KOLEKSIYON')}</p><h3 id="paid-rent-heading">{tr('Paid rent','Bayad sa upa')}</h3><p>{tr('Confirmed rent payments with outstanding rent listed below.','Mga kumpirmadong bayad sa upa at ang natitirang singil sa ibaba.')}</p></div><span className="preview-pill">{tr('Fictional preview · Resets on reload','Halimbawa lang · Mawawala kapag binuksan ulit')}</span></div>
+    <section className="card paid-report-sheet" aria-label={tr('Confirmed rent payments report','Ulat ng kumpirmadong bayad sa upa')}>
+      <div className="paid-report-toolbar"><div><label htmlFor="paid-month">{tr('Cash received during','Cash na natanggap sa panahong ito')}</label><input id="paid-month" type="month" value={month} onChange={event => setMonth(event.target.value)} /></div><span className="paid-report-period">{validBusinessDate(month + '-01') ? formatMonth(month) : tr('Select a valid month','Piliin ang tamang buwan')}</span></div>
       <div className="paid-report-metrics" aria-live="polite">
-        <article><span>{tr('Confirmed cash received','Kumpirmadong nadawat nga kwarta')}</span><strong>{pesos(total)}</strong></article>
-        <article><span>{tr('Renters who paid','Mga nag-abang nga mibayad')}</span><strong>{paidRenterCount}</strong></article>
+        <article><span>{tr('Confirmed cash received','Kumpirmadong natanggap na cash')}</span><strong>{pesos(total)}</strong></article>
+        <article><span>{tr('Renters who paid','Mga umuupang nagbayad')}</span><strong>{paidRenterCount}</strong></article>
         <article><span>{tr('Confirmed payments','Mga kumpirmadong bayad')}</span><strong>{payments.length}</strong></article>
       </div>
-      <p className="field-help">{tr('Receipt month means when cash was received, not when it was confirmed. Pending reports and uncleared checks are excluded.','Ang bulan sa resibo mao ang bulan nga nadawat ang kwarta, dili ang bulan nga gikumpirma. Wala giapil ang wala pa kumpirmaha ug tseke nga wala pa bayri sa bangko.')}</p>
-      {!paidRows.length ? <div className="paid-report-empty"><h4>{tr('No confirmed payments for this month','Walay kumpirmadong bayad niining bulana')}</h4><p>{tr('Choose another month, or confirm a pending cash record after checking receipt.','Pilia ang laing bulan o kumpirmaha ang rekord sa kwarta human kini susihon.')}</p></div> :
-        <div className="paid-table-scroll" role="region" aria-label={tr('Confirmed payments table','Lamesa sa kumpirmadong bayad')} tabIndex={0}>
+      <p className="field-help">{tr('Receipt month means when cash was received, not when it was confirmed. Pending reports and uncleared checks are excluded.','Ang buwan sa resibo ay ang buwang natanggap ang cash, hindi ang buwang kinumpirma. Hindi kasama ang hindi pa kumpirmado at tsekeng hindi pa nababayaran ng bangko.')}</p>
+      {!paidRows.length ? <div className="paid-report-empty"><h4>{tr('No confirmed payments for this month','Walang kumpirmadong bayad ngayong buwan')}</h4><p>{tr('Choose another month, or confirm a pending cash record after checking receipt.','Pumili ng ibang buwan o kumpirmahin ang talaan ng cash pagkatapos itong suriin.')}</p></div> :
+        <div className="paid-table-scroll" role="region" aria-label={tr('Confirmed payments table','Talahanayan ng kumpirmadong bayad')} tabIndex={0}>
           <table className="paid-report-table">
-            <caption>{tr('Confirmed rent payments received in','Kumpirmadong bayad sa abang nga nadawat sa')} {validBusinessDate(month + '-01') ? formatMonth(month) : tr('the selected month','napiling bulan')}</caption>
-            <thead><tr><th scope="col">{tr('Renter','Nag-abang')}</th><th scope="col">{tr('Rental space','Lugar nga giabangan')}</th><th scope="col">{tr('Date received','Petsa nga nadawat')}</th><th scope="col">{tr('Amount','Kantidad')}</th><th scope="col">{tr('Rent months covered','Mga bulan sa abang nga gibayran')}</th><th scope="col">{tr('Receipt','Resibo')}</th></tr></thead>
+            <caption>{tr('Confirmed rent payments received in','Kumpirmadong bayad sa upa na natanggap noong')} {validBusinessDate(month + '-01') ? formatMonth(month) : tr('the selected month','napiling buwan')}</caption>
+            <thead><tr><th scope="col">{tr('Renter','Umuupa')}</th><th scope="col">{tr('Rental space','Lugar na inuupahan')}</th><th scope="col">{tr('Date received','Petsa ng pagkatanggap')}</th><th scope="col">{tr('Amount','Halaga')}</th><th scope="col">{tr('Rent months covered','Mga buwan ng upa na nabayaran')}</th><th scope="col">{tr('Receipt','Resibo')}</th></tr></thead>
             <tbody>{paidRows.map(({ payment, tenant, building, room, rentMonths }) => <tr key={payment.id}>
-              <td data-label={tr('Renter','Nag-abang')}>{tenant?.name ?? tr('Tenant unavailable','Walay rekord sa nag-abang')}</td>
-              <td data-label={tr('Rental space','Lugar nga giabangan')}>{building?.name ?? tr('Building unavailable','Walay rekord sa bilding')} / {room?.label ?? tr('Room unavailable','Walay rekord sa kwarto')}</td>
-              <td data-label={tr('Date received','Petsa nga nadawat')}>{formatDate(payment.date)}</td>
-              <td data-label={tr('Amount','Kantidad')} className="paid-table-amount">{pesos(payment.cents)}</td>
-              <td data-label={tr('Rent months covered','Mga bulan sa abang nga gibayran')}>{rentMonths.length ? rentMonths.map(formatMonth).join(', ') : tr('Unavailable','Wala')}</td>
-              <td data-label={tr('Receipt','Resibo')}>{acknowledgments[payment.id] ? <Button className="quiet-button" onClick={() => setReceipt(acknowledgments[payment.id])}>{tr('Open acknowledgment','Ablihi ang resibo')}</Button> : '—'}</td>
+              <td data-label={tr('Renter','Umuupa')}>{tenant?.name ?? tr('Tenant unavailable','Walang talaan ng umuupa')}</td>
+              <td data-label={tr('Rental space','Lugar na inuupahan')}>{building?.name ?? tr('Building unavailable','Walang talaan ng gusali')} / {room?.label ?? tr('Room unavailable','Walang talaan ng kuwarto')}</td>
+              <td data-label={tr('Date received','Petsa ng pagkatanggap')}>{formatDate(payment.date)}</td>
+              <td data-label={tr('Amount','Halaga')} className="paid-table-amount">{pesos(payment.cents)}</td>
+              <td data-label={tr('Rent months covered','Mga buwan ng upa na nabayaran')}>{rentMonths.length ? rentMonths.map(formatMonth).join(', ') : tr('Unavailable','Wala')}</td>
+              <td data-label={tr('Receipt','Resibo')}>{acknowledgments[payment.id] ? <Button className="quiet-button" onClick={() => setReceipt(acknowledgments[payment.id])}>{tr('Open acknowledgment','Buksan ang resibo')}</Button> : '—'}</td>
             </tr>)}</tbody>
-            <tfoot><tr><th scope="row" colSpan={3}>{tr('Total confirmed cash received','Kinatibuk-ang kumpirmadong nadawat nga kwarta')}</th><td className="paid-table-amount">{pesos(total)}</td><td colSpan={2}>{payments.length} {payments.length === 1 ? 'payment' : 'payments'} · {paidRenterCount} {paidRenterCount === 1 ? 'renter' : 'renters'}</td></tr></tfoot>
+            <tfoot><tr><th scope="row" colSpan={3}>{tr('Total confirmed cash received','Kabuuang kumpirmadong natanggap na cash')}</th><td className="paid-table-amount">{pesos(total)}</td><td colSpan={2}>{payments.length} {payments.length === 1 ? 'payment' : 'payments'} · {paidRenterCount} {paidRenterCount === 1 ? 'renter' : 'renters'}</td></tr></tfoot>
           </table>
         </div>}
     </section>
     <section className="card unpaid-report-sheet" aria-labelledby="unpaid-report-heading">
-      <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('OUTSTANDING RENT','ABANG NGA WALA PA MABAYRI')}</p><h4 id="unpaid-report-heading">{tr('Renters with rent still due','Mga nag-abang nga naa pay bayranan')}</h4><p>{tr('Only recorded rent charges for the selected rent month are included.','Apil lang ang mga bayranan nga narekord sa napiling bulan.')}</p></div><div><label htmlFor="unpaid-month">{tr('Rent month','Bulan sa abang')}</label><input id="unpaid-month" type="month" value={rentMonth} onChange={event => { setRentMonth(event.target.value); setConfirmingTenant(''); setActionMessage('') }} /></div></div>
-      <div className="unpaid-report-total"><span>{unpaidRenterCount} {tr(unpaidRenterCount === 1 ? 'renter with a remaining balance' : 'renters with a remaining balance',unpaidRenterCount === 1 ? 'nag-abang nga naa pay balanse' : 'mga nag-abang nga naa pay balanse')}</span><strong>{pesos(unpaidTotal)}</strong></div>
-      {!unpaidRows.length ? <p className="paid-report-empty">{charges.some(charge => charge.period === rentMonth) ? tr('No remaining rent for this month.','Walay nabilin nga abang niining bulana.') : tr('No rent charges are recorded for this month. Missing setup does not mean rent is unpaid.','Walay narekord nga bayranan sa abang niining bulana. Ang wala ma-set up dili pasabot nga wala mabayri ang abang.')}</p> :
-        <div className="paid-table-scroll" role="region" aria-label={tr('Outstanding rent table','Lamesa sa wala pa mabayri nga abang')} tabIndex={0}>
+      <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('OUTSTANDING RENT','UPANG HINDI PA NABABAYARAN')}</p><h4 id="unpaid-report-heading">{tr('Renters with rent still due','Mga umuupang may singil pa')}</h4><p>{tr('Only recorded rent charges for the selected rent month are included.','Kasama lang ang mga singil na naitala sa napiling buwan.')}</p></div><div><label htmlFor="unpaid-month">{tr('Rent month','Buwan ng upa')}</label><input id="unpaid-month" type="month" value={rentMonth} onChange={event => { setRentMonth(event.target.value); setConfirmingTenant(''); setActionMessage('') }} /></div></div>
+      <div className="unpaid-report-total"><span>{unpaidRenterCount} {tr(unpaidRenterCount === 1 ? 'renter with a remaining balance' : 'renters with a remaining balance',unpaidRenterCount === 1 ? 'umuupang may balanse pa' : 'mga umuupang may balanse pa')}</span><strong>{pesos(unpaidTotal)}</strong></div>
+      {!unpaidRows.length ? <p className="paid-report-empty">{charges.some(charge => charge.period === rentMonth) ? tr('No remaining rent for this month.','Walang natitirang upa ngayong buwan.') : tr('No rent charges are recorded for this month. Missing setup does not mean rent is unpaid.','Walang naitalang singil sa upa ngayong buwan. Ang hindi na-set up ay hindi nangangahulugang hindi nabayaran ang upa.')}</p> :
+        <div className="paid-table-scroll" role="region" aria-label={tr('Outstanding rent table','Talahanayan ng hindi pa nababayarang upa')} tabIndex={0}>
           <table className="paid-report-table unpaid-report-table">
-            <caption>{tr('Rent charges with a remaining balance for','Mga bayranan sa abang nga naa pay balanse sa')} {validBusinessDate(rentMonth + '-01') ? formatMonth(rentMonth) : tr('the selected month','napiling bulan')}</caption>
-            <thead><tr><th scope="col">{tr('Renter','Nag-abang')}</th><th scope="col">{tr('Rental space','Lugar nga giabangan')}</th><th scope="col">{tr('Due date','Petsa sa bayad')}</th><th scope="col">{tr('Rent charged','Bayranan sa abang')}</th><th scope="col">{tr('Still due','Bayran pa')}</th></tr></thead>
+            <caption>{tr('Rent charges with a remaining balance for','Mga singil sa upa na may balanse pa noong')} {validBusinessDate(rentMonth + '-01') ? formatMonth(rentMonth) : tr('the selected month','napiling buwan')}</caption>
+            <thead><tr><th scope="col">{tr('Renter','Umuupa')}</th><th scope="col">{tr('Rental space','Lugar na inuupahan')}</th><th scope="col">{tr('Due date','Petsa ng bayad')}</th><th scope="col">{tr('Rent charged','Singil sa upa')}</th><th scope="col">{tr('Still due','Babayaran pa')}</th></tr></thead>
             <tbody>{unpaidRows.map(({ charge, tenant, building, room, due }) => <tr key={charge.id}>
-              <td data-label={tr('Renter','Nag-abang')}>{tenant?.name ?? tr('Tenant unavailable','Walay rekord sa nag-abang')}</td>
-              <td data-label={tr('Rental space','Lugar nga giabangan')}>{building?.name ?? tr('Building unavailable','Walay rekord sa bilding')} / {room?.label ?? tr('Room unavailable','Walay rekord sa kwarto')}</td>
+              <td data-label={tr('Renter','Umuupa')}>{tenant?.name ?? tr('Tenant unavailable','Walang talaan ng umuupa')}</td>
+              <td data-label={tr('Rental space','Lugar na inuupahan')}>{building?.name ?? tr('Building unavailable','Walang talaan ng gusali')} / {room?.label ?? tr('Room unavailable','Walang talaan ng kuwarto')}</td>
               <td data-label={tr('Due date','Takdang petsa')}>{formatDate(charge.due)}</td>
-              <td data-label={tr('Rent charged','Bayranan sa abang')}>{pesos(charge.cents)}</td>
-              <td data-label={tr('Still due','Bayran pa')} className="paid-table-amount">{pesos(due)}</td>
+              <td data-label={tr('Rent charged','Singil sa upa')}>{pesos(charge.cents)}</td>
+              <td data-label={tr('Still due','Babayaran pa')} className="paid-table-amount">{pesos(due)}</td>
             </tr>)}</tbody>
-            <tfoot><tr><th scope="row" colSpan={4}>{tr('Total still due','Kinatibuk-ang bayran pa')}</th><td className="paid-table-amount">{pesos(unpaidTotal)}</td></tr></tfoot>
+            <tfoot><tr><th scope="row" colSpan={4}>{tr('Total still due','Kabuuang babayaran pa')}</th><td className="paid-table-amount">{pesos(unpaidTotal)}</td></tr></tfoot>
           </table>
         </div>}
-      <p className="field-help">{tr('Partial confirmed cash reduces the remaining balance. Pending reports and uncleared checks do not.','Ang bahin nga bayad nga gikumpirma mopaubos sa balanse. Dili mopaubos ang wala pa kumpirmaha o tseke nga wala pa bayri sa bangko.')}</p>
+      <p className="field-help">{tr('Partial confirmed cash reduces the remaining balance. Pending reports and uncleared checks do not.','Ang kumpirmadong bahagyang bayad ay nagpapababa ng balanse. Hindi ito binababa ng hindi pa kumpirmado o tsekeng hindi pa nababayaran ng bangko.')}</p>
     </section>
     <section className={`card arrears-report-sheet${arrearsRows.length ? ' has-arrears' : ''}`} aria-labelledby="arrears-report-heading">
-      <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('MULTIPLE MONTHS OUTSTANDING','DAGHANG BULAN NGA NAAY BALANSE')}</p><h4 id="arrears-report-heading">{tr('Renters with 2 or more unpaid rent months','Mga nag-abang nga naay balanse sa 2 o daghang bulan')}</h4><p>{tr('Counts distinct recorded rent months with a remaining balance.','Ihap sa lain-laing bulan nga narekord ug naa pay balanse.')}</p></div><span className="preview-pill">{arrearsRows.length} {tr(arrearsRows.length === 1 ? 'renter flagged' : 'renters flagged',arrearsRows.length === 1 ? 'nag-abang nga gimarkahan' : 'mga nag-abang nga gimarkahan')}</span></div>
-      {!arrearsRows.length ? <p className="paid-report-empty">{tr('No renter currently has balances in 2 or more recorded rent months.','Walay nag-abang nga adunay balanse sa 2 o daghang bulan nga narekord.')}</p> :
-        <div className="paid-table-scroll" role="region" aria-label={tr('Renters with multiple unpaid rent months','Mga nag-abang nga naay balanse sa daghang bulan')} tabIndex={0}>
+      <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('MULTIPLE MONTHS OUTSTANDING','MARAMING BUWANG MAY BALANSE')}</p><h4 id="arrears-report-heading">{tr('Renters with 2 or more unpaid rent months','Mga umuupang may balanse sa 2 o higit pang buwan')}</h4><p>{tr('Counts distinct recorded rent months with a remaining balance.','Bilang ng magkakaibang buwang naitala at may balanse pa.')}</p></div><span className="preview-pill">{arrearsRows.length} {tr(arrearsRows.length === 1 ? 'renter flagged' : 'renters flagged',arrearsRows.length === 1 ? 'umuupang minarkahan' : 'mga umuupang minarkahan')}</span></div>
+      {!arrearsRows.length ? <p className="paid-report-empty">{tr('No renter currently has balances in 2 or more recorded rent months.','Walang umuupang may balanse sa 2 o higit pang naitalang buwan.')}</p> :
+        <div className="paid-table-scroll" role="region" aria-label={tr('Renters with multiple unpaid rent months','Mga umuupang may balanse sa maraming buwan')} tabIndex={0}>
           <table className="paid-report-table arrears-report-table">
-            <caption>{tr('Renters with balances in at least two distinct rent months','Mga nag-abang nga naay balanse sa labing menos duha ka lain-laing bulan')}</caption>
-            <thead><tr><th scope="col">{tr('Renter','Nag-abang')}</th><th scope="col">{tr('Rental space','Lugar nga giabangan')}</th><th scope="col">{tr('Unpaid months','Mga bulan nga wala pa mabayri')}</th><th scope="col">{tr('Rent months','Mga bulan sa abang')}</th><th scope="col">{tr('Total still due','Kinatibuk-ang bayran pa')}</th></tr></thead>
+            <caption>{tr('Renters with balances in at least two distinct rent months','Mga umuupang may balanse sa hindi bababa sa dalawang magkakaibang buwan')}</caption>
+            <thead><tr><th scope="col">{tr('Renter','Umuupa')}</th><th scope="col">{tr('Rental space','Lugar na inuupahan')}</th><th scope="col">{tr('Unpaid months','Mga buwang hindi pa nababayaran')}</th><th scope="col">{tr('Rent months','Mga buwan ng upa')}</th><th scope="col">{tr('Total still due','Kabuuang babayaran pa')}</th></tr></thead>
             <tbody>{arrearsRows.map(row => <tr key={row.tenant.id}>
-              <td data-label={tr('Renter','Nag-abang')}>{row.tenant.name}</td>
-              <td data-label={tr('Rental space','Lugar nga giabangan')}>{row.building} / {row.room}</td>
-              <td data-label={tr('Unpaid months','Mga bulan nga wala pa mabayri')}>{row.periods.length}</td>
-              <td data-label={tr('Rent months','Mga bulan sa abang')}>{row.periods.map(formatMonth).join(', ')}</td>
-              <td data-label={tr('Total still due','Kinatibuk-ang bayran pa')} className="paid-table-amount">{pesos(row.total)}</td>
+              <td data-label={tr('Renter','Umuupa')}>{row.tenant.name}</td>
+              <td data-label={tr('Rental space','Lugar na inuupahan')}>{row.building} / {row.room}</td>
+              <td data-label={tr('Unpaid months','Mga buwang hindi pa nababayaran')}>{row.periods.length}</td>
+              <td data-label={tr('Rent months','Mga buwan ng upa')}>{row.periods.map(formatMonth).join(', ')}</td>
+              <td data-label={tr('Total still due','Kabuuang babayaran pa')} className="paid-table-amount">{pesos(row.total)}</td>
             </tr>)}</tbody>
           </table>
         </div>}
-      <p className="field-help">{tr('This is based on rent charges recorded in the preview; it does not identify months without a recorded charge.','Base kini sa mga bayranan sa sample. Dili niini makita ang mga bulan nga walay narekord nga bayranan.')}</p>
+      <p className="field-help">{tr('This is based on rent charges recorded in the preview; it does not identify months without a recorded charge.','Batay ito sa mga halimbawang singil. Hindi nito ipinapakita ang mga buwang walang naitalang singil.')}</p>
     </section>
     <section className="card add-missed-month-sheet" aria-labelledby="add-missed-month-heading">
-      <div><p className="eyebrow">{tr('PREVIEW RENT SETUP','SAMPLE NGA PAGBUTANG SA ABANG')}</p><h4 id="add-missed-month-heading">{tr('Add a missed rent month','Idugang ang bulan sa abang nga wala pa')}</h4><p>{tr('Choose the rent month above. Add one charge using that renter’s saved rent amount and move-in-based due date.','Pilia ang bulan sa abang sa taas. Idugang ang usa ka bayranan gamit ang natipig nga kantidad ug takdang petsa base sa petsa sa pagsulod.')}</p></div>
-      {!addableTenants.length ? <p className="paid-report-empty">{tr('No renter with saved rent setup is missing a charge for','Walay nag-abang nga adunay setup sa abang nga kulang og bayranan sa')} {validBusinessDate(rentMonth + '-01') ? formatMonth(rentMonth) : tr('the selected month','napiling bulan')}. {tr('Set up rent first in Record and confirm, or choose a month without a recorded charge.','Ibutang una ang abang sa Record and confirm, o pilia ang bulan nga walay narekord nga bayranan.')}</p> :
+      <div><p className="eyebrow">{tr('PREVIEW RENT SETUP','HALIMBAWANG PAGTATAKDA NG UPA')}</p><h4 id="add-missed-month-heading">{tr('Add a missed rent month','Idagdag ang buwan ng upa na wala pa')}</h4><p>{tr('Choose the rent month above. Add one charge using that renter’s saved rent amount and move-in-based due date.','Piliin ang buwan ng upa sa itaas. Magdagdag ng isang singil gamit ang naka-save na halaga at takdang petsa batay sa petsa ng paglipat.')}</p></div>
+      {!addableTenants.length ? <p className="paid-report-empty">{tr('No renter with saved rent setup is missing a charge for','Walang umuupang may setup ng upa na kulang ng singil noong')} {validBusinessDate(rentMonth + '-01') ? formatMonth(rentMonth) : tr('the selected month','napiling buwan')}. {tr('Set up rent first in Record and confirm, or choose a month without a recorded charge.','Itakda muna ang upa sa Record and confirm, o pumili ng buwang walang naitalang singil.')}</p> :
         <div className="add-missed-month-list">{addableTenants.map(renter => {
           const setup = rentTerms[renter.id]
           const dueDate = anniversaryDue(setup.start, rentMonth)
           const confirming = confirmingTenant === renter.id
           return <article className="add-missed-month-row" key={renter.id}>
-            <div><strong>{renter.name}</strong><span>{getLocation(renter.room)} · {pesos(setup.cents)} · {tr('Due','Bayran sa')} {formatDate(dueDate)}</span></div>
-            {!confirming ? <Button className="secondary-button" onClick={() => { setConfirmingTenant(renter.id); setActionMessage('') }}>{tr('Add','Idugang')} {formatMonth(rentMonth)} {tr('charge','nga bayranan')}</Button> :
-              <div className="add-missed-month-confirm"><p>{tr('This adds a','Kini magdugang og')} {pesos(setup.cents)} {tr('rent charge for','nga bayranan sa abang para sa')} {formatMonth(rentMonth)}, {tr('due','bayran sa')} {formatDate(dueDate)}. {tr('It will appear as unpaid until confirmed cash is allocated. This preview change resets on reload.','Makita kini isip wala pa mabayri hangtod adunay kumpirmadong kwarta nga igahin niini. Mawala kini nga kausaban sa sample inig abli pag-usab.')}</p><Button className="primary" onClick={() => {
+            <div><strong>{renter.name}</strong><span>{getLocation(renter.room)} · {pesos(setup.cents)} · {tr('Due','Babayaran sa')} {formatDate(dueDate)}</span></div>
+            {!confirming ? <Button className="secondary-button" onClick={() => { setConfirmingTenant(renter.id); setActionMessage('') }}>{tr('Add','Idagdag')} {formatMonth(rentMonth)} {tr('charge','na singil')}</Button> :
+              <div className="add-missed-month-confirm"><p>{tr('This adds a','Magdadagdag ito ng')} {pesos(setup.cents)} {tr('rent charge for','na singil sa upa para sa')} {formatMonth(rentMonth)}, {tr('due','babayaran sa')} {formatDate(dueDate)}. {tr('It will appear as unpaid until confirmed cash is allocated. This preview change resets on reload.','Makikita ito bilang hindi pa nababayaran hanggang may kumpirmadong cash na ilalaan dito. Mawawala ang pagbabagong ito sa halimbawa kapag binuksan ulit.')}</p><Button className="primary" onClick={() => {
                 const error = addRentMonth(renter.id, rentMonth)
                 if (error) { setActionMessage(error); return }
                 setConfirmingTenant('')
-                setActionMessage(`${formatMonth(rentMonth)} ${tr('rent charge added for','nga bayranan sa abang gidugang para kang')} ${renter.name}.`)
-              }}>{tr('Confirm add rent month','Kumpirmaha ang pagdugang sa bulan')}</Button><Button className="secondary-button" onClick={() => setConfirmingTenant('')}>{tr('Cancel','Kanselahon')}</Button></div>}
+                setActionMessage(`${formatMonth(rentMonth)} ${tr('rent charge added for','na singil sa upa idinagdag para kay')} ${renter.name}.`)
+              }}>{tr('Confirm add rent month','Kumpirmahin ang pagdagdag ng buwan')}</Button><Button className="secondary-button" onClick={() => setConfirmingTenant('')}>{tr('Cancel','Kanselahin')}</Button></div>}
           </article>
         })}</div>}
       <p className="field-help" role="status" aria-live="polite">{actionMessage}</p>

@@ -48,9 +48,9 @@ export function buildRentFollowUp(data: RentWorkspaceSnapshot, tenants: readonly
 }
 
 // A polite reminder staff can paste into SMS or Messenger. Contains only this renter's own figures.
-export function reminderText(row: LateRow, language: 'en' | 'ceb', pesos: (value: string) => string, month: (value: string) => string, day: (value: string) => string) {
+export function reminderText(row: LateRow, language: 'en' | 'fil', pesos: (value: string) => string, month: (value: string) => string, day: (value: string) => string) {
   const months = row.months.map(month).join(', ')
-  return language === 'ceb'
-    ? `Hi ${row.tenant}, pahinumdom gikan sa RentByBob. Ang abang sa ${row.room} nga ${pesos(row.overdue)} (${months}) wala pa mabayri; ang pinakauna kay takdang ${day(row.oldestDue)}. Kon nakabayad na ka, palihug pahibaloa mi o ireport sa imong renter account. Salamat!`
+  return language === 'fil'
+    ? `Hi ${row.tenant}, paalala mula sa RentByBob. Ang upa sa ${row.room} na ${pesos(row.overdue)} (${months}) ay hindi pa nababayaran; ang pinakauna ay dapat bayaran noong ${day(row.oldestDue)}. Kung nakabayad ka na, pakisabihan kami o iulat ito sa iyong renter account. Salamat!`
     : `Hi ${row.tenant}, this is a friendly reminder from RentByBob. Rent for ${row.room} of ${pesos(row.overdue)} (${months}) is still unpaid; the oldest was due ${day(row.oldestDue)}. If you have already paid, please let us know or report it in your renter account. Thank you!`
 }

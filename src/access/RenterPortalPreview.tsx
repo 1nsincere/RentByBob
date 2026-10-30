@@ -32,30 +32,30 @@ const sampleAccount = parseRenterAccount({
 })
 
 export function RenterPortalPreview() {
-  const [language, setLanguage] = useState<Language>(() => { try { return localStorage.getItem('rentbybob-language') === 'ceb' ? 'ceb' : 'en' } catch { return 'en' } })
+  const [language, setLanguage] = useState<Language>(() => { try { return localStorage.getItem('rentbybob-language') === 'fil' ? 'fil' : 'en' } catch { return 'en' } })
   const [theme, setTheme] = useState<'light' | 'dark'>(() => { try { return localStorage.getItem('rentbybob-theme') === 'dark' ? 'dark' : 'light' } catch { return 'light' } })
   useEffect(() => { document.documentElement.dataset.theme = theme }, [theme])
-  useEffect(() => { document.documentElement.lang = language === 'ceb' ? 'ceb' : 'en' }, [language])
+  useEffect(() => { document.documentElement.lang = language === 'fil' ? 'fil' : 'en' }, [language])
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   return <div className="app-shell renter-preview-shell">
-    <a className="skip-link" href="#main">{tr('Skip to content', 'Lakaw sa sulod')}</a>
-    <div className="environment-note">{tr('Fictional renter preview · Sample data · No sign-in or database', 'Sample nga panid sa nag-abang · Sample nga datos · Walay sign-in o database')}</div>
+    <a className="skip-link" href="#main">{tr('Skip to content', 'Pumunta sa nilalaman')}</a>
+    <div className="environment-note">{tr('Fictional renter preview · Sample data · No sign-in or database', 'Halimbawang pahina ng umuupa · Halimbawang datos · Walang sign-in o database')}</div>
     <header className="site-header">
       <div className="shell header-inner">
         <span className="brand"><span className="brand-mark" aria-hidden="true">R</span><span>Rent<span className="brand-accent">ByBob</span></span></span>
         <div className="session-tools"><div className="session-actions">
-          <Button className="quiet-button" aria-pressed={theme === 'dark'} onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? tr('Day mode', 'Adlaw nga mode') : tr('Night mode', 'Gabii nga mode')}</Button>
-          <Button className="quiet-button" aria-pressed={language === 'ceb'} onClick={() => setLanguage(current => current === 'en' ? 'ceb' : 'en')}>{language === 'en' ? 'English · Bisaya' : 'Bisaya · English'}</Button>
-          <Button className="quiet-button" onClick={() => { location.href = '/' }}>{tr('Leave preview', 'Biyai ang preview')}</Button>
+          <Button className="quiet-button" aria-pressed={theme === 'dark'} onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? tr('Day mode', 'Day mode') : tr('Night mode', 'Night mode')}</Button>
+          <Button className="quiet-button" aria-pressed={language === 'fil'} onClick={() => setLanguage(current => current === 'en' ? 'fil' : 'en')}>{language === 'en' ? 'English · Filipino' : 'Filipino · English'}</Button>
+          <Button className="quiet-button" onClick={() => { location.href = '/' }}>{tr('Leave preview', 'Umalis sa preview')}</Button>
         </div></div>
       </div>
     </header>
     <div className="shell page-shell">
       <main id="main" tabIndex={-1}>
-        <p className="notice" role="status"><strong>{tr('Renter view preview.', 'Sample nga panid sa nag-abang.')}</strong> {tr('This is what a signed-in renter sees. All names and amounts are fictional and nothing is saved.', 'Mao kini ang makita sa nag-abang human mosulod. Hinimo-himo ang tanang ngalan ug kantidad ug walay ma-save.')}</p>
+        <p className="notice" role="status"><strong>{tr('Renter view preview.', 'Halimbawang pahina ng umuupa.')}</strong> {tr('This is what a signed-in renter sees. All names and amounts are fictional and nothing is saved.', 'Ito ang makikita ng umuupa pagkatapos mag-sign in. Gawa-gawa ang lahat ng pangalan at halaga at walang mase-save.')}</p>
         <RenterAccountView account={sampleAccount} language={language} preview />
       </main>
-      <footer className="site-footer"><span>RentByBob</span><span>{tr('No online payments · Sample reports stay on this screen', 'Walay online nga bayad · Ang sample nga report magpabilin dinhi')}</span></footer>
+      <footer className="site-footer"><span>RentByBob</span><span>{tr('No online payments · Sample reports stay on this screen', 'Walang online na bayad · Ang halimbawang ulat ay mananatili rito')}</span></footer>
     </div>
   </div>
 }

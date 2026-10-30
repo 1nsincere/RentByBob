@@ -44,10 +44,18 @@ test('clerks run operations, owners keep access control, and MFA is always requi
   await db.exec('reset role')
   assert.equal((await q('select removed_at is not null as r from public.tenants where id = $1', [id(10)]))[0].r, true, 'the clerk removed a tenant who had a room')
 
-  // Access control stays with the owner: the clerk cannot change who may sign in, designate verifiers or read the access history.
+  // A clerk may let people in (202610300003): clerk access for someone else, never owner access, never their own, never
+  // the owner's. Designating verifiers and reading the access history stay with the owner.
   await as(clerk)
-  await assert.rejects(db.query('select public.set_staff_access($1,$2,$3,$4)', [prop, other, 'clerk', 'Not allowed']), /permission denied|Owner MFA required/)
-  await assert.rejects(db.query('select public.assign_account_access($1,$2,$3,$4,$5,$6,$7,$8)', [prop, other, 'other@example.invalid', 'staff', null, 'clerk', true, 'Not allowed']), /Owner MFA required/)
+  const assign = 'select public.assign_account_access($1,$2,$3,$4,$5,$6,$7,$8)'
+  await assert.rejects(db.query(assign, [prop, other, 'other@example.invalid', 'staff', null, 'owner', true, 'Not allowed']), /Only the owner/)
+  await assert.rejects(db.query(assign, [prop, owner, 'owner@example.invalid', 'staff', null, null, false, 'Not allowed']), /Only the owner/)
+  await assert.rejects(db.query(assign, [prop, clerk, 'clerk@example.invalid', 'staff', null, null, false, 'Not allowed']), /Only the owner/)
+  await db.query(assign, [prop, other, 'other@example.invalid', 'staff', null, 'clerk', true, 'New helper, owner away'])
+  await db.query(assign, [prop, other, 'other@example.invalid', 'staff', null, null, false, 'Trial over'])
+  await db.exec('reset role')
+  assert.deepEqual((await q("select action from public.audit_events where target_id = $1 and action like 'staff_%' order by occurred_at, id", [other])).map(r => r.action).sort(), ['staff_revoked', 'staff_role_clerk'], 'both changes are in the access history')
+  await as(clerk)
   await assert.rejects(db.query('select public.read_access_audit($1)', [prop]), /Owner MFA required/)
   await assert.rejects(db.query('select public.assign_cash_verifier($1,$2,$3)', [prop, clerk, 'clerk@example.invalid']), /Owner MFA required/)
   await assert.rejects(db.query('select public.prepare_account_invitation($1,$2,$3,$4)', [prop, id(40), 'staff', 'new@example.invalid']), /./, 'a clerk cannot invite staff accounts')

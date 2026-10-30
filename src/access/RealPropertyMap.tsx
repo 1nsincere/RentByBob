@@ -52,7 +52,7 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
         setOccupied(new Set(current.map(agreement => agreement.unit_id)))
         setTenantByUnit(Object.fromEntries(current.map(agreement => [agreement.unit_id, agreement.tenant_id])))
         const nameOf = new Map((names.data ?? []).map(row => [row.id as string, row.display_name as string]))
-        setRenterByUnit(Object.fromEntries((current as unknown as { unit_id: string; tenant_id: string; rent: string }[]).map(agreement => [agreement.unit_id, { name: nameOf.get(agreement.tenant_id) ?? tr('Tenant', 'Nag-abang'), rent: agreement.rent }])))
+        setRenterByUnit(Object.fromEntries((current as unknown as { unit_id: string; tenant_id: string; rent: string }[]).map(agreement => [agreement.unit_id, { name: nameOf.get(agreement.tenant_id) ?? tr('Tenant', 'Umuupa'), rent: agreement.rent }])))
       }
       setState('ready')
     } catch { setState('failed') }
@@ -71,12 +71,12 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
   }, [locate, state, units, buildings])
   function selectRoom(unitId: string) { setSelected(unitId); setRenaming(false); requestAnimationFrame(() => panelHeading.current?.focus()) }
   async function rename(unitId: string) {
-    if (!newLabel.trim() || !renameReason.trim()) { setMessage({ text: tr('Enter the new room name and a reason.', 'Isulod ang bag-ong ngalan sa kwarto ug rason.'), error: true }); return }
+    if (!newLabel.trim() || !renameReason.trim()) { setMessage({ text: tr('Enter the new room name and a reason.', 'Ilagay ang bagong pangalan ng kuwarto at dahilan.'), error: true }); return }
     setBusy(true); setMessage(null)
     const { error } = await supabase!.rpc('manage_property_location', { p_property_id: propertyId, p_location_id: unitId, p_action: 'rename', p_label: newLabel.trim(), p_reason: renameReason.trim() })
     setBusy(false)
-    if (error) { setMessage({ text: error.code === '23505' ? tr('Another room in this building already has that name. Nothing changed.', 'Naa nay laing kwarto niini nga bilding nga ingon ana og ngalan. Walay nausab.') : error.code === '42501' ? tr('Only staff with an active authenticator session can rename rooms.', 'Ang staff lang nga naay aktibo nga authenticator ang makausab sa ngalan.') : tr('The room could not be renamed. Nothing changed.', 'Wala mausab ang ngalan sa kwarto. Walay nausab.'), error: true }); return }
-    setRenaming(false); setMessage({ text: `${tr('Room renamed to', 'Giilisan ang ngalan sa kwarto ngadto sa')} ${newLabel.trim()}.`, error: false })
+    if (error) { setMessage({ text: error.code === '23505' ? tr('Another room in this building already has that name. Nothing changed.', 'May ibang kuwarto na sa gusaling ito na ganoon ang pangalan. Walang nabago.') : error.code === '42501' ? tr('Only staff with an active authenticator session can rename rooms.', 'Ang staff lang na may aktibong authenticator ang makapagbabago ng pangalan.') : tr('The room could not be renamed. Nothing changed.', 'Hindi nabago ang pangalan ng kuwarto. Walang nabago.'), error: true }); return }
+    setRenaming(false); setMessage({ text: `${tr('Room renamed to', 'Pinalitan ang pangalan ng kuwarto ng')} ${newLabel.trim()}.`, error: false })
     await load(); requestAnimationFrame(() => panelHeading.current?.focus())
   }
 
@@ -84,80 +84,80 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
     setBusy(true); setMessage(null)
     const { data, error } = await supabase!.rpc('setup_property_from_sketch', { p_property_id: propertyId })
     setBusy(false); setReviewing(false)
-    if (error) { setMessage({ text: error.code === '42501' ? tr('Only staff with an active authenticator session can set up the layout.', 'Ang staff lang nga naay aktibo nga authenticator ang maka-set up sa layout.') : tr('The layout could not be created. Nothing was changed.', 'Wala mahimo ang layout. Walay nausab.'), error: true }); return }
-    setMessage({ text: tr(`Layout ready: ${data.buildings_created} buildings and ${data.units_created} rooms created; existing ones kept.`, `Andam na ang layout: ${data.buildings_created} ka bilding ug ${data.units_created} ka kwarto ang nahimo; gitipigan ang naa na.`), error: false })
+    if (error) { setMessage({ text: error.code === '42501' ? tr('Only staff with an active authenticator session can set up the layout.', 'Ang staff lang na may aktibong authenticator ang makapagse-set up ng layout.') : tr('The layout could not be created. Nothing was changed.', 'Hindi nagawa ang layout. Walang nabago.'), error: true }); return }
+    setMessage({ text: tr(`Layout ready: ${data.buildings_created} buildings and ${data.units_created} rooms created; existing ones kept.`, `Handa na ang layout: ${data.buildings_created} gusali at ${data.units_created} kuwarto ang nagawa; pinanatili ang mga naroon na.`), error: false })
     await load()
   }
 
-  if (state === 'failed') return <p className="notice notice--error" role="alert">{tr('The property map could not be loaded. The layout migration must be applied and your staff session must be active.', 'Wala ma-load ang mapa. Kinahanglan ma-apply ang layout migration ug aktibo ang imong staff session.')}</p>
-  if (state === 'loading') return <LoadingSkeleton label={tr('Loading property map…', 'Gikarga ang mapa…')} rows={3} />
+  if (state === 'failed') return <p className="notice notice--error" role="alert">{tr('The property map could not be loaded. The layout migration must be applied and your staff session must be active.', 'Hindi ma-load ang mapa. Kailangang ma-apply ang layout migration at aktibo ang iyong staff session.')}</p>
+  if (state === 'loading') return <LoadingSkeleton label={tr('Loading property map…', 'Nilo-load ang mapa…')} rows={3} />
   const placed = buildings.filter(building => building.sketch_slot)
   const unplaced = buildings.filter(building => !building.sketch_slot)
   const isOccupied = (unitId: string) => occupied?.has(unitId) ?? false
-  const statusFor = (unit: DbUnit) => unit.kind === 'shared' ? tr('Shared space', 'Gipaambit nga lugar') : occupied === null ? tr('Status unavailable', 'Wala makita ang kahimtang') : isOccupied(unit.id) ? tr('Occupied', 'Giokupahan') : tr('Vacant', 'Bakante')
+  const statusFor = (unit: DbUnit) => unit.kind === 'shared' ? tr('Shared space', 'Pinaghahatiang lugar') : occupied === null ? tr('Status unavailable', 'Hindi makita ang katayuan') : isOccupied(unit.id) ? tr('Occupied', 'Okupado') : tr('Vacant', 'Bakante')
   const summary = (building: DbBuilding) => {
     const rentable = units.filter(unit => unit.building_id === building.id && unit.kind !== 'shared')
     const taken = rentable.filter(unit => isOccupied(unit.id)).length
-    if (!rentable.length) return tr('No rooms yet', 'Wala pay kwarto')
+    if (!rentable.length) return tr('No rooms yet', 'Wala pang kuwarto')
     if (rentable.length === 1) return statusFor(rentable[0])
-    return occupied === null ? `${rentable.length} ${tr('spaces', 'ka lugar')}` : `${taken} ${tr('of', 'sa')} ${rentable.length} ${tr('occupied', 'giokupahan')}`
+    return occupied === null ? `${rentable.length} ${tr('spaces', 'lugar')}` : `${taken} ${tr('of', 'sa')} ${rentable.length} ${tr('occupied', 'okupado')}`
   }
   const current = buildings.find(building => building.id === entered)
 
   return <section className="property-visual real-property-map" aria-labelledby="real-map-heading">
-    <div className="section-heading"><div><p className="eyebrow">{tr('YOUR PROPERTY, AT A GLANCE', 'IMONG PROPIEDAD, SA USA KA TAN-AW')}</p><h2 id="real-map-heading">{tr('Property map', 'Mapa sa propiedad')}</h2>
-      <p>{tr('Rooms show Occupied, with the renter and monthly rent, when they have a current agreement.', 'Ang kwarto nga naay kasabotan karon makita nga Giokupahan, uban ang nag-abang ug binulan nga abang.')}</p></div></div>
+    <div className="section-heading"><div><p className="eyebrow">{tr('YOUR PROPERTY, AT A GLANCE', 'ANG IYONG PROPERTY, SA ISANG TINGIN')}</p><h2 id="real-map-heading">{tr('Property map', 'Mapa ng property')}</h2>
+      <p>{tr('Rooms show Occupied, with the renter and monthly rent, when they have a current agreement.', 'Ang kuwartong may kasunduan ngayon ay makikitang Okupado, kasama ang umuupa at buwanang upa.')}</p></div></div>
     {message && <p className={`notice ${message.error ? 'notice--error' : 'notice--success'}`} role={message.error ? 'alert' : 'status'}>{message.text}</p>}
-    {occupied === null && <p className="notice" role="note">{tr('Occupancy could not be loaded, so rooms are shown without Occupied/Vacant status.', 'Wala ma-load ang kahimtang sa kwarto, busa walay Giokupahan/Bakante.')}</p>}
+    {occupied === null && <p className="notice" role="note">{tr('Occupancy could not be loaded, so rooms are shown without Occupied/Vacant status.', 'Hindi ma-load ang katayuan ng kuwarto, kaya walang Okupado/Bakante.')}</p>}
 
     {!placed.length && <div className="card layout-setup">
-      <h3>{tr('Set up buildings and rooms from your sketch', 'I-set up ang mga bilding ug kwarto gikan sa imong drawing')}</h3>
-      <p>{tr('Creates Building 1 (Apartment + Rooms 01–03 on the ground floor, Rooms 04–09 on the second), Building 2 (Gym + Rooms 01–03, Rooms 04–08), Bob\'s house (Rooms 01–06), House 1 (whole house), Yamaha property and Stores 1–3. Existing buildings and rooms with the same names are kept, never duplicated. You can rename rooms afterwards.', 'Mohimo sa Building 1, Building 2, balay ni Bob, House 1, Yamaha property ug Stores 1–3. Ang naa nang bilding ug kwarto nga parehas og ngalan dili doblehon. Mahimo nimong usbon ang ngalan sa kwarto human.')}</p>
-      {!owner ? <p className="field-help">{tr('Only signed-in staff can set up the layout.', 'Ang staff ra nga naka-sign in ang maka-set up sa layout.')}</p>
-        : !reviewing ? <Button className="primary" onClick={() => setReviewing(true)}>{tr('Review layout', 'Susiha ang layout')}</Button>
-        : <div className="notice" role="group" aria-label={tr('Confirm layout setup', 'Kumpirmaha ang pag-setup')}><p><strong>{tr('Create these buildings and rooms now?', 'Himoon na kining mga bilding ug kwarto?')}</strong> {tr('This adds records to your saved property. It can be run again safely.', 'Modugang kini og rekord sa imong propiedad. Luwas kining usbon pagpadagan.')}</p>
-          <div className="person-actions"><Button className="primary" disabled={busy} onClick={() => void runSetup()}>{busy ? tr('Creating…', 'Gihimo…') : tr('Create layout', 'Himoa ang layout')}</Button><Button disabled={busy} onClick={() => setReviewing(false)}>{tr('Cancel', 'Kanselahon')}</Button></div></div>}
+      <h3>{tr('Set up buildings and rooms from your sketch', 'I-set up ang mga gusali at kuwarto mula sa iyong drawing')}</h3>
+      <p>{tr('Creates Building 1 (Apartment + Rooms 01–03 on the ground floor, Rooms 04–09 on the second), Building 2 (Gym + Rooms 01–03, Rooms 04–08), Bob\'s house (Rooms 01–06), House 1 (whole house), Yamaha property and Stores 1–3. Existing buildings and rooms with the same names are kept, never duplicated. You can rename rooms afterwards.', 'Gagawa ng Building 1, Building 2, bahay ni Bob, House 1, Yamaha property at Stores 1–3. Ang mga gusali at kuwartong may parehong pangalan ay hindi dodoblehin. Maaari mong palitan ang pangalan ng kuwarto pagkatapos.')}</p>
+      {!owner ? <p className="field-help">{tr('Only signed-in staff can set up the layout.', 'Ang naka-sign in na staff lang ang makapagse-set up ng layout.')}</p>
+        : !reviewing ? <Button className="primary" onClick={() => setReviewing(true)}>{tr('Review layout', 'Suriin ang layout')}</Button>
+        : <div className="notice" role="group" aria-label={tr('Confirm layout setup', 'Kumpirmahin ang setup')}><p><strong>{tr('Create these buildings and rooms now?', 'Gagawin na ba ang mga gusali at kuwartong ito?')}</strong> {tr('This adds records to your saved property. It can be run again safely.', 'Magdadagdag ito ng talaan sa iyong property. Ligtas itong patakbuhin ulit.')}</p>
+          <div className="person-actions"><Button className="primary" disabled={busy} onClick={() => void runSetup()}>{busy ? tr('Creating…', 'Ginagawa…') : tr('Create layout', 'Gawin ang layout')}</Button><Button disabled={busy} onClick={() => setReviewing(false)}>{tr('Cancel', 'Kanselahin')}</Button></div></div>}
     </div>}
 
     {current ? <section className="card building-entry" aria-labelledby="real-building-heading">
-      <div className="building-entry-toolbar"><Button className="secondary-button" onClick={() => { setEntered(''); setFloorIndex(0); setSelected('') }}>{tr('Back to property map', 'Balik sa mapa')}</Button><span className="preview-pill">{summary(current)}</span></div>
-      <div className="building-entry-title"><div><p className="eyebrow">{tr('FRONT VIEW', 'ATUBANGAN')}</p><h3 id="real-building-heading">{current.label}</h3></div></div>
+      <div className="building-entry-toolbar"><Button className="secondary-button" onClick={() => { setEntered(''); setFloorIndex(0); setSelected('') }}>{tr('Back to property map', 'Bumalik sa mapa')}</Button><span className="preview-pill">{summary(current)}</span></div>
+      <div className="building-entry-title"><div><p className="eyebrow">{tr('FRONT VIEW', 'HARAPAN')}</p><h3 id="real-building-heading">{current.label}</h3></div></div>
       {(() => {
         const drawn = toDrawn(current, units, language)
         const floor = drawn.floors[Math.min(floorIndex, drawn.floors.length - 1)]
         return <>
           <figure className="building-facade"><BuildingFacade building={drawn} selectedRoom={selected} language={language} isOccupied={isOccupied} onPick={id => { setFloorIndex(Math.max(0, drawn.floors.findIndex(item => item.rooms.some(room => room.id === id)))); selectRoom(id) }} />
-            <figcaption>{tr('Drawn from the saved rooms on each floor: one door per space, shaded when occupied. Not a surveyed plan.', 'Gikan sa na-save nga kwarto matag andana: usa ka pultahan matag lugar, may kolor kon giokupahan. Dili sukod nga plano.')}</figcaption></figure>
-          {drawn.floors.length > 1 && <div className="floor-tabs" role="group" aria-label={tr('Choose floor', 'Pilia ang andana')}>{drawn.floors.map((item, index) => <Button key={item.label} aria-pressed={item === floor} onClick={() => { setFloorIndex(index); setSelected('') }}>{item.label}</Button>)}</div>}
-          {drawn.floors.length > 1 && <p className="field-help">{tr('Choose a floor, then select a room to see its details.', 'Pilia ang andana, dayon pilia ang kwarto aron makita ang detalye.')}</p>}
+            <figcaption>{tr('Drawn from the saved rooms on each floor: one door per space, shaded when occupied. Not a surveyed plan.', 'Mula sa naka-save na kuwarto bawat palapag: isang pinto bawat lugar, may kulay kung okupado. Hindi ito sukat na plano.')}</figcaption></figure>
+          {drawn.floors.length > 1 && <div className="floor-tabs" role="group" aria-label={tr('Choose floor', 'Piliin ang palapag')}>{drawn.floors.map((item, index) => <Button key={item.label} aria-pressed={item === floor} onClick={() => { setFloorIndex(index); setSelected('') }}>{item.label}</Button>)}</div>}
+          {drawn.floors.length > 1 && <p className="field-help">{tr('Choose a floor, then select a room to see its details.', 'Piliin ang palapag, saka piliin ang kuwarto para makita ang detalye.')}</p>}
           <div className="room-grid">{floor.rooms.map(room => { const unit = units.find(item => item.id === room.id)!
-            return <button type="button" key={room.id} aria-pressed={selected === room.id} aria-label={`${room.label}, ${tr(drawnKind[unit.kind], drawnKind[unit.kind])}, ${statusFor(unit)}${renterByUnit[room.id] ? `, ${renterByUnit[room.id].name}, ${decimalPesos(renterByUnit[room.id].rent)} ${tr('per month', 'matag bulan')}` : ''}`} onClick={() => selectRoom(room.id)} className={`room-tile ${isOccupied(room.id) ? 'occupied' : ''} ${unit.kind === 'shared' ? 'shared' : ''} ${selected === room.id ? 'selected' : ''}`}><strong>{room.label}</strong><span>{tr(drawnKind[unit.kind], drawnKind[unit.kind])}</span><span className={`status ${unit.kind === 'shared' ? '' : isOccupied(room.id) ? 'status--pending' : 'status--ready'}`}>{statusFor(unit)}</span>{renterByUnit[room.id] && <span className="room-renter"><b>{renterByUnit[room.id].name}</b><span>{decimalPesos(renterByUnit[room.id].rent)} / {tr('month', 'bulan')}</span></span>}</button> })}</div>
-          {(() => { const unit = units.find(item => item.id === selected && item.building_id === current.id); if (!unit) return <p className="field-help selected-space-empty">{tr('Select a space above to view its details.', 'Pilia ang lugar sa ibabaw aron makita ang detalye.')}</p>
+            return <button type="button" key={room.id} aria-pressed={selected === room.id} aria-label={`${room.label}, ${tr(drawnKind[unit.kind], drawnKind[unit.kind])}, ${statusFor(unit)}${renterByUnit[room.id] ? `, ${renterByUnit[room.id].name}, ${decimalPesos(renterByUnit[room.id].rent)} ${tr('per month', 'bawat buwan')}` : ''}`} onClick={() => selectRoom(room.id)} className={`room-tile ${isOccupied(room.id) ? 'occupied' : ''} ${unit.kind === 'shared' ? 'shared' : ''} ${selected === room.id ? 'selected' : ''}`}><strong>{room.label}</strong><span>{tr(drawnKind[unit.kind], drawnKind[unit.kind])}</span><span className={`status ${unit.kind === 'shared' ? '' : isOccupied(room.id) ? 'status--pending' : 'status--ready'}`}>{statusFor(unit)}</span>{renterByUnit[room.id] && <span className="room-renter"><b>{renterByUnit[room.id].name}</b><span>{decimalPesos(renterByUnit[room.id].rent)} / {tr('month', 'buwan')}</span></span>}</button> })}</div>
+          {(() => { const unit = units.find(item => item.id === selected && item.building_id === current.id); if (!unit) return <p className="field-help selected-space-empty">{tr('Select a space above to view its details.', 'Piliin ang lugar sa itaas para makita ang detalye.')}</p>
             const taken = isOccupied(unit.id), tenantId = tenantByUnit[unit.id]
             return <section className="card selected-space" aria-labelledby="selected-space-heading"><p className="eyebrow">{tr('SELECTED SPACE', 'NAPILING LUGAR')}</p><h4 id="selected-space-heading" ref={panelHeading} tabIndex={-1}>{current.label} · {unit.label}</h4>
-              <dl className="selected-space-facts"><div><dt>{tr('Type', 'Klase')}</dt><dd>{tr(drawnKind[unit.kind], drawnKind[unit.kind])}</dd></div><div><dt>{tr('Floor', 'Andana')}</dt><dd>{unit.floor_label ?? tr('Not set', 'Wala pa')}</dd></div><div><dt>{tr('Status', 'Kahimtang')}</dt><dd>{statusFor(unit)}</dd></div>{renterByUnit[unit.id] && <><div><dt>{tr('Renter', 'Nag-abang')}</dt><dd>{renterByUnit[unit.id].name}</dd></div><div><dt>{tr('Monthly rent', 'Binulan nga abang')}</dt><dd>{decimalPesos(renterByUnit[unit.id].rent)}</dd></div></>}</dl>
-              {unit.kind === 'shared' ? <p className="field-help">{tr('Shared space for everyone; it cannot be rented or listed.', 'Gipaambit nga lugar; dili kini paabangan o i-lista.')}</p>
-                : taken ? <p className="field-help">{tr('Occupied. Open the payments account to see the balance and payments.', 'Giokupahan. Ablihi ang account sa bayad aron makita ang balanse ug bayad.')}</p>
-                : occupied !== null && <p className="field-help">{tr('Vacant: no current agreement. An upcoming move-in may still be saved.', 'Bakante: walay kasabotan karon. Basin naay umaabot nga pagsulod nga na-save.')}</p>}
+              <dl className="selected-space-facts"><div><dt>{tr('Type', 'Uri')}</dt><dd>{tr(drawnKind[unit.kind], drawnKind[unit.kind])}</dd></div><div><dt>{tr('Floor', 'Palapag')}</dt><dd>{unit.floor_label ?? tr('Not set', 'Wala pa')}</dd></div><div><dt>{tr('Status', 'Katayuan')}</dt><dd>{statusFor(unit)}</dd></div>{renterByUnit[unit.id] && <><div><dt>{tr('Renter', 'Umuupa')}</dt><dd>{renterByUnit[unit.id].name}</dd></div><div><dt>{tr('Monthly rent', 'Buwanang upa')}</dt><dd>{decimalPesos(renterByUnit[unit.id].rent)}</dd></div></>}</dl>
+              {unit.kind === 'shared' ? <p className="field-help">{tr('Shared space for everyone; it cannot be rented or listed.', 'Pinaghahatiang lugar; hindi ito paupahan o ililista.')}</p>
+                : taken ? <p className="field-help">{tr('Occupied. Open the payments account to see the balance and payments.', 'Okupado. Buksan ang account sa bayad para makita ang balanse at bayad.')}</p>
+                : occupied !== null && <p className="field-help">{tr('Vacant: no current agreement. An upcoming move-in may still be saved.', 'Bakante: walang kasunduan ngayon. Maaaring may paparating na paglipat na naka-save.')}</p>}
               <div className="person-actions">
-                {startAgreement && unit.kind !== 'shared' && occupied !== null && !taken && <Button className="primary" aria-label={`${tr('Add tenant to', 'Idugang og nag-abang sa')} ${current.label} ${unit.label}`} onClick={() => startAgreement(unit.id)}>{tr('Add tenant to this space', 'Idugang og nag-abang niini nga lugar')}</Button>}
-                {openPaymentsForUnit && taken && tenantId && <Button className="secondary-button" onClick={() => openPaymentsForUnit(tenantId)}>{tr('View rent and payments', 'Tan-awa ang abang ug bayad')}</Button>}
-                {owner && !renaming && <Button className="secondary-button" onClick={() => { setRenaming(true); setNewLabel(unit.label); setRenameReason(''); setMessage(null) }}>{tr('Rename room', 'Usba ang ngalan sa kwarto')}</Button>}
+                {startAgreement && unit.kind !== 'shared' && occupied !== null && !taken && <Button className="primary" aria-label={`${tr('Add tenant to', 'Magdagdag ng umuupa sa')} ${current.label} ${unit.label}`} onClick={() => startAgreement(unit.id)}>{tr('Add tenant to this space', 'Magdagdag ng umuupa sa lugar na ito')}</Button>}
+                {openPaymentsForUnit && taken && tenantId && <Button className="secondary-button" onClick={() => openPaymentsForUnit(tenantId)}>{tr('View rent and payments', 'Tingnan ang upa at bayad')}</Button>}
+                {owner && !renaming && <Button className="secondary-button" onClick={() => { setRenaming(true); setNewLabel(unit.label); setRenameReason(''); setMessage(null) }}>{tr('Rename room', 'Palitan ang pangalan ng kuwarto')}</Button>}
               </div>
               {renaming && <form className="rent-setup rename-room" onSubmit={event => { event.preventDefault(); void rename(unit.id) }}>
-                <label htmlFor="rename-room-label">{tr('New room name', 'Bag-ong ngalan sa kwarto')}</label><input id="rename-room-label" value={newLabel} maxLength={200} onChange={event => setNewLabel(event.target.value)} />
-                <label htmlFor="rename-room-reason">{tr('Reason (required)', 'Rason (kinahanglan)')}</label><input id="rename-room-reason" value={renameReason} maxLength={500} onChange={event => setRenameReason(event.target.value)} placeholder={tr('Example: match the number on the door', 'Pananglitan: ipares sa numero sa pultahan')} />
-                <div className="person-actions"><Button className="primary" disabled={busy}>{busy ? tr('Saving…', 'Gi-save…') : tr('Save room name', 'I-save ang ngalan')}</Button><Button type="button" disabled={busy} onClick={() => setRenaming(false)}>{tr('Cancel', 'Kanselahon')}</Button></div>
+                <label htmlFor="rename-room-label">{tr('New room name', 'Bagong pangalan ng kuwarto')}</label><input id="rename-room-label" value={newLabel} maxLength={200} onChange={event => setNewLabel(event.target.value)} />
+                <label htmlFor="rename-room-reason">{tr('Reason (required)', 'Dahilan (kailangan)')}</label><input id="rename-room-reason" value={renameReason} maxLength={500} onChange={event => setRenameReason(event.target.value)} placeholder={tr('Example: match the number on the door', 'Halimbawa: itugma sa numero ng pinto')} />
+                <div className="person-actions"><Button className="primary" disabled={busy}>{busy ? tr('Saving…', 'Sine-save…') : tr('Save room name', 'I-save ang pangalan')}</Button><Button type="button" disabled={busy} onClick={() => setRenaming(false)}>{tr('Cancel', 'Kanselahin')}</Button></div>
               </form>}
             </section> })()}
         </>
       })()}
-    </section> : placed.length > 0 && <div className="map-scroll" tabIndex={0} role="region" aria-label={tr('Property sketch. Scroll sideways on small screens.', 'Drawing sa propiedad. I-scroll pahalang sa gamay nga screen.')}><div className="property-plan">
+    </section> : placed.length > 0 && <div className="map-scroll" tabIndex={0} role="region" aria-label={tr('Property sketch. Scroll sideways on small screens.', 'Drawing ng property. I-scroll pahalang sa maliit na screen.')}><div className="property-plan">
       <svg viewBox="0 0 1000 650" preserveAspectRatio="none" className="plan-roads" aria-hidden="true"><path d="M0 400H1000M230 400V650" stroke="#343c38" strokeWidth="58" /><path d="M0 400H1000M230 440V650" stroke="#d4d9d3" strokeWidth="2" strokeDasharray="12 12" /></svg>
-      <span className="road-label">{tr('ACCESS ROAD', 'AGIANAN')}</span>
+      <span className="road-label">{tr('ACCESS ROAD', 'DAANAN')}</span>
       {placed.map(building => { const position = sketchPositions[building.sketch_slot!]
         return <button type="button" key={building.id} className={`plan-building ${building.sketch_slot!.startsWith('store') ? 'store-building' : ''}`} style={{ left: `${position.x}%`, top: `${position.y}%`, width: `${position.w}%`, height: `${position.h}%` }}
-          aria-label={`${tr('Explore', 'Tan-awa')} ${building.label}, ${summary(building)}`} onClick={() => { setEntered(building.id); setFloorIndex(0) }}>
+          aria-label={`${tr('Explore', 'Tingnan')} ${building.label}, ${summary(building)}`} onClick={() => { setEntered(building.id); setFloorIndex(0) }}>
           <BuildingArt building={toDrawn(building, units, language)} /><strong>{building.label}</strong>{!building.sketch_slot!.startsWith('store') && <span>{summary(building)}</span>}
         </button> })}
     </div></div>}

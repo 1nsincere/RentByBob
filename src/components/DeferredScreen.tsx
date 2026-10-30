@@ -32,20 +32,20 @@ export class DeferredBoundary extends Component<DeferredBoundaryProps, { failed:
   render() {
     const { children, loadingLabel, rows, language } = this.props
     if (!this.state.failed) return <Suspense fallback={<LoadingSkeleton label={loadingLabel} rows={rows} />}>{children}</Suspense>
-    const translate = (english: string, bisaya: string) => language === 'ceb' ? bisaya : english
+    const translate = (english: string, bisaya: string) => language === 'fil' ? bisaya : english
     return <div ref={this.message} tabIndex={-1} role="alert" className="notice notice--error deferred-failure">
-      <p><strong>{translate('This section did not open.', 'Wala maablihi kini nga bahin.')}</strong></p>
+      <p><strong>{translate('This section did not open.', 'Hindi mabuksan ang bahaging ito.')}</strong></p>
       <p>{translate(
         'It may not have downloaded because the internet connection is weak or the app was updated. Your other sections are still open. Check your connection, then choose Try again.',
-        'Basin wala ma-download tungod kay hinay ang internet o na-update ang app. Bukas gihapon ang ubang mga bahin. Susiha ang imong koneksyon, dayon pilia ang Sulayi pag-usab.',
+        'Maaaring hindi na-download dahil mabagal ang internet o na-update ang app. Bukas pa rin ang ibang bahagi. Suriin ang iyong koneksyon, saka piliin ang Subukan ulit.',
       )}</p>
       <div className="deferred-failure__actions">
-        <Button type="button" onClick={this.tryAgain}>{translate('Try again', 'Sulayi pag-usab')}</Button>
-        <Button type="button" className="secondary-button" onClick={() => window.location.reload()}>{translate('Reload page', 'I-reload ang panid')}</Button>
+        <Button type="button" onClick={this.tryAgain}>{translate('Try again', 'Subukan ulit')}</Button>
+        <Button type="button" className="secondary-button" onClick={() => window.location.reload()}>{translate('Reload page', 'I-reload ang pahina')}</Button>
       </div>
       <p>{translate(
         'Reload page only if Try again does not work. Reloading clears anything you typed but have not saved in other sections.',
-        'I-reload lang ang panid kung dili molihok ang Sulayi pag-usab. Ang pag-reload mopapas sa bisan unsa nga imong gi-type apan wala pa ma-save sa ubang mga bahin.',
+        'I-reload lang ang pahina kung hindi gumana ang Subukan ulit. Buburahin ng pag-reload ang anumang na-type mo pero hindi pa na-save sa ibang bahagi.',
       )}</p>
     </div>
   }

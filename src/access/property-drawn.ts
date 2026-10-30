@@ -15,7 +15,7 @@ export function toDrawn(building: DbBuilding, units: DbUnit[], language: Languag
   const labels = [...new Set(own.map(unit => unit.floor_label))].sort((a, b) => floorOrder(a) - floorOrder(b))
   const floors: Floor[] = labels.map(label => {
     const rooms: Room[] = own.filter(unit => unit.floor_label === label).map(unit => ({ id: unit.id, label: unit.label, kind: drawnKind[unit.kind] }))
-    return { label: label ?? tr('Rooms', 'Mga kwarto'), count: rooms.filter(room => room.kind === 'Room').length, rooms }
+    return { label: label ?? tr('Rooms', 'Mga kuwarto'), count: rooms.filter(room => room.kind === 'Room').length, rooms }
   })
-  return { id: building.id, name: building.label, floors: floors.length ? floors : [{ label: tr('No rooms yet', 'Wala pay kwarto'), count: null, rooms: [] }] }
+  return { id: building.id, name: building.label, floors: floors.length ? floors : [{ label: tr('No rooms yet', 'Wala pang kuwarto'), count: null, rooms: [] }] }
 }
