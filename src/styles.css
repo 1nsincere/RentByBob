@@ -1785,3 +1785,19 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
   .site-header .appbar-language span { padding: .3rem .45rem; }
 }
 @media (max-width: 26rem) { .site-header .brand .wordmark { display: none; } }
+/* Phones, signed in (30 Oct 2026): one row - logo, then theme, language, avatar and Sign out on the right. Sign out shows
+   just its icon here; its name "Sign out" stays for screen readers and the tooltip. */
+@media (max-width: 40rem) {
+  .site-header .header-inner { flex-wrap: nowrap; row-gap: 0; }
+  .site-header .session-tools { width: auto; flex: 0 1 auto; flex-wrap: nowrap; justify-content: flex-end; gap: .3rem; }
+  .site-header .appbar-account { order: 0; flex: none; padding-left: .35rem; border-left: 1px solid var(--border); gap: .3rem; }
+  .site-header .appbar-signout { margin-left: 0; width: 2.75rem; padding: 0; justify-content: center; font-size: 0; gap: 0; }
+  .site-header .appbar-signout svg { display: block; width: 1.2rem; height: 1.2rem; }
+  .site-header .appbar-avatar { width: 2.3rem; height: 2.3rem; }
+}
+.site-header .appbar-language, .site-header .appbar-icon, .site-header .appbar-signout { flex: none; white-space: nowrap; }
+@media (max-width: 22rem) { .site-header .session-tools, .site-header .appbar-account { gap: .2rem; } .site-header .appbar-language span { padding: .3rem .35rem; } }
+/* Payments view switch on phones: short tabs on one line each, a little smaller, instead of three-line wraps. */
+@media (max-width: 40rem) {
+  .segmented-control .button { padding-inline: .45rem; font-size: .88rem; line-height: 1.2; overflow-wrap: normal; word-break: normal; hyphens: none; }
+}
