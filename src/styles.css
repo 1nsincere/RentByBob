@@ -1809,3 +1809,40 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
 .access-candidate-email { min-width: 0; overflow-wrap: anywhere; font-weight: 700; }
 .access-candidate-meta { grid-column: 1; color: var(--text-secondary); font-size: .88rem; }
 .access-candidate-list .button { grid-column: 2; grid-row: 1 / span 2; width: auto; }
+
+/* Paid rent report, redone for easy reading (30 Oct 2026): one plain, wide typeface (Verdana, then Tahoma/Segoe UI),
+   12 pt body and 11 pt table text (most people open the PDF on a phone, which shows the A4 page shrunk to fit), labels in
+   normal sentence case instead of small spaced capitals, strong contrast, and roomy rows. Overrides the rules above. */
+html .paid-rent-document { --doc-ink: #111; --doc-muted: #3d4741; --doc-line: #c9d1c6; --doc-tint: #f1f5ec;
+  font-family: Verdana, Tahoma, "Segoe UI", Arial, sans-serif; font-size: 12pt; line-height: 1.5; letter-spacing: 0; }
+html .paid-rent-document h1, html .paid-rent-document h2, html .paid-rent-document .doc-figure strong, html .paid-rent-document .doc-property { font-family: inherit; font-style: normal; letter-spacing: 0; }
+html .paid-rent-document h1 { margin: 0; font-size: 22pt; font-weight: 700; line-height: 1.2; }
+html .paid-rent-document h2 { display: flex; align-items: center; gap: 3mm; margin: 0 0 2mm; font-size: 15pt; font-weight: 700; }
+html .paid-rent-document .doc-brand { font-size: 13pt; }
+html .paid-rent-document .doc-mark { width: 8mm; height: 8mm; font-size: 12pt; }
+html .paid-rent-document .doc-confidential, html .paid-rent-document .doc-kicker, html .paid-rent-document .doc-meta dt,
+html .paid-rent-document .doc-figure span, html .paid-rent-document .doc-table thead th { text-transform: none; letter-spacing: 0; }
+html .paid-rent-document .doc-confidential { font-size: 10pt; }
+html .paid-rent-document .doc-kicker { font-size: 11pt; }
+html .paid-rent-document .doc-property { margin: 1.5mm 0 5mm; font-size: 14pt; color: var(--doc-muted); }
+html .paid-rent-document .doc-meta { grid-template-columns: 1fr; gap: 1.5mm; padding: 4mm 5mm; }
+html .paid-rent-document .doc-meta div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2mm; }
+html .paid-rent-document .doc-meta dt { font-size: 11pt; color: var(--doc-muted); }
+html .paid-rent-document .doc-meta dd { margin: 0; font-size: 12pt; font-weight: 700; }
+html .paid-rent-document .doc-summary { grid-template-columns: 1fr; gap: 3mm; }
+html .paid-rent-document .doc-figure { grid-template-columns: 1fr auto; align-items: baseline; gap: 1mm 4mm; padding: 4mm 5mm; }
+html .paid-rent-document .doc-figure span { font-size: 12pt; color: var(--doc-ink); font-weight: 600; }
+html .paid-rent-document .doc-figure strong { grid-row: 1 / span 2; grid-column: 2; font-size: 20pt; font-weight: 700; }
+html .paid-rent-document .doc-figure small { font-size: 10.5pt; }
+html .paid-rent-document .doc-number { width: 8mm; height: 8mm; font: 700 11pt Verdana, Tahoma, sans-serif; }
+html .paid-rent-document .doc-note { font-size: 11pt; line-height: 1.5; color: var(--doc-muted); }
+html .paid-rent-document .doc-table { font-size: 11pt; }
+html .paid-rent-document .doc-table th, html .paid-rent-document .doc-table td { padding: 3mm 2.5mm; }
+html .paid-rent-document .doc-table thead th { font-size: 10.5pt; font-weight: 700; color: var(--doc-ink); border-bottom: 2px solid var(--doc-ink); }
+html .paid-rent-document .doc-table tfoot th, html .paid-rent-document .doc-table tfoot td { font-size: 12pt; }
+html .paid-rent-document .doc-money { font-weight: 600; }
+html .paid-rent-document .doc-code { font-family: inherit; font-size: 10pt; }
+html .paid-rent-document .doc-empty { font-style: normal; font-size: 11pt; }
+html .paid-rent-document .doc-footer { font-size: 10pt; }
+html .paid-rent-document .doc-optional h2 { font-size: 14pt; }
+@media print { html.print-paid-report { --doc-page-number: 10pt; } @page { @bottom-right { font: 10pt Verdana, Tahoma, sans-serif; } } }
