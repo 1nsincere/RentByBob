@@ -151,7 +151,8 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     // 74 adds the six notebook-month and move-in double-check functions (202610280001), each staff-only with no anonymous grant.
     // 78 adds remove_tenant_with_room (202610280002) and the three maintenance functions (202610280003), staff-only.
     // 79 adds private.add_rent_month_core (202610280005), not callable from the browser.
-    assert.equal(result.rows.length, 79)
+    // 80 adds public.list_access_candidates (202610300002), owner-only.
+    assert.equal(result.rows.length, 80)
     // The only reviewed anonymous entry points: read listed rooms and leave an inquiry (202610270002).
     const anonymousAllowed = new Set(['read_public_listings', 'submit_rental_inquiry'])
     for (const fn of result.rows) {

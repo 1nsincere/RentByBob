@@ -1801,3 +1801,11 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
 @media (max-width: 40rem) {
   .segmented-control .button { padding-inline: .45rem; font-size: .88rem; line-height: 1.2; overflow-wrap: normal; word-break: normal; hyphens: none; }
 }
+/* Owner approval: list of sign-in accounts to choose from. */
+.access-candidates { display: grid; gap: .5rem; margin: 1rem 0; }
+.access-candidates h3 { margin: 0; }
+.access-candidate-list { display: grid; gap: .4rem; max-height: 22rem; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.access-candidate-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .2rem .75rem; padding: .6rem .75rem; border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--surface); }
+.access-candidate-email { min-width: 0; overflow-wrap: anywhere; font-weight: 700; }
+.access-candidate-meta { grid-column: 1; color: var(--text-secondary); font-size: .88rem; }
+.access-candidate-list .button { grid-column: 2; grid-row: 1 / span 2; width: auto; }

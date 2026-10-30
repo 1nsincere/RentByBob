@@ -87,6 +87,32 @@ export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: 
     }, () => undefined)
     return () => { live = false }
   }, [propertyId])
+  // Sign-in accounts the owner may act on (202610300002): pick one instead of typing the email. Optional: if the list
+  // cannot load (older database), typing the exact email still works.
+  type Candidate = { email: string; confirmed: boolean; last_sign_in_at: string | null; access: string }
+  const [candidates, setCandidates] = useState<Candidate[] | null>(null)
+  const [filter, setFilter] = useState('')
+  const loadCandidates = () => {
+    void supabase!.rpc('list_access_candidates', { p_property_id: propertyId })
+      .then(({ data, error }) => setCandidates(!error && Array.isArray(data) ? data as Candidate[] : null), () => setCandidates(null))
+  }
+  useEffect(loadCandidates, [propertyId])
+  const accessLabel = (access: string) => ({ owner: tr('Owner', 'Tag-iya'), clerk: tr('Clerk', 'Klerk'), tenant: tr('Tenant', 'Nag-abang'), disabled: tr('Access off', 'Gipalong'), none: tr('No access yet', 'Wala pay access') } as Record<string, string>)[access] ?? access
+  const signedIn = (c: Candidate) => {
+    if (!c.confirmed) return tr('Email not confirmed', 'Wala makumpirma ang email')
+    if (!c.last_sign_in_at) return tr('Never signed in', 'Wala pa makasulod')
+    const when = new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Manila' }).format(new Date(c.last_sign_in_at))
+    return `${tr('Last sign-in', 'Katapusang sulod')} ${when}`
+  }
+  async function choose(candidate: Candidate) {
+    setEmail(candidate.email); setReview(false); setConfirmation(''); setMessage(''); setBusy(true)
+    try {
+      const { data, error } = await supabase!.rpc('find_account_for_assignment', { p_property_id: propertyId, p_email: candidate.email })
+      if (error) throw error
+      setAccount(data as Account | null); setError(false)
+    } catch { setError(true); setMessage(tr('Account lookup failed. Owner access and MFA are required. No assignment was made.', 'Napakyas ang pagpangita sa account. Kinahanglan ang access sa tag-iya ug MFA. Walay access nga gi-assign.')) }
+    finally { setBusy(false) }
+  }
   async function lookup() {
     const { data, error } = await supabase!.rpc('find_account_for_assignment', { p_property_id: propertyId, p_email: email.trim() })
     if (error) throw error
@@ -96,6 +122,18 @@ export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: 
   return <section className="card form-card" aria-labelledby="manage-access-heading"><p className="eyebrow">{tr('OWNER APPROVAL', 'APROBADO SA TAG-IYA')}</p><h2 id="manage-access-heading">{tr('Assign or disable account access', 'Ihatag o tangtangon ang access sa account')}</h2>
     <p>{tr('Confirm the intended person’s email with them outside this app. Look up that exact address, review the account and target below, then retype the email. A verified email proves mailbox access, not a person’s real-world identity.', 'Kumpirmaha ang email sa tawo gawas niining app. Pangitaa ang eksaktong email, susiha ang account ug target, dayon isulat pag-usab ang email. Nagpamatuod lang ang email nga makagamit siya sa mailbox, dili sa iyang tinuod nga identidad.')}</p>
     <Feedback message={message} error={error} />
+    {candidates && candidates.length > 0 && <div className="access-candidates">
+      <h3>{tr('Accounts that can sign in', 'Mga account nga makasulod')}</h3>
+      <p className="field-help">{tr('Newest sign-in first. People waiting for access show "No access yet". Choose one to review it below.', 'Ang pinakabag-o nga nisulod una. Ang naghulat og access kay "Wala pay access". Pilia aron masusi sa ubos.')}</p>
+      {candidates.length > 6 && <><label htmlFor="candidate-filter">{tr('Filter by email', 'Pangitaa pinaagi sa email')}</label><input id="candidate-filter" type="search" value={filter} onChange={e => setFilter(e.target.value)} autoComplete="off" /></>}
+      <ul className="access-candidate-list">
+        {candidates.filter(c => c.email.toLowerCase().includes(filter.trim().toLowerCase())).map(c => <li key={c.email}>
+          <span className="access-candidate-email">{c.email}</span>
+          <span className="access-candidate-meta"><span className={`status status--${c.access === 'none' ? 'pending' : c.access === 'disabled' ? 'archived' : 'ready'}`}>{accessLabel(c.access)}</span> {signedIn(c)}</span>
+          <Button variant="secondary" size="sm" disabled={busy} aria-label={`${tr('Choose', 'Pilia')} ${c.email}`} onClick={() => void choose(c)}>{tr('Choose', 'Pilia')}</Button>
+        </li>)}
+      </ul>
+    </div>}
     <form onSubmit={async e => {
       e.preventDefault(); if (busy) return
       setBusy(true); setMessage(''); setAccount(null); setReview(false); setConfirmation('')
@@ -124,7 +162,7 @@ export function ManageAccess({ propertyId, tenants, changed, language = 'en' }: 
             p_role: kind === 'staff' && enabled ? role : null, p_enabled: enabled, p_reason: reason.trim(),
           })
           if (error) throw error
-          setError(false); setMessage(tr('Access change saved. The account’s next access check will use the new permissions.', 'Na-save ang kausaban sa access. Gamiton sa sunod nga pagsusi sa account ang bag-ong permiso.')); setReview(false); setConfirmation(''); await lookup(); changed()
+          setError(false); setMessage(tr('Access change saved. The account’s next access check will use the new permissions.', 'Na-save ang kausaban sa access. Gamiton sa sunod nga pagsusi sa account ang bag-ong permiso.')); setReview(false); setConfirmation(''); await lookup(); loadCandidates(); changed()
         } catch { setError(true); setMessage(tr('Access was not confirmed. Refresh the account before retrying. Check the verified email, owner MFA, target tenant and last-owner protection.', 'Wala makumpirma ang access. I-refresh una ang account. Susiha ang kumpirmadong email, MFA sa tag-iya, nag-abang nga gipili ug proteksyon sa kataposang tag-iya.')); setReview(false) }
         finally { setBusy(false) }
       }}>
