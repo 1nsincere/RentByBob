@@ -211,8 +211,6 @@ const TRAFFIC: Ride[] = [
   { kind: 'jt', heading: 'w', duration: 16, delay: -8, rest: 40 },
   { kind: 'moveit', heading: 'w', duration: 16, delay: -13, rest: 74 },
   { kind: 'pandesal', heading: 'e', duration: 60, delay: 0, rest: 45, stops: true },
-  { kind: 'jt', heading: 'n', duration: 10, delay: -3, rest: 45 },
-  { kind: 'moveit', heading: 's', duration: 12, delay: -7, rest: 20 },
 ]
 // A motorbike from above, drawn facing east inside a 36×20 box, shifted right by x: both wheels, the tank and seat,
 // forks, handlebar with mirrors and a headlight, the rider's shoulders, arms and knees, and a helmet with a visor
@@ -293,10 +291,11 @@ const BobArt = () => <>
       <circle className="bob-ear" cx="12.6" cy="5.9" r="1.1" /><circle className="bob-ear" cx="12.6" cy="14.1" r="1.1" />
       <circle className="bob-head" cx="13" cy="10" r="4.4" /><ellipse className="bob-shine" cx="11.8" cy="8.4" rx="1.8" ry="1.1" />
 </>
-function Bob({ label, line }: { label: string; line: string }) {
+function Bob({ label, line, bless }: { label: string; line: string; bless?: string }) {
   return <span className="lp-bob" tabIndex={0} role="img" aria-label={label}>
     <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
     <span className="lp-say lp-say--bob" aria-hidden="true">{line}</span>
+    {bless && <span className="lp-say lp-say--bless" aria-hidden="true">{bless}</span>}
     <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false">
       <BobArt />
     </svg>
@@ -536,8 +535,82 @@ function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (engl
   </div>, document.body)
 }
 
+// James and Jake help Sir Bob. They drive in on Mariano Abella St in a 2016 Toyota Wigo, park beside Bob's house, walk the
+// sidewalk to him and greet him with "Mano po", then drive off again (one 60 s loop with everyone else, landing.css).
+// Their photos and Facebook pages are public here, shared by the owner (30 Oct 2026).
+export const HELPERS = {
+  james: { name: 'James', photo: '/james.jpg', facebook: 'https://www.facebook.com/jameslee.gica.1', alt: { en: 'James at the beach in sunglasses and a black sleeveless shirt', bis: 'Si James sa baybayon, naka-sunglasses ug itom nga sleeveless' } as Bilingual },
+  jake: { name: 'Jake', photo: '/jake.jpg', facebook: 'https://www.facebook.com/ja.ke.477316', alt: { en: 'Jake taking a selfie with a peace sign', bis: 'Si Jake nag-selfie nga naay peace sign' } as Bilingual },
+}
+type HelperId = keyof typeof HELPERS
+
+// A 2016 Toyota Wigo from above, facing east: compact five-door hatchback, short bonnet, big glass, red.
+const WigoArt = () => <>
+      <ellipse className="bob-shadow" cx="31" cy="16" rx="30" ry="13" />
+      <rect className="wigo-body" x="3" y="3.5" width="54" height="23" rx="8" />
+      <rect className="wigo-mirror" x="38" y="1.2" width="3.2" height="3" rx="1" /><rect className="wigo-mirror" x="38" y="25.8" width="3.2" height="3" rx="1" />
+      <path className="wigo-glass" d="M40 6.5 Q46 7 47.5 9 L47.5 21 Q46 23 40 23.5 Z" />
+      <rect className="wigo-roof" x="14" y="6.2" width="26" height="17.6" rx="3.5" />
+      <path className="wigo-glass" d="M14 6.6 Q9.5 7.5 8.5 10 L8.5 20 Q9.5 22.5 14 23.4 Z" />
+      <line className="wigo-line" x1="27" y1="6.4" x2="27" y2="23.6" />
+      <rect className="wigo-lamp" x="53.4" y="5" width="2.6" height="4.6" rx="1.2" /><rect className="wigo-lamp" x="53.4" y="20.4" width="2.6" height="4.6" rx="1.2" />
+      <rect className="wigo-tail" x="3.4" y="5.2" width="2" height="4.2" rx="0.8" /><rect className="wigo-tail" x="3.4" y="20.6" width="2" height="4.2" rx="0.8" />
+      <rect className="wigo-grille" x="55.6" y="11.5" width="1.4" height="7" rx="0.6" />
+</>
+// James: black sleeveless shirt and sunglasses. Jake: dark green shirt.
+const HelperArt = ({ who }: { who: HelperId }) => <>
+      <ellipse className="bob-shadow" cx="12" cy="11" rx="10" ry="8.5" />
+      <ellipse className="st-leg bob-foot bob-foot--a" cx="11" cy="7" rx="4.2" ry="2.1" /><ellipse className="st-leg bob-foot bob-foot--b" cx="11" cy="13" rx="4.2" ry="2.1" />
+      <ellipse className={`hp-shirt hp-shirt--${who}`} cx="12" cy="10" rx="4" ry="7.4" />
+      {who === 'james' ? <><circle className="st-hand" cx="12.4" cy="3.4" r="1.6" /><circle className="st-hand" cx="12.4" cy="16.6" r="1.6" /></>
+        : <><ellipse className="hp-shirt hp-shirt--jake" cx="12.4" cy="3.8" rx="2.6" ry="1.7" /><ellipse className="hp-shirt hp-shirt--jake" cx="12.4" cy="16.2" rx="2.6" ry="1.7" /></>}
+      <circle className="st-hand" cx="14.6" cy="3.6" r="1.1" /><circle className="st-hand" cx="14.6" cy="16.4" r="1.1" />
+      <circle className="st-hair" cx="13" cy="10" r="4.4" />
+      {who === 'james' && <rect className="hp-shades" x="15.4" y="6.6" width="1.6" height="6.8" rx="0.8" />}
+</>
+
+function Wigo() {
+  return <div className="lp-car" aria-hidden="true"><svg viewBox="0 0 60 30" focusable="false"><WigoArt /></svg></div>
+}
+
+function Helper({ who, label, line, open, onOpen, tr }: { who: HelperId; label: string; line: string; open: boolean; onOpen: () => void; tr: (english: string, bisaya: string) => string }) {
+  return <div className={`lp-roam lp-roam--${who}`}>
+    <button type="button" className={`lp-student lp-helper${open ? ' is-open' : ''}`} aria-label={`${label}. ${tr('Show contact', 'Ipakita ang kontak')}`} aria-haspopup="dialog" onClick={onOpen}>
+      <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
+      <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false"><HelperArt who={who} /></svg>
+    </button>
+    <span className={`lp-say lp-say--mano-${who}`} aria-hidden="true">{line}</span>
+  </div>
+}
+
+function HelperCard({ who, onClose, tr, language }: { who: HelperId; onClose: () => void; tr: (english: string, bisaya: string) => string; language: Language }) {
+  const helper = HELPERS[who]
+  const closeRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null
+    closeRef.current?.focus()
+    const keys = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
+    window.addEventListener('keydown', keys)
+    return () => { window.removeEventListener('keydown', keys); opener?.focus?.() }
+  }, [onClose])
+  return createPortal(<div className="dev-backdrop" onClick={event => { if (event.target === event.currentTarget) onClose() }}>
+    <section className="dev-card helper-card" role="dialog" aria-modal="true" aria-label={`${helper.name} · ${tr('contact', 'kontak')}`}>
+      <button type="button" className="dev-close" ref={closeRef} onClick={onClose} aria-label={tr('Close', 'Isira')}><span aria-hidden="true">×</span></button>
+      <figure className="dev-photo helper-photo"><img src={helper.photo} alt={text(language, helper.alt.en, helper.alt.bis)} width="520" height="780" /></figure>
+      <div className="dev-body">
+        <p className="dev-eyebrow">{tr("Sir Bob's helper", 'Katabang ni Sir Bob')}</p>
+        <h2 className="dev-name">{helper.name}</h2>
+        <p className="dev-study">{tr("Helps Sir Bob run the boarding houses. Message him on Facebook for rooms, payments or repairs.", 'Motabang kang Sir Bob sa pagdumala sa mga boarding house. Mensahe siya sa Facebook bahin sa kwarto, bayad o ayuhonon.')}</p>
+        <ul className="dev-links" aria-label={tr('Contact', 'Kontak')}>
+          <li><a href={helper.facebook} className="dev-link dev-link--facebook" target="_blank" rel="noopener noreferrer"><LinkIcon kind="facebook" /><span>{tr('Message on Facebook', 'Mensahe sa Facebook')}</span><span className="visually-hidden"> ({tr('opens in a new tab', 'mo-abli sa bag-ong tab')})</span></a></li>
+        </ul>
+      </div>
+    </section>
+  </div>, document.body)
+}
+
 // Who is who on the street, drawn with the same pictures that move on the plan.
-function Legend({ tr, onDeveloper }: { tr: (english: string, bisaya: string) => string; onDeveloper: () => void }) {
+function Legend({ tr, onDeveloper, onHelper }: { tr: (english: string, bisaya: string) => string; onDeveloper: () => void; onHelper: (who: HelperId) => void }) {
   const bike = (kind: Ride['kind'], width: number, pillion?: boolean) => <svg viewBox={`0 2 ${width} 16`} aria-hidden="true" focusable="false"><RideArt kind={kind} pillion={pillion} /></svg>
   const person = (art: ReactNode) => <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false">{art}</svg>
   // Open on wide screens; collapsed on phones, where the plan is too small to spare the room.
@@ -550,6 +623,9 @@ function Legend({ tr, onDeveloper }: { tr: (english: string, bisaya: string) => 
       <li><span className="lp-legend-icon lp-legend-icon--wide">{bike('pandesal', 60)}</span>{tr('Malunggay pandesal cart', 'Karton sa malunggay pandesal')}</li>
       <li><span className="lp-legend-icon">{person(<BobArt />)}</span>{tr('Bob, with his sungkod', 'Si Bob, naay sungkod')}</li>
       <li><span className="lp-legend-icon">{person(<DogArt />)}</span>{tr('Bantay, the street dog', 'Si Bantay, ang iro sa dalan')}</li>
+      <li><span className="lp-legend-icon lp-legend-icon--wide"><svg viewBox="0 0 60 30" aria-hidden="true" focusable="false"><WigoArt /></svg></span>{tr("James & Jake's Wigo", 'Wigo ni James ug Jake')}</li>
+      <li><button type="button" className="lp-legend-dev" onClick={() => onHelper('james')}><span className="lp-legend-icon">{person(<HelperArt who="james" />)}</span>{tr('James (tap)', 'Si James (i-tap)')}</button></li>
+      <li><button type="button" className="lp-legend-dev" onClick={() => onHelper('jake')}><span className="lp-legend-icon">{person(<HelperArt who="jake" />)}</span>{tr('Jake (tap)', 'Si Jake (i-tap)')}</button></li>
       <li><button type="button" className="lp-legend-dev" onClick={onDeveloper}><span className="lp-legend-icon">{person(<StudentArt />)}</span>{tr('Developer and tenant (tap)', 'Developer ug nag-abang (i-tap)')}</button></li>
     </ul>
   </details>
@@ -564,6 +640,7 @@ export const statusText = (language: Language, known: boolean, lit: number) => !
 export function StreetPlan({ openByBuilding, known, active, setActive, language }: { openByBuilding: Map<string, string[]>; known: boolean; active: string; setActive: (label: string) => void; language: Language }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [profile, setProfile] = useState(false)
+  const [helper, setHelper] = useState<HelperId | null>(null)
   const planRef = useRef<HTMLDivElement>(null)
   // Everything on the plan stands still while it is scrolled out of view (saves battery and work on phones).
   useEffect(() => {
@@ -582,7 +659,8 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
   // On a phone the plan is wider than the screen and scrolls sideways inside its frame (so it can be drawn larger); the
   // legend stays put over it and the profile card is a page-level dialog.
   return <div className="lp-plan-wrap">
-    <Legend tr={tr} onDeveloper={() => setProfile(true)} />
+    <Legend tr={tr} onDeveloper={() => setProfile(true)} onHelper={setHelper} />
+    {helper && <HelperCard who={helper} onClose={() => setHelper(null)} tr={tr} language={language} />}
     {profile && <ProfileCard onClose={() => setProfile(false)} tr={tr} language={language} />}
     <div className="lp-plan-scroll" tabIndex={0} role="region" aria-label={tr('Street map. Scroll sideways to see all of it on a small screen.', 'Mapa sa dalan. I-scroll pa-sidlakan aron makita tanan sa gamay nga screen.')}>
     <div ref={planRef} className={`lp-plan${profile ? ' has-profile' : ''}`} role="group" aria-label={tr('Site plan on B. Zubiri St and Mariano Abella St. Glowing doors and windows are spaces open now. Choose a home to see rooms.', 'Plano sa B. Zubiri St ug Mariano Abella St. Ang nagsiga nga pultahan ug bintana bakante karon. Pilia ang balay aron makita ang kwarto.')}>
@@ -594,8 +672,12 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
       <circle className="lp-tree-leaf" cx="14" cy="15" r="7" /><circle className="lp-tree-leaf" cx="25" cy="23" r="6" /><circle className="lp-tree-leaf" cx="15" cy="26" r="5" />
     </svg>)}
     {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} extra={index >= 4} vendorLine={tr('Malunggay Pandesal, init pa with cheese, tag singko lang!', 'Malunggay Pandesal, init pa with cheese, tag singko lang!')} />)}
-    <Bob label={tr('This is Bob', 'Kini si Bob')} line={tr('Thank you, iho!', "Salamat, 'do!")} />
+    <Bob label={tr('This is Bob', 'Kini si Bob')} line={tr('Thank you, iho!', "Salamat, 'do!")} bless={tr('God bless you both!', 'Kaloy-an mo sa Ginoo!')} />
     <Dog heart="♥" bark={tr('Arf!', 'Aw aw!')} />
+    <span className="lp-driveway" aria-hidden="true" />
+    <Wigo />
+    <Helper who="james" label={tr("James, Sir Bob's helper", 'Si James, katabang ni Sir Bob')} line={tr('Mano po, Sir Bob!', 'Mano po, Sir Bob!')} open={helper === 'james'} onOpen={() => setHelper('james')} tr={tr} />
+    <Helper who="jake" label={tr("Jake, Sir Bob's helper", 'Si Jake, katabang ni Sir Bob')} line={tr('Mano po!', 'Mano po!')} open={helper === 'jake'} onOpen={() => setHelper('jake')} tr={tr} />
     <Student label={tr('The developer, and a tenant here too', 'Ang developer, ug nag-abang sad dinhi')} open={profile} onToggle={() => setProfile(open => !open)} tr={tr} />
     {SITE.map(site => {
       const open = (openByBuilding.get(site.label) ?? []).slice(0, site.spaces)

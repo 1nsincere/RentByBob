@@ -247,7 +247,7 @@
 .bob-cane circle:not(.bob-hand) { fill: #2b2420; }
 @keyframes lp-step { from { transform: translateX(-2.2px); } to { transform: translateX(2.2px); } }
 @keyframes lp-stroll { 0%, 3% { translate: 0 0; } 25%, 33% { translate: 426% 0; } 50%, 100% { translate: 0 0; } }
-@keyframes lp-turn { 0%, 25% { transform: rotate(0deg); } 28%, 80% { transform: rotate(180deg); } 84%, 100% { transform: rotate(360deg); } }
+@keyframes lp-turn { 0%, 25% { transform: rotate(0deg); } 28%, 97% { transform: rotate(180deg); } 99.5%, 100% { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .lp-bob { left: 82%; } .lp-bob svg { animation: none; } }
 /* Roaming cast: the student (the developer, a tenant), Bantay the dog, Bob and the malunggay pandesal cart share one 60 s
    loop. The student and the dog are full-size layers whose translate is in percent of the street plan, so positions read
@@ -265,7 +265,7 @@
 .lp-student svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-face-student 60s linear infinite both; }
 .lp-dog { position: absolute; left: 0; top: 0; width: 3.3cqw; transform: translate(-50%, -50%); }
 .lp-dog svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-face-dog 60s linear infinite both; }
-.lp-plan:has(.lp-student:hover, .lp-student:focus-visible, .lp-student.is-open, .lp-bob:hover, .lp-bob:focus-visible) :is(.lp-roam, .lp-roam svg, .lp-bob, .lp-bob svg, .lp-say, .lp-lane--stop) { animation-play-state: paused; }
+.lp-plan:has(.lp-student:hover, .lp-student:focus-visible, .lp-student.is-open, .lp-bob:hover, .lp-bob:focus-visible) :is(.lp-roam, .lp-roam svg, .lp-bob, .lp-bob svg, .lp-say, .lp-lane--stop, .lp-car, .lp-car svg) { animation-play-state: paused; }
 .dog-body { fill: #b97a43; }
 .dog-back { fill: #8a5730; }
 .dog-ear { fill: #6e4325; }
@@ -666,3 +666,82 @@
 
 /* Memory: sections below the fold are not drawn until they come near the screen. */
 .lp-how, .lp-tenant, .lp-visit, .lp-footer, .lp-facts { content-visibility: auto; contain-intrinsic-size: auto 800px; }
+
+/* James, Jake and their Wigo. Points (x%, y% of the plan): Mariano Abella northbound lane x 20, southbound x 16.5; the
+   parking spot beside Bob's house 26.5,84 (car facing east); the strip beside the house x 26.5 / 29.3; the sidewalk
+   y 68.8 / 71.6; in front of Bob 65.5 / 66. They only walk on sidewalks and yards. */
+.lp-driveway { position: absolute; z-index: 2; left: 22.2%; top: 78%; width: 8.4%; height: 12%; border-radius: 3px; background: rgb(31 43 37 / 55%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%); }
+.lp-car { position: absolute; left: 0; top: 0; z-index: 4; width: 6.6cqw; animation: lp-car-drive 60s linear infinite both; }
+.lp-car svg { display: block; width: 100%; height: auto; transform: translate(-50%, -50%); animation: lp-car-face 60s linear infinite both; overflow: visible; filter: drop-shadow(0 2px 2px rgb(0 0 0 / 40%)); }
+.wigo-body { fill: #c8202b; stroke: #8b1119; stroke-width: 0.8; }
+.wigo-roof { fill: #d9343e; }
+.wigo-glass { fill: #1c2a33; }
+.wigo-line { stroke: #8b1119; stroke-width: 0.6; }
+.wigo-mirror { fill: #8b1119; }
+.wigo-lamp { fill: #fff3c4; }
+.wigo-tail { fill: #ff6b5a; }
+.wigo-grille { fill: #2a2f33; }
+.lp-roam--james { width: 4.4cqw; animation: lp-roam-james 60s linear infinite both; }
+.lp-roam--jake { width: 4.4cqw; animation: lp-roam-jake 60s linear infinite both; }
+.lp-roam--james .lp-student svg { animation: lp-face-james 60s linear infinite both; }
+.lp-roam--jake .lp-student svg { animation: lp-face-jake 60s linear infinite both; }
+.hp-shirt--james { fill: #16181b; stroke: #000; stroke-width: 0.5; }
+.hp-shirt--jake { fill: #23382c; stroke: #13211a; stroke-width: 0.5; }
+.hp-shades { fill: #4fb6d8; stroke: #0d1b22; stroke-width: 0.4; }
+.lp-say--mano-james { animation: lp-say-mano-james 60s linear infinite both; }
+.lp-say--mano-jake { transform: translate(-50%, 1.4em); animation: lp-say-mano-jake 60s linear infinite both; }
+.lp-say--mano-jake::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #fffdf4; }
+.lp-say--bless { left: 50%; transform: translate(-50%, calc(-100% - .4em)); animation: lp-say-bless 60s linear infinite both; }
+@keyframes lp-say-mano-james { 0%, 89.9% { opacity: 0; } 90%, 94% { opacity: 1; } 94.1%, 100% { opacity: 0; } }
+@keyframes lp-say-mano-jake { 0%, 91.4% { opacity: 0; } 91.5%, 95% { opacity: 1; } 95.1%, 100% { opacity: 0; } }
+@keyframes lp-say-bless { 0%, 94.9% { opacity: 0; } 95%, 99.5% { opacity: 1; } 99.6%, 100% { opacity: 0; } }
+/* The car: leaves at 12% (backs into the southbound lane, drives off the bottom), returns at 64% up the northbound lane,
+   turns into the parking spot and stays from 76%. */
+@keyframes lp-car-drive {
+  0%, 12% { translate: 26.5cqw 84cqh; }
+  14% { translate: 16.5cqw 84cqh; }
+  15% { translate: 16.5cqw 84cqh; }
+  20% { translate: 16.5cqw 116cqh; }
+  20.1%, 64% { translate: 20cqw 116cqh; }
+  72% { translate: 20cqw 84cqh; }
+  73% { translate: 20.5cqw 84cqh; }
+  76%, 100% { translate: 26.5cqw 84cqh; }
+}
+@keyframes lp-car-face { 0%, 14% { rotate: 0deg; } 15.5%, 20% { rotate: 90deg; } 20.1%, 72% { rotate: -90deg; } 73.5%, 100% { rotate: 0deg; } }
+/* James (driver side) and Jake (passenger side): out at 77%, along the sidewalk to Bob, "Mano po", then back to the car
+   from 97% and in by 10% of the next minute. */
+@keyframes lp-roam-james {
+  0% { translate: 55cqw 68.8cqh; opacity: 1; visibility: visible; }
+  6% { translate: 26.5cqw 69cqh; }
+  9% { translate: 26.5cqw 80.6cqh; opacity: 1; }
+  10% { translate: 26.5cqw 80.6cqh; opacity: 0; visibility: visible; }
+  10.1%, 76.9% { translate: 26.5cqw 80.6cqh; opacity: 0; visibility: hidden; }
+  77% { translate: 26.5cqw 80.6cqh; opacity: 0; visibility: visible; }
+  78% { translate: 26.5cqw 80.6cqh; opacity: 1; }
+  81% { translate: 26.5cqw 69cqh; }
+  89%, 97% { translate: 64cqw 67.4cqh; }
+  100% { translate: 55cqw 68.8cqh; opacity: 1; visibility: visible; }
+}
+@keyframes lp-face-james { 0%, 5.5% { transform: rotate(180deg); } 6.5%, 9% { transform: rotate(90deg); } 9.5%, 78% { transform: rotate(-90deg); } 81.5%, 88.5% { transform: rotate(0deg); } 89.5%, 96.5% { transform: rotate(0deg); } 97.5%, 100% { transform: rotate(180deg); } }
+@keyframes lp-roam-jake {
+  0% { translate: 56cqw 71.6cqh; opacity: 1; visibility: visible; }
+  6.5% { translate: 29.3cqw 71.6cqh; }
+  9% { translate: 29.3cqw 87.4cqh; }
+  10% { translate: 27cqw 87.4cqh; opacity: 1; }
+  10.5% { translate: 26.5cqw 87.4cqh; opacity: 0; visibility: visible; }
+  10.6%, 76.9% { translate: 26.5cqw 87.4cqh; opacity: 0; visibility: hidden; }
+  77% { translate: 26.5cqw 87.4cqh; opacity: 0; visibility: visible; }
+  78% { translate: 27cqw 87.4cqh; opacity: 1; }
+  79.5% { translate: 29.3cqw 87.4cqh; }
+  82.5% { translate: 29.3cqw 71.6cqh; }
+  90%, 97% { translate: 64.8cqw 75cqh; }
+  100% { translate: 56cqw 71.6cqh; opacity: 1; visibility: visible; }
+}
+@keyframes lp-face-jake { 0%, 6% { transform: rotate(180deg); } 7%, 8.5% { transform: rotate(90deg); } 9.5%, 10.5% { transform: rotate(180deg); } 10.6%, 78% { transform: rotate(0deg); } 79%, 79.5% { transform: rotate(0deg); } 80%, 82% { transform: rotate(-90deg); } 83%, 96.5% { transform: rotate(0deg); } 97.5%, 100% { transform: rotate(180deg); } }
+.helper-photo img { object-fit: cover; }
+@media (prefers-reduced-motion: reduce) {
+  .lp-car, .lp-car svg, .lp-roam--james, .lp-roam--jake, .lp-roam--james .lp-student svg, .lp-roam--jake .lp-student svg { animation: none; }
+  .lp-car { translate: 26.5cqw 84cqh; }
+  .lp-roam--james { translate: 64cqw 67.4cqh; } .lp-roam--jake { translate: 64.8cqw 75cqh; }
+}
+@media (min-width: 60rem) { .lp-legend { max-width: 70%; } .lp-legend ul { grid-template-columns: repeat(3, auto); } }
