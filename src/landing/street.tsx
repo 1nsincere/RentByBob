@@ -291,11 +291,12 @@ const BobArt = () => <>
       <circle className="bob-ear" cx="12.6" cy="5.9" r="1.1" /><circle className="bob-ear" cx="12.6" cy="14.1" r="1.1" />
       <circle className="bob-head" cx="13" cy="10" r="4.4" /><ellipse className="bob-shine" cx="11.8" cy="8.4" rx="1.8" ry="1.1" />
 </>
-function Bob({ label, line, bless }: { label: string; line: string; bless?: string }) {
+function Bob({ label, line, bless, farewell }: { label: string; line: string; bless?: string; farewell?: string }) {
   return <span className="lp-bob" tabIndex={0} role="img" aria-label={label}>
     <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
     <span className="lp-say lp-say--bob" aria-hidden="true">{line}</span>
     {bless && <span className="lp-say lp-say--bless" aria-hidden="true">{bless}</span>}
+    {farewell && <span className="lp-say lp-say--farewell" aria-hidden="true">{farewell}</span>}
     <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false">
       <BobArt />
     </svg>
@@ -371,6 +372,8 @@ function Student({ label, open, onToggle, tr }: { label: string; open: boolean; 
     <span className="lp-say lp-say--pet" aria-hidden="true">{tr('Hi, Bantay!', 'Hi, Bantay!')}</span>
     <span className="lp-say lp-say--buy" aria-hidden="true">{tr('Papalita ko ya!', 'Papalita ko ya!')}</span>
     <span className="lp-say lp-say--hello" aria-hidden="true">{tr('Pandesal, Sir Bob?', 'Pandesal, Sir Bob?')}</span>
+    <span className="lp-say lp-say--ace-hi" aria-hidden="true">{tr('Hi Kuya James! Kuya Jake!', 'Uy Kuya James! Kuya Jake!')}</span>
+    <span className="lp-say lp-say--ace-bye" aria-hidden="true">{tr('Drive safe, Kuyas!', 'Amping, mga Kuya!')}</span>
   </div>
 }
 
@@ -535,7 +538,7 @@ function ProfileCard({ onClose, tr, language }: { onClose: () => void; tr: (engl
   </div>, document.body)
 }
 
-// James and Jake help Sir Bob. They drive in on Mariano Abella St in a 2016 Toyota Wigo, park beside Bob's house, walk the
+// James and Jake run the place with Sir Bob (the RentByBob team). They drive in on Mariano Abella St in a 2016 Toyota Wigo, park beside Bob's house, walk the
 // sidewalk to him and greet him with "Mano po", then drive off again (one 60 s loop with everyone else, landing.css).
 // Their photos and Facebook pages are public here, shared by the owner (30 Oct 2026).
 export const HELPERS = {
@@ -573,13 +576,14 @@ function Wigo() {
   return <div className="lp-car" aria-hidden="true"><svg viewBox="0 0 60 30" focusable="false"><WigoArt /></svg></div>
 }
 
-function Helper({ who, label, line, open, onOpen, tr }: { who: HelperId; label: string; line: string; open: boolean; onOpen: () => void; tr: (english: string, bisaya: string) => string }) {
+function Helper({ who, label, line, extra, open, onOpen, tr }: { who: HelperId; label: string; line: string; extra: { name: string; text: string }[]; open: boolean; onOpen: () => void; tr: (english: string, bisaya: string) => string }) {
   return <div className={`lp-roam lp-roam--${who}`}>
     <button type="button" className={`lp-student lp-helper${open ? ' is-open' : ''}`} aria-label={`${label}. ${tr('Show contact', 'Ipakita ang kontak')}`} aria-haspopup="dialog" onClick={onOpen}>
       <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
       <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false"><HelperArt who={who} /></svg>
     </button>
     <span className={`lp-say lp-say--mano-${who}`} aria-hidden="true">{line}</span>
+    {extra.map(say => <span key={say.name} className={`lp-say lp-say--${say.name}`} aria-hidden="true">{say.text}</span>)}
   </div>
 }
 
@@ -598,9 +602,9 @@ function HelperCard({ who, onClose, tr, language }: { who: HelperId; onClose: ()
       <button type="button" className="dev-close" ref={closeRef} onClick={onClose} aria-label={tr('Close', 'Isira')}><span aria-hidden="true">×</span></button>
       <figure className="dev-photo helper-photo"><img src={helper.photo} alt={text(language, helper.alt.en, helper.alt.bis)} width="520" height="780" /></figure>
       <div className="dev-body">
-        <p className="dev-eyebrow">{tr("Sir Bob's helper", 'Katabang ni Sir Bob')}</p>
+        <p className="dev-eyebrow">{tr('RentByBob team · Property assistant', 'RentByBob team · Property assistant')}</p>
         <h2 className="dev-name">{helper.name}</h2>
-        <p className="dev-study">{tr("Helps Sir Bob run the boarding houses. Message him on Facebook for rooms, payments or repairs.", 'Motabang kang Sir Bob sa pagdumala sa mga boarding house. Mensahe siya sa Facebook bahin sa kwarto, bayad o ayuhonon.')}</p>
+        <p className="dev-study">{tr("Part of the team that keeps Sir Bob's homes running: he welcomes new tenants, keeps the rent records and gets repairs done. Message him on Facebook about rooms, payments or anything that needs fixing.", 'Kauban sa team nga nagpadagan sa mga balay ni Sir Bob: siya ang moabiabi sa bag-ong nag-abang, nagdumala sa rekord sa abang ug nagpaayo sa guba. Mensahe siya sa Facebook bahin sa kwarto, bayad o bisan unsa nga ayuhon.')}</p>
         <ul className="dev-links" aria-label={tr('Contact', 'Kontak')}>
           <li><a href={helper.facebook} className="dev-link dev-link--facebook" target="_blank" rel="noopener noreferrer"><LinkIcon kind="facebook" /><span>{tr('Message on Facebook', 'Mensahe sa Facebook')}</span><span className="visually-hidden"> ({tr('opens in a new tab', 'mo-abli sa bag-ong tab')})</span></a></li>
         </ul>
@@ -623,7 +627,6 @@ function Legend({ tr, onDeveloper, onHelper }: { tr: (english: string, bisaya: s
       <li><span className="lp-legend-icon lp-legend-icon--wide">{bike('pandesal', 60)}</span>{tr('Malunggay pandesal cart', 'Karton sa malunggay pandesal')}</li>
       <li><span className="lp-legend-icon">{person(<BobArt />)}</span>{tr('Bob, with his sungkod', 'Si Bob, naay sungkod')}</li>
       <li><span className="lp-legend-icon">{person(<DogArt />)}</span>{tr('Bantay, the street dog', 'Si Bantay, ang iro sa dalan')}</li>
-      <li><span className="lp-legend-icon lp-legend-icon--wide"><svg viewBox="0 0 60 30" aria-hidden="true" focusable="false"><WigoArt /></svg></span>{tr("James & Jake's Wigo", 'Wigo ni James ug Jake')}</li>
       <li><button type="button" className="lp-legend-dev" onClick={() => onHelper('james')}><span className="lp-legend-icon">{person(<HelperArt who="james" />)}</span>{tr('James (tap)', 'Si James (i-tap)')}</button></li>
       <li><button type="button" className="lp-legend-dev" onClick={() => onHelper('jake')}><span className="lp-legend-icon">{person(<HelperArt who="jake" />)}</span>{tr('Jake (tap)', 'Si Jake (i-tap)')}</button></li>
       <li><button type="button" className="lp-legend-dev" onClick={onDeveloper}><span className="lp-legend-icon">{person(<StudentArt />)}</span>{tr('Developer and tenant (tap)', 'Developer ug nag-abang (i-tap)')}</button></li>
@@ -672,12 +675,12 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
       <circle className="lp-tree-leaf" cx="14" cy="15" r="7" /><circle className="lp-tree-leaf" cx="25" cy="23" r="6" /><circle className="lp-tree-leaf" cx="15" cy="26" r="5" />
     </svg>)}
     {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} extra={index >= 4} vendorLine={tr('Malunggay Pandesal, init pa with cheese, tag singko lang!', 'Malunggay Pandesal, init pa with cheese, tag singko lang!')} />)}
-    <Bob label={tr('This is Bob', 'Kini si Bob')} line={tr('Thank you, iho!', "Salamat, 'do!")} bless={tr('God bless you both!', 'Kaloy-an mo sa Ginoo!')} />
+    <Bob label={tr('This is Bob', 'Kini si Bob')} line={tr('Thank you, iho!', "Salamat, 'do!")} bless={tr('God bless you both!', 'Kaloy-an mo sa Ginoo!')} farewell={tr('Take care, you two!', 'Amping mo, mga ‘do!')} />
     <Dog heart="♥" bark={tr('Arf!', 'Aw aw!')} />
     <span className="lp-driveway" aria-hidden="true" />
     <Wigo />
-    <Helper who="james" label={tr("James, Sir Bob's helper", 'Si James, katabang ni Sir Bob')} line={tr('Mano po, Sir Bob!', 'Mano po, Sir Bob!')} open={helper === 'james'} onOpen={() => setHelper('james')} tr={tr} />
-    <Helper who="jake" label={tr("Jake, Sir Bob's helper", 'Si Jake, katabang ni Sir Bob')} line={tr('Mano po!', 'Mano po!')} open={helper === 'jake'} onOpen={() => setHelper('jake')} tr={tr} />
+    <Helper who="james" label={tr('James, RentByBob team', 'Si James, RentByBob team')} line={tr('Mano po, Sir Bob!', 'Mano po, Sir Bob!')} extra={[{ name: 'james-ace', text: tr('Hey Ace! How is the code?', 'Uy Ace! Kumusta ang code?') }, { name: 'james-bye', text: tr('See you, Sir Bob!', 'Babay, Sir Bob!') }]} open={helper === 'james'} onOpen={() => setHelper('james')} tr={tr} />
+    <Helper who="jake" label={tr('Jake, RentByBob team', 'Si Jake, RentByBob team')} line={tr('Mano po!', 'Mano po!')} extra={[{ name: 'jake-ace', text: tr('Pandesal for us too?', 'Naa pay pandesal para namo?') }]} open={helper === 'jake'} onOpen={() => setHelper('jake')} tr={tr} />
     <Student label={tr('The developer, and a tenant here too', 'Ang developer, ug nag-abang sad dinhi')} open={profile} onToggle={() => setProfile(open => !open)} tr={tr} />
     {SITE.map(site => {
       const open = (openByBuilding.get(site.label) ?? []).slice(0, site.spaces)

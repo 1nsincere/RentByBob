@@ -745,3 +745,20 @@
   .lp-roam--james { translate: 64cqw 67.4cqh; } .lp-roam--jake { translate: 64.8cqw 75cqh; }
 }
 @media (min-width: 60rem) { .lp-legend { max-width: 70%; } .lp-legend ul { grid-template-columns: repeat(3, auto); } }
+
+/* More of the minute: Ace waves to James and Jake as they arrive, they answer; Bob sends them off; Ace waves them off. */
+.lp-say--ace-hi { animation: lp-say-ace-hi 60s linear infinite both; }
+.lp-say--james-ace { animation: lp-say-james-ace 60s linear infinite both; }
+.lp-say--jake-ace { transform: translate(-50%, 1.4em); animation: lp-say-jake-ace 60s linear infinite both; }
+.lp-say--jake-ace::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #fffdf4; }
+.lp-say--farewell { left: 50%; transform: translate(-50%, calc(-100% - .4em)); animation: lp-say-farewell 60s linear infinite both; }
+.lp-say--james-bye { animation: lp-say-james-bye 60s linear infinite both; }
+.lp-say--ace-bye { animation: lp-say-ace-bye 60s linear infinite both; }
+@keyframes lp-say-ace-hi { 0%, 78.4% { opacity: 0; } 78.5%, 82% { opacity: 1; } 82.1%, 100% { opacity: 0; } }
+@keyframes lp-say-james-ace { 0%, 81.4% { opacity: 0; } 81.5%, 85% { opacity: 1; } 85.1%, 100% { opacity: 0; } }
+@keyframes lp-say-jake-ace { 0%, 84.9% { opacity: 0; } 85%, 88.5% { opacity: 1; } 88.6%, 100% { opacity: 0; } }
+@keyframes lp-say-farewell { 0%, 0.9% { opacity: 0; } 1%, 4.5% { opacity: 1; } 4.6%, 100% { opacity: 0; } }
+@keyframes lp-say-james-bye { 0%, 4.9% { opacity: 0; } 5%, 8.5% { opacity: 1; } 8.6%, 100% { opacity: 0; } }
+@keyframes lp-say-ace-bye { 0%, 10.9% { opacity: 0; } 11%, 14.5% { opacity: 1; } 14.6%, 100% { opacity: 0; } }
+.lp-say--james-ace { transform: translate(-50%, 1.4em); }
+.lp-say--james-ace::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #fffdf4; }
