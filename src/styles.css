@@ -1770,3 +1770,18 @@ button.room-tile { width: 100%; font: inherit; color: var(--text); text-align: l
   .sign-in-shell .page-intro h1 { max-width: none; }
 }
 @media (prefers-reduced-motion: reduce) { .sign-in-shell .page-intro::before, .sign-in-shell .page-intro::after { animation: none; } .sign-in-shell .welcome-points > div { transition: none; } }
+
+/* Phone fixes (30 Oct 2026). Calendar: the month title stays on one line between the arrows (small-screen buttons are
+   full width by default, which squeezed it into "Oct / ober / 202 / 6"). App bar: one compact row, logo left, controls
+   right, so it no longer stacks into three rows that cover the top of the page. */
+.ph-calendar-head .button { flex: none; width: auto; }
+.ph-calendar-head strong { flex: 1; min-width: 0; text-align: center; white-space: nowrap; overflow-wrap: normal; }
+@media (max-width: 40rem) {
+  .site-header .header-inner { flex-wrap: nowrap; min-height: 3.6rem; padding-block: .45rem; gap: .5rem; }
+  .site-header .session-tools { width: auto; flex-direction: row; align-items: center; margin-left: auto; padding-top: 0; border-top: 0; gap: .35rem; }
+  .site-header .session-actions { flex-wrap: nowrap; justify-content: flex-end; margin-left: 0; gap: .3rem; }
+  .site-header .appbar-account { padding-left: .4rem; gap: .35rem; }
+  .site-header .session-identity { display: none; }
+  .site-header .appbar-language span { padding: .3rem .45rem; }
+}
+@media (max-width: 26rem) { .site-header .brand .wordmark { display: none; } }
