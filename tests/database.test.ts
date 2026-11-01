@@ -108,6 +108,11 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
   })
   await t.test('owner grants and revokes contacts without changing the existing session claims', async () => {
     await as(owner)
+    // One sign-in per tenant record (202611010003): a second email is refused while Alice's sign-in is active.
+    await assert.rejects(db.query(contactSql.replace('$3,$4','true,$3'), [tenant, outsider, 'Second email']), (error: unknown) => (error as { code: string }).code === 'RB410')
+    await db.exec('reset role')
+    await db.query('update public.tenant_contacts set revoked_at=now() where user_id=$1', [alice])
+    await as(owner)
     await db.query(contactSql.replace('$3,$4','true,$3'), [tenant, outsider, 'Authorized contact'])
     await as(outsider, 'aal1')
     assert.deepEqual(await visible(), [tenant])
@@ -115,6 +120,8 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     await db.query('update public.tenant_contacts set revoked_at=now() where user_id=$1', [outsider])
     await db.exec('set role authenticated')
     assert.deepEqual(await visible(), [])
+    await db.exec('reset role')
+    await db.query('update public.tenant_contacts set revoked_at=null where user_id=$1', [alice])
   })
   await t.test('revoked clerk loses access with unchanged JWT claims', async () => {
     await as(owner)
@@ -136,7 +143,7 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
   })
   await t.test('cross-property contacts violate the composite foreign key', async () => {
     await db.exec('reset role')
-    await assert.rejects(db.query('insert into public.tenant_contacts(property_id,tenant_id,user_id) values ($1,$2,$3)', [otherProperty, company, outsider]), (error: unknown) => (error as { code: string }).code === '23503')
+    await assert.rejects(db.query('insert into public.tenant_contacts(property_id,tenant_id,user_id) values ($1,$2,$3)', [property, otherTenant, outsider]), (error: unknown) => (error as { code: string }).code === '23503')
   })
   await t.test('definer functions pin search paths and have no anonymous execution grants', async () => {
     await db.exec('reset role')
@@ -245,6 +252,9 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     await as(owner)
     await denied("select public.set_staff_access($1,$2,'owner','Attempt')", [property,outsider])
     await denied("select public.set_tenant_contact($1,$2,true,'Attempt')", [company,outsider])
+    await db.exec('reset role')
+    await db.query('update public.tenant_contacts set revoked_at=now() where user_id=$1',[business]) // one sign-in per record
+    await as(owner)
     const args = [property,outsider,`${outsider}@example.invalid`,'contact',company,null,true,'Identity reviewed']
     const sql = 'select public.assign_account_access($1,$2,$3,$4,$5,$6,$7,$8)'
     await assert.rejects(db.query(sql,[...args.slice(0,2),`${business}@example.invalid`,...args.slice(3)]))
@@ -268,6 +278,8 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     await as(outsider,'aal1')
     assert.equal((await db.query<{access:{state:string}}>('select public.my_access_state() as access')).rows[0].access.state,'disabled')
     assert.deepEqual(await visible(),[])
+    await db.exec('reset role')
+    await db.query('update public.tenant_contacts set revoked_at=null where user_id=$1',[business])
   })
   await t.test('property directory is owner-written, scoped, audited and retry-safe', async () => {
     const sql='select public.create_property_location($1,$2,$3,$4)'

@@ -26,7 +26,7 @@ One owner, one clerk (James), about 25 rooms and spaces. Tenants see their own r
 - No production deployment, `supabase db push`, `functions deploy` or purchases unless the owner explicitly says so.
   Prepare the change, then tell the owner the exact command to run.
 - New database behaviour goes in a NEW migration file (`supabase/migrations/YYYYMMDDNNNN_name.sql`). Never edit an
-  applied migration. The live database has every migration up to `202611010001_real_email_invitations.sql`; `202611010002_account_profiles.sql` is waiting for the owner to run `npx.cmd supabase db push`.
+  applied migration. The live database has every migration up to `202611010001_real_email_invitations.sql`; `202611010003_one_login_per_tenant.sql` is waiting for the owner to run `npx.cmd supabase db push`.
 - Exact money arithmetic only (no floating point). Philippine business dates (Asia/Manila), UTC timestamps.
 - Accessibility: 18px base text, 44px touch targets, visible focus, persistent labels, statuses in words, works at 200%
   zoom and 320px wide. Do not claim WCAG compliance.
@@ -127,6 +127,8 @@ Record the decision in `docs/DECISIONS.md`.
   `src/landing/street.tsx`). Do not add more landing decorations.
 
 ## Recently finished (for context; do not redo)
+
+- One sign-in per tenant record (migration `202611010003`, error `RB410`, picker note "Has a sign-in"); to change a tenant's email, disable the old sign-in for that record first. Welcome card is a modal `<dialog>` (preview: `?preview=1&welcome=1`).
 
 - Profile welcome card (`src/components/ProfileCard.tsx`, migration `202611010002`): preferred name and optional picture (256 px JPEG data URL), greeting and app-bar picture; edit in Account security / under Change password.
 - Test-account cleanup: `scripts/find-account-references.sql` (read-only) and `scripts/delete-test-account.sql` (refuses owners and accounts in real records), tested in `tests/account-cleanup.test.ts`.

@@ -7,9 +7,10 @@ const shownAtOnce = 6
 
 // Search-and-pick for long tenant lists (replaces a dropdown that grows with every tenant): type part of a name or
 // room, choose from a short list, and the choice shows as a chip with "Change". Works with a form through the "name" prop.
-export function TenantPicker({ label, tenants, value, onChange, rooms = {}, name, language = 'en' }: {
+export function TenantPicker({ label, tenants, value, onChange, rooms = {}, notes = {}, name, language = 'en' }: {
   label: string; tenants: PickerTenant[]; value: string; onChange: (tenantId: string) => void
-  rooms?: Record<string, string>; name?: string; language?: Language
+  // notes: an extra word per tenant, for example "Has a sign-in" on the access screen.
+  rooms?: Record<string, string>; notes?: Record<string, string>; name?: string; language?: Language
 }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const id = useId()
@@ -26,7 +27,7 @@ export function TenantPicker({ label, tenants, value, onChange, rooms = {}, name
       <p className="tenant-picker-label" id={`${id}-label`}>{label}</p>
       <div className="tenant-picker-chosen" aria-labelledby={`${id}-label`}>
         <span className="tenant-picker-avatar" aria-hidden="true">{chosen.display_name.trim().slice(0, 1).toLocaleUpperCase()}</span>
-        <span><strong>{chosen.display_name}</strong><small>{kind(chosen)}{rooms[chosen.id] ? ` · ${rooms[chosen.id]}` : ''}</small></span>
+        <span><strong>{chosen.display_name}</strong><small>{kind(chosen)}{rooms[chosen.id] ? ` · ${rooms[chosen.id]}` : ''}{notes[chosen.id] ? ` · ${notes[chosen.id]}` : ''}</small></span>
         <Button type="button" className="secondary-button" aria-label={`${tr('Change', 'Baguhin')} ${label.toLocaleLowerCase()}`} onClick={() => { onChange(''); setQuery('') }}>{tr('Change', 'Baguhin')}</Button>
       </div>
     </> : <>
@@ -37,7 +38,7 @@ export function TenantPicker({ label, tenants, value, onChange, rooms = {}, name
         {matches.slice(0, shownAtOnce).map(tenant => <li key={tenant.id}>
           <button type="button" onClick={() => onChange(tenant.id)} aria-label={`${tr('Choose', 'Piliin')} ${tenant.display_name}`}>
             <span className="tenant-picker-avatar" aria-hidden="true">{tenant.display_name.trim().slice(0, 1).toLocaleUpperCase()}</span>
-            <span><strong>{tenant.display_name}</strong><small>{kind(tenant)}{rooms[tenant.id] ? ` · ${rooms[tenant.id]}` : ''}</small></span>
+            <span><strong>{tenant.display_name}</strong><small>{kind(tenant)}{rooms[tenant.id] ? ` · ${rooms[tenant.id]}` : ''}{notes[tenant.id] ? ` · ${notes[tenant.id]}` : ''}</small></span>
           </button>
         </li>)}
       </ul>

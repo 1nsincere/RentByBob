@@ -113,6 +113,18 @@ export function ManageAccess({ propertyId, tenants, changed, owner = true, langu
       .then(({ data, error }) => setCandidates(!error && Array.isArray(data) ? data as Candidate[] : []), () => setCandidates([]))
   }
   useEffect(loadCandidates, [propertyId])
+  // Which tenant records already have an active sign-in (one per record, 202611010003). Staff may read the links but
+  // not the emails, so the picker says "Has a sign-in" and the review step stops a second, different email.
+  const [linked, setLinked] = useState<Record<string, string>>({})
+  const loadLinked = () => {
+    void supabase!.from('tenant_contacts').select('tenant_id,user_id').eq('property_id', propertyId).is('revoked_at', null)
+      .then(({ data, error }) => { if (!error && data) setLinked(Object.fromEntries((data as { tenant_id: string; user_id: string }[]).map(row => [row.tenant_id, row.user_id]))) }, () => undefined)
+  }
+  useEffect(loadLinked, [propertyId])
+  const otherLogin = (tenantId: string) => Boolean(account && linked[tenantId] && linked[tenantId] !== account.id)
+  const linkedNotes = Object.fromEntries(Object.entries(linked).map(([tenantId, userId]) => [tenantId,
+    account && userId === account.id ? tr('Linked to this account', 'Naka-link sa account na ito') : tr('Has a sign-in', 'May sign-in na')]))
+  const changeEmailHelp = tr('This tenant already has a sign-in, so a different email cannot be linked. To change their email: choose their current account in the list above, pick this tenant, choose Disable access and save. Then come back to this account and enable it.', 'May sign-in na ang umuupang ito, kaya hindi maaaring i-link ang ibang email. Para palitan ang email: piliin ang kasalukuyang account niya sa listahan sa itaas, piliin ang umuupang ito, piliin ang Tanggalin ang access at i-save. Saka bumalik sa account na ito at ibigay ang access.')
   const accessLabel = (access: string) => ({ owner: tr('Owner', 'May-ari'), clerk: tr('Clerk', 'Clerk'), tenant: tr('Tenant', 'Umuupa'), disabled: tr('Access off', 'Naka-off'), none: tr('No access yet', 'Wala pang access') } as Record<string, string>)[access] ?? access
   const signedIn = (c: Candidate) => {
     if (!c.confirmed) return tr('Email not confirmed', 'Hindi nakumpirma ang email')
@@ -170,6 +182,7 @@ export function ManageAccess({ propertyId, tenants, changed, owner = true, langu
       {!account.accepted ? <p>{tr('Wait for invitation acceptance before assigning access.', 'Hintaying tanggapin muna ang imbitasyon bago mag-assign ng access.')}</p> : <form onSubmit={async e => {
         e.preventDefault(); if (busy) return
         if (!review && kind === 'contact' && !tenant) { setError(true); setMessage(tr('Choose the tenant record first.', 'Piliin muna ang talaan ng umuupa.')); return }
+        if (kind === 'contact' && enabled && otherLogin(tenant)) { setError(true); setMessage(changeEmailHelp); setReview(false); return }
         if (!review) { setReview(true); setMessage(tr('Review the assignment and retype the matched email before confirming.', 'Suriin ang assignment at isulat ulit ang email ng account bago kumpirmahin.')); setError(false); return }
         setBusy(true); setMessage('')
         try {
@@ -179,13 +192,15 @@ export function ManageAccess({ propertyId, tenants, changed, owner = true, langu
             p_role: kind === 'staff' && enabled ? role : null, p_enabled: enabled, p_reason: reason.trim(),
           })
           if (error) throw error
-          setError(false); setMessage(tr('Access change saved. The account’s next access check will use the new permissions.', 'Na-save ang pagbabago sa access. Gagamitin sa susunod na pagsusuri ng account ang bagong pahintulot.')); setReview(false); setConfirmation(''); await lookup(); loadCandidates(); changed()
-        } catch { setError(true); setMessage(tr('Access was not confirmed. Refresh the account before retrying. Check the verified email, owner MFA, target tenant and last-owner protection.', 'Hindi makumpirma ang access. I-refresh muna ang account. Suriin ang kumpirmadong email, MFA ng staff, napiling umuupa at proteksyon ng huling may-ari.')); setReview(false) }
+          setError(false); setMessage(tr('Access change saved. The account’s next access check will use the new permissions.', 'Na-save ang pagbabago sa access. Gagamitin sa susunod na pagsusuri ng account ang bagong pahintulot.')); setReview(false); setConfirmation(''); await lookup(); loadCandidates(); loadLinked(); changed()
+        } catch (failure) {
+          if ((failure as { code?: string }).code === 'RB410') { setError(true); setMessage(changeEmailHelp); setReview(false); loadLinked(); return }
+          setError(true); setMessage(tr('Access was not confirmed. Refresh the account before retrying. Check the verified email, owner MFA, target tenant and last-owner protection.', 'Hindi makumpirma ang access. I-refresh muna ang account. Suriin ang kumpirmadong email, MFA ng staff, napiling umuupa at proteksyon ng huling may-ari.')); setReview(false) }
         finally { setBusy(false) }
       }}>
         <fieldset disabled={busy || review}><legend>{tr('Choose access','Pagpili ng access')}</legend>
           <label htmlFor="assignment-kind">{tr('Access type','Uri ng access')}</label><select id="assignment-kind" value={kind} onChange={e => setKind(e.target.value)}><option value="contact">{tr('Tenant/contact','Umuupa/contact')}</option><option value="staff">{tr('Property staff','Staff ng property')}</option></select>
-          {kind === 'contact' ? <TenantPicker label={tr('Tenant record','Talaan ng umuupa')} tenants={activeTenants} value={tenant} onChange={setTenant} rooms={rooms} language={language} /> : <><label htmlFor="assignment-role">{tr('Staff role','Tungkulin ng staff')}</label><select id="assignment-role" value={role} onChange={e => setRole(e.target.value)}><option value="clerk">{tr('Clerk','Clerk')}</option>{owner && <option value="owner">{tr('Owner','May-ari')}</option>}</select></>}
+          {kind === 'contact' ? <TenantPicker label={tr('Tenant record','Talaan ng umuupa')} tenants={activeTenants} value={tenant} onChange={setTenant} rooms={rooms} notes={linkedNotes} language={language} /> : <><label htmlFor="assignment-role">{tr('Staff role','Tungkulin ng staff')}</label><select id="assignment-role" value={role} onChange={e => setRole(e.target.value)}><option value="clerk">{tr('Clerk','Clerk')}</option>{owner && <option value="owner">{tr('Owner','May-ari')}</option>}</select></>}
           <label htmlFor="assignment-action">{tr('Action','Aksyon')}</label><select id="assignment-action" value={enabled ? 'enable' : 'disable'} onChange={e => setEnabled(e.target.value === 'enable')}><option value="enable">{tr('Enable access','Ibigay ang access')}</option><option value="disable">{tr('Disable access','Tanggalin ang access')}</option></select>
           <label htmlFor="assignment-reason">{tr('Reason for this change','Dahilan ng pagbabago')}</label><input id="assignment-reason" value={reason} onChange={e => setReason(e.target.value)} required maxLength={500} aria-describedby="assignment-reason-help" />
           <p className="field-help" id="assignment-reason-help">{tr('This reason is retained in the property access history.','Mananatili ang dahilang ito sa kasaysayan ng access ng property.')}</p>
