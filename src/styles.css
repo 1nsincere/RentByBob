@@ -1901,3 +1901,59 @@ html .paid-rent-document .doc-optional h2 { font-size: 14pt; }
   .sign-in-shell .page-intro:has(.signin-scene) .page-summary { padding-right: 3.2rem; }
 }
 @media (max-width: 40rem) { .season-band { bottom: -10px; height: 12px; } .logo-hat { width: 22px; left: 12px; top: -11px; } .logo-hat--halloween { width: 24px; top: -13px; left: 8px; } }
+
+/* Loading skeletons shaped like the screen that is coming (atoms.tsx LoadingSkeleton). One light sweep crosses the
+   whole placeholder (a transform, cheap on old phones); lite mode and reduced motion get the plain pulse instead. */
+.loading-skeleton { width: 100%; max-width: none; }
+.loading-skeleton--lines { width: min(100%, 42rem); }
+.sk-body { position: relative; display: grid; gap: .9rem; overflow: hidden; }
+.sk-body::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 45%) 50%, transparent 80%); transform: translateX(-100%); animation: sk-sweep 1.6s ease-in-out infinite; pointer-events: none; }
+:root[data-theme="dark"] .sk-body::after { background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 7%) 50%, transparent 80%); }
+@keyframes sk-sweep { to { transform: translateX(100%); } }
+.sk { display: block; width: 100%; height: 1rem; border-radius: .4rem; background: var(--support); }
+.sk-thin { height: .72rem; } .sk-big { height: 1.6rem; } .sk-huge { height: 2.6rem; border-radius: .6rem; }
+.sk-w30 { width: 30%; } .sk-w40 { width: 40%; } .sk-w50 { width: 50%; } .sk-w60 { width: 60%; } .sk-w70 { width: 70%; }
+.sk-pill { width: 5.5rem; height: 1.6rem; border-radius: 999px; flex: none; }
+.sk-mark { width: 2.6rem; height: 2.6rem; border-radius: 50%; flex: none; }
+.sk-list { display: grid; }
+.sk-row { display: flex; align-items: center; gap: .9rem; padding: .8rem 0; border-bottom: 1px solid var(--border); }
+.sk-row:last-child { border-bottom: 0; }
+.sk-stack { display: grid; flex: 1; gap: .45rem; min-width: 0; }
+.sk-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: .8rem; }
+.sk-tile { display: grid; gap: .7rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-small); }
+.sk-table { display: grid; gap: 0; }
+.sk-tr { display: grid; grid-template-columns: 2fr 1.3fr 1fr 1fr; gap: 1rem; padding: .85rem 0; border-bottom: 1px solid var(--border); }
+.sk-th .sk { height: .7rem; opacity: .7; }
+.sk-form { display: grid; gap: 1.1rem; max-width: 36rem; }
+.sk-field { display: grid; gap: .5rem; }
+.sk-input { height: 2.9rem; border-radius: var(--radius-small); }
+.sk-button { width: 10rem; height: 2.9rem; border-radius: 999px; }
+.sk-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr)); gap: .8rem; }
+.sk-card { display: grid; gap: .65rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-small); }
+.sk-hero { display: grid; gap: .8rem; padding: 1.2rem; border-radius: var(--radius-small); background: color-mix(in srgb, var(--support) 45%, transparent); }
+.sk-note { margin: .4rem 0 0; padding: .7rem .9rem; border-radius: var(--radius-small); background: var(--surface-alt); color: var(--text-secondary); font-size: .95rem; }
+.sk-note--offline { border-left: 4px solid #c46a12; color: var(--text); }
+@media (max-width: 40rem) {
+  .sk-tr { grid-template-columns: 1.6fr 1fr; } .sk-tr > :nth-child(n+3) { display: none; }
+  .sk-pill { width: 4rem; } .sk-mark { width: 2.2rem; height: 2.2rem; }
+  .sk-button { width: 100%; }
+}
+:root[data-perf="lite"] .sk-body::after { display: none; }
+:root[data-perf="lite"] .sk { animation: skeleton-pulse 1.25s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) { .sk-body::after { display: none; } .sk { animation: none; } }
+
+/* Connection status (components/Network.tsx): a thin gold bar under the top edge while the database is slow to answer,
+   and one notice in words at the bottom for slow, offline and back online. Taps pass through it. */
+.net-bar { position: fixed; z-index: 900; top: 0; left: 0; right: 0; height: 3px; overflow: hidden; opacity: 0; transition: opacity 300ms ease; pointer-events: none; }
+.net-bar.is-on { opacity: 1; }
+.net-bar::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; background: linear-gradient(90deg, transparent, #f2b84b, var(--brand), transparent); transform: translateX(-100%); }
+.net-bar.is-on::before { animation: net-run 1.3s ease-in-out infinite; }
+@keyframes net-run { to { transform: translateX(260%); } }
+.net-notice { position: fixed; z-index: 900; left: 50%; bottom: max(1rem, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: .6rem; width: max-content; max-width: min(34rem, calc(100% - 2rem)); margin: 0; padding: .75rem 1.1rem; border-radius: 1rem; background: #1d2a24; color: #fff; font-size: .95rem; line-height: 1.4; box-shadow: 0 14px 40px -12px rgb(0 0 0 / 55%); transform: translate(-50%, 140%); opacity: 0; transition: transform 300ms cubic-bezier(.2, .8, .2, 1), opacity 300ms ease; pointer-events: none; }
+.net-notice.is-on { transform: translate(-50%, 0); opacity: 1; }
+.net-notice-dot { width: .7rem; height: .7rem; border-radius: 50%; flex: none; background: #f2b84b; }
+.net-notice--offline .net-notice-dot { background: #e5483f; }
+.net-notice--ok .net-notice-dot { background: #2fae69; }
+@media (prefers-reduced-motion: reduce) { .net-bar.is-on::before { animation: none; transform: none; width: 100%; opacity: .6; } .net-notice { transition: none; } }
+@media print { .net-bar, .net-notice { display: none !important; } }
+.atoms-gallery { grid-template-columns: minmax(0, 1fr); } .atoms-gallery > section { min-width: 0; }

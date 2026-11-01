@@ -72,7 +72,7 @@ export function AccessAudit({ propertyId, language = 'en' }: { propertyId: strin
     <p>{tr('Shows up to 100 recent access changes and invitation dispatch events for this property. Times are shown in Philippine time.', 'Ipinapakita hanggang 100 pinakabagong pagbabago sa access at mga pangyayari sa imbitasyon sa property na ito. Oras ng Pilipinas ang nakikita.')}</p>
     <Feedback message={error} error />
     <Button className="secondary-button" disabled={loading} onClick={() => void load()}>{loading ? tr('Refreshing history…', 'Nire-refresh ang kasaysayan…') : tr('Refresh access history', 'I-refresh ang kasaysayan ng access')}</Button>
-    {!loaded && !error && <LoadingSkeleton label={tr('Loading access history…', 'Nilo-load ang kasaysayan ng access…')} rows={3} />}
+    {!loaded && !error && <LoadingSkeleton label={tr('Loading access history…', 'Nilo-load ang kasaysayan ng access…')} rows={3} shape="table" />}
     {loaded && events.length === 0 && <div className="empty-state"><h3>{tr('No access changes recorded', 'Walang pagbabago sa access')}</h3><p>{tr('Invitation and account changes for this property will appear here when recorded.', 'Makikita rito ang mga imbitasyon at pagbabago sa account kapag naitala na.')}</p></div>}
     {loaded && events.length > 0 && <ol className="records">{events.map(event => <li key={event.event_id}>
       <div>

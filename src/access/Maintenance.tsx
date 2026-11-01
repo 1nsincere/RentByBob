@@ -67,7 +67,7 @@ export function Maintenance({ propertyId, userId, language = 'en' }: { propertyI
     {message && <p className="notice" role="status">{message}</p>}
     {error && <p className="notice notice--error" role="alert">{error}</p>}
     {failed ? <p className="notice notice--error" role="alert">{tr('Maintenance records could not be loaded. Check your connection and staff session, then reload.', 'Hindi ma-load ang mga talaan ng maintenance. Suriin ang koneksyon at staff session, saka i-reload.')}</p>
-      : items === null ? <LoadingSkeleton label={tr('Loading maintenance…', 'Nilo-load ang maintenance…')} rows={2} />
+      : items === null ? <LoadingSkeleton label={tr('Loading maintenance…', 'Nilo-load ang maintenance…')} rows={2} shape="list" />
       : <section className="card maintenance-list" aria-labelledby="maintenance-list-heading">
         <div className="maintenance-total"><h3 id="maintenance-list-heading">{monthName(month)}</h3><p><span>{tr('Total maintenance', 'Kabuuang maintenance')}</span> <strong>{decimalPesos(maintenanceTotal(items))}</strong></p></div>
         {!items.length ? <p role="status">{tr('Nothing recorded for this month yet.', 'Wala pang naitala ngayong buwan.')}</p> : <ul className="maintenance-rows">{items.map(item => <li key={item.id} className="maintenance-row">

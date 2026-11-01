@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '../components/atoms'
+import { Button, LoadingSkeleton } from '../components/atoms'
 import { WorkspaceIcon } from '../components/WorkspaceIcon'
 import { decimalPesos } from './CashAcknowledgment'
 import { buildCollectionsOverview, type CollectionsOverview as Overview } from './collections-overview-model.ts'
@@ -51,7 +51,7 @@ export function CollectionsOverview({ propertyId, tenants, openPayments, languag
   }, [propertyId])
 
   if (state === 'unavailable') return <p className="notice collections-unavailable" role="status">{tr('Collection figures are unavailable right now. Open Payments and balances to check saved records.', 'Hindi makita ngayon ang mga numero ng koleksiyon. Buksan ang Mga bayad at balanse para suriin ang mga talaan.')}</p>
-  if (state === 'loading' || !overview || !followUp) return <p className="field-help collections-loading" role="status">{tr('Loading collection figures…', 'Nilo-load ang mga numero ng koleksiyon…')}</p>
+  if (state === 'loading' || !overview || !followUp) return <LoadingSkeleton label={tr('Loading collection figures…', 'Nilo-load ang mga numero ng koleksiyon…')} rows={3} shape="stats" />
   const month = monthName(overview.month)
   const waiting = overview.pendingCash.count + overview.unclearedChecks.count
   const reminder = (row: LateRow) => reminderText(row, language, decimalPesos, monthName, dayName)

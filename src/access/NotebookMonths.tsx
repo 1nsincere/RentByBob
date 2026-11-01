@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Button } from '../components/atoms'
+import { Button, LoadingSkeleton } from '../components/atoms'
 import { supabase } from './client'
 import { decimalPesos } from './CashAcknowledgment'
 import { fromCents, toCents } from './simple-payments-model'
@@ -66,7 +66,7 @@ export function NotebookMonths({ propertyId, agreementId, moveIn, endedOn, charg
   }
 
   if (state === 'unavailable') return null
-  if (state === 'loading') return <p className="field-help" role="status">{tr('Loading notebook months…', 'Nilo-load ang mga buwan mula sa kuwaderno…')}</p>
+  if (state === 'loading') return <LoadingSkeleton label={tr('Loading notebook months…', 'Nilo-load ang mga buwan mula sa kuwaderno…')} rows={3} shape="table" />
   return <section className="card notebook-months" aria-labelledby={`notebook-heading-${agreementId}`}>
     <div className="section-heading"><div><h3 id={`notebook-heading-${agreementId}`}>{tr('Months owed from the notebook', 'Mga buwang utang mula sa kuwaderno')}</h3>
       <p>{tr('Tenants already living here before this app? Copy their unpaid months from the notebook. These wait for a double check by a different staff member and do not count as owed, in balances or in reminders, until then.', 'Nandito na ang mga umuupa bago pa ang app? Kopyahin ang kanilang hindi nabayarang buwan mula sa kuwaderno. Maghihintay ito ng double check ng ibang staff at hindi ituturing na utang, sa balanse o sa paalala, hanggang matapos.')}</p></div></div>

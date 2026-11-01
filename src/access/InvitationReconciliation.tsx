@@ -143,7 +143,7 @@ export function InvitationReconciliation({ propertyId, language = 'en' }: { prop
     <Feedback message={error} error />
     <Feedback message={message} />
     <Button className="secondary-button" disabled={!!busyId} onClick={() => void load()}>{tr('Refresh invitation attempts', 'I-refresh ang mga imbitasyon')}</Button>
-    {!loaded && !error && <LoadingSkeleton label={tr('Loading invitation attempts…', 'Nilo-load ang mga imbitasyon…')} rows={3} />}
+    {!loaded && !error && <LoadingSkeleton label={tr('Loading invitation attempts…', 'Nilo-load ang mga imbitasyon…')} rows={3} shape="list" />}
     {loaded && attempts.length === 0 && <div className="empty-state"><h3>{tr('No invitation attempts to review', 'Walang imbitasyong susuriin')}</h3><p>{tr('Attempts initiated for this property will appear here with their recorded status.', 'Makikita rito ang katayuan ng mga kahilingan sa property na ito.')}</p></div>}
     {loaded && attempts.length > 0 && <ol className="records">{attempts.map(attempt => <li key={attempt.attempt_id}>
       <article>

@@ -1,4 +1,4 @@
-import { Button, Chip, IconButton, type ButtonSize, type ButtonVariant, type ChipTone } from './atoms'
+import { Button, Chip, IconButton, LoadingSkeleton, type SkeletonShape, type ButtonSize, type ButtonVariant, type ChipTone } from './atoms'
 
 // Developer-only style guide (open /?atoms=1 while running `npm run dev`; it is not part of the production build).
 // Shows every atom the app uses, in every variant and size, and when to use each.
@@ -30,6 +30,10 @@ export function AtomsGallery() {
     <section aria-labelledby="atoms-chips"><h2 id="atoms-chips">Status chips</h2>
       <div className="atoms-row">{TONES.map(([tone, label]) => <Chip key={tone} tone={tone}>{label}</Chip>)}</div>
       <p className="field-help">The status is always written in words; colour and the dot only support it.</p>
+    </section>
+    <section aria-labelledby="atoms-skeletons"><h2 id="atoms-skeletons">Loading skeletons</h2>
+      <p className="field-help">Shaped like the screen that is coming. After 8 seconds they say the internet may be slow; offline, they say so at once.</p>
+      {(['dashboard', 'stats', 'list', 'table', 'form', 'cards', 'rent', 'lines'] as SkeletonShape[]).map(shape => <div key={shape} className="atoms-skeleton"><h3>{shape}</h3><LoadingSkeleton label={`Loading (${shape})`} rows={3} shape={shape} /></div>)}
     </section>
   </main>
 }

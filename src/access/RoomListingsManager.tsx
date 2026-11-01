@@ -56,7 +56,7 @@ export function RoomListingsManager({ propertyId, owner = false, language = 'en'
   }
 
   if (state === 'failed') return <p className="notice notice--error" role="alert">{tr('Room listings could not be loaded. The public listing migration must be applied and your staff authenticator session must be active.', 'Hindi ma-load ang listahan ng kuwarto. Kailangang ma-apply ang migration at aktibo ang iyong staff authenticator session.')}</p>
-  if (state === 'loading') return <LoadingSkeleton label={tr('Loading room listings…', 'Nilo-load ang listahan ng kuwarto…')} rows={3} />
+  if (state === 'loading') return <LoadingSkeleton label={tr('Loading room listings…', 'Nilo-load ang listahan ng kuwarto…')} rows={3} shape="cards" />
   const newCount = inquiries.filter(item => !item.handled_at).length
   const unitLabel = (unitId: string) => { const unit = units.find(item => item.id === unitId); return `${buildings.find(item => item.id === unit?.building_id)?.label ?? tr('Building', 'Gusali')} · ${unit?.label ?? tr('Room unavailable', 'Walang kuwarto')}` }
   return <section className="card room-listings" aria-labelledby="room-listings-heading">

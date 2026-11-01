@@ -90,7 +90,7 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
   }
 
   if (state === 'failed') return <p className="notice notice--error" role="alert">{tr('The property map could not be loaded. The layout migration must be applied and your staff session must be active.', 'Hindi ma-load ang mapa. Kailangang ma-apply ang layout migration at aktibo ang iyong staff session.')}</p>
-  if (state === 'loading') return <LoadingSkeleton label={tr('Loading property map…', 'Nilo-load ang mapa…')} rows={3} />
+  if (state === 'loading') return <LoadingSkeleton label={tr('Loading property map…', 'Nilo-load ang mapa…')} rows={3} shape="cards" />
   const placed = buildings.filter(building => building.sketch_slot)
   const unplaced = buildings.filter(building => !building.sketch_slot)
   const isOccupied = (unitId: string) => occupied?.has(unitId) ?? false

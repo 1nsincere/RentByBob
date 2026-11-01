@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { connectionAllowed, hostedDevelopmentUrl } from './connection'
 import { withDeviceHeader } from './trusted-device'
+import { trackRequests } from '../components/requests'
 
 const env = import.meta.env
 const url = env.VITE_SUPABASE_URL
@@ -13,7 +14,7 @@ export const hostedDevelopment = url === hostedDevelopmentUrl
 export const liveTarget = env.VITE_SUPABASE_TARGET === 'production' || env.VITE_SUPABASE_TARGET === 'staging' ? env.VITE_SUPABASE_TARGET as 'production' | 'staging' : null
 // Hosted access is explicit, project-bound and unavailable in production builds.
 export const supabase = preview ? preview.previewClient : connectionAllowed(url, env.VITE_SUPABASE_TARGET, env.DEV) && key
-  ? createClient(url, key, { auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storage: window.sessionStorage }, global: { fetch: withDeviceHeader((...args) => fetch(...args)) } })
+  ? createClient(url, key, { auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storage: window.sessionStorage }, global: { fetch: withDeviceHeader(trackRequests((...args) => fetch(...args))) } })
   : null
 
 export const stateLabels: Record<string, string> = {

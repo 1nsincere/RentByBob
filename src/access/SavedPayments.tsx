@@ -144,7 +144,7 @@ export function SavedPayments({ propertyId, propertyName, tenants, owner, userId
  return <section className="payments-preview simple-payments" aria-labelledby="payments-heading">
  <div className="section-heading"><div><p className="eyebrow">{tr('RENT RECORDS','TALAAN NG UPA')}</p><h2 id="payments-heading">{t.paymentRecords}</h2><p>{tr('Find a tenant, record cash, then confirm it.','Hanapin ang umuupa, itala ang cash, saka kumpirmahin.')}</p></div></div>
  {error&&<p className="notice notice--error" role="alert">{error}</p>}{message&&<p className="notice" role="status">{message}</p>}
- {!data&&!error&&<LoadingSkeleton label={tr('Loading saved records…','Nilo-load ang mga talaan…')} rows={4} />}
+ {!data&&!error&&<LoadingSkeleton label={tr('Loading saved records…','Nilo-load ang mga talaan…')} rows={4} shape="table" />}
  {data&&<>
  <div className="segmented-control" role="group" aria-label={tr('Payment views','Mga tingin sa bayad')}><Button aria-pressed={view==='records'} onClick={()=>setView('records')}>{tr('Record and confirm','Itala at kumpirmahin')}</Button><Button aria-pressed={view==='report'} onClick={()=>setView('report')}>{t.paidReport}</Button><Button aria-pressed={view==='tools'} onClick={()=>setView('tools')}>{tr('More tools','Iba pang gamit')}</Button></div>
 

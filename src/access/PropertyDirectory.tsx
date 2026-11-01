@@ -135,7 +135,7 @@ export function PropertyDirectory({ propertyId, owner, language = 'en' }: { prop
     <p>{t.propertyDirectory}</p>
     <Feedback message={error} error />
     <Feedback message={message} />
-    {loading && !loaded && !error && <LoadingSkeleton label={tr('Loading property locations…', 'Nilo-load ang mga lokasyon…')} rows={3} />}
+    {loading && !loaded && !error && <LoadingSkeleton label={tr('Loading property locations…', 'Nilo-load ang mga lokasyon…')} rows={3} shape="list" />}
     <Button className="secondary-button" disabled={loading} onClick={() => void load()}>{loading ? tr('Refreshing locations…', 'Nire-refresh ang mga lokasyon…') : tr('Refresh locations', 'I-refresh ang mga lokasyon')}</Button>
     {loaded && buildings.length > 0 && <div className="property-directory-search">
       <label htmlFor="property-location-search">{tr('Search buildings and units', 'Hanapin ang mga gusali at kuwarto')}</label>

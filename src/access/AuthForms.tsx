@@ -116,7 +116,7 @@ export function Mfa({ done, backup = false, language = 'en' }: { done: () => voi
   return <section className="card auth-card"><h2>{backup ? t.addBackup : t.staffSecurityCheck}</h2>
     <p>{backup ? t.backupDeviceHelp : t.mfaHelp}</p>
     <Feedback message={message} error />
-    {!loaded && !message && <LoadingSkeleton label={language === 'fil' ? 'Nilo-load ang authenticator…' : 'Loading authenticator…'} rows={2} />}
+    {!loaded && !message && <LoadingSkeleton label={language === 'fil' ? 'Nilo-load ang authenticator…' : 'Loading authenticator…'} rows={2} shape="form" />}
     {loaded && (backup || factors.length === 0) && !secret && <Button disabled={busy} onClick={async () => {
       setBusy(true); setMessage('')
       try {

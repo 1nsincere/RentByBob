@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Button } from '../components/atoms'
+import { Button, LoadingSkeleton } from '../components/atoms'
 import type { Tenant } from './client'
 import { decimalPesos, type CashAcknowledgmentData } from './CashAcknowledgment'
 import type { RentWorkspaceSnapshot } from './saved-payments-model'
@@ -134,7 +134,7 @@ export function SavedPaidRentReport({ data, tenants, openAcknowledgment, propert
     </section>
     <section className="card maintenance-report-sheet" aria-labelledby="saved-maintenance-heading">
       <div className="unpaid-report-heading"><div><p className="eyebrow">{tr('UPKEEP', 'PAG-AASIKASO')}</p><h4 id="saved-maintenance-heading">{tr('Maintenance spending in', 'Gastos sa maintenance noong')} {formatMonth(receiptMonth)}</h4></div></div>
-      {maintenance === 'loading' ? <p role="status">{tr('Loading maintenance…', 'Nilo-load ang maintenance…')}</p>
+      {maintenance === 'loading' ? <LoadingSkeleton label={tr('Loading maintenance…', 'Nilo-load ang maintenance…')} rows={2} shape="list" />
         : maintenance === 'unavailable' ? <p className="notice notice--warning" role="status">{tr('Maintenance could not be loaded, so the PDF will not include it. Check your connection and staff session, then reopen this report.', 'Hindi ma-load ang maintenance, kaya hindi ito kasama sa PDF. Suriin ang koneksyon at staff session, saka buksan ulit ang ulat na ito.')}</p>
         : !maintenance.length ? <p className="paid-report-empty">{tr('No maintenance was recorded for this month. Add it from Maintenance in the menu.', 'Walang naitalang maintenance ngayong buwan. Idagdag mula sa Maintenance sa menu.')}</p>
         : <div className="paid-table-scroll" role="region" aria-label={tr('Maintenance table', 'Talahanayan ng maintenance')} tabIndex={0}>

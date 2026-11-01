@@ -1,5 +1,5 @@
 import { useState, type FormEvent, useEffect } from 'react'
-import { Button } from '../components/atoms'
+import { Button, LoadingSkeleton } from '../components/atoms'
 import { Feedback } from './AuthForms'
 import { hostedDevelopment, supabase, stateLabels, type Account, type Tenant } from './client'
 import { copy, text, type Language } from '../i18n'
@@ -94,7 +94,7 @@ export function ManageAccess({ propertyId, tenants, changed, owner = true, langu
   const [filter, setFilter] = useState('')
   const loadCandidates = () => {
     void supabase!.rpc('list_access_candidates', { p_property_id: propertyId })
-      .then(({ data, error }) => setCandidates(!error && Array.isArray(data) ? data as Candidate[] : null), () => setCandidates(null))
+      .then(({ data, error }) => setCandidates(!error && Array.isArray(data) ? data as Candidate[] : []), () => setCandidates([]))
   }
   useEffect(loadCandidates, [propertyId])
   const accessLabel = (access: string) => ({ owner: tr('Owner', 'May-ari'), clerk: tr('Clerk', 'Clerk'), tenant: tr('Tenant', 'Umuupa'), disabled: tr('Access off', 'Naka-off'), none: tr('No access yet', 'Wala pang access') } as Record<string, string>)[access] ?? access
@@ -122,6 +122,7 @@ export function ManageAccess({ propertyId, tenants, changed, owner = true, langu
   return <section className="card form-card" aria-labelledby="manage-access-heading"><p className="eyebrow">{owner ? tr('OWNER APPROVAL', 'PAG-APRUBA NG MAY-ARI') : tr('STAFF ACCESS', 'ACCESS NG STAFF')}</p>{!owner && <p className="notice">{tr('As a clerk you can give or remove tenant access and clerk access. Owner access, and your own access, can only be changed by the owner. Every change is kept in the access history.', 'Bilang clerk, maaari mong ibigay o tanggalin ang access ng umuupa at ng clerk. Ang access ng may-ari at ang sarili mong access ay ang may-ari lang ang makapagbabago. Bawat pagbabago ay nakatala sa kasaysayan ng access.')}</p>}<h2 id="manage-access-heading">{tr('Assign or disable account access', 'Ibigay o tanggalin ang access sa account')}</h2>
     <p>{tr('Confirm the intended person’s email with them outside this app. Look up that exact address, review the account and target below, then retype the email. A verified email proves mailbox access, not a person’s real-world identity.', 'Kumpirmahin ang email ng tao sa labas ng app na ito. Hanapin ang eksaktong email, suriin ang account at target, saka isulat ulit ang email. Pinatutunayan lang ng email na nagagamit niya ang mailbox, hindi ang tunay niyang pagkakakilanlan.')}</p>
     <Feedback message={message} error={error} />
+    {candidates === null && <LoadingSkeleton label={tr('Loading accounts that can sign in…', 'Nilo-load ang mga account na makakapag-sign in…')} rows={3} shape="list" />}
     {candidates && candidates.length > 0 && <div className="access-candidates">
       <h3>{tr('Accounts that can sign in', 'Mga account na makakapag-sign in')}</h3>
       <p className="field-help">{tr('Newest sign-in first. People waiting for access show "No access yet". Choose one to review it below.', 'Pinakabagong nag-sign in muna. Ang naghihintay ng access ay "Wala pang access". Piliin para masuri sa ibaba.')}</p>

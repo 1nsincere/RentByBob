@@ -315,6 +315,6 @@ export function RenterPortal({ language = 'en' }: { language?: Language }) {
     <p>{tr('Your rent record could not be loaded. Nothing was changed. Check your connection and try again.', 'Hindi ma-load ang talaan ng iyong upa. Walang nabago. Suriin ang koneksyon at subukan ulit.')}</p>
     <Button onClick={() => { setAccount(null); void load() }}>{tr('Try again', 'Subukan ulit')}</Button>
   </div>
-  if (!account) return <LoadingSkeleton label={tr('Loading your rent record…', 'Nilo-load ang talaan ng iyong upa…')} rows={4} />
+  if (!account) return <LoadingSkeleton label={tr('Loading your rent record…', 'Nilo-load ang talaan ng iyong upa…')} rows={4} shape="rent" />
   return <RenterAccountView account={account} language={language} credits={credits} reports={reports} sendReport={reports ? sendReport : undefined} withdrawReport={reports ? withdrawReport : undefined} />
 }
