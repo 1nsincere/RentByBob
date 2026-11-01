@@ -22,6 +22,44 @@ export function Feedback({ message, error = false }: { message: string; error?: 
   return message ? <p ref={ref} tabIndex={-1} role={error ? 'alert' : 'status'} className={`notice ${error ? 'notice--error' : ''}`}>{message}</p> : null
 }
 
+// Shown when an invite or reset link fails. Links work once: someone who opened their invite and closed the page before
+// choosing a password finds the link "expired" the second time. They ask for a fresh link here (a password-reset email,
+// which also works for an invited account with no password yet). The reply is the same whether or not the email has an
+// account, so this page does not reveal who is registered.
+export function NewLinkRequest({ language = 'en', onBack }: { language?: Language; onBack: () => void }) {
+  const t = copy[language]
+  const tr = (english: string, filipino: string) => text(language, english, filipino)
+  const [busy, setBusy] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState(false)
+  return <section className="card auth-card new-link-card" aria-labelledby="new-link-heading">
+    <div className="auth-brand"><LogoMark size={46} /></div>
+    <h2 id="new-link-heading">{tr('This link was already used or has expired', 'Nagamit na o nag-expire na ang link na ito')}</h2>
+    <p>{tr('Invite and password links work only once. If you opened yours and closed the page before choosing a password, that is fine: enter your email and we will send you a new link to set it.', 'Isang beses lang gumagana ang link ng imbitasyon at password. Kung nabuksan mo ito at naisara bago pumili ng password, ayos lang: ilagay ang email mo at padadalhan ka namin ng bagong link para gumawa nito.')}</p>
+    <Feedback message={message} error={error} />
+    {!sent && <form onSubmit={async event => {
+      event.preventDefault(); if (busy) return
+      const email = String(new FormData(event.currentTarget).get('email')).trim()
+      setBusy(true); setMessage('')
+      try {
+        const result = await supabase!.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/auth/callback` })
+        if (result.error) throw result.error
+        setSent(true); setError(false)
+        setMessage(tr('If this email has an account, a new link is on its way. Open the newest email from RentByBob (check Spam too) and choose your password right away.', 'Kung may account ang email na ito, padating na ang bagong link. Buksan ang pinakabagong email mula sa RentByBob (tingnan din ang Spam) at pumili agad ng password.'))
+      } catch {
+        setError(true)
+        setMessage(tr('The new link could not be sent. Wait a minute and try again, or ask the owner or clerk for help.', 'Hindi maipadala ang bagong link. Maghintay ng isang minuto at subukan ulit, o humingi ng tulong sa may-ari o clerk.'))
+      } finally { setBusy(false) }
+    }}>
+      <label htmlFor="new-link-email">{t.email}</label>
+      <input id="new-link-email" name="email" type="email" autoComplete="email" required maxLength={320} />
+      <Button className="primary" disabled={busy}>{busy ? t.pleaseWait : tr('Send me a new link', 'Padalhan ako ng bagong link')}</Button>
+    </form>}
+    <Button className="secondary-button" type="button" onClick={onBack}>{t.returnSignIn}</Button>
+  </section>
+}
+
 export function SignIn({ language = 'en' }: { language?: Language }) {
   const t = copy[language]
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
