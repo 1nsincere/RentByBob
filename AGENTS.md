@@ -1,5 +1,6 @@
 # Project instructions
 Read README.md and docs/STATUS.md, DECISIONS.md, DATA_MODEL.md, SECURITY.md before changes. Read docs/USER_REQUIREMENTS.txt for the original detailed brief.
+Read HANDOFF.md for the remaining work, owner actions and how to check changes.
 Use this existing workspace; do not create another Desktop project. Work in reviewable milestones. Latest user direction permits routine UI decisions without waiting for design approval. Prioritize database/access dependencies before new features.
 Stack: React, strict TypeScript, Vite, Tailwind, Supabase Auth/PostgreSQL, narrow trusted Edge Functions, private GitHub, Cloudflare Pages. No extra backend.
 Fake data only during development. Never print or commit secrets. No production deployment or purchases without explicit authorization.
