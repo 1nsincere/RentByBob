@@ -4,7 +4,7 @@ import { Button, LoadingSkeleton } from './components/atoms'
 import { WorkspaceIcon } from './components/WorkspaceIcon'
 import { DeferredBoundary, deferredScreen } from './components/DeferredScreen'
 import { dashboardPreview, hostedDevelopment, liveTarget, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
-import { ChangePassword, Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
+import { ChangePassword, Feedback, Mfa, NewLinkRequest, PasswordSetup, SignIn } from './access/AuthForms'
 import { LogoMark, Wordmark } from './components/Logo'
 import { NetworkStatus } from './components/Network'
 import { ProfileAvatar, ProfileCard, useProfile } from './components/ProfileCard'
@@ -386,6 +386,7 @@ export function App() {
             {route === 'loading' || route === 'checking' ? t.checkingAccess
               : route === 'ready' ? role ? language === 'fil' ? role === 'owner' ? 'Pahina ng may-ari' : 'Pahina ng clerk' : role === 'owner' ? 'Owner workspace' : 'Clerk workspace' : translate('Your rental records', 'Ang iyong mga talaan ng upa')
                 : route === 'sign-in' ? translate('A little less hassle. A little more home.', 'Mas madali ang pamamahala ng upa.')
+                  : route === 'link-error' ? translate('Your sign-in link', 'Ang iyong sign-in link')
                   : route === 'disabled' ? translate('Access disabled', 'Wala na ang access')
                         : route === 'pending' ? translate('Invitation pending', 'Naghihintay ang imbitasyon')
                           : route === 'unassigned' ? t.waitingAccess : translate('Your rental account', 'Ang iyong account sa upa')}
@@ -400,6 +401,7 @@ export function App() {
           {import.meta.env.PROD ? <p>{translate('The app cannot reach its records right now. Please try again later, or contact the property owner.', 'Hindi makakonekta ang app sa mga talaan ngayon. Subukan ulit mamaya, o kontakin ang may-ari.')}</p>
             : <p>{translate('Start local development with', 'Simulan ang local development gamit ang')} <code>npm.cmd run dev:local</code>{translate(', or the configured hosted development environment with', ', o ang naka-set up na hosted development gamit ang')} <code>npm.cmd run dev:hosted</code>. {translate('No prototype records are substituted.', 'Walang prototype na talaang ipapalit.')}</p>}
         </section>
+          : callbackError === 'link-invalid' || callbackError === 'link-verification' ? <NewLinkRequest language={language} onBack={() => { setCallbackError(''); void signOut(false) }} />
           : callbackError ? <><Feedback message={appError(language, callbackError)} error /><Button className="primary" onClick={() => { setCallbackError(''); void signOut(false) }}>{t.returnSignIn}</Button></>
             : !session ? <>{idleNotice && <p className="notice" role="status">{translate('You were signed out after 30 minutes without activity. Sign in again to continue.', 'Na-sign out ka pagkatapos ng 30 minutong walang galaw. Mag-sign in ulit para magpatuloy.')}</p>}<SignIn language={language} /></>
               : <>
@@ -520,8 +522,14 @@ export function App() {
                         <DeferredBoundary loadingLabel={translate('Loading your rent record…', 'Nilo-load ang talaan ng iyong upa…')} rows={4} language={language} shape="rent" reset={RenterPortal.reset}>
                           <RenterPortal.Screen language={language} greetingName={profile?.preferredName ?? undefined} />
                         </DeferredBoundary>
-                        {session.user.email && <ChangePassword email={session.user.email} language={language} />}
-                        {supabase && profile?.welcomed && <ProfileCard client={supabase} profile={profile} onSaved={setProfile} language={language} email={session.user.email ?? ''} mode="edit" />}
+                        {/* Name, picture and password stay folded away until the tenant opens them. */}
+                        <details className="card renter-settings">
+                          <summary><span className="renter-settings-title">{translate('Account settings', 'Mga setting ng account')}</span><small>{translate('Your name, picture and password', 'Iyong pangalan, larawan at password')}</small></summary>
+                          <div className="renter-settings-body">
+                            {supabase && profile?.welcomed && <ProfileCard client={supabase} profile={profile} onSaved={setProfile} language={language} email={session.user.email ?? ''} mode="edit" />}
+                            {session.user.email && <ChangePassword email={session.user.email} language={language} />}
+                          </div>
+                        </details>
                       </>}
               </>}
       </main>
