@@ -2034,3 +2034,8 @@ html .paid-rent-document .doc-optional h2 { font-size: 14pt; }
 .renter-settings-body > .card { margin: 1rem 0 0; padding: 0; border: 0; box-shadow: none; background: transparent; }
 .renter-settings-body > .card + .card { padding-top: 1rem; border-top: 1px solid var(--border); border-radius: 0; }
 @media (prefers-reduced-motion: reduce) { .renter-settings > summary::after { transition: none; } }
+/* Tenant greeting with their profile picture beside it. */
+.renter-hero--photo { display: flex; align-items: center; gap: clamp(.9rem, 2.5vw, 1.4rem); }
+.renter-hero-text { min-width: 0; }
+.renter-hero-photo { width: clamp(5rem, 9vw, 6.8rem); height: clamp(5rem, 9vw, 6.8rem); border-color: var(--surface); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 30%, transparent), 0 12px 28px -10px rgb(15 61 45 / 45%); }
+@media (max-width: 26rem) { .renter-hero--photo { align-items: flex-start; } .renter-hero-photo { width: 4.4rem; height: 4.4rem; } }

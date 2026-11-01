@@ -234,16 +234,20 @@ function ReportPayment({ agreement, language, preview, reports, send: sendReport
   </section>
 }
 
-function TenantView({ tenant, language, preview, openAcknowledgment, credits, reports, sendReport, withdrawReport, greetingName }: { tenant: RenterTenant; language: Language; greetingName?: string; preview: boolean; openAcknowledgment: (data: CashAcknowledgmentData) => void; credits: Record<string, string>; reports: PaymentReport[] | null; sendReport: ReportSender | null; withdrawReport: ReportWithdrawer | null }) {
+function TenantView({ tenant, language, preview, openAcknowledgment, credits, reports, sendReport, withdrawReport, greetingName, greetingPhoto }: { tenant: RenterTenant; language: Language; greetingName?: string; greetingPhoto?: string; preview: boolean; openAcknowledgment: (data: CashAcknowledgmentData) => void; credits: Record<string, string>; reports: PaymentReport[] | null; sendReport: ReportSender | null; withdrawReport: ReportWithdrawer | null }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const hour = Number(new Intl.DateTimeFormat('en-PH', { hour: 'numeric', hour12: false, timeZone: 'Asia/Manila' }).format(new Date())) % 24
   const greeting = hour < 12 ? tr('Good morning', 'Magandang umaga') : hour < 18 ? tr('Good afternoon', 'Magandang hapon') : tr('Good evening', 'Magandang gabi')
   return <section className="renter-tenant" aria-labelledby={`renter-tenant-${tenant.id}`}>
-    <div className="renter-hero">
+    <div className={`renter-hero${greetingPhoto ? ' renter-hero--photo' : ''}`}>
+      {/* The tenant's own profile picture (Account settings), large beside the greeting. */}
+      {greetingPhoto && <span className="profile-avatar profile-avatar--xl renter-hero-photo" aria-hidden="true"><img src={greetingPhoto} alt="" /></span>}
+      <div className="renter-hero-text">
       <p className="eyebrow">{tenant.property} · {greeting}</p>
       <h2 id={`renter-tenant-${tenant.id}`}>{tr('Hello', 'Kumusta')}, {greetingName || tenant.display_name}</h2>
       {greetingName && greetingName !== tenant.display_name && <p className="renter-record-name">{tr('Rental record', 'Talaan ng upa')}: <strong>{tenant.display_name}</strong></p>}
       <p className="dashboard-identity">{tenant.kind === 'business' ? tr('Business renter', 'Negosyong umuupa') : tr('Renter', 'Umuupa')} · {tr('Here is your rent and payment record.', 'Narito ang talaan ng iyong upa at bayad.')}</p>
+      </div>
     </div>
     {tenant.agreements.length
       ? tenant.agreements.map(agreement => <AgreementView key={agreement.id} agreement={agreement} language={language} preview={preview} openAcknowledgment={openAcknowledgment} credit={credits[agreement.id]} reports={reports} sendReport={sendReport} withdrawReport={withdrawReport} />)
@@ -251,7 +255,7 @@ function TenantView({ tenant, language, preview, openAcknowledgment, credits, re
   </section>
 }
 
-export function RenterAccountView({ account, language = 'en', preview = false, credits = {}, reports, sendReport, withdrawReport, greetingName }: { account: RenterAccount; language?: Language; greetingName?: string; preview?: boolean; credits?: Record<string, string>; reports?: PaymentReport[] | null; sendReport?: ReportSender; withdrawReport?: ReportWithdrawer }) {
+export function RenterAccountView({ account, language = 'en', preview = false, credits = {}, reports, sendReport, withdrawReport, greetingName, greetingPhoto }: { account: RenterAccount; language?: Language; greetingName?: string; greetingPhoto?: string; preview?: boolean; credits?: Record<string, string>; reports?: PaymentReport[] | null; sendReport?: ReportSender; withdrawReport?: ReportWithdrawer }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [receipt, setReceipt] = useState<CashAcknowledgmentData | null>(null)
   // The fictional preview keeps sample reports on screen only: nothing is sent anywhere.
@@ -266,7 +270,7 @@ export function RenterAccountView({ account, language = 'en', preview = false, c
   const withdrawer = preview ? sampleWithdraw : withdrawReport ?? null
   return <div className="renter-portal">
     {account.tenants.length
-      ? account.tenants.map(tenant => <TenantView key={tenant.id} tenant={tenant} language={language} preview={preview} openAcknowledgment={setReceipt} credits={credits} reports={shownReports} sendReport={sender} withdrawReport={withdrawer} greetingName={greetingName} />)
+      ? account.tenants.map(tenant => <TenantView key={tenant.id} tenant={tenant} language={language} preview={preview} openAcknowledgment={setReceipt} credits={credits} reports={shownReports} sendReport={sender} withdrawReport={withdrawer} greetingName={greetingName} greetingPhoto={greetingPhoto} />)
       : <div className="card empty-state"><h3>{tr('No rental record is shared with this account yet', 'Wala pang talaan ng upa na ibinahagi sa account na ito')}</h3><p>{tr('Your account works, but the owner has not linked it to your rental yet. Ask the owner to confirm the right renter record.', 'Gumagana ang iyong account, pero hindi pa ito nai-link ng may-ari sa iyong upa. Humingi sa may-ari na kumpirmahin ang tamang talaan.')}</p></div>}
     <p className="field-help renter-footnote">{tr('Pay your collector in person as usual; payments are not made on this website. You can report a payment here so the property knows to check it. Questions about a record? Contact the property owner.', 'Bayaran ang iyong kolektor gaya ng dati; walang bayad na gagawin sa website. Maaari mong iulat ang bayad dito para masuri ito ng property. May tanong tungkol sa talaan? Kontakin ang may-ari ng property.')}</p>
     {receipt && <CashAcknowledgment data={receipt} close={() => setReceipt(null)} preview={preview} language={language} />}
@@ -274,7 +278,7 @@ export function RenterAccountView({ account, language = 'en', preview = false, c
 }
 
 // Loads the signed-in renter's own record through the read-only database function.
-export function RenterPortal({ language = 'en', greetingName }: { language?: Language; greetingName?: string }) {
+export function RenterPortal({ language = 'en', greetingName, greetingPhoto }: { language?: Language; greetingName?: string; greetingPhoto?: string }) {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [account, setAccount] = useState<RenterAccount | null>(null)
   const [failed, setFailed] = useState(false)
@@ -317,5 +321,5 @@ export function RenterPortal({ language = 'en', greetingName }: { language?: Lan
     <Button onClick={() => { setAccount(null); void load() }}>{tr('Try again', 'Subukan ulit')}</Button>
   </div>
   if (!account) return <LoadingSkeleton label={tr('Loading your rent record…', 'Nilo-load ang talaan ng iyong upa…')} rows={4} shape="rent" />
-  return <RenterAccountView account={account} language={language} greetingName={greetingName} credits={credits} reports={reports} sendReport={reports ? sendReport : undefined} withdrawReport={reports ? withdrawReport : undefined} />
+  return <RenterAccountView account={account} language={language} greetingName={greetingName} greetingPhoto={greetingPhoto} credits={credits} reports={reports} sendReport={reports ? sendReport : undefined} withdrawReport={reports ? withdrawReport : undefined} />
 }

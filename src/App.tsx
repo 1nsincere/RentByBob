@@ -520,7 +520,7 @@ export function App() {
                         </div>
                       </> : <>
                         <DeferredBoundary loadingLabel={translate('Loading your rent record…', 'Nilo-load ang talaan ng iyong upa…')} rows={4} language={language} shape="rent" reset={RenterPortal.reset}>
-                          <RenterPortal.Screen language={language} greetingName={profile?.preferredName ?? undefined} />
+                          <RenterPortal.Screen language={language} greetingName={profile?.preferredName ?? undefined} greetingPhoto={profile?.photo ?? undefined} />
                         </DeferredBoundary>
                         {/* Name, picture and password stay folded away until the tenant opens them. */}
                         <details className="card renter-settings">
