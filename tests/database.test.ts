@@ -414,7 +414,7 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     )
     const accepted = read.rows.find(row => row.attempt_id === attempt)
     assert.equal(accepted?.status, 'accepted')
-    assert.equal(accepted?.masked_recipient, 'd***@***.invalid')
+    assert.equal(accepted?.masked_recipient, 'd***@example.invalid')
     assert.equal(accepted?.auth_account_matches, true)
     assert.equal((await db.query('select * from public.tenant_contacts where user_id=$1', [providerUser])).rows.length, 0)
     assert.equal((await db.query('select * from public.staff_memberships where user_id=$1', [providerUser])).rows.length, 0)
@@ -439,9 +439,24 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
       await db.exec('reset role; set role authenticated')
     }
     await completeAfterClaim(rejectedAttempt, 'rejected', 422)
-    await assert.rejects(db.query(prepare, [
-      property, id(80), 'tenant', `${rejectedAttempt.slice(-4)}@example.invalid`,
-    ]), (error: unknown) => (error as { code: string }).code === '23505')
+    // A definitive rejection (for example a rate limit) may be tried again with a new attempt, but only one open attempt
+    // per address at a time.
+    const retryAddress = `${rejectedAttempt.slice(-4)}@example.invalid`
+    assert.equal((await db.query<{ result: { status: string } }>(prepare, [property, id(80), 'tenant', retryAddress])).rows[0].result.status, 'prepared')
+    await assert.rejects(db.query(prepare, [property, id(81), 'tenant', retryAddress]), (error: unknown) =>
+      (error as { code: string }).code === '23505')
+    // Real addresses are accepted; malformed ones and addresses that already have a confirmed account are refused.
+    assert.equal((await db.query<{ result: { status: string } }>(prepare, [property, id(82), 'tenant', 'New.Tenant@Example.com']))
+      .rows[0].result.status, 'prepared')
+    for (const bad of ['no-at-sign', 'two@@example.com', 'tenant@localhost', 'tenant@example.']) {
+      await assert.rejects(db.query(prepare, [property, id(83), 'tenant', bad]), (error: unknown) =>
+        (error as { code: string }).code === '22023')
+    }
+    await assert.rejects(db.query(prepare, [property, id(84), 'tenant', recipient]), (error: unknown) =>
+      (error as { code: string }).code === 'RB409')
+    await db.exec('reset role')
+    assert.equal((await db.query('select * from private.invitation_attempts where attempt_id in ($1,$2,$3)', [id(81), id(83), id(84)])).rows.length, 0)
+    await as(owner)
     await completeAfterClaim(uncertainAttempt, 'uncertain', null)
     await as(clerk)
     await assert.rejects(db.query('select public.record_invitation_attempt_review($1,$2,$3,$4)', [

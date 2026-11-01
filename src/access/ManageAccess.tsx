@@ -7,6 +7,17 @@ import { TenantPicker } from './TenantPicker'
 import { currentTenantRooms } from './tenant-directory-model'
 import { philippineToday } from './payment-preview-model'
 
+// The invitation service names why it refused when nothing was saved: the email already has an account, an earlier
+// invitation to it is still open, or invitations are switched off for this project.
+async function refusalReason(error: unknown): Promise<'account_exists' | 'open_attempt' | 'switched_off' | null> {
+  const response = (error as { context?: unknown } | null)?.context
+  if (!(response instanceof Response)) return null
+  try {
+    const body = await response.clone().json() as { reason?: unknown }
+    return body.reason === 'account_exists' || body.reason === 'open_attempt' || body.reason === 'switched_off' ? body.reason : null
+  } catch { return null }
+}
+
 export function Invitations({ propertyId, owner, language = 'en' }: { propertyId: string; owner: boolean; language?: Language }) {
   const t = copy[language]
   const invitationStatusText: Record<string, string> = language === 'fil' ? {
@@ -32,14 +43,18 @@ export function Invitations({ propertyId, owner, language = 'en' }: { propertyId
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (busy) return
-    if (!email.toLowerCase().endsWith('.invalid')) {
-      setError(true); setMessage(t.invalidLocalEmail); return
-    }
     setBusy(true); setAttempted(true); setMessage(''); setError(false)
     try {
       const { data, error } = await supabase!.functions.invoke('invite-account', {
         body: { propertyId, accountType, email, attemptId },
       })
+      // Refusals that happen before anything is saved (no attempt exists), so the form opens again for a fix.
+      const reason = await refusalReason(error)
+      if (reason) {
+        setAttempted(false); setAttemptStatus(''); setAttemptId(crypto.randomUUID()); setError(true)
+        setMessage(reason === 'account_exists' ? t.inviteAccountExists : reason === 'open_attempt' ? t.inviteOpenAttempt : t.inviteSwitchedOff)
+        return
+      }
       if (error || !data?.status || !data?.message) {
         setAttemptStatus('unconfirmed')
         setError(true)
@@ -58,8 +73,8 @@ export function Invitations({ propertyId, owner, language = 'en' }: { propertyId
   return <section className="card form-card" aria-labelledby="invite-account-heading"><p className="eyebrow">{t.invitationHeading}</p><h2 id="invite-account-heading">{t.invitationTitle}</h2><p>{t.invitationSetup}</p>
     <Feedback message={message} error={error} />
     <form onSubmit={submit}>
-      <label htmlFor="invite-email">{t.invitationEmailLabel}</label><input id="invite-email" name="invite-email" type="email" autoComplete="email" required disabled={busy || attempted} value={email} onChange={event => setEmail(event.target.value)} placeholder="person@example.invalid" aria-describedby="invite-email-help" />
-      <p className="field-help" id="invite-email-help">{t.localEmailOnly}</p>
+      <label htmlFor="invite-email">{t.invitationEmailLabel}</label><input id="invite-email" name="invite-email" type="email" autoComplete="email" required disabled={busy || attempted} value={email} onChange={event => setEmail(event.target.value)} placeholder="tenant@gmail.com" aria-describedby="invite-email-help" />
+      <p className="field-help" id="invite-email-help">{t.inviteEmailHelp}</p>
       <label htmlFor="account-type">{t.accountType}</label><select id="account-type" name="account-type" disabled={busy || attempted} value={accountType} onChange={event => setAccountType(event.target.value)}><option value="tenant">{t.renterContact}</option>{owner && <option value="staff">{t.staff}</option>}</select>
       <Button className="primary" disabled={busy}>{busy ? t.checkingAttempt : attempted ? t.continueAttempt : t.startInvitation}</Button>
     </form>
