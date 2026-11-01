@@ -18,7 +18,8 @@ function applyPhase() {
     const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hourCycle: 'h23', timeZone: 'Asia/Manila' }).format(new Date()))
     intro.dataset.phase = hour >= 15 || hour < 4 ? 'dusk' : 'dawn'
     const season = currentSeason(new Date(), location.hash)
-    if (season) intro.dataset.season = season // Halloween look, same dates as the landing page
+    const decorOff = (() => { try { return localStorage.getItem('rentbybob-decor') === 'off' } catch { return false } })()
+    if (season && !decorOff) intro.dataset.season = season // Halloween look, same dates as the landing page
   } catch { /* keep the default sunrise */ }
 }
 applyPhase()

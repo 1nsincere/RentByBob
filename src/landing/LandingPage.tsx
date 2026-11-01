@@ -3,7 +3,7 @@ import { text, type Language } from '../i18n'
 import { parsePublicListings, type PublicListings } from '../access/public-listings-model.ts'
 import { LogoMark } from '../components/Logo'
 import { currentSeason } from './season'
-import { Parol, Pumpkin } from './street'
+import { Garland, Parol, Pumpkin, SpiderWeb } from './street'
 import { Facade, SITE, StreetPlan, StreetSummary, TOTAL_SPACES, statusText } from './street'
 import './landing.css'
 
@@ -172,7 +172,11 @@ export function LandingPage() {
   const minutes = simulated ?? manilaMinutes(now)
   const phase = minutes >= 300 && minutes < 1080 ? 'day' : 'night'
   const day = phase === 'day'
-  const [season, setSeason] = useState(() => currentSeason(new Date(), location.hash))
+  const [dateSeason, setSeason] = useState(() => currentSeason(new Date(), location.hash))
+  // Visitors can switch the seasonal decorations off; the choice is remembered on this device.
+  const [decorOff, setDecorOff] = useState(() => { try { return localStorage.getItem('rentbybob-decor') === 'off' } catch { return false } })
+  const toggleDecor = () => setDecorOff(off => { try { localStorage.setItem('rentbybob-decor', off ? 'on' : 'off') } catch { /* not remembered */ } return !off })
+  const season = decorOff ? null : dateSeason
   useEffect(() => { const read = () => setSeason(currentSeason(new Date(), location.hash)); window.addEventListener('hashchange', read); return () => window.removeEventListener('hashchange', read) }, [])
   // Sky over the hero follows the real Cebu hour: the sun (day) or moon (night) travels an arc left to right, and the
   // sky tint changes for morning, noon and golden hour.
@@ -269,6 +273,8 @@ export function LandingPage() {
         {day ? <><div className="lp-sun" aria-hidden="true" /><span className="lp-cloud-sky lp-cloud-sky--a" aria-hidden="true" /><span className="lp-cloud-sky lp-cloud-sky--b" aria-hidden="true" /></>
           : <><span className="lp-stars" aria-hidden="true" /><span className="lp-moon" aria-hidden="true" /></>}
         {!day && <span className="lp-hero-lamps" aria-hidden="true" />}
+        {dateSeason && <button type="button" className="lp-decor-toggle" aria-pressed={!decorOff} onClick={toggleDecor}>{dateSeason === 'christmas' ? '✦' : '☾'} {decorOff ? tr('Show decorations', 'Ipakita ang dekorasyon') : tr('Hide decorations', 'Itago ang dekorasyon')}</button>}
+        {season === 'halloween' && <><SpiderWeb className="lp-hw-web lp-hw-web--l" /><SpiderWeb className="lp-hw-web lp-hw-web--r" /></>}
         {season === 'christmas' && <>
           <span className="lp-xm-tint" aria-hidden="true" />
           <span className="lp-xm-sparkles" aria-hidden="true" />
@@ -295,7 +301,7 @@ export function LandingPage() {
             <a className="lp-pill lp-pill--ghost lp-magnetic" href="/sign-in">{tr('I already rent here', 'Umuupa na ako rito')}</a>
           </div>
         </div>
-        <div className="lp-skyline" aria-hidden="true">{season === 'halloween' && [8, 34, 58, 83].map((left, i) => <Pumpkin key={left} className="lp-hw-porch" style={{ left: `${left}%`, animationDelay: `${i * -0.7}s` }} />)}{season === 'christmas' && <span className="lp-xm-strand" />}{season === 'christmas' && [14, 44, 68, 88].map((left, i) => <Parol key={left} className="lp-xm-porch" style={{ left: `${left}%`, animationDelay: `${i * -0.8}s` }} />)}{SITE.map(site => <div key={site.label} className={`lp-skyline-home lp-skyline-home--${site.kind}`}><Facade site={site} open={openRooms(site.label)} width={100} /></div>)}</div>
+        <div className="lp-skyline" aria-hidden="true">{season === 'halloween' && [8, 34, 58, 83].map((left, i) => <Pumpkin key={left} className="lp-hw-porch" style={{ left: `${left}%`, animationDelay: `${i * -0.7}s` }} />)}{season === 'christmas' && <Garland className="lp-xm-hero-garland" swags={5} />}{season === 'christmas' && [10, 30, 50, 70, 90].map((left, i) => <Parol key={left} className={`lp-xm-porch${i % 2 ? ' lp-xm-porch--small' : ''}`} style={{ left: `${left}%`, animationDelay: `${i * -0.8}s` }} />)}{SITE.map(site => <div key={site.label} className={`lp-skyline-home lp-skyline-home--${site.kind}`}><Facade site={site} open={openRooms(site.label)} width={100} /></div>)}</div>
         <a className="lp-scroll-cue" href="#street"><span>{tr('Walk down the street', 'Libutin ang kalye')}</span><i aria-hidden="true" /></a>
       </section>
 
