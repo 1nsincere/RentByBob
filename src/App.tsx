@@ -341,6 +341,8 @@ export function App() {
     <a className="skip-link" href="#main">{t.skipContent}</a>
     <div className="environment-note">{environmentLabel}</div>
     <NetworkStatus language={language} />
+    {/* First sign-in: the welcome card opens as a dialog over the blurred page (owner, clerk or tenant). */}
+    {route === 'ready' && session && supabase && profile && !profile.welcomed && <ProfileCard client={supabase} profile={profile} onSaved={setProfile} language={language} email={session.user.email ?? ''} mode="welcome" />}
     <header className="site-header">
       <div className="shell header-inner">
         <a className="brand" href="/" aria-label={translateText(language, 'RentByBob home', 'Home ng RentByBob')}><span className="brand-logo"><LogoMark size={34} /><LogoHat season={seasonal.season} /></span><Wordmark /></a>
@@ -441,7 +443,6 @@ export function App() {
                               </div> : <p className="toolbar-property"><span>{t.property}</span> <strong>{snapshot.properties.find(property => property.id === propertyId)?.name}</strong></p>}
                             </div>
                             <section hidden={activeSection !== 'home'} tabIndex={-1} id="dashboard-home" className="dashboard-home" aria-labelledby="dashboard-welcome-heading">
-                              {supabase && profile && !profile.welcomed && <ProfileCard client={supabase} profile={profile} onSaved={setProfile} language={language} email={session.user.email ?? ''} mode="welcome" />}
                               <div className="dashboard-welcome">
                                 <p className="eyebrow">{role === 'owner' ? (language === 'fil' ? 'TRABAHO NG MAY-ARI' : 'OWNER WORKSPACE') : (language === 'fil' ? 'TRABAHO NG STAFF' : 'STAFF WORKSPACE')}</p>
                                 <div className="dashboard-greeting">
@@ -516,7 +517,6 @@ export function App() {
                           </div>
                         </div>
                       </> : <>
-                        {supabase && profile && !profile.welcomed && <ProfileCard client={supabase} profile={profile} onSaved={setProfile} language={language} email={session.user.email ?? ''} mode="welcome" />}
                         <DeferredBoundary loadingLabel={translate('Loading your rent record…', 'Nilo-load ang talaan ng iyong upa…')} rows={4} language={language} shape="rent" reset={RenterPortal.reset}>
                           <RenterPortal.Screen language={language} greetingName={profile?.preferredName ?? undefined} />
                         </DeferredBoundary>

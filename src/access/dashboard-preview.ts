@@ -23,7 +23,8 @@ export const previewSnapshot = {
 
 // This transport never calls fetch. All writes fail explicitly; no real Auth
 // client, stored session, privileged key or hosted request is used in preview.
-let previewProfile: { preferred_name: string | null; photo: string | null; welcomed: boolean } = { preferred_name: null, photo: null, welcomed: false }
+// The welcome dialog opens in the preview only with ?welcome=1, so the other preview checks are not blocked by it.
+let previewProfile: { preferred_name: string | null; photo: string | null; welcomed: boolean } = { preferred_name: null, photo: null, welcomed: !new URLSearchParams(location.search).has('welcome') }
 export const previewClient = createClient('http://preview.invalid', 'offline-preview-only', {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   global: { fetch: async (input, options) => {

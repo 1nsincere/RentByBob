@@ -156,6 +156,16 @@ export function ProfileCard({ client, profile, onSaved, language, email, mode }:
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null)
   useEffect(() => { setName(profile.preferredName ?? ''); setPhoto(profile.photo); setPhotoChanged(false) }, [profile])
   useEffect(() => () => { if (source) URL.revokeObjectURL(source) }, [source])
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    if (mode !== 'welcome') return
+    const dialog = dialogRef.current
+    if (dialog && !dialog.open) { try { dialog.showModal() } catch { dialog.setAttribute('open', '') } }
+    const root = document.documentElement
+    const previous = root.style.overflow
+    root.style.overflow = 'hidden'
+    return () => { root.style.overflow = previous; if (dialog?.open) dialog.close() }
+  }, [mode])
   const suggestion = email.split('@')[0]?.replace(/[._-]+/g, ' ').replace(/\d+/g, '').trim().replace(/\b\w/g, letter => letter.toUpperCase()) || ''
 
   function choosePhoto(file: File | undefined) {
@@ -190,10 +200,10 @@ export function ProfileCard({ client, profile, onSaved, language, email, mode }:
 
   const preview: Profile = { preferredName: name.trim() || null, photo, welcomed: true }
   const headingId = `${id}-heading`
-  return <section className={`card profile-card profile-card--${mode}`} aria-labelledby={headingId}>
-    {mode === 'welcome' && <p className="eyebrow">{tr('WELCOME TO RENTBYBOB', 'MALIGAYANG PAGDATING SA RENTBYBOB')}</p>}
-    <h2 id={headingId}>{mode === 'welcome' ? tr('Hey! What should we call you?', 'Uy! Ano ang itatawag namin sa iyo?') : tr('Your profile', 'Iyong profile')}</h2>
-    <p className="profile-card-lead">{tr('We will greet you by this name every time you sign in. A picture is optional.', 'Ito ang itatawag namin sa iyo tuwing mag-sign in ka. Hindi kailangan ang larawan.')}</p>
+  const card = <section className={`card profile-card profile-card--${mode}`} aria-labelledby={headingId}>
+    {mode === 'welcome' && !cropping && <p className="eyebrow">{tr('WELCOME TO RENTBYBOB', 'MALIGAYANG PAGDATING SA RENTBYBOB')}</p>}
+    <h2 id={headingId}>{cropping ? tr('Crop your picture', 'I-crop ang iyong larawan') : mode === 'welcome' ? tr('Hey! What should we call you?', 'Uy! Ano ang itatawag namin sa iyo?') : tr('Your profile', 'Iyong profile')}</h2>
+    {!cropping && <p className="profile-card-lead">{tr('We will greet you by this name every time you sign in. A picture is optional.', 'Ito ang itatawag namin sa iyo tuwing mag-sign in ka. Hindi kailangan ang larawan.')}</p>}
     <form className="profile-form" onSubmit={save}>
       {cropping && source
         ? <PhotoCropper src={source} language={language}
@@ -212,6 +222,7 @@ export function ProfileCard({ client, profile, onSaved, language, email, mode }:
             <small className="field-help">{tr('Only you see your picture. You can crop it before saving.', 'Ikaw lang ang nakakakita ng larawan. Maaari mo itong i-crop bago i-save.')}</small>
           </div>
         </div>}
+      {!cropping && <>
       <label htmlFor={`${id}-name`}>{tr('Your name or nickname', 'Iyong pangalan o palayaw')}</label>
       <input id={`${id}-name`} type="text" value={name} maxLength={40} autoComplete="nickname" disabled={busy}
         placeholder={suggestion ? tr(`For example ${suggestion}`, `Halimbawa: ${suggestion}`) : undefined}
@@ -221,6 +232,11 @@ export function ProfileCard({ client, profile, onSaved, language, email, mode }:
         <Button variant="primary" disabled={busy || cropping}>{busy ? tr('Saving…', 'Sine-save…') : mode === 'welcome' ? tr('Save and continue', 'I-save at magpatuloy') : tr('Save profile', 'I-save ang profile')}</Button>
         {mode === 'welcome' && <Button type="button" variant="ghost" disabled={busy} onClick={() => void later()}>{tr('Maybe later', 'Mamaya na lang')}</Button>}
       </div>
+      </>}
     </form>
   </section>
+  // First sign-in: a modal dialog over the blurred, unscrollable page. Escape counts as "Maybe later".
+  return mode === 'welcome'
+    ? <dialog ref={dialogRef} className="profile-dialog" aria-labelledby={headingId} onCancel={event => { event.preventDefault(); void later() }}>{card}</dialog>
+    : card
 }

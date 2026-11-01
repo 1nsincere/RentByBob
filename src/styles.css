@@ -2005,3 +2005,14 @@ html .paid-rent-document .doc-optional h2 { font-size: 14pt; }
 .photo-cropper-frame img { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; pointer-events: none; }
 .photo-cropper-mask { position: absolute; inset: 0; border: 2px solid rgb(255 255 255 / 90%); border-radius: 50%; box-shadow: 0 0 0 999px rgb(0 0 0 / 52%); pointer-events: none; }
 .photo-cropper-zoom { width: min(100%, 18rem); min-height: 2.75rem; accent-color: var(--brand); }
+/* Welcome card as a dialog: the page behind is blurred and does not scroll; the card fits the screen. */
+.profile-dialog { width: min(34rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; padding: 0; overflow: auto; overscroll-behavior: contain; border: 0; border-radius: var(--radius); background: transparent; color: inherit; }
+.profile-dialog::backdrop { background: rgb(8 22 16 / 55%); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.profile-dialog .profile-card { margin: 0; box-shadow: 0 30px 80px -20px rgb(0 0 0 / 55%); background: var(--surface); }
+.profile-dialog .profile-card--welcome { background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 9%, var(--surface)), var(--surface) 60%), var(--surface); }
+.profile-dialog[open] { animation: profile-dialog-in 260ms cubic-bezier(.2, .8, .2, 1); }
+@keyframes profile-dialog-in { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+@media (prefers-reduced-motion: reduce) { .profile-dialog[open] { animation: none; } }
+@media (max-width: 30rem) { .profile-dialog .photo-cropper-frame { width: min(100%, 15rem); } }
+@media (max-height: 44rem) { .profile-dialog .photo-cropper-frame, .profile-dialog .photo-cropper-zoom { width: min(100%, 11.5rem); } .profile-dialog .photo-cropper-help { font-size: .9rem; } .profile-dialog .profile-card { gap: .45rem; } }
+@media (max-width: 30rem) { .photo-cropper .profile-card-buttons .button { flex: 1 1 40%; } .photo-cropper .profile-card-buttons .button--primary { flex-basis: 100%; } }
