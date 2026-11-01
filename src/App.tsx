@@ -445,7 +445,7 @@ export function App() {
                               <div className="dashboard-welcome">
                                 <p className="eyebrow">{role === 'owner' ? (language === 'fil' ? 'TRABAHO NG MAY-ARI' : 'OWNER WORKSPACE') : (language === 'fil' ? 'TRABAHO NG STAFF' : 'STAFF WORKSPACE')}</p>
                                 <div className="dashboard-greeting">
-                                  {(profile?.photo || profile?.preferredName) && <ProfileAvatar profile={profile} fallback={session.user.email ?? ''} />}
+                                  {(profile?.photo || profile?.preferredName) && <ProfileAvatar profile={profile} fallback={session.user.email ?? ''} size="xl" />}
                                   <h2 id="dashboard-welcome-heading">{t.welcome}{profile?.preferredName ? `, ${profile.preferredName}` : ''}</h2>
                                 </div>
                                 {seasonGreeting(seasonal.season, language) && <p className="season-greeting">{seasonGreeting(seasonal.season, language)}</p>}

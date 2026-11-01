@@ -1993,3 +1993,15 @@ html .paid-rent-document .doc-optional h2 { font-size: 14pt; }
   .profile-card-buttons .button { flex: 1 1 100%; }
 }
 @media print { .profile-card { display: none !important; } }
+/* Bigger greeting picture with a light ring so it reads on the green banner; smaller on phones. */
+.profile-avatar--xl { width: clamp(4.4rem, 7vw, 5.6rem); height: clamp(4.4rem, 7vw, 5.6rem); font-size: 2.1rem; border: 3px solid rgb(255 255 255 / 85%); box-shadow: 0 0 0 4px rgb(242 184 75 / 35%), 0 10px 24px -8px rgb(0 0 0 / 45%); }
+.dashboard-greeting { gap: 1rem; }
+/* Photo cropper: drag to move, pinch / wheel / slider to zoom; the circle shows exactly what is saved. */
+.photo-cropper { display: grid; gap: .55rem; justify-items: start; }
+.photo-cropper-help { margin: 0; color: var(--text-secondary); }
+.photo-cropper-frame { position: relative; width: min(100%, 18rem); aspect-ratio: 1; overflow: hidden; border-radius: var(--radius-small); background: #0b1f17; cursor: grab; touch-action: none; user-select: none; }
+.photo-cropper-frame:active { cursor: grabbing; }
+.photo-cropper-frame:focus-visible { outline: 3px solid var(--focus, var(--brand)); outline-offset: 3px; }
+.photo-cropper-frame img { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; pointer-events: none; }
+.photo-cropper-mask { position: absolute; inset: 0; border: 2px solid rgb(255 255 255 / 90%); border-radius: 50%; box-shadow: 0 0 0 999px rgb(0 0 0 / 52%); pointer-events: none; }
+.photo-cropper-zoom { width: min(100%, 18rem); min-height: 2.75rem; accent-color: var(--brand); }
