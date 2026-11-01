@@ -1,3 +1,4 @@
+import { currentSeason } from './landing/season'
 // Lifts the intro that index.html draws (particles, logo, wordmark, counter, the street at sunrise or sunset) as a curtain
 // that slides up with a glowing gold edge. The full intro plays only for the first visit to the landing page in a tab (about
 // 5 seconds, so every part can be seen; shorter on phones marked lite by perf.ts). Any other load, such as the sign-in page
@@ -16,6 +17,8 @@ function applyPhase() {
   try {
     const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hourCycle: 'h23', timeZone: 'Asia/Manila' }).format(new Date()))
     intro.dataset.phase = hour >= 15 || hour < 4 ? 'dusk' : 'dawn'
+    const season = currentSeason(new Date(), location.hash)
+    if (season) intro.dataset.season = season // Halloween look, same dates as the landing page
   } catch { /* keep the default sunrise */ }
 }
 applyPhase()

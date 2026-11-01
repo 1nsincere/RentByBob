@@ -2,6 +2,8 @@ import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, typ
 import { text, type Language } from '../i18n'
 import { parsePublicListings, type PublicListings } from '../access/public-listings-model.ts'
 import { LogoMark } from '../components/Logo'
+import { currentSeason } from './season'
+import { Parol, Pumpkin } from './street'
 import { Facade, SITE, StreetPlan, StreetSummary, TOTAL_SPACES, statusText } from './street'
 import './landing.css'
 
@@ -170,6 +172,8 @@ export function LandingPage() {
   const minutes = simulated ?? manilaMinutes(now)
   const phase = minutes >= 300 && minutes < 1080 ? 'day' : 'night'
   const day = phase === 'day'
+  const [season, setSeason] = useState(() => currentSeason(new Date(), location.hash))
+  useEffect(() => { const read = () => setSeason(currentSeason(new Date(), location.hash)); window.addEventListener('hashchange', read); return () => window.removeEventListener('hashchange', read) }, [])
   // Sky over the hero follows the real Cebu hour: the sun (day) or moon (night) travels an arc left to right, and the
   // sky tint changes for morning, noon and golden hour.
   const sky = !day ? 'night' : minutes < 600 ? 'morning' : minutes < 900 ? 'noon' : 'golden'
@@ -239,7 +243,7 @@ export function LandingPage() {
     [2, tr('languages', 'wika'), tr('English and Filipino, on every page', 'English at Filipino, sa bawat pahina')],
   ]
 
-  return <div className="lp" ref={root} data-phase={phase}>
+  return <div className="lp" ref={root} data-phase={phase} data-season={season ?? undefined}>
     <div className="lp-progress" aria-hidden="true" />
     <div className="lp-grain" aria-hidden="true" />
     <div className="lp-cursor" ref={ring} hidden aria-hidden="true"><span /></div>
@@ -265,6 +269,16 @@ export function LandingPage() {
         {day ? <><div className="lp-sun" aria-hidden="true" /><span className="lp-cloud-sky lp-cloud-sky--a" aria-hidden="true" /><span className="lp-cloud-sky lp-cloud-sky--b" aria-hidden="true" /></>
           : <><span className="lp-stars" aria-hidden="true" /><span className="lp-moon" aria-hidden="true" /></>}
         {!day && <span className="lp-hero-lamps" aria-hidden="true" />}
+        {season === 'christmas' && <>
+          <span className="lp-xm-tint" aria-hidden="true" />
+          <span className="lp-xm-sparkles" aria-hidden="true" />
+          <p className="lp-hw-badge lp-xm-badge"><Parol className="lp-hw-badge-pumpkin" />{tr('Maligayang Pasko from B. Zubiri St.', 'Maligayang Pasko mula sa B. Zubiri St.')}</p>
+        </>}
+        {season === 'halloween' && <>
+          <span className="lp-hw-tint" aria-hidden="true" />
+          {[0, 1, 2].map(i => <svg key={i} className={`lp-bat lp-bat--${i}`} viewBox="0 0 40 16" aria-hidden="true" focusable="false"><path d="M20 6c-1-2-2.6-2.4-3.4-1.6.4-1.6-.6-2.8-2-2.4C13 4 9.5 4.6 6 3.4 4 2.8 1.6 3.4 0 5.2c2.4-.4 4 .4 4.8 2 1.6-1 3.4-.8 4.6.8 1.4-1.2 3.4-1 4.4.6 1-1.6 3.2-1.8 4.2-.2.6 1.4 1.4 2.2 2 2.4.6-.2 1.4-1 2-2.4 1-1.6 3.2-1.4 4.2.2 1-1.6 3-1.8 4.4-.6 1.2-1.6 3-1.8 4.6-.8.8-1.6 2.4-2.4 4.8-2-1.6-1.8-4-2.4-6-1.8-3.5 1.2-7 .6-8.6-1.4-1.4-.4-2.4.8-2 2.4C22.6 3.6 21 4 20 6Z" /></svg>)}
+          <p className="lp-hw-badge"><Pumpkin className="lp-hw-badge-pumpkin" />{tr('Spooky season on B. Zubiri St.', 'Spooky season sa B. Zubiri St.')}</p>
+        </>}
         <div className="lp-hero-top">
           <p>{tr('Labangon, Cebu City', 'Labangon, Lungsod ng Cebu')}</p>
           <p><span className="lp-dot" aria-hidden="true" /> {tr('Cebu time', 'Oras sa Cebu')} {clock}</p>
@@ -281,7 +295,7 @@ export function LandingPage() {
             <a className="lp-pill lp-pill--ghost lp-magnetic" href="/sign-in">{tr('I already rent here', 'Umuupa na ako rito')}</a>
           </div>
         </div>
-        <div className="lp-skyline" aria-hidden="true">{SITE.map(site => <div key={site.label} className={`lp-skyline-home lp-skyline-home--${site.kind}`}><Facade site={site} open={openRooms(site.label)} width={100} /></div>)}</div>
+        <div className="lp-skyline" aria-hidden="true">{season === 'halloween' && [8, 34, 58, 83].map((left, i) => <Pumpkin key={left} className="lp-hw-porch" style={{ left: `${left}%`, animationDelay: `${i * -0.7}s` }} />)}{season === 'christmas' && <span className="lp-xm-strand" />}{season === 'christmas' && [14, 44, 68, 88].map((left, i) => <Parol key={left} className="lp-xm-porch" style={{ left: `${left}%`, animationDelay: `${i * -0.8}s` }} />)}{SITE.map(site => <div key={site.label} className={`lp-skyline-home lp-skyline-home--${site.kind}`}><Facade site={site} open={openRooms(site.label)} width={100} /></div>)}</div>
         <a className="lp-scroll-cue" href="#street"><span>{tr('Walk down the street', 'Libutin ang kalye')}</span><i aria-hidden="true" /></a>
       </section>
 
@@ -310,7 +324,7 @@ export function LandingPage() {
             {unavailable && <p className="lp-note">{tr('The live street is not connected right now. Message us and we will tell you what is open.', 'Hindi konektado ngayon ang live na kalye. Mag-message sa amin at sasabihin namin kung ano ang bakante.')}</p>}
           </div>
           <div className="lp-street-stage">
-            <div className="lp-plan-frame"><StreetPlan openByBuilding={openByBuilding} known={known} active={active} setActive={setActive} language={language} /></div>
+            <div className="lp-plan-frame"><StreetPlan openByBuilding={openByBuilding} known={known} active={active} setActive={setActive} language={language} season={season} /></div>
             <StreetSummary openByBuilding={openByBuilding} known={known} active={active} setActive={setActive} language={language} />
             <p className="lp-plan-note">{tr('Not to scale. Tap a home to see what is open; use the buttons below to see the rooms.', 'Hindi sukat. I-tap ang bahay para makita kung ano ang bakante; gamitin ang mga button sa ibaba para makita ang mga kuwarto.')}<span className="lp-swipe-hint"> {tr('Swipe sideways to see the whole street.', 'I-swipe pakanan para makita ang buong kalye.')}</span></p>
           </div>
