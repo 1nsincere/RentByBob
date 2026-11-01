@@ -6,6 +6,7 @@ import { DeferredBoundary, deferredScreen } from './components/DeferredScreen'
 import { dashboardPreview, hostedDevelopment, liveTarget, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
 import { ChangePassword, Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
 import { LogoMark, Wordmark } from './components/Logo'
+import { LogoHat, SeasonBand, SignInScene, seasonGreeting, useSeasonal } from './components/Seasonal'
 import { IdleSignOut } from './access/IdleSignOut'
 import { PhilippineClock } from './access/PhilippineClock'
 import { TrustedDevices } from './access/TrustedDevices'
@@ -330,13 +331,14 @@ export function App() {
   }
 
   signOutRef.current = signOut
+  const seasonal = useSeasonal()
   const staffWorkspaceOpen = Boolean(session && role && snapshot && !snapshot.mfa && !setup && !dashboardPreview && !preview)
-  return <div className={`app-shell ${route === 'sign-in' || (route === 'loading' && !dashboardPreview && !savedSessionAtBoot) || !supabase ? 'sign-in-shell' : ''} ${dashboardPreview ? 'focused-preview' : ''}`}>
+  return <div data-season={seasonal.season ?? undefined} className={`app-shell ${route === 'sign-in' || (route === 'loading' && !dashboardPreview && !savedSessionAtBoot) || !supabase ? 'sign-in-shell' : ''} ${dashboardPreview ? 'focused-preview' : ''}`}>
     <a className="skip-link" href="#main">{t.skipContent}</a>
     <div className="environment-note">{environmentLabel}</div>
     <header className="site-header">
       <div className="shell header-inner">
-        <a className="brand" href="/" aria-label={translateText(language, 'RentByBob home', 'Home ng RentByBob')}><LogoMark size={34} /><Wordmark /></a>
+        <a className="brand" href="/" aria-label={translateText(language, 'RentByBob home', 'Home ng RentByBob')}><span className="brand-logo"><LogoMark size={34} /><LogoHat season={seasonal.season} /></span><Wordmark /></a>
         {/* App bar: display controls, then the signed-in account and Sign out (same accessible names as before). */}
         <div className="session-tools">
           <div className="session-actions">
@@ -362,12 +364,14 @@ export function App() {
           </div>}
         </div>
       </div>
+      <SeasonBand season={seasonal.season} />
     </header>
     <div className="shell page-shell">
       <main id="main" tabIndex={-1} className={role && route === 'ready' ? 'staff-main' : ''}>
         {dashboardPreview && <p className="notice" role="status"><strong>{translate('Fictional dashboard preview - sign-in skipped.', 'Halimbawang dashboard - hindi naka-sign in sa account.')}</strong> {translate('Sample records are isolated from your account. Changes reset on reload. This mode makes no Supabase requests, database writes or emails.', 'Hiwalay ang halimbawang talaan sa iyong account. Mawawala ang mga pagbabago kapag nag-reload. Walang Supabase request, database write o email sa mode na ito.')}</p>}
         {/* While starting up, the intro is kept for screen readers but takes no space, so nothing jumps when the real screen arrives. */}
         <div className={`page-intro ${booting ? 'visually-hidden' : ''}`}>
+          {route === 'sign-in' && <SignInScene season={seasonal.season} />}
           <p className="eyebrow">{role ? translate('PROPERTY WORKSPACE', 'WORKSPACE NG PROPERTY') : session ? translate('YOUR ACCOUNT', 'IYONG ACCOUNT') : translate('YOUR RENTAL SPACE, SIMPLIFIED', 'Madaling pamamahala ng iyong inuupahan')}</p>
           <h1 ref={heading} tabIndex={-1} className="route-heading">
             {route === 'loading' || route === 'checking' ? t.checkingAccess
@@ -433,6 +437,7 @@ export function App() {
                               <div className="dashboard-welcome">
                                 <p className="eyebrow">{role === 'owner' ? (language === 'fil' ? 'TRABAHO NG MAY-ARI' : 'OWNER WORKSPACE') : (language === 'fil' ? 'TRABAHO NG STAFF' : 'STAFF WORKSPACE')}</p>
                                 <h2 id="dashboard-welcome-heading">{t.welcome}</h2>
+                                {seasonGreeting(seasonal.season, language) && <p className="season-greeting">{seasonGreeting(seasonal.season, language)}</p>}
                                 <p className="dashboard-identity">{translate('Signed in as', 'Naka-sign in bilang')} <strong>{session.user.email}</strong></p>
                                 <h3>{t.today}</h3>
                                 <div className="dashboard-actions">
@@ -488,6 +493,7 @@ export function App() {
                               <div id="access-history" hidden={activeSection !== 'access-history'} tabIndex={-1} className="workspace-section">{visitedSections.includes('access-history') && <DeferredBoundary loadingLabel={translate('Loading access history…', 'Nilo-load ang kasaysayan ng access…')} rows={3} language={language} reset={AccessAudit.reset}><AccessAudit.Screen key={`audit:${propertyId}:${visit('access-history')}`} propertyId={propertyId} language={language} /></DeferredBoundary>}</div>
                             </>}
                             <section hidden={activeSection !== 'account-security'} tabIndex={-1} className="card account-security" id="account-security">
+                              {seasonal.dateSeason && <label className="season-switch"><input type="checkbox" checked={!seasonal.off} onChange={seasonal.toggle} /><span>{translate('Show seasonal decorations', 'Ipakita ang pang-season na dekorasyon')}<small>{translate('Small holiday touches on the app bar, logo and sign-in page. Your records are not affected.', 'Maliit na dekorasyon sa app bar, logo at sign-in page. Hindi apektado ang iyong mga talaan.')}</small></span></label>}
                               <p className="eyebrow">{translate('SIGN-IN AND RECOVERY', 'PAG-SIGN IN AT PAG-RECOVER NG ACCOUNT')}</p>
                               <h2>{t.accountSecurity}</h2>
                               <p>{translate('Enroll a backup authenticator on a separate device before losing access to your main one. Password recovery does not bypass staff MFA.', 'Magdagdag ng isa pang authenticator sa ibang device para may iba kang magamit. Hindi inaalis ng pagpapalit ng password ang security check ng staff.')}</p>

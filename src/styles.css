@@ -1846,3 +1846,58 @@ html .paid-rent-document .doc-empty { font-style: normal; font-size: 11pt; }
 html .paid-rent-document .doc-footer { font-size: 10pt; }
 html .paid-rent-document .doc-optional h2 { font-size: 14pt; }
 @media print { html.print-paid-report { --doc-page-number: 10pt; } @page { @bottom-right { font: 10pt Verdana, Tahoma, sans-serif; } } }
+
+/* Seasonal touches in the app (components/Seasonal.tsx). Only edges change: the band under the app bar, the logo hat,
+   the sign-in panel scene and one greeting line. Status colours, tables, amounts and buttons never take the theme. */
+.site-header { position: sticky; }
+.season-band { position: absolute; left: 0; right: 0; bottom: -11px; height: 14px; pointer-events: none; overflow: visible; }
+.season-band-art { display: block; width: 100%; height: 100%; overflow: visible; }
+.sb-string, .sb-wire { fill: none; stroke: var(--text-secondary); stroke-width: .9; opacity: .55; vector-effect: non-scaling-stroke; }
+.sb-flag { transform-box: fill-box; transform-origin: 50% 0; animation: sb-flutter 3.2s ease-in-out infinite alternate; }
+.sb-flag--0 { fill: #e8761f; } .sb-flag--1 { fill: #4a2a5e; } .sb-flag--2 { fill: #f2b84b; }
+@keyframes sb-flutter { from { rotate: -5deg; } to { rotate: 5deg; } }
+.sb-bulb { animation: sb-glow 1.9s ease-in-out infinite alternate; }
+.sb-bulb--0 { fill: #e5483f; } .sb-bulb--1 { fill: #f2c040; } .sb-bulb--2 { fill: #2fae69; }
+@keyframes sb-glow { from { opacity: .5; } to { opacity: 1; } }
+:root[data-theme="dark"] .sb-bulb, :root:not([data-theme="light"]) .sb-bulb { filter: drop-shadow(0 0 2px currentColor); }
+.brand-logo { position: relative; display: inline-grid; flex: none; }
+.logo-hat { position: absolute; left: 13px; top: -13px; width: 26px; height: auto; rotate: 16deg; pointer-events: none; filter: drop-shadow(0 1px 1px rgb(0 0 0 / 30%)); }
+.logo-hat--halloween { left: 9px; top: -15px; rotate: 12deg; width: 28px; }
+.lh-red { fill: #d23a2f; } .lh-fur { fill: #fffaf0; }
+.lh-witch { fill: #2b1d3a; } .lh-band { fill: #e8761f; }
+.season-greeting { margin: .2rem 0 .4rem; color: #fdf3d6; font-family: Georgia, "Iowan Old Style", serif; font-style: italic; font-size: 1.05rem; }
+.signin-scene { position: absolute; z-index: -1; pointer-events: none; }
+.signin-scene--christmas { right: clamp(1rem, 4vw, 2.6rem); top: 0; width: clamp(3.6rem, 8vw, 5.4rem); }
+.ss-parol { display: block; width: 100%; height: auto; overflow: visible; }
+.ss-cord { stroke: rgb(255 255 255 / 45%); stroke-width: 1; }
+.ss-swing { transform-origin: 30px 0; animation: ss-swing 4s ease-in-out infinite alternate; }
+@keyframes ss-swing { from { rotate: -4deg; } to { rotate: 4deg; } }
+.ss-halo { fill: rgb(255 205 100 / 18%); }
+.ss-ring { fill: none; stroke: #ffd25a; stroke-width: 1.6; }
+.ss-star { fill: #d83a30; stroke: #ffd25a; stroke-width: 1.2; stroke-linejoin: round; }
+.ss-star-in { fill: #ffe08a; }
+.ss-tail { fill: none; stroke: #ffd25a; stroke-width: 1.4; stroke-linecap: round; }
+.signin-scene--halloween { inset: 0; }
+.ss-moon { position: absolute; right: clamp(1.2rem, 4vw, 2.6rem); top: clamp(1rem, 3vw, 2rem); width: clamp(2.6rem, 5vw, 3.6rem); }
+.ss-moon circle { fill: #f6e7b4; } .ss-moon .ss-moon-bite { fill: #134634; }
+.ss-patch { position: absolute; right: clamp(1rem, 3vw, 2rem); bottom: clamp(.8rem, 2vw, 1.4rem); width: clamp(5rem, 11vw, 7.4rem); overflow: visible; }
+.ss-pool { fill: rgb(255 160 60 / 22%); }
+.ss-pk { fill: #e2721a; } .ss-pk--mid { fill: #f58a2a; } .ss-stem { fill: #4b7a2e; } .ss-face { fill: #ffe2a0; }
+.season-switch { display: flex; align-items: flex-start; gap: .6rem; margin: 0 0 1rem; padding: .8rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--surface-alt); cursor: pointer; }
+.season-switch input { width: 1.25rem; height: 1.25rem; margin-top: .15rem; accent-color: var(--brand); }
+.season-switch span { display: grid; gap: .15rem; font-weight: 650; }
+.season-switch small { color: var(--text-secondary); font-weight: 400; }
+:root[data-perf="lite"] .sb-flag, :root[data-perf="lite"] .sb-bulb, :root[data-perf="lite"] .ss-swing { animation: none; }
+@media (prefers-reduced-motion: reduce) { .sb-flag, .sb-bulb, .ss-swing { animation: none; } }
+@media print { .season-band, .logo-hat, .signin-scene, .season-greeting { display: none !important; } }
+/* Sign-in scene: the headline keeps clear of the decoration at every size (phones, tablets, laptops). */
+.sign-in-shell .page-intro:has(.signin-scene--christmas) h1 { padding-right: clamp(3.4rem, 9vw, 5.6rem); }
+.sign-in-shell .page-intro:has(.signin-scene--halloween) h1 { padding-right: clamp(2.8rem, 7vw, 4.4rem); }
+.signin-scene--christmas { right: clamp(.6rem, 2.4vw, 1.6rem); width: clamp(3rem, 6vw, 4.6rem); }
+@media (max-width: 54rem) {
+  .signin-scene--christmas { width: 2.8rem; right: .7rem; }
+  .ss-moon { width: 2.2rem; top: .8rem; right: .8rem; }
+  .ss-patch { width: 4.4rem; right: .8rem; bottom: .6rem; }
+  .sign-in-shell .page-intro:has(.signin-scene) .page-summary { padding-right: 3.2rem; }
+}
+@media (max-width: 40rem) { .season-band { bottom: -10px; height: 12px; } .logo-hat { width: 22px; left: 12px; top: -11px; } .logo-hat--halloween { width: 24px; top: -13px; left: 8px; } }

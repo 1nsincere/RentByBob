@@ -1,5 +1,11 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Seasonal touches inside the app; mobile fit - 1 Nov 2026
+
+**Owner request:** let the Halloween (24 Oct - 23 Nov) and Christmas (1 Dec - 6 Jan) themes reach the app, not only the landing page, and keep every size working (iPhone, Android phones, iPad, tablets). New `src/components/Seasonal.tsx`: a strip under the app bar (paper banderitas at Halloween, a drooping string of lights at Christmas), a small hat on the logo tile, a scene in the sign-in welcome panel (a hanging parol, or a moon and two pumpkins) and one greeting line on the dashboard. Money screens, tables, amounts, statuses and buttons never take the theme. Decorations are hidden in print and stay still in reduced motion and lite mode. The landing page's "Hide decorations" choice switches all of it off, and Account security has the same switch ("Show seasonal decorations").
+
+**Validation (1 Nov 2026):** unit 118/118, build, artifact and production CSP checks pass. Playwright screenshots of the dashboard and sign-in page in both seasons at 360, 390, 768, 1024 and 1366 px wide: no sideways scrolling, and the sign-in headline keeps clear of the decoration (the moon used to cover it on phones; fixed). Preview a season with `#theme=halloween` or `#theme=christmas` on any page. **Limitation:** checked in desktop Edge at phone and tablet sizes, not on physical iPhone/Android devices; the Tagalog greeting still needs a native speaker's review.
+
 ## Live project pinned - 29 Oct 2026
 
 `productionUrl` in `src/access/connection.ts` is now the owner's Supabase project (`https://hxkfuwqxpykckxvsbvbc.supabase.co`, free plan for the 90-day trial; upgrade to Pro when the client pays). The Content Security Policy `connect-src` in `public/_headers` names only that project (no `*.supabase.co` wildcard) and `scripts/check-production-build.mjs` fails the build if the wildcard returns or the project is missing. Unit 114/114, build, artifact and production CSP checks pass. Still to do by the owner: push the code, Cloudflare Pages, Supabase migrations push, owner account, real phone number in `LandingPage.tsx`.
