@@ -237,3 +237,10 @@ Before relaxing that guard, decide who may authorize reissue, what evidence qual
 
 ## User direction - 17 Oct 2026
 Prioritize frontend UX and responsiveness before further backend work. Use U-ConvertIT as a visual reference while retaining readable RentByBob styling. Renter email-code login is accepted follow-up scope, not implemented in this UI milestone; staff authenticator MFA remains required. Do not display a nonworking email-code button or weaken trusted assurance checks.
+
+## Real email invitations and re-sending - 1 Nov 2026
+Owner direction: invite tenants by their real email (Gmail) after setting up a dedicated Gmail as the Supabase SMTP sender. Answers to the reissue questions above, as built in migration `202611010001_real_email_invitations.sql`:
+- **Who may re-send:** the same people who may invite (staff with MFA for tenants, the owner for staff). Every attempt is audited with its actor.
+- **When:** a new attempt for the same address is allowed only when no earlier attempt for it is open (prepared, dispatching) or uncertain. Uncertain attempts still need an owner review first; no waiting period otherwise.
+- **Provider behaviour:** Supabase Auth re-sends the invitation to an existing unconfirmed account and refuses a confirmed one. The database refuses confirmed accounts before saving anything, with a note to use Assign access.
+- **Switch:** hosted projects send nothing unless the secret `INVITE_EMAIL_ENABLED=true` is set; that secret means "a mail sender is configured". Recipient addresses stay in the restricted attempt table (retention still unconfirmed by the owner).

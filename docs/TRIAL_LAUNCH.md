@@ -15,7 +15,7 @@ What you will end up with: one live website (Cloudflare Pages) connected to one 
 4. Put the database structure in (from this folder):
    - `npx.cmd supabase login`
    - `npx.cmd supabase link --project-ref <the 20 letters>`
-   - `npx.cmd supabase db push` - review the list: it must end with `202610300003_clerks_manage_access.sql`.
+   - `npx.cmd supabase db push` - review the list: it must end with `202611010001_real_email_invitations.sql`.
    - `npx.cmd supabase functions deploy invite-account`
    - `npx.cmd supabase secrets set APP_ORIGIN=https://<your-site>.pages.dev` (after step 3 gives you the address; you can come back to this)
 5. Authentication > Sign In / Providers: **signups off**, anonymous sign-ins off. Authentication > Settings: minimum password length **12**, secure password change on. Authentication > Multi-Factor: **TOTP on**. On Pro, also turn on leaked-password protection and session limits (timebox 12 h, inactivity 2 h).
@@ -39,7 +39,7 @@ The app refuses to connect to any online database unless its exact address is wr
 2. Supabase > SQL Editor: open `scripts/bootstrap-live-owner.sql`, replace the two `REPLACE_WITH_...` values (owner email, property name), run it once.
 3. Open the website, sign in as the owner, set up the authenticator app (MFA), then change the password (Account security).
 4. For James and other staff: create their sign-in the same way (Add user, auto-confirm), then in the app: Accounts & security > **Assign or disable access** > their email > Clerk. They set up MFA at first sign-in.
-5. Email invitations to real addresses are **disabled on purpose** (the invitation function and migration only accept `.invalid` addresses); always create logins with Add user as above. Enabling real invitations needs a reviewed change plus a mail sender: Supabase > Authentication > SMTP (for example a Gmail/Google Workspace or Brevo account). Without SMTP, use Add user.
+5. **Email invitations (after the mail sender is set up):** Supabase > Authentication > SMTP has your sender (for example a dedicated Gmail with an app password). Then switch invitations on once: `npx.cmd supabase secrets set INVITE_EMAIL_ENABLED=true` and `npx.cmd supabase functions deploy invite-account`. Also set Authentication > Emails (or Providers > Email) > **Email OTP expiration** to `86400` (24 hours) so a tenant who opens the email the next day can still use the link. In the app: Accounts & security > **Invite account** > the tenant's email > Start invitation attempt. The tenant gets an email from RentByBob, chooses their own password, then you or James give them access in **Assign or disable access**. If the link expired or got lost, start a new invitation to the same email (allowed once the earlier one shows as issued or rejected). An email that already has an account is refused with a note to use Assign access instead. Without SMTP and the switch, invitations are refused before anything is saved; use Add user as above.
 
 ## 6. Enter the property and tenants (1-2 hours with James)
 1. Buildings and units > **Create layout** (Building 1, Building 2, House 1, Bob's house, stores, Yamaha).

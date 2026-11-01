@@ -5,6 +5,7 @@ import { classifyProviderFailure, runInvitationWorkflow, type AttemptStatus, typ
 const allowedOrigin = Deno.env.get("APP_ORIGIN") ?? "http://127.0.0.1:5173"
 const callbackUrl = `${allowedOrigin}/auth/callback`
 const uuidPattern = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i
+const emailPattern = /^[^@]+@[^@.]+(\.[^@.]+)+$/
 const attemptStatuses = new Set<AttemptStatus>(["prepared", "dispatching", "issued", "rejected", "uncertain", "accepted"])
 
 function isAttemptStatus(value: unknown): value is AttemptStatus {
@@ -35,11 +36,12 @@ function statusResponse(attemptId: string, status: AttemptStatus, origin?: strin
 }
 
 const authenticatedFetch = withSupabase({ auth: "user" }, async (request, context) => {
-  // Hosted development has no authorized email delivery. Fail before preparing
-  // or claiming an attempt so it cannot consume the permanent no-reissue guard.
+  // A hosted project sends real email only after its owner has set up a mail sender (Supabase Auth SMTP) and switched
+  // invitations on with the secret INVITE_EMAIL_ENABLED=true. Fail before preparing or claiming an attempt, so a project
+  // without a sender never records a half-made invitation. Local development uses the local mail catcher.
   const authHost = new URL(Deno.env.get("SUPABASE_URL") ?? "http://invalid").hostname
-  if (!["kong", "127.0.0.1", "localhost"].includes(authHost)) {
-    return jsonResponse({ error: "Email invitations are unavailable in hosted development. No invitation attempt was created." }, 403)
+  if (!["kong", "127.0.0.1", "localhost"].includes(authHost) && Deno.env.get("INVITE_EMAIL_ENABLED") !== "true") {
+    return jsonResponse({ error: "Email invitations are switched off for this project. No invitation attempt was created.", reason: "switched_off" }, 403)
   }
   if (request.method !== "POST") {
     return jsonResponse({ error: "Use POST to request an account invitation." }, 405)
@@ -94,7 +96,7 @@ const authenticatedFetch = withSupabase({ auth: "user" }, async (request, contex
       return statusResponse(attemptId, claim.status)
     }
     if (!uuidPattern.test(propertyId) || (accountType !== "tenant" && accountType !== "staff")
-      || !normalizedEmail.endsWith(".invalid")) {
+      || !emailPattern.test(normalizedEmail)) {
       return jsonResponse({ error: "The saved request is incomplete. Ask an owner to review it." }, 503)
     }
   } else {
@@ -108,12 +110,11 @@ const authenticatedFetch = withSupabase({ auth: "user" }, async (request, contex
       return jsonResponse({ error: "Choose a tenant or staff invitation." }, 400)
     }
     if (typeof rawEmail !== "string" || rawEmail.length > 320 || /[\s\u0000-\u001f\u007f]/.test(rawEmail)) {
-      return jsonResponse({ error: "Enter a valid fictional email address." }, 400)
+      return jsonResponse({ error: "Enter a valid email address." }, 400)
     }
     normalizedEmail = rawEmail.trim().toLowerCase()
-    if (!/^[^@]+@[^@]+\.[^@]+$/.test(normalizedEmail)
-      || !normalizedEmail.endsWith(".invalid")) {
-      return jsonResponse({ error: "Only fictional .invalid addresses can be invited in this local application." }, 400)
+    if (!emailPattern.test(normalizedEmail)) {
+      return jsonResponse({ error: "Enter a valid email address." }, 400)
     }
     propertyId = rawPropertyId
     accountType = rawAccountType
@@ -125,7 +126,13 @@ const authenticatedFetch = withSupabase({ auth: "user" }, async (request, contex
     })
     if (error) {
       if (error.code === "42501") return jsonResponse({ error: "Current staff permission and MFA are required." }, 403)
-      if (error.code === "23505" || error.code === "22023") {
+      if (error.code === "RB409") {
+        return jsonResponse({ error: "This email already has an account. Give it access in Assign or disable access instead.", reason: "account_exists" }, 409)
+      }
+      if (error.code === "23505") {
+        return jsonResponse({ error: "An earlier invitation to this email is still open or waiting for owner review. Check Invitation review first.", reason: "open_attempt" }, 409)
+      }
+      if (error.code === "22023") {
         return jsonResponse({ error: "This attempt conflicts with a previous invitation or its saved details. Review it before doing anything else." }, 409)
       }
       return jsonResponse({ error: "The invitation request could not be durably prepared. No provider call was started." }, 503)

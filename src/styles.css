@@ -1957,3 +1957,6 @@ html .paid-rent-document .doc-optional h2 { font-size: 14pt; }
 @media (prefers-reduced-motion: reduce) { .net-bar.is-on::before { animation: none; transform: none; width: 100%; opacity: .6; } .net-notice { transition: none; } }
 @media print { .net-bar, .net-notice { display: none !important; } }
 .atoms-gallery { grid-template-columns: minmax(0, 1fr); } .atoms-gallery > section { min-width: 0; }
+/* Signed in, the account picture and Sign out share the bar, so phones up to 480px show only the logo tile (the link
+   keeps its "RentByBob home" name). Signed out there is room for the full name. */
+@media (max-width: 30rem) { .site-header:has(.appbar-account) .brand .wordmark { display: none; } }
