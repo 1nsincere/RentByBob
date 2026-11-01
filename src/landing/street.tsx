@@ -282,6 +282,16 @@ function Vehicle({ ride, extra, vendorLine }: { ride: Ride; extra?: boolean; ven
 
 // Bob: short, bald and always with his sungkod (walking stick). Drawn from above, facing east; he strolls the shoulder
 // in front of his house, stopping now and then to look around.
+// A small jack-o'-lantern (Halloween season): orange body, stem, and a carved face that glows.
+export function Pumpkin({ className, style }: { className?: string; style?: CSSProperties }) {
+  return <svg className={['hw-pumpkin', className].filter(Boolean).join(' ')} style={style} viewBox="0 0 24 22" aria-hidden="true" focusable="false">
+    <path className="hw-stem" d="M11.4 4.6c0-2 .6-3.4 2.2-4.1l.9 1c-1 .7-1.4 1.6-1.4 3.1Z" />
+    <ellipse className="hw-body" cx="7.6" cy="13" rx="6.2" ry="7.6" /><ellipse className="hw-body" cx="16.4" cy="13" rx="6.2" ry="7.6" />
+    <ellipse className="hw-body hw-body--mid" cx="12" cy="13" rx="6.4" ry="8.2" />
+    <path className="hw-face" d="M7 10.2 9.6 9l.4 2.8Zm10 0L14.4 9l-.4 2.8ZM6.8 14.6c1.6 2.6 8.8 2.6 10.4 0l-1.6.6-1-1-1.2 1.2-1.4-1.2-1.4 1.2-1.2-1.2-1 1Z" />
+  </svg>
+}
+
 const BobArt = () => <>
       <ellipse className="bob-shadow" cx="12" cy="11" rx="10" ry="8.5" />
       <ellipse className="bob-foot bob-foot--a" cx="11" cy="6.6" rx="3" ry="1.7" /><ellipse className="bob-foot bob-foot--b" cx="11" cy="13.4" rx="3" ry="1.7" />
@@ -291,7 +301,7 @@ const BobArt = () => <>
       <circle className="bob-ear" cx="12.6" cy="5.9" r="1.1" /><circle className="bob-ear" cx="12.6" cy="14.1" r="1.1" />
       <circle className="bob-head" cx="13" cy="10" r="4.4" /><ellipse className="bob-shine" cx="11.8" cy="8.4" rx="1.8" ry="1.1" />
 </>
-function Bob({ label, line, bless, farewell }: { label: string; line: string; bless?: string; farewell?: string }) {
+function Bob({ label, line, bless, farewell, hat }: { label: string; line: string; bless?: string; farewell?: string; hat?: boolean }) {
   return <span className="lp-bob" tabIndex={0} role="img" aria-label={label}>
     <span className="lp-bob-bubble" aria-hidden="true">{label}</span>
     <span className="lp-say lp-say--bob" aria-hidden="true">{line}</span>
@@ -299,6 +309,7 @@ function Bob({ label, line, bless, farewell }: { label: string; line: string; bl
     {farewell && <span className="lp-say lp-say--farewell" aria-hidden="true">{farewell}</span>}
     <svg viewBox="0 0 26 20" aria-hidden="true" focusable="false">
       <BobArt />
+      {hat && <g className="hw-hat"><circle cx="13" cy="10" r="6.6" className="hw-hat-brim" /><circle cx="13" cy="10" r="3.6" className="hw-hat-band" /><circle cx="13.6" cy="9.6" r="2.4" className="hw-hat-top" /><circle cx="14.2" cy="9.2" r="0.9" className="hw-hat-tip" /></g>}
     </svg>
   </span>
 }
@@ -353,9 +364,9 @@ const DogArt = () => <>
       <circle className="dog-body" cx="19.2" cy="10" r="3.3" />
       <ellipse className="dog-snout" cx="22.3" cy="10" rx="1.6" ry="1.3" /><circle className="dog-nose" cx="23.7" cy="10" r="0.65" />
 </>
-function Dog({ heart, bark }: { heart: string; bark: string }) {
+function Dog({ heart, bark, hat }: { heart: string; bark: string; hat?: boolean }) {
   return <div className="lp-roam lp-roam--dog" aria-hidden="true">
-    <span className="lp-dog"><svg viewBox="0 0 26 20" focusable="false"><DogArt /></svg></span>
+    <span className="lp-dog"><svg viewBox="0 0 26 20" focusable="false"><DogArt />{hat && <g className="hw-dog-hat" transform="translate(15.4 5.6) scale(0.34)"><ellipse className="hw-body" cx="7.6" cy="13" rx="6.2" ry="7.6" /><ellipse className="hw-body" cx="16.4" cy="13" rx="6.2" ry="7.6" /><ellipse className="hw-body hw-body--mid" cx="12" cy="13" rx="6.4" ry="8.2" /><path className="hw-stem" d="M11.4 4.6c0-2 .6-3.4 2.2-4.1l.9 1c-1 .7-1.4 1.6-1.4 3.1Z" /></g>}</svg></span>
     <span className="lp-say lp-say--heart">{heart}</span>
     <span className="lp-say lp-say--bark">{bark}</span>
   </div>
@@ -640,7 +651,8 @@ const LAMPS = [[9, 'top'], [33, 'top'], [66, 'top'], [96, 'top'], [25, 'bottom']
 export const statusText = (language: Language, known: boolean, lit: number) => !known ? text(language, 'Checking…', 'Sinusuri…') : lit ? `${lit} ${text(language, 'open now', 'bakante ngayon')}` : text(language, 'Full right now', 'Puno ngayon')
 
 // The whole street: roads, lamps, trees, traffic and the four homes (each a link to the open rooms).
-export function StreetPlan({ openByBuilding, known, active, setActive, language }: { openByBuilding: Map<string, string[]>; known: boolean; active: string; setActive: (label: string) => void; language: Language }) {
+export function StreetPlan({ openByBuilding, known, active, setActive, language, season = null }: { openByBuilding: Map<string, string[]>; known: boolean; active: string; setActive: (label: string) => void; language: Language; season?: 'halloween' | null }) {
+  const spooky = season === 'halloween'
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   const [profile, setProfile] = useState(false)
   const [helper, setHelper] = useState<HelperId | null>(null)
@@ -675,8 +687,9 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language 
       <circle className="lp-tree-leaf" cx="14" cy="15" r="7" /><circle className="lp-tree-leaf" cx="25" cy="23" r="6" /><circle className="lp-tree-leaf" cx="15" cy="26" r="5" />
     </svg>)}
     {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} extra={index >= 4} vendorLine={tr('Malunggay Pandesal, init pa with cheese, tag singko lang!', 'Malunggay Pandesal, init pa with cheese, tag singko lang!')} />)}
-    <Bob label={tr('This is Bob', 'Ito si Bob')} line={tr('Thank you, iho!', "Salamat, iho!")} bless={tr('God bless you both!', 'Pagpalain kayo ng Diyos!')} farewell={tr('Take care, you two!', 'Ingat kayo, mga iho!')} />
-    <Dog heart="♥" bark={tr('Arf!', 'Aw aw!')} />
+    {spooky && [[7, 48], [38, 48], [66, 48], [86, 48], [27.5, 95], [47, 95], [58, 72]].map(([left, top], i) => <Pumpkin key={i} className="lp-hw-map" style={{ left: `${left}%`, top: `${top}%`, animationDelay: `${i * -0.6}s` }} />)}
+    <Bob hat={spooky} label={tr('This is Bob', 'Ito si Bob')} line={tr('Thank you, iho!', "Salamat, iho!")} bless={tr('God bless you both!', 'Pagpalain kayo ng Diyos!')} farewell={tr('Take care, you two!', 'Ingat kayo, mga iho!')} />
+    <Dog hat={spooky} heart="♥" bark={tr('Arf!', 'Aw aw!')} />
     <span className="lp-driveway" aria-hidden="true" />
     <Wigo />
     <Helper who="james" label={tr('James, RentByBob team', 'Si James, RentByBob team')} line={tr('Mano po, Sir Bob!', 'Mano po, Sir Bob!')} extra={[{ name: 'james-ace', text: tr('Hey Ace! How is the code?', 'Uy Ace! Kumusta ang code?') }, { name: 'james-bye', text: tr('See you, Sir Bob!', 'Paalam, Sir Bob!') }]} open={helper === 'james'} onOpen={() => setHelper('james')} tr={tr} />

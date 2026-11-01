@@ -786,3 +786,33 @@
 :root[data-perf="lite"] .lp-cloud-sky, :root[data-perf="lite"] .lp-stars { animation: none; }
 :root[data-perf="lite"] .lp-cloud-sky { display: none; }
 @media (prefers-reduced-motion: reduce) { .lp-cloud-sky, .lp-stars, .lp-hero-lamps { animation: none; } .lp-cloud-sky--a { transform: translateX(10vw); } .lp-cloud-sky--b { transform: translateX(55vw); } }
+
+/* Halloween season (Oct 24 - Nov 23, Cebu date; see season.ts): purple-orange sky tint, bats crossing the hero, glowing
+   jack-o'-lanterns on the porches and on the street map, a witch hat for Bob and a pumpkin hat for Bantay. Cute, not
+   scary. Low-end phones and reduced motion keep the decorations still. */
+.hw-body { fill: #f07a1a; stroke: #b4520c; stroke-width: .6; }
+.hw-body--mid { fill: #ff8f2e; }
+.hw-stem { fill: #3f6b2a; }
+.hw-face { fill: #ffd76a; }
+.lp[data-phase="night"] .hw-face { fill: #fff1a8; filter: drop-shadow(0 0 1.5px #ffcf3a); }
+.lp-hw-tint { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(70% 55% at 50% 100%, rgb(255 120 30 / 22%), transparent 70%), linear-gradient(180deg, rgb(70 30 110 / 32%), transparent 55%); mix-blend-mode: screen; }
+.lp-bat { position: absolute; z-index: 1; left: 0; top: 18%; width: clamp(1.8rem, 3vw, 2.6rem); fill: #120a1c; pointer-events: none; animation: lp-bat 22s linear infinite, lp-flap .32s ease-in-out infinite alternate; }
+.lp[data-phase="day"] .lp-bat { fill: #2b1a3a; opacity: .7; }
+.lp-bat--1 { top: 28%; width: clamp(1.4rem, 2.3vw, 2rem); animation-duration: 30s, .28s; animation-delay: -12s, 0s; }
+.lp-bat--2 { top: 12%; width: clamp(1.2rem, 2vw, 1.7rem); animation-duration: 26s, .3s; animation-delay: -19s, 0s; }
+@keyframes lp-bat { 0% { transform: translate(-10vw, 0); } 25% { transform: translate(22vw, -2vh); } 50% { transform: translate(50vw, 3vh); } 75% { transform: translate(78vw, -1vh); } 100% { transform: translate(110vw, 2vh); } }
+@keyframes lp-flap { from { scale: 1 1; } to { scale: 1 .45; } }
+.lp-hw-badge { position: absolute; left: var(--pad); top: 4.1rem; z-index: 2; display: inline-flex; align-items: center; gap: .45rem; width: fit-content; margin: 0 0 .4rem; padding: .3rem .8rem .3rem .45rem; border: 1px solid rgb(255 143 46 / 55%); border-radius: 999px; background: rgb(40 16 52 / 55%); color: #ffcf9a; font: 700 clamp(.7rem, 1.5vw, .85rem) var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.lp-hw-badge-pumpkin { width: 1.4rem; height: auto; }
+.lp-skyline { position: relative; }
+.lp-hw-porch { position: absolute; z-index: 2; bottom: .3rem; width: clamp(1.3rem, 2.4vw, 2.1rem); height: auto; transform-origin: 50% 100%; animation: lp-wobble 2.8s ease-in-out infinite alternate; }
+.lp-hw-map { position: absolute; z-index: 4; width: 2.6%; height: auto; transform: translate(-50%, -50%); animation: lp-glow 2.2s ease-in-out infinite alternate; pointer-events: none; }
+@keyframes lp-wobble { from { rotate: -4deg; } to { rotate: 4deg; } }
+@keyframes lp-glow { from { filter: drop-shadow(0 0 1px rgb(255 160 40 / 40%)); } to { filter: drop-shadow(0 0 5px rgb(255 160 40 / 85%)); } }
+.hw-hat-brim { fill: #2a1640; stroke: #120a1c; stroke-width: .4; }
+.hw-hat-band { fill: #7b3fb0; }
+.hw-hat-top { fill: #3a1f58; }
+.hw-hat-tip { fill: #ffb347; }
+:root[data-perf="lite"] .lp-bat, :root[data-perf="lite"] .lp-hw-porch, :root[data-perf="lite"] .lp-hw-map { animation: none; }
+:root[data-perf="lite"] .lp-bat { display: none; }
+@media (prefers-reduced-motion: reduce) { .lp-bat { display: none; } .lp-hw-porch, .lp-hw-map { animation: none; } }
