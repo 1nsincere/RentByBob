@@ -50,7 +50,7 @@ try {
   }
 
   {
-    const { page, pageErrors } = await openHarness('ceb', { failRender: true })
+    const { page, pageErrors } = await openHarness('fil', { failRender: true })
     const alert = page.getByRole('alert')
     await alert.getByText('Wala maablihi kini nga bahin.', { exact: true }).waitFor()
     await alert.getByRole('button', { name: 'Sulayi pag-usab', exact: true }).waitFor()

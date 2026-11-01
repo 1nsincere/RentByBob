@@ -173,7 +173,7 @@ export function PublicRoomsPage() {
   const tr = (english: string, bisaya: string) => text(language, english, bisaya)
   return <PublicRoomsFrame propertyName={listings?.properties[0]?.name ?? 'RentByBob'} language={language} setLanguage={setLanguage} open={listings ? roomCount(listings) : null}>
     {failed ? <p className="notice notice--error" role="alert">{tr('Room listings could not be loaded. Please try again later.', 'Hindi ma-load ang listahan ng kuwarto. Pakisubukan ulit mamaya.')}</p>
-      : !listings ? <LoadingSkeleton label={tr('Loading rooms…', 'Nilo-load ang mga kuwarto…')} rows={3} />
+      : !listings ? <LoadingSkeleton label={tr('Loading rooms…', 'Nilo-load ang mga kuwarto…')} rows={3} shape="cards" />
       : <PublicRoomsView listings={listings} language={language} submit={submit} />}
   </PublicRoomsFrame>
 }

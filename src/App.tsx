@@ -6,6 +6,8 @@ import { DeferredBoundary, deferredScreen } from './components/DeferredScreen'
 import { dashboardPreview, hostedDevelopment, liveTarget, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
 import { ChangePassword, Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
 import { LogoMark, Wordmark } from './components/Logo'
+import { NetworkStatus } from './components/Network'
+import { LogoHat, SeasonBand, SignInScene, seasonGreeting, useSeasonal } from './components/Seasonal'
 import { IdleSignOut } from './access/IdleSignOut'
 import { PhilippineClock } from './access/PhilippineClock'
 import { TrustedDevices } from './access/TrustedDevices'
@@ -330,13 +332,15 @@ export function App() {
   }
 
   signOutRef.current = signOut
+  const seasonal = useSeasonal()
   const staffWorkspaceOpen = Boolean(session && role && snapshot && !snapshot.mfa && !setup && !dashboardPreview && !preview)
-  return <div className={`app-shell ${route === 'sign-in' || (route === 'loading' && !dashboardPreview && !savedSessionAtBoot) || !supabase ? 'sign-in-shell' : ''} ${dashboardPreview ? 'focused-preview' : ''}`}>
+  return <div data-season={seasonal.season ?? undefined} className={`app-shell ${route === 'sign-in' || (route === 'loading' && !dashboardPreview && !savedSessionAtBoot) || !supabase ? 'sign-in-shell' : ''} ${dashboardPreview ? 'focused-preview' : ''}`}>
     <a className="skip-link" href="#main">{t.skipContent}</a>
     <div className="environment-note">{environmentLabel}</div>
+    <NetworkStatus language={language} />
     <header className="site-header">
       <div className="shell header-inner">
-        <a className="brand" href="/" aria-label={translateText(language, 'RentByBob home', 'Home ng RentByBob')}><LogoMark size={34} /><Wordmark /></a>
+        <a className="brand" href="/" aria-label={translateText(language, 'RentByBob home', 'Home ng RentByBob')}><span className="brand-logo"><LogoMark size={34} /><LogoHat season={seasonal.season} /></span><Wordmark /></a>
         {/* App bar: display controls, then the signed-in account and Sign out (same accessible names as before). */}
         <div className="session-tools">
           <div className="session-actions">
@@ -362,12 +366,14 @@ export function App() {
           </div>}
         </div>
       </div>
+      <SeasonBand season={seasonal.season} />
     </header>
     <div className="shell page-shell">
       <main id="main" tabIndex={-1} className={role && route === 'ready' ? 'staff-main' : ''}>
         {dashboardPreview && <p className="notice" role="status"><strong>{translate('Fictional dashboard preview - sign-in skipped.', 'Halimbawang dashboard - hindi naka-sign in sa account.')}</strong> {translate('Sample records are isolated from your account. Changes reset on reload. This mode makes no Supabase requests, database writes or emails.', 'Hiwalay ang halimbawang talaan sa iyong account. Mawawala ang mga pagbabago kapag nag-reload. Walang Supabase request, database write o email sa mode na ito.')}</p>}
         {/* While starting up, the intro is kept for screen readers but takes no space, so nothing jumps when the real screen arrives. */}
         <div className={`page-intro ${booting ? 'visually-hidden' : ''}`}>
+          {route === 'sign-in' && <SignInScene season={seasonal.season} />}
           <p className="eyebrow">{role ? translate('PROPERTY WORKSPACE', 'WORKSPACE NG PROPERTY') : session ? translate('YOUR ACCOUNT', 'IYONG ACCOUNT') : translate('YOUR RENTAL SPACE, SIMPLIFIED', 'Madaling pamamahala ng iyong inuupahan')}</p>
           <h1 ref={heading} tabIndex={-1} className="route-heading">
             {route === 'loading' || route === 'checking' ? t.checkingAccess
@@ -382,7 +388,7 @@ export function App() {
           {route === 'sign-in' && <div className="welcome-points"><div><span className="welcome-number">01</span><span><strong>{t.yourRecords}</strong><small>{t.onlySharedInfo}</small></span></div><div><span className="welcome-number">02</span><span><strong>{t.yourOwnAccount}</strong><small>{t.invitedManaged}</small></span></div></div>}
         </div>
 
-        {booting ? <div className="boot-placeholder"><LoadingSkeleton label={t.sessionLoading} rows={4} /></div> : !supabase ? <section className="card auth-card">
+        {booting ? <div className="boot-placeholder"><LoadingSkeleton label={t.sessionLoading} rows={4} shape={savedSessionAtBoot ? 'dashboard' : 'form'} /></div> : !supabase ? <section className="card auth-card">
           <h2>{t.noConnection}</h2>
           {import.meta.env.PROD ? <p>{translate('The app cannot reach its records right now. Please try again later, or contact the property owner.', 'Hindi makakonekta ang app sa mga talaan ngayon. Subukan ulit mamaya, o kontakin ang may-ari.')}</p>
             : <p>{translate('Start local development with', 'Simulan ang local development gamit ang')} <code>npm.cmd run dev:local</code>{translate(', or the configured hosted development environment with', ', o ang naka-set up na hosted development gamit ang')} <code>npm.cmd run dev:hosted</code>. {translate('No prototype records are substituted.', 'Walang prototype na talaang ipapalit.')}</p>}
@@ -392,7 +398,7 @@ export function App() {
               : <>
                 <Feedback message={appError(language, error)} error />
                 {!dashboardPreview && snapshot && !snapshot.mfa && !setup && !role && snapshot.access.state !== 'ready' && <Button className="quiet-button refresh-access" onClick={() => { setSnapshot(null); void refresh() }}>{translate('Refresh access', 'I-refresh ang access')}</Button>}
-                {!snapshot ? error ? <p role="status" className="loading-state">{t.recordsUnavailable}</p> : <LoadingSkeleton label={t.checkingPermissions} rows={4} />
+                {!snapshot ? error ? <p role="status" className="loading-state">{t.recordsUnavailable}</p> : <LoadingSkeleton label={t.checkingPermissions} rows={4} shape="dashboard" />
                   : snapshot.mfa ? <Mfa done={() => void refresh()} language={language} />
                     : setup ? <PasswordSetup language={language} email={session.user.email ?? ''} done={() => { sessionStorage.removeItem(`password-setup:${session.user.id}`); setSetup(false); void refresh() }} />
                       : snapshot.access.state !== 'ready' ? <section className="card access-state-card">
@@ -433,6 +439,7 @@ export function App() {
                               <div className="dashboard-welcome">
                                 <p className="eyebrow">{role === 'owner' ? (language === 'fil' ? 'TRABAHO NG MAY-ARI' : 'OWNER WORKSPACE') : (language === 'fil' ? 'TRABAHO NG STAFF' : 'STAFF WORKSPACE')}</p>
                                 <h2 id="dashboard-welcome-heading">{t.welcome}</h2>
+                                {seasonGreeting(seasonal.season, language) && <p className="season-greeting">{seasonGreeting(seasonal.season, language)}</p>}
                                 <p className="dashboard-identity">{translate('Signed in as', 'Naka-sign in bilang')} <strong>{session.user.email}</strong></p>
                                 <h3>{t.today}</h3>
                                 <div className="dashboard-actions">
@@ -445,7 +452,7 @@ export function App() {
                             </section>
                             {!preview && activeSection === 'home' && (snapshot?.newInquiries ?? 0) > 0 && <div className="notice inquiry-alert" role="status"><p><strong>{snapshot!.newInquiries} {translate(snapshot!.newInquiries === 1 ? 'new inquiry' : 'new inquiries', 'ka bag-ong pangutana')}</strong> {translate('from people asking about rooms on the public page.', 'mula sa mga taong nagtanong tungkol sa kuwarto sa publikong pahina.')}</p><Button className="primary" onClick={() => selectSection('room-listings')}>{translate('Open inquiries', 'Buksan ang mga tanong')}</Button></div>}
                             {activeSection === 'home' && <PhilippineClock propertyId={preview ? undefined : propertyId} language={language} />}
-                            {!preview && propertyId && activeSection === 'home' && <DeferredBoundary loadingLabel={translate('Loading collection figures…', 'Nilo-load ang mga numero ng koleksiyon…')} rows={2} language={language} reset={CollectionsOverview.reset}>
+                            {!preview && propertyId && activeSection === 'home' && <DeferredBoundary loadingLabel={translate('Loading collection figures…', 'Nilo-load ang mga numero ng koleksiyon…')} rows={2} language={language} shape="stats" reset={CollectionsOverview.reset}>
                               <CollectionsOverview.Screen key={propertyId} propertyId={propertyId} tenants={tenantList} openPayments={tenantId => { if (tenantId) setPaymentTenant({ tenantId, nonce: Date.now() }); selectSection('payment-records') }} language={language} />
                             </DeferredBoundary>}
                             <section hidden={activeSection !== 'home'} className="workspace-overview" aria-label={translate('Property workspace summary', 'Kabuuang katayuan ng property')}>
@@ -459,7 +466,7 @@ export function App() {
                               ))}
                             </section>
                             {preview && <div hidden={activeSection !== 'tenant-records'} tabIndex={-1} id="preview-tenant-records"><preview.TenantDirectoryPreview key={visit('tenant-records')} openPayments={() => selectSection('payment-records')} openMap={() => selectSection('property-locations')} addTenant={() => selectSection('create-tenant')} language={language} /></div>}
-                            {!preview && <div id="tenant-records" hidden={activeSection !== 'tenant-records'} tabIndex={-1} className="workspace-section">{visitedSections.includes('tenant-records') && <DeferredBoundary loadingLabel={translate('Loading tenants…', 'Nilo-load ang mga umuupa…')} rows={3} language={language} reset={TenantDirectory.reset}>
+                            {!preview && <div id="tenant-records" hidden={activeSection !== 'tenant-records'} tabIndex={-1} className="workspace-section">{visitedSections.includes('tenant-records') && <DeferredBoundary loadingLabel={translate('Loading tenants…', 'Nilo-load ang mga umuupa…')} rows={3} language={language} shape="list" reset={TenantDirectory.reset}>
                               <TenantDirectory.Screen key={`directory:${propertyId}:${visit('tenant-records')}`} propertyId={propertyId} tenants={tenantList} renterLinks={snapshot.renterLinks} owner={canManage} active={activeSection === 'tenant-records'} language={language}
                                 addTenant={() => selectSection('create-tenant')}
                                 openPayments={(tenantId, tab) => { setPaymentTenant({ tenantId, nonce: Date.now(), tab }); selectSection('payment-records') }}
@@ -469,25 +476,26 @@ export function App() {
                             </DeferredBoundary>}</div>}
                             <div id="property-locations" hidden={activeSection !== 'property-locations'} tabIndex={-1} className="workspace-section">{preview
                               ? <preview.PropertyMapPreview key={visit('property-locations')} addTenant={() => selectSection('create-tenant')} language={language} />
-                              : visitedSections.includes('property-locations') && <DeferredBoundary loadingLabel={translate('Loading property locations…', 'Nilo-load ang mga lokasyon…')} rows={3} language={language} reset={PropertyDirectory.reset}>
+                              : visitedSections.includes('property-locations') && <DeferredBoundary loadingLabel={translate('Loading property locations…', 'Nilo-load ang mga lokasyon…')} rows={3} language={language} shape="list" reset={PropertyDirectory.reset}>
                                 <PropertyDirectory.Screen key={`locations:${propertyId}:${visit('property-locations')}`} propertyId={propertyId} owner={canManage} startAgreement={unitId => { setTenantRoom({ unitId, nonce: Date.now() }); selectSection('create-tenant') }} locate={locateUnit} openPaymentsForUnit={tenantId => { setPaymentTenant({ tenantId, nonce: Date.now() }); selectSection('payment-records') }} language={language} />
                               </DeferredBoundary>}</div>
-                            <div id="create-tenant" hidden={activeSection !== 'create-tenant'} tabIndex={-1} className="workspace-section">{preview ? <preview.AddTenantPreview showDirectory={() => selectSection('tenant-records')} showBuildings={() => selectSection('property-locations')} language={language} /> : <DeferredBoundary loadingLabel={translate('Loading the tenant form…', 'Nilo-load ang form…')} rows={3} language={language} reset={AddTenant.reset}><AddTenant.Screen key={`create:${propertyId}`} propertyId={propertyId} preselect={tenantRoom} assignTenant={assignTenant} done={() => void refresh()} openDirectory={() => selectSection('tenant-records')} openPayments={() => selectSection('payment-records')} language={language} /></DeferredBoundary>}</div>
+                            <div id="create-tenant" hidden={activeSection !== 'create-tenant'} tabIndex={-1} className="workspace-section">{preview ? <preview.AddTenantPreview showDirectory={() => selectSection('tenant-records')} showBuildings={() => selectSection('property-locations')} language={language} /> : <DeferredBoundary loadingLabel={translate('Loading the tenant form…', 'Nilo-load ang form…')} rows={3} language={language} shape="form" reset={AddTenant.reset}><AddTenant.Screen key={`create:${propertyId}`} propertyId={propertyId} preselect={tenantRoom} assignTenant={assignTenant} done={() => void refresh()} openDirectory={() => selectSection('tenant-records')} openPayments={() => selectSection('payment-records')} language={language} /></DeferredBoundary>}</div>
                             <div id="payment-records" hidden={activeSection !== 'payment-records'} tabIndex={-1} className="workspace-section">{preview
                               ? <preview.PaymentsPreview key={visit('payment-records')} language={language} />
-                              : visitedSections.includes('payment-records') && <DeferredBoundary loadingLabel={translate('Loading payment records…', 'Nilo-load ang mga talaan ng bayad…')} rows={3} language={language} reset={SavedPayments.reset}>
+                              : visitedSections.includes('payment-records') && <DeferredBoundary loadingLabel={translate('Loading payment records…', 'Nilo-load ang mga talaan ng bayad…')} rows={3} language={language} shape="table" reset={SavedPayments.reset}>
                                 <SavedPayments.Screen key={`payments:${propertyId}:${visit('payment-records')}`} propertyId={propertyId} propertyName={snapshot.properties.find(property => property.id === propertyId)?.name} tenants={tenantList} owner={canManage} userId={session.user.id} focusTenant={paymentTenant} active={activeSection === 'payment-records'} language={language} />
                               </DeferredBoundary>}</div>
-                              {!preview && <div id="maintenance" hidden={activeSection !== 'maintenance'} tabIndex={-1} className="workspace-section">{visitedSections.includes('maintenance') && <DeferredBoundary loadingLabel={translate('Loading maintenance…', 'Nilo-load ang maintenance…')} rows={3} language={language} reset={Maintenance.reset}><Maintenance.Screen key={`maintenance:${propertyId}:${visit('maintenance')}`} propertyId={propertyId} userId={session.user.id} language={language} /></DeferredBoundary>}</div>}
-                              <div id="room-listings" hidden={activeSection !== 'room-listings'} tabIndex={-1} className="workspace-section">{visitedSections.includes('room-listings') && <DeferredBoundary loadingLabel={translate('Loading room listings…', 'Nilo-load ang listahan ng kuwarto…')} rows={3} language={language} reset={RoomListingsManager.reset}><RoomListingsManager.Screen key={`listings:${propertyId}:${visit('room-listings')}`} propertyId={propertyId} owner={canManage} language={language} /></DeferredBoundary>}</div>
-                              <div id="invite-account" hidden={activeSection !== 'invite-account'} tabIndex={-1} className="workspace-section">{visitedSections.includes('invite-account') && <DeferredBoundary loadingLabel={translate('Loading invitations…', 'Nilo-load ang mga imbitasyon…')} rows={2} language={language} reset={Invitations.reset}><Invitations.Screen key={`invite:${propertyId}:${visit('invite-account')}`} propertyId={propertyId} owner={role === 'owner'} language={language} /></DeferredBoundary>}</div>
-                            <div id="manage-access" hidden={activeSection !== 'manage-access'} tabIndex={-1} className="workspace-section">{visitedSections.includes('manage-access') && <DeferredBoundary loadingLabel={translate('Loading account access…', 'Nilo-load ang access sa account…')} rows={3} language={language} reset={ManageAccess.reset}><ManageAccess.Screen owner={role === 'owner'} key={`access:${propertyId}:${visit('manage-access')}`} propertyId={propertyId} tenants={tenantList} changed={() => void refresh()} language={language} /></DeferredBoundary>}</div>
+                              {!preview && <div id="maintenance" hidden={activeSection !== 'maintenance'} tabIndex={-1} className="workspace-section">{visitedSections.includes('maintenance') && <DeferredBoundary loadingLabel={translate('Loading maintenance…', 'Nilo-load ang maintenance…')} rows={3} language={language} shape="list" reset={Maintenance.reset}><Maintenance.Screen key={`maintenance:${propertyId}:${visit('maintenance')}`} propertyId={propertyId} userId={session.user.id} language={language} /></DeferredBoundary>}</div>}
+                              <div id="room-listings" hidden={activeSection !== 'room-listings'} tabIndex={-1} className="workspace-section">{visitedSections.includes('room-listings') && <DeferredBoundary loadingLabel={translate('Loading room listings…', 'Nilo-load ang listahan ng kuwarto…')} rows={3} language={language} shape="cards" reset={RoomListingsManager.reset}><RoomListingsManager.Screen key={`listings:${propertyId}:${visit('room-listings')}`} propertyId={propertyId} owner={canManage} language={language} /></DeferredBoundary>}</div>
+                              <div id="invite-account" hidden={activeSection !== 'invite-account'} tabIndex={-1} className="workspace-section">{visitedSections.includes('invite-account') && <DeferredBoundary loadingLabel={translate('Loading invitations…', 'Nilo-load ang mga imbitasyon…')} rows={2} language={language} shape="form" reset={Invitations.reset}><Invitations.Screen key={`invite:${propertyId}:${visit('invite-account')}`} propertyId={propertyId} owner={role === 'owner'} language={language} /></DeferredBoundary>}</div>
+                            <div id="manage-access" hidden={activeSection !== 'manage-access'} tabIndex={-1} className="workspace-section">{visitedSections.includes('manage-access') && <DeferredBoundary loadingLabel={translate('Loading account access…', 'Nilo-load ang access sa account…')} rows={3} language={language} shape="list" reset={ManageAccess.reset}><ManageAccess.Screen owner={role === 'owner'} key={`access:${propertyId}:${visit('manage-access')}`} propertyId={propertyId} tenants={tenantList} changed={() => void refresh()} language={language} /></DeferredBoundary>}</div>
                             {role === 'owner' && <>
                               
-                              <div id="invitation-review" hidden={activeSection !== 'invitation-review'} tabIndex={-1} className="workspace-section">{visitedSections.includes('invitation-review') && <DeferredBoundary loadingLabel={translate('Loading invitation review…', 'Nilo-load ang pagsusuri ng imbitasyon…')} rows={3} language={language} reset={InvitationReconciliation.reset}><InvitationReconciliation.Screen key={`invitation-reconciliation:${propertyId}:${visit('invitation-review')}`} propertyId={propertyId} language={language} /></DeferredBoundary>}</div>
-                              <div id="access-history" hidden={activeSection !== 'access-history'} tabIndex={-1} className="workspace-section">{visitedSections.includes('access-history') && <DeferredBoundary loadingLabel={translate('Loading access history…', 'Nilo-load ang kasaysayan ng access…')} rows={3} language={language} reset={AccessAudit.reset}><AccessAudit.Screen key={`audit:${propertyId}:${visit('access-history')}`} propertyId={propertyId} language={language} /></DeferredBoundary>}</div>
+                              <div id="invitation-review" hidden={activeSection !== 'invitation-review'} tabIndex={-1} className="workspace-section">{visitedSections.includes('invitation-review') && <DeferredBoundary loadingLabel={translate('Loading invitation review…', 'Nilo-load ang pagsusuri ng imbitasyon…')} rows={3} language={language} shape="list" reset={InvitationReconciliation.reset}><InvitationReconciliation.Screen key={`invitation-reconciliation:${propertyId}:${visit('invitation-review')}`} propertyId={propertyId} language={language} /></DeferredBoundary>}</div>
+                              <div id="access-history" hidden={activeSection !== 'access-history'} tabIndex={-1} className="workspace-section">{visitedSections.includes('access-history') && <DeferredBoundary loadingLabel={translate('Loading access history…', 'Nilo-load ang kasaysayan ng access…')} rows={3} language={language} shape="table" reset={AccessAudit.reset}><AccessAudit.Screen key={`audit:${propertyId}:${visit('access-history')}`} propertyId={propertyId} language={language} /></DeferredBoundary>}</div>
                             </>}
                             <section hidden={activeSection !== 'account-security'} tabIndex={-1} className="card account-security" id="account-security">
+                              {seasonal.dateSeason && <label className="season-switch"><input type="checkbox" checked={!seasonal.off} onChange={seasonal.toggle} /><span>{translate('Show seasonal decorations', 'Ipakita ang pang-season na dekorasyon')}<small>{translate('Small holiday touches on the app bar, logo and sign-in page. Your records are not affected.', 'Maliit na dekorasyon sa app bar, logo at sign-in page. Hindi apektado ang iyong mga talaan.')}</small></span></label>}
                               <p className="eyebrow">{translate('SIGN-IN AND RECOVERY', 'PAG-SIGN IN AT PAG-RECOVER NG ACCOUNT')}</p>
                               <h2>{t.accountSecurity}</h2>
                               <p>{translate('Enroll a backup authenticator on a separate device before losing access to your main one. Password recovery does not bypass staff MFA.', 'Magdagdag ng isa pang authenticator sa ibang device para may iba kang magamit. Hindi inaalis ng pagpapalit ng password ang security check ng staff.')}</p>
@@ -498,7 +506,7 @@ export function App() {
                           </div>
                         </div>
                       </> : <>
-                        <DeferredBoundary loadingLabel={translate('Loading your rent record…', 'Nilo-load ang talaan ng iyong upa…')} rows={4} language={language} reset={RenterPortal.reset}>
+                        <DeferredBoundary loadingLabel={translate('Loading your rent record…', 'Nilo-load ang talaan ng iyong upa…')} rows={4} language={language} shape="rent" reset={RenterPortal.reset}>
                           <RenterPortal.Screen language={language} />
                         </DeferredBoundary>
                         {session.user.email && <ChangePassword email={session.user.email} language={language} />}

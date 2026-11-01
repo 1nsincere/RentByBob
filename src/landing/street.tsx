@@ -282,6 +282,35 @@ function Vehicle({ ride, extra, vendorLine }: { ride: Ride; extra?: boolean; ven
 
 // Bob: short, bald and always with his sungkod (walking stick). Drawn from above, facing east; he strolls the shoulder
 // in front of his house, stopping now and then to look around.
+// A string of Christmas lights: a wire drooping in swags between hooks, with glass bulbs in red, gold and green that
+// twinkle in turn. Drawn in a 600x40 box and stretched to its container's width.
+export function Garland({ className, swags = 4 }: { className?: string; swags?: number }) {
+  const w = 600, sag = 18, step = w / swags, bulbs: { x: number; y: number; c: number }[] = []
+  let d = 'M0 4'
+  for (let i = 0; i < swags; i++) {
+    const x0 = i * step, x1 = x0 + step
+    d += ` Q${x0 + step / 2} ${4 + sag * 2} ${x1} 4`
+    for (let k = 1; k < 7; k++) { const t = k / 7, x = x0 + step * t, y = 4 + sag * 4 * t * (1 - t); bulbs.push({ x, y, c: (i * 6 + k) % 3 }) }
+  }
+  return <svg className={['xm-garland', className].filter(Boolean).join(' ')} viewBox={`0 0 ${w} 40`} preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <path className="xm-wire" d={d} />
+    {bulbs.map((b, i) => <g key={i} className={`xm-bulb xm-bulb--${b.c}`} style={{ animationDelay: `${(i % 5) * 0.35}s` } as CSSProperties}>
+      <rect x={b.x - 1.2} y={b.y - .5} width="2.4" height="2.4" rx=".5" className="xm-socket" /><ellipse cx={b.x} cy={b.y + 5} rx="2.6" ry="3.8" />
+    </g>)}
+  </svg>
+}
+
+// A corner spider web for Halloween (thin silk lines, a tiny spider hanging on a thread).
+export function SpiderWeb({ className }: { className?: string }) {
+  const rays = [0, 18, 36, 54, 72, 90].map(a => [Math.cos(a * Math.PI / 180) * 100, Math.sin(a * Math.PI / 180) * 100])
+  const ring = (r: number) => rays.map(([x, y], i) => `${i ? 'L' : 'M'}${(x * r / 100).toFixed(1)} ${(y * r / 100).toFixed(1)}`).join(' ')
+  return <svg className={['hw-web', className].filter(Boolean).join(' ')} viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+    {rays.map(([x, y], i) => <line key={i} x1="0" y1="0" x2={x} y2={y} />)}
+    {[25, 45, 65, 85].map(r => <path key={r} d={ring(r)} fill="none" />)}
+    <line className="hw-thread" x1="58" y1="44" x2="58" y2="72" /><g className="hw-spider"><ellipse cx="58" cy="75" rx="3.4" ry="4" /><circle cx="58" cy="70.4" r="2.2" /><path d="M54.5 73l-4-2.5M54.5 76l-4.5 1M61.5 73l4-2.5M61.5 76l4.5 1" /></g>
+  </svg>
+}
+
 // A parol, the Filipino Christmas star lantern: a five-point star in a round frame with two long tails; glows at night.
 export function Parol({ className, style }: { className?: string; style?: CSSProperties }) {
   return <svg className={['xm-parol', className].filter(Boolean).join(' ')} style={style} viewBox="0 0 40 56" aria-hidden="true" focusable="false">
@@ -702,8 +731,8 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language,
     </svg>)}
     {TRAFFIC.map((ride, index) => <Vehicle key={index} ride={ride} extra={index >= 4} vendorLine={tr('Malunggay Pandesal, init pa with cheese, tag singko lang!', 'Malunggay Pandesal, init pa with cheese, tag singko lang!')} />)}
     {spooky && [[7, 48], [38, 48], [66, 48], [86, 48], [27.5, 95], [47, 95], [58, 72]].map(([left, top], i) => <Pumpkin key={i} className="lp-hw-map" style={{ left: `${left}%`, top: `${top}%`, animationDelay: `${i * -0.6}s` }} />)}
-    {festive && <span className="lp-xm-lights lp-xm-lights--top" aria-hidden="true" />}
-    {festive && <span className="lp-xm-lights lp-xm-lights--bottom" aria-hidden="true" />}
+    {festive && <Garland className="lp-xm-map-garland lp-xm-map-garland--top" swags={6} />}
+    {festive && <Garland className="lp-xm-map-garland lp-xm-map-garland--bottom" swags={6} />}
     {festive && [[2.2, 27], [35.5, 31], [66.5, 31], [96.5, 33], [53, 68]].map(([left, top], i) => <Parol key={i} className="lp-xm-map" style={{ left: `${left}%`, top: `${top}%`, animationDelay: `${i * -0.9}s` }} />)}
     <Bob hat={spooky ? 'witch' : festive ? 'santa' : false} label={tr('This is Bob', 'Ito si Bob')} line={tr('Thank you, iho!', "Salamat, iho!")} bless={tr('God bless you both!', 'Pagpalain kayo ng Diyos!')} farewell={tr('Take care, you two!', 'Ingat kayo, mga iho!')} />
     <Dog hat={spooky ? 'pumpkin' : festive ? 'bow' : false} heart="♥" bark={tr('Arf!', 'Aw aw!')} />

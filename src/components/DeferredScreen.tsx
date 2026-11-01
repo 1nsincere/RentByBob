@@ -1,5 +1,5 @@
 import { Component, createRef, lazy, Suspense, type ComponentType, type ReactNode } from 'react'
-import { Button, LoadingSkeleton } from './atoms'
+import { Button, LoadingSkeleton, type SkeletonShape } from './atoms'
 import type { Language } from '../i18n'
 
 // React.lazy keeps a rejected import for the lifetime of the lazy component, so retrying needs a new one.
@@ -10,7 +10,7 @@ export function deferredScreen<P extends object>(load: () => Promise<ComponentTy
   return { Screen, reset: () => { Loaded = create() } }
 }
 
-type DeferredBoundaryProps = { children: ReactNode; loadingLabel: string; rows?: number; language: Language; reset: () => void }
+type DeferredBoundaryProps = { children: ReactNode; loadingLabel: string; rows?: number; shape?: SkeletonShape; language: Language; reset: () => void }
 
 // One failed screen (download or render) shows a recoverable message instead of unmounting every workspace section.
 export class DeferredBoundary extends Component<DeferredBoundaryProps, { failed: boolean }> {
@@ -30,8 +30,8 @@ export class DeferredBoundary extends Component<DeferredBoundaryProps, { failed:
   }
 
   render() {
-    const { children, loadingLabel, rows, language } = this.props
-    if (!this.state.failed) return <Suspense fallback={<LoadingSkeleton label={loadingLabel} rows={rows} />}>{children}</Suspense>
+    const { children, loadingLabel, rows, shape, language } = this.props
+    if (!this.state.failed) return <Suspense fallback={<LoadingSkeleton label={loadingLabel} rows={rows} shape={shape} />}>{children}</Suspense>
     const translate = (english: string, bisaya: string) => language === 'fil' ? bisaya : english
     return <div ref={this.message} tabIndex={-1} role="alert" className="notice notice--error deferred-failure">
       <p><strong>{translate('This section did not open.', 'Hindi mabuksan ang bahaging ito.')}</strong></p>

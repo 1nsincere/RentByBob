@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Button } from '../components/atoms'
+import { Button, LoadingSkeleton } from '../components/atoms'
 import { supabase } from './client'
 import { clearDevice, readDevice } from './trusted-device'
 import { text, type Language } from '../i18n'
@@ -36,7 +36,7 @@ export function TrustedDevices({ language = 'en' }: { language?: Language }) {
     <h3 id="trusted-devices-heading">{tr('Remembered devices', 'Mga natandaang device')}</h3>
     <p>{tr('On a remembered device you sign in with your password only, without the authenticator code, for 30 days. Remove any device you no longer use or that is shared.', 'Sa natandaang device, password lang ang kailangan, walang authenticator code, sa loob ng 30 araw. Tanggalin ang device na hindi mo na ginagamit o ginagamit ng iba.')}</p>
     {message && <p role={message.error ? 'alert' : 'status'} className={`notice${message.error ? ' notice--error' : ''}`}>{message.text}</p>}
-    {devices === null ? <p className="field-help">{tr('Loading…', 'Nilo-load…')}</p> : devices.length === 0 ? <p className="field-help">{tr('No remembered devices. Tick "Remember this device" after entering the authenticator code to add one.', 'Walang natandaang device. I-check ang "Tandaan ang device na ito" pagkatapos ilagay ang code.')}</p>
+    {devices === null ? <LoadingSkeleton label={tr('Loading remembered devices…', 'Nilo-load ang mga naaalalang device…')} rows={2} shape="list" /> : devices.length === 0 ? <p className="field-help">{tr('No remembered devices. Tick "Remember this device" after entering the authenticator code to add one.', 'Walang natandaang device. I-check ang "Tandaan ang device na ito" pagkatapos ilagay ang code.')}</p>
       : <ul className="trusted-device-list">{devices.map(device => <li key={device.id}>
         <div><strong>{device.label}{device.current && <span className="status status--ready">{tr('This device', 'Ang device na ito')}</span>}</strong>
           <small>{tr('Added', 'Idinagdag')} {day(device.created_at)} · {tr('expires', 'matatapos')} {day(device.expires_at)}{device.last_used_at ? ` · ${tr('last used', 'huling gamit')} ${day(device.last_used_at)}` : ''}</small></div>

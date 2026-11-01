@@ -97,7 +97,7 @@ export function AddTenant({ propertyId, preselect, assignTenant, done, openDirec
   function reset() { setExisting(null); setDraft(empty()); setStep('form'); setError(''); ids.current = { tenant: crypto.randomUUID(), agreement: crypto.randomUUID() } }
 
   if (state === 'failed') return <p className="notice notice--error" role="alert">{tr('Rooms could not be loaded. Check your connection and staff session, then reload.', 'Hindi ma-load ang mga kuwarto. Suriin ang koneksyon at staff session, saka i-reload.')}</p>
-  if (state === 'loading') return <LoadingSkeleton label={tr('Loading rooms…', 'Nilo-load ang mga kuwarto…')} rows={3} />
+  if (state === 'loading') return <LoadingSkeleton label={tr('Loading rooms…', 'Nilo-load ang mga kuwarto…')} rows={3} shape="form" />
   return <section className="add-tenant-preview add-tenant" aria-labelledby="add-tenant-heading">
     <div className="section-heading"><div><p className="eyebrow">{tr('DIRECTORY MANAGEMENT', 'PAMAMAHALA NG LISTAHAN')}</p><h2 id="add-tenant-heading">{existing ? tr('Assign a room', 'Bigyan ng kuwarto') : tr('Add tenant record', 'Magdagdag ng umuupa')}</h2><p>{existing ? tr('Choose the vacant room, move-in date and monthly rent for this tenant.', 'Piliin ang bakanteng kuwarto, petsa ng paglipat at buwanang upa para sa umuupang ito.') : tr('Add the person or business and, if they are moving in, their room and rent in one step.', 'Idagdag ang tao o negosyo at, kung lilipat na, ang kanilang kuwarto at upa sa isang hakbang.')}</p></div></div>
     <ol className="form-progress" aria-label={tr('Form progress', 'Progreso ng form')}>
