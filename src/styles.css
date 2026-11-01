@@ -334,7 +334,10 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+  /* The landing street is exempt only after its visitor presses "Play the street" (landing/street.tsx). */
+  :not(.lp[data-street-motion="on"] .lp-plan-wrap *), :not(.lp[data-street-motion="on"] .lp-plan-wrap *)::before,
+  :not(.lp[data-street-motion="on"] .lp-plan-wrap *)::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
 
 /* Focused workspace and welcoming mobile entry, 17 Oct 2026. */
