@@ -17,7 +17,7 @@ declare
   removable constant text[] := array[
     'private.invitation_attempts', 'private.invitation_attempt_reviews', 'staff_memberships', 'public.staff_memberships',
     'tenant_contacts', 'public.tenant_contacts', 'audit_events', 'public.audit_events',
-    'private.trusted_devices'];
+    'private.trusted_devices', 'account_profiles', 'public.account_profiles'];
 begin
   select id into v_account from auth.users where lower(email) = lower(btrim(v_email));
   if v_account is null then raise exception 'No account uses the email %', v_email; end if;

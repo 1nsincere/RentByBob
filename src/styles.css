@@ -1960,3 +1960,36 @@ html .paid-rent-document .doc-optional h2 { font-size: 14pt; }
 /* Signed in, the account picture and Sign out share the bar, so phones up to 480px show only the logo tile (the link
    keeps its "RentByBob home" name). Signed out there is room for the full name. */
 @media (max-width: 30rem) { .site-header:has(.appbar-account) .brand .wordmark { display: none; } }
+
+/* Personal profile (components/ProfileCard.tsx): the welcome card asked once after the first sign-in, the editor in
+   Account settings, the round picture in the greeting and the app bar. */
+.profile-card { position: relative; display: grid; gap: .6rem; margin: 0 0 1.25rem; padding: clamp(1.1rem, 3vw, 1.6rem); overflow: hidden; }
+.profile-card--welcome { border-color: color-mix(in srgb, var(--brand) 35%, var(--border)); background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 9%, var(--surface)), var(--surface) 60%); }
+.profile-card--welcome::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: linear-gradient(90deg, var(--brand), #f2b84b); }
+.profile-card h2 { margin: 0; font-size: clamp(1.4rem, 3vw, 1.8rem); letter-spacing: -.02em; }
+.profile-card .eyebrow { margin: 0; }
+.profile-card-lead { margin: 0; color: var(--text-secondary); max-width: 40rem; }
+.profile-form { display: grid; gap: .55rem; max-width: 36rem; margin-top: .4rem; }
+.profile-form input[type="text"] { min-height: 2.9rem; }
+.profile-photo-row { display: flex; align-items: center; gap: 1rem; margin-bottom: .4rem; }
+.profile-photo-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.profile-photo-actions .field-help { flex-basis: 100%; margin: 0; }
+.profile-photo-pick { cursor: pointer; }
+.profile-photo-pick:focus-within { outline: 3px solid var(--focus, var(--brand)); outline-offset: 2px; }
+.profile-card-buttons { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .4rem; }
+.profile-avatar { display: inline-grid; flex: none; place-items: center; overflow: hidden; border-radius: 50%; background: var(--action-gradient, var(--brand)); color: #fff; font-weight: 800; box-shadow: 0 4px 12px rgb(15 61 45 / 25%); }
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.profile-avatar--sm { width: 2.5rem; height: 2.5rem; font-size: 1rem; }
+.profile-avatar--md { width: 3.4rem; height: 3.4rem; font-size: 1.3rem; }
+.profile-avatar--lg { width: 5.5rem; height: 5.5rem; font-size: 2.1rem; border: 3px solid var(--surface); }
+.dashboard-greeting { display: flex; align-items: center; gap: .8rem; }
+.dashboard-greeting h2 { min-width: 0; overflow-wrap: anywhere; }
+.site-header .appbar-avatar--photo { overflow: hidden; padding: 0; }
+.site-header .appbar-avatar--photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.renter-record-name { margin: .1rem 0 0; color: var(--text-secondary); }
+@media (max-width: 30rem) {
+  .profile-photo-row { align-items: flex-start; }
+  .profile-avatar--lg { width: 4.5rem; height: 4.5rem; }
+  .profile-card-buttons .button { flex: 1 1 100%; }
+}
+@media print { .profile-card { display: none !important; } }
