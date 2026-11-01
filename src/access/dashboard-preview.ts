@@ -23,6 +23,7 @@ export const previewSnapshot = {
 
 // This transport never calls fetch. All writes fail explicitly; no real Auth
 // client, stored session, privileged key or hosted request is used in preview.
+let previewProfile: { preferred_name: string | null; photo: string | null; welcomed: boolean } = { preferred_name: null, photo: null, welcomed: false }
 export const previewClient = createClient('http://preview.invalid', 'offline-preview-only', {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   global: { fetch: async (input, options) => {
@@ -32,6 +33,14 @@ export const previewClient = createClient('http://preview.invalid', 'offline-pre
     if (path === '/rest/v1/units' && (!options?.method || options.method === 'GET')) return json([{ id: 'preview-unit', building_id: 'preview-building', label: 'Sample Room 01', archived_at: null }])
     if (['/rest/v1/rpc/read_access_audit', '/rest/v1/rpc/read_invitation_attempts'].includes(path)) return json([])
     if (path === '/rest/v1/rpc/find_account_for_assignment') return json(null)
+    // Profile lives in memory for this tab only, so the welcome card can be tried without saving anything anywhere.
+    if (path === '/rest/v1/rpc/read_my_profile') return json(previewProfile)
+    if (path === '/rest/v1/rpc/save_my_profile') {
+      const body = JSON.parse(String(options?.body ?? '{}')) as { p_preferred_name?: string; p_photo?: string | null; p_change_photo?: boolean }
+      previewProfile = { preferred_name: body.p_preferred_name?.trim() || null, photo: body.p_change_photo ? body.p_photo ?? null : previewProfile.photo, welcomed: true }
+      return json(previewProfile)
+    }
+    if (path === '/rest/v1/rpc/dismiss_profile_welcome') { previewProfile = { ...previewProfile, welcomed: true }; return json(previewProfile) }
     return json({ code: 'PREVIEW_ONLY', message: 'Preview only. Nothing was saved or sent.' }, 403)
   } },
 })

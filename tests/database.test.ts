@@ -54,8 +54,8 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     const rows = (await db.query<{ relrowsecurity: boolean }>("select relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'")).rows
     // 21 includes cash_reversals (202610270001), room_listings and rental_inquiries (202610270002); 22 adds agreement_room_changes (202610270009); 23 adds renter_payment_reports (202610270012); every table must still have RLS.
     // 24 adds rent_month_drafts (202610280001), months copied from the notebook, which have no browser grants.
-    // 25 adds maintenance_expenses (202610280003).
-    assert.equal(rows.length, 25)
+    // 25 adds maintenance_expenses (202610280003); 26 adds account_profiles (202611010002).
+    assert.equal(rows.length, 26)
     assert.ok(rows.every(r => r.relrowsecurity))
     await db.exec('set role anon')
     await denied('select * from public.tenants')
@@ -152,7 +152,8 @@ test('access migration enforces roles, tenant isolation, revocation and atomic a
     // 78 adds remove_tenant_with_room (202610280002) and the three maintenance functions (202610280003), staff-only.
     // 79 adds private.add_rent_month_core (202610280005), not callable from the browser.
     // 80 adds public.list_access_candidates (202610300002), owner-only.
-    assert.equal(result.rows.length, 80)
+    // 83 adds read_my_profile, save_my_profile and dismiss_profile_welcome (202611010002), signed-in self only.
+    assert.equal(result.rows.length, 83)
     // The only reviewed anonymous entry points: read listed rooms and leave an inquiry (202610270002).
     const anonymousAllowed = new Set(['read_public_listings', 'submit_rental_inquiry'])
     for (const fn of result.rows) {

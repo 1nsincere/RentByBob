@@ -7,6 +7,7 @@ import { dashboardPreview, hostedDevelopment, liveTarget, preview, initialized, 
 import { ChangePassword, Feedback, Mfa, PasswordSetup, SignIn } from './access/AuthForms'
 import { LogoMark, Wordmark } from './components/Logo'
 import { NetworkStatus } from './components/Network'
+import { ProfileAvatar, ProfileCard, useProfile } from './components/ProfileCard'
 import { LogoHat, SeasonBand, SignInScene, seasonGreeting, useSeasonal } from './components/Seasonal'
 import { IdleSignOut } from './access/IdleSignOut'
 import { PhilippineClock } from './access/PhilippineClock'
@@ -220,6 +221,8 @@ export function App() {
   const route = booting ? 'loading' : callbackError ? 'link-error' : !session ? 'sign-in'
     : !snapshot ? 'checking' : snapshot.mfa ? 'mfa' : setup ? 'password' : snapshot.access.state
   useEffect(() => { heading.current?.focus() }, [route])
+  // What to call the signed-in person and their picture (welcome card on first sign-in, greeting, app bar).
+  const [profile, setProfile] = useProfile(supabase, route === 'ready' ? session?.user.id ?? null : null)
   // The idle sign-out notice stays on the sign-in screen until the person signs in again (token refresh events must not clear it).
   const previousRoute = useRef(route)
   useEffect(() => { if (previousRoute.current === 'sign-in' && route !== 'sign-in' && route !== 'loading') setIdleNotice(false); previousRoute.current = route }, [route])
@@ -357,7 +360,9 @@ export function App() {
             </Button>
           </div>
           {session && <div className="appbar-account">
-            <span className="appbar-avatar" aria-hidden="true">{(dashboardPreview ? 'S' : session.user.email ?? '?').trim().slice(0, 1).toLocaleUpperCase()}</span>
+            {profile?.photo
+              ? <span className="appbar-avatar appbar-avatar--photo" aria-hidden="true"><img src={profile.photo} alt="" /></span>
+              : <span className="appbar-avatar" aria-hidden="true">{(profile?.preferredName || (dashboardPreview ? 'S' : session.user.email) || '?').trim().slice(0, 1).toLocaleUpperCase()}</span>}
             <div className="session-identity">
               <span className="signed-in-label">{dashboardPreview ? translateText(language, 'Workspace mode', 'Lugar ng trabaho') : role ? (role === 'owner' ? translateText(language, 'Owner', 'May-ari') : translateText(language, 'Clerk', 'Clerk')) : translateText(language, 'Signed in as', 'Naka-sign in bilang')}</span>
               <span className="account-email">{dashboardPreview ? translateText(language, 'Fictional sample account', 'Gawa-gawang halimbawang account') : session.user.email}</span>
@@ -436,9 +441,13 @@ export function App() {
                               </div> : <p className="toolbar-property"><span>{t.property}</span> <strong>{snapshot.properties.find(property => property.id === propertyId)?.name}</strong></p>}
                             </div>
                             <section hidden={activeSection !== 'home'} tabIndex={-1} id="dashboard-home" className="dashboard-home" aria-labelledby="dashboard-welcome-heading">
+                              {supabase && profile && !profile.welcomed && <ProfileCard client={supabase} profile={profile} onSaved={setProfile} language={language} email={session.user.email ?? ''} mode="welcome" />}
                               <div className="dashboard-welcome">
                                 <p className="eyebrow">{role === 'owner' ? (language === 'fil' ? 'TRABAHO NG MAY-ARI' : 'OWNER WORKSPACE') : (language === 'fil' ? 'TRABAHO NG STAFF' : 'STAFF WORKSPACE')}</p>
-                                <h2 id="dashboard-welcome-heading">{t.welcome}</h2>
+                                <div className="dashboard-greeting">
+                                  {(profile?.photo || profile?.preferredName) && <ProfileAvatar profile={profile} fallback={session.user.email ?? ''} />}
+                                  <h2 id="dashboard-welcome-heading">{t.welcome}{profile?.preferredName ? `, ${profile.preferredName}` : ''}</h2>
+                                </div>
                                 {seasonGreeting(seasonal.season, language) && <p className="season-greeting">{seasonGreeting(seasonal.season, language)}</p>}
                                 <p className="dashboard-identity">{translate('Signed in as', 'Naka-sign in bilang')} <strong>{session.user.email}</strong></p>
                                 <h3>{t.today}</h3>
@@ -494,6 +503,7 @@ export function App() {
                               <div id="invitation-review" hidden={activeSection !== 'invitation-review'} tabIndex={-1} className="workspace-section">{visitedSections.includes('invitation-review') && <DeferredBoundary loadingLabel={translate('Loading invitation review…', 'Nilo-load ang pagsusuri ng imbitasyon…')} rows={3} language={language} shape="list" reset={InvitationReconciliation.reset}><InvitationReconciliation.Screen key={`invitation-reconciliation:${propertyId}:${visit('invitation-review')}`} propertyId={propertyId} language={language} /></DeferredBoundary>}</div>
                               <div id="access-history" hidden={activeSection !== 'access-history'} tabIndex={-1} className="workspace-section">{visitedSections.includes('access-history') && <DeferredBoundary loadingLabel={translate('Loading access history…', 'Nilo-load ang kasaysayan ng access…')} rows={3} language={language} shape="table" reset={AccessAudit.reset}><AccessAudit.Screen key={`audit:${propertyId}:${visit('access-history')}`} propertyId={propertyId} language={language} /></DeferredBoundary>}</div>
                             </>}
+                            {activeSection === 'account-security' && supabase && profile && <ProfileCard client={supabase} profile={profile} onSaved={setProfile} language={language} email={session.user.email ?? ''} mode="edit" />}
                             <section hidden={activeSection !== 'account-security'} tabIndex={-1} className="card account-security" id="account-security">
                               {seasonal.dateSeason && <label className="season-switch"><input type="checkbox" checked={!seasonal.off} onChange={seasonal.toggle} /><span>{translate('Show seasonal decorations', 'Ipakita ang pang-season na dekorasyon')}<small>{translate('Small holiday touches on the app bar, logo and sign-in page. Your records are not affected.', 'Maliit na dekorasyon sa app bar, logo at sign-in page. Hindi apektado ang iyong mga talaan.')}</small></span></label>}
                               <p className="eyebrow">{translate('SIGN-IN AND RECOVERY', 'PAG-SIGN IN AT PAG-RECOVER NG ACCOUNT')}</p>
@@ -506,10 +516,12 @@ export function App() {
                           </div>
                         </div>
                       </> : <>
+                        {supabase && profile && !profile.welcomed && <ProfileCard client={supabase} profile={profile} onSaved={setProfile} language={language} email={session.user.email ?? ''} mode="welcome" />}
                         <DeferredBoundary loadingLabel={translate('Loading your rent record…', 'Nilo-load ang talaan ng iyong upa…')} rows={4} language={language} shape="rent" reset={RenterPortal.reset}>
-                          <RenterPortal.Screen language={language} />
+                          <RenterPortal.Screen language={language} greetingName={profile?.preferredName ?? undefined} />
                         </DeferredBoundary>
                         {session.user.email && <ChangePassword email={session.user.email} language={language} />}
+                        {supabase && profile?.welcomed && <ProfileCard client={supabase} profile={profile} onSaved={setProfile} language={language} email={session.user.email ?? ''} mode="edit" />}
                       </>}
               </>}
       </main>
