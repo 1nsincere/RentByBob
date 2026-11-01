@@ -13,6 +13,7 @@ const ease = 'cubic-bezier(.76, 0, .24, 1)'
 const rise = 'cubic-bezier(.2, .85, .15, 1)'
 
 const pumpkin = '<svg class="in-pk" viewBox="0 0 24 22"><path fill="#3f6b2a" d="M11.4 4.6c0-2 .6-3.4 2.2-4.1l.9 1c-1 .7-1.4 1.6-1.4 3.1Z"/><ellipse fill="#e06f14" cx="7.6" cy="13" rx="6.2" ry="7.6"/><ellipse fill="#e06f14" cx="16.4" cy="13" rx="6.2" ry="7.6"/><ellipse fill="#ff8f2e" cx="12" cy="13" rx="6.4" ry="8.2"/><path fill="none" stroke="#c95d0d" stroke-width=".6" d="M9 6.2C7.6 10 7.6 16 9 20M15 6.2c1.4 3.8 1.4 9.8 0 13.8"/><path class="in-pk-face" d="M7 10.2 9.6 9l.4 2.8Zm10 0L14.4 9l-.4 2.8ZM6.8 14.6c1.6 2.6 8.8 2.6 10.4 0l-1.6.6-1-1-1.2 1.2-1.4-1.2-1.4 1.2-1.2-1.2-1 1Z"/></svg>'
+const parol = '<svg class="in-parol" viewBox="0 0 40 56"><line x1="20" y1="0" x2="20" y2="4" stroke="#6b5a3a" stroke-width="1.2"/><circle cx="20" cy="20" r="15.5" fill="none" stroke="#ffcf3a" stroke-width="1.6"/><path d="M20 5.5 23.9 15.2 34.3 15.6 26.2 22.2 29 32.3 20 26.6 11 32.3 13.8 22.2 5.7 15.6 16.1 15.2Z" fill="#e2342d" stroke="#ffcf3a" stroke-width="1" stroke-linejoin="round"/><path d="M20 12 21.9 17 27.2 17.2 23 20.5 24.5 25.6 20 22.7 15.5 25.6 17 20.5 12.8 17.2 18.1 17Z" fill="#ffd76a"/><circle cx="20" cy="20" r="2.4" fill="#fff6c9"/><path d="M15.5 33.5c-1.5 7-4 12-7 20M24.5 33.5c1.5 7 4 12 7 20" fill="none" stroke="#ffcf3a" stroke-width="1.4" stroke-linecap="round"/><path d="M18 34.6c-.6 7-1.6 12-3 19M22 34.6c.6 7 1.6 12 3 19" fill="none" stroke="#e2342d" stroke-width="1.4" stroke-linecap="round"/></svg>'
 const html = `<!doctype html>
 <html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="description" content="A rental records app with property-owner-managed access."/><meta name="theme-color" content="#07130e"/><meta name="color-scheme" content="light dark"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="manifest" href="/manifest.webmanifest"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="RentByBob"/><meta name="apple-mobile-web-app-status-bar-style" content="default"/><title>RentByBob | Your rental records</title>
 <style>
@@ -104,6 +105,25 @@ const html = `<!doctype html>
 #intro .in-hw-tag { display: none; margin: -.4rem 0 0; text-align: center; color: #ffb36b; font: 600 clamp(.62rem, 1.5vw, .78rem) ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .22em; text-transform: uppercase; opacity: 0; animation: in-fade 900ms ease 2.8s forwards; }
 :root[data-perf="lite"] #intro .in-hw-bat { display: none; }
 @media (prefers-reduced-motion: reduce) { #intro .in-hw-bat { display: none; } #intro .in-pk, #intro .in-hw-tag { opacity: 1; transform: none; } }
+/* Christmas season (Dec 1 - Jan 6): warm red-green light, parol lanterns swinging in from the top, a twinkling string
+   of lights along the top edge and a "Maligayang Pasko" line under the tagline. */
+#intro .in-xm, #intro .in-xm-tag { display: none; }
+#intro[data-season="christmas"] .in-xm { display: block; position: absolute; inset: 0; pointer-events: none; }
+#intro[data-season="christmas"] .in-xm-tag { display: block; margin: -.4rem 0 0; color: #ffb3a1; font: 600 clamp(.62rem, 1.5vw, .78rem) ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .22em; text-transform: uppercase; opacity: 0; animation: in-fade 900ms ease 2.8s forwards; }
+#intro[data-season="christmas"] .in-light { background: radial-gradient(circle, rgb(255 200 90 / 26%) 0%, rgb(220 50 50 / 10%) 34%, transparent 64%); }
+#intro[data-season="christmas"] .in-vignette { background: radial-gradient(120% 90% at 50% 45%, #10281c 0%, #0a1710 58%, #040906 100%); }
+#intro .in-xm-lights { position: absolute; left: 0; right: 0; top: clamp(.9rem, 2.4vw, 1.8rem); height: 12px; background: radial-gradient(circle, #ff5b4f 0 3px, transparent 3.5px) 0 50% / 30px 100% repeat-x, radial-gradient(circle, #ffd24a 0 3px, transparent 3.5px) 10px 50% / 30px 100% repeat-x, radial-gradient(circle, #4fdc8a 0 3px, transparent 3.5px) 20px 50% / 30px 100% repeat-x; filter: drop-shadow(0 0 5px rgb(255 220 120 / 80%)); opacity: 0; animation: in-fade .8s ease .5s forwards, in-xmblink 1.4s steps(2) 1.3s infinite; }
+@keyframes in-xmblink { 50% { opacity: .5; } }
+#intro .in-xm-parol { position: absolute; top: 0; width: clamp(3rem, 6vw, 5rem); transform-origin: 50% 0; transform: translateY(-110%); animation: in-xmdrop 1.1s cubic-bezier(.2, 1.3, .3, 1) forwards, in-xmswing 3.2s ease-in-out 1.6s infinite alternate; }
+#intro .in-xm-parol svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 0 10px rgb(255 190 70 / 70%)); }
+#intro .in-xm-parol--l { left: 20%; animation-delay: .9s, 2s; }
+#intro .in-xm-parol--r { right: 20%; animation-delay: 1.2s, 2.3s; }
+#intro .in-xm-parol--s { left: 31%; width: clamp(2rem, 3.6vw, 3rem); animation-delay: 1.5s, 2.6s; }
+@keyframes in-xmdrop { to { transform: translateY(clamp(3.4rem, 9vh, 5.4rem)); } }
+@keyframes in-xmswing { from { rotate: -5deg; } to { rotate: 5deg; } }
+@media (max-width: 40rem) { #intro .in-xm-parol--s { display: none; } #intro .in-xm-parol { width: 2.8rem; } #intro .in-xm-parol--l { left: 12%; } #intro .in-xm-parol--r { right: auto; left: 46%; } }
+:root[data-perf="lite"] #intro .in-xm-parol { animation: in-xmdrop 1.1s ease forwards; }
+@media (prefers-reduced-motion: reduce) { #intro .in-xm-parol { transform: translateY(1.6rem); } #intro .in-xm-lights, #intro[data-season="christmas"] .in-xm-tag { opacity: 1; } }
 /* Skip */
 #intro-skip { position: fixed; top: clamp(1.4rem, 4vw, 2.6rem); right: clamp(1.4rem, 4vw, 2.9rem); z-index: 2002; min-height: 2.75rem; padding: .5rem 1.1rem; border: 1px solid rgb(243 239 226 / 26%); border-radius: 999px; background: transparent; color: #f3efe2; font: 500 clamp(.62rem, 1.5vw, .74rem) ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .22em; text-transform: uppercase; cursor: pointer; opacity: 0; animation: in-fade 600ms ease 1200ms forwards; transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease; }
 #intro-skip:hover { background: #ffbf1f; border-color: #ffbf1f; color: #07130e; }
@@ -128,6 +148,7 @@ const html = `<!doctype html>
   <span class="in-vignette"></span><span class="in-light"></span>
   <div class="in-marquee">${marquee}</div>
   <span class="in-grain"></span>
+  <div class="in-xm" aria-hidden="true"><span class="in-xm-lights"></span><span class="in-xm-parol in-xm-parol--l">${parol}</span><span class="in-xm-parol in-xm-parol--r">${parol}</span><span class="in-xm-parol in-xm-parol--s">${parol}</span></div>
   <div class="in-hw" aria-hidden="true"><span class="in-hw-bat in-hw-bat--0"><svg class="in-bat" viewBox="0 0 40 16"><path d="M20 6c-1-2-2.6-2.4-3.4-1.6.4-1.6-.6-2.8-2-2.4C13 4 9.5 4.6 6 3.4 4 2.8 1.6 3.4 0 5.2c2.4-.4 4 .4 4.8 2 1.6-1 3.4-.8 4.6.8 1.4-1.2 3.4-1 4.4.6 1-1.6 3.2-1.8 4.2-.2.6 1.4 1.4 2.2 2 2.4.6-.2 1.4-1 2-2.4 1-1.6 3.2-1.4 4.2.2 1-1.6 3-1.8 4.4-.6 1.2-1.6 3-1.8 4.6-.8.8-1.6 2.4-2.4 4.8-2-1.6-1.8-4-2.4-6-1.8-3.5 1.2-7 .6-8.6-1.4-1.4-.4-2.4.8-2 2.4C22.6 3.6 21 4 20 6Z"/></svg></span><span class="in-hw-bat in-hw-bat--1"><svg class="in-bat" viewBox="0 0 40 16"><path d="M20 6c-1-2-2.6-2.4-3.4-1.6.4-1.6-.6-2.8-2-2.4C13 4 9.5 4.6 6 3.4 4 2.8 1.6 3.4 0 5.2c2.4-.4 4 .4 4.8 2 1.6-1 3.4-.8 4.6.8 1.4-1.2 3.4-1 4.4.6 1-1.6 3.2-1.8 4.2-.2.6 1.4 1.4 2.2 2 2.4.6-.2 1.4-1 2-2.4 1-1.6 3.2-1.4 4.2.2 1-1.6 3-1.8 4.4-.6 1.2-1.6 3-1.8 4.6-.8.8-1.6 2.4-2.4 4.8-2-1.6-1.8-4-2.4-6-1.8-3.5 1.2-7 .6-8.6-1.4-1.4-.4-2.4.8-2 2.4C22.6 3.6 21 4 20 6Z"/></svg></span><span class="in-hw-bat in-hw-bat--2"><svg class="in-bat" viewBox="0 0 40 16"><path d="M20 6c-1-2-2.6-2.4-3.4-1.6.4-1.6-.6-2.8-2-2.4C13 4 9.5 4.6 6 3.4 4 2.8 1.6 3.4 0 5.2c2.4-.4 4 .4 4.8 2 1.6-1 3.4-.8 4.6.8 1.4-1.2 3.4-1 4.4.6 1-1.6 3.2-1.8 4.2-.2.6 1.4 1.4 2.2 2 2.4.6-.2 1.4-1 2-2.4 1-1.6 3.2-1.4 4.2.2 1-1.6 3-1.8 4.4-.6 1.2-1.6 3-1.8 4.6-.8.8-1.6 2.4-2.4 4.8-2-1.6-1.8-4-2.4-6-1.8-3.5 1.2-7 .6-8.6-1.4-1.4-.4-2.4.8-2 2.4C22.6 3.6 21 4 20 6Z"/></svg></span><span class="in-hw-bat in-hw-bat--3"><svg class="in-bat" viewBox="0 0 40 16"><path d="M20 6c-1-2-2.6-2.4-3.4-1.6.4-1.6-.6-2.8-2-2.4C13 4 9.5 4.6 6 3.4 4 2.8 1.6 3.4 0 5.2c2.4-.4 4 .4 4.8 2 1.6-1 3.4-.8 4.6.8 1.4-1.2 3.4-1 4.4.6 1-1.6 3.2-1.8 4.2-.2.6 1.4 1.4 2.2 2 2.4.6-.2 1.4-1 2-2.4 1-1.6 3.2-1.4 4.2.2 1-1.6 3-1.8 4.4-.6 1.2-1.6 3-1.8 4.6-.8.8-1.6 2.4-2.4 4.8-2-1.6-1.8-4-2.4-6-1.8-3.5 1.2-7 .6-8.6-1.4-1.4-.4-2.4.8-2 2.4C22.6 3.6 21 4 20 6Z"/></svg></span><div class="in-hw-patch in-hw-patch--l"><span class="in-hw-pool"></span>${pumpkin.replace('class="in-pk"','class="in-pk in-pk--md"')}${pumpkin.replace('class="in-pk"','class="in-pk in-pk--lg"')}${pumpkin.replace('class="in-pk"','class="in-pk in-pk--sm"')}</div><div class="in-hw-patch in-hw-patch--r"><span class="in-hw-pool"></span>${pumpkin.replace('class="in-pk"','class="in-pk in-pk--sm"')}${pumpkin.replace('class="in-pk"','class="in-pk in-pk--lg"')}${pumpkin.replace('class="in-pk"','class="in-pk in-pk--md"')}</div></div>
   <span class="in-frame"></span>
   <div class="in-cap in-tl">N° 001 <b>/</b> Labangon, Cebu City</div>
@@ -136,6 +157,7 @@ const html = `<!doctype html>
     <div class="in-word">${letters}</div>
     <div class="in-rule"><span>Rooms &amp; homes on B. Zubiri St.</span></div>
     <p class="in-hw-tag">Spooky season on B. Zubiri St.</p>
+    <p class="in-xm-tag">Maligayang Pasko on B. Zubiri St.</p>
   </div>
   <div class="in-cap in-bl"><span class="in-count"><span class="in-count-strip">${counterStrip}</span></span><span>Opening the street</span></div>
   <div class="in-cap in-br">Est. <b>2026</b></div>

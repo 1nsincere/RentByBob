@@ -3,7 +3,7 @@ import { text, type Language } from '../i18n'
 import { parsePublicListings, type PublicListings } from '../access/public-listings-model.ts'
 import { LogoMark } from '../components/Logo'
 import { currentSeason } from './season'
-import { Pumpkin } from './street'
+import { Parol, Pumpkin } from './street'
 import { Facade, SITE, StreetPlan, StreetSummary, TOTAL_SPACES, statusText } from './street'
 import './landing.css'
 
@@ -269,6 +269,11 @@ export function LandingPage() {
         {day ? <><div className="lp-sun" aria-hidden="true" /><span className="lp-cloud-sky lp-cloud-sky--a" aria-hidden="true" /><span className="lp-cloud-sky lp-cloud-sky--b" aria-hidden="true" /></>
           : <><span className="lp-stars" aria-hidden="true" /><span className="lp-moon" aria-hidden="true" /></>}
         {!day && <span className="lp-hero-lamps" aria-hidden="true" />}
+        {season === 'christmas' && <>
+          <span className="lp-xm-tint" aria-hidden="true" />
+          <span className="lp-xm-sparkles" aria-hidden="true" />
+          <p className="lp-hw-badge lp-xm-badge"><Parol className="lp-hw-badge-pumpkin" />{tr('Maligayang Pasko from B. Zubiri St.', 'Maligayang Pasko mula sa B. Zubiri St.')}</p>
+        </>}
         {season === 'halloween' && <>
           <span className="lp-hw-tint" aria-hidden="true" />
           {[0, 1, 2].map(i => <svg key={i} className={`lp-bat lp-bat--${i}`} viewBox="0 0 40 16" aria-hidden="true" focusable="false"><path d="M20 6c-1-2-2.6-2.4-3.4-1.6.4-1.6-.6-2.8-2-2.4C13 4 9.5 4.6 6 3.4 4 2.8 1.6 3.4 0 5.2c2.4-.4 4 .4 4.8 2 1.6-1 3.4-.8 4.6.8 1.4-1.2 3.4-1 4.4.6 1-1.6 3.2-1.8 4.2-.2.6 1.4 1.4 2.2 2 2.4.6-.2 1.4-1 2-2.4 1-1.6 3.2-1.4 4.2.2 1-1.6 3-1.8 4.4-.6 1.2-1.6 3-1.8 4.6-.8.8-1.6 2.4-2.4 4.8-2-1.6-1.8-4-2.4-6-1.8-3.5 1.2-7 .6-8.6-1.4-1.4-.4-2.4.8-2 2.4C22.6 3.6 21 4 20 6Z" /></svg>)}
@@ -290,7 +295,7 @@ export function LandingPage() {
             <a className="lp-pill lp-pill--ghost lp-magnetic" href="/sign-in">{tr('I already rent here', 'Umuupa na ako rito')}</a>
           </div>
         </div>
-        <div className="lp-skyline" aria-hidden="true">{season === 'halloween' && [8, 34, 58, 83].map((left, i) => <Pumpkin key={left} className="lp-hw-porch" style={{ left: `${left}%`, animationDelay: `${i * -0.7}s` }} />)}{SITE.map(site => <div key={site.label} className={`lp-skyline-home lp-skyline-home--${site.kind}`}><Facade site={site} open={openRooms(site.label)} width={100} /></div>)}</div>
+        <div className="lp-skyline" aria-hidden="true">{season === 'halloween' && [8, 34, 58, 83].map((left, i) => <Pumpkin key={left} className="lp-hw-porch" style={{ left: `${left}%`, animationDelay: `${i * -0.7}s` }} />)}{season === 'christmas' && <span className="lp-xm-strand" />}{season === 'christmas' && [14, 44, 68, 88].map((left, i) => <Parol key={left} className="lp-xm-porch" style={{ left: `${left}%`, animationDelay: `${i * -0.8}s` }} />)}{SITE.map(site => <div key={site.label} className={`lp-skyline-home lp-skyline-home--${site.kind}`}><Facade site={site} open={openRooms(site.label)} width={100} /></div>)}</div>
         <a className="lp-scroll-cue" href="#street"><span>{tr('Walk down the street', 'Libutin ang kalye')}</span><i aria-hidden="true" /></a>
       </section>
 
