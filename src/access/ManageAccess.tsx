@@ -8,13 +8,14 @@ import { currentTenantRooms } from './tenant-directory-model'
 import { philippineToday } from './payment-preview-model'
 
 // The invitation service names why it refused when nothing was saved: the email already has an account, an earlier
-// invitation to it is still open, or invitations are switched off for this project.
-async function refusalReason(error: unknown): Promise<'account_exists' | 'open_attempt' | 'switched_off' | null> {
+// invitation to it is still open, invitations are switched off for this project, or the signed-in person lacks permission.
+type Refusal = 'account_exists' | 'open_attempt' | 'switched_off' | 'permission'
+async function refusalReason(error: unknown): Promise<Refusal | null> {
   const response = (error as { context?: unknown } | null)?.context
   if (!(response instanceof Response)) return null
   try {
     const body = await response.clone().json() as { reason?: unknown }
-    return body.reason === 'account_exists' || body.reason === 'open_attempt' || body.reason === 'switched_off' ? body.reason : null
+    return ['account_exists', 'open_attempt', 'switched_off', 'permission'].includes(String(body.reason)) ? body.reason as Refusal : null
   } catch { return null }
 }
 
@@ -52,7 +53,7 @@ export function Invitations({ propertyId, owner, language = 'en' }: { propertyId
       const reason = await refusalReason(error)
       if (reason) {
         setAttempted(false); setAttemptStatus(''); setAttemptId(crypto.randomUUID()); setError(true)
-        setMessage(reason === 'account_exists' ? t.inviteAccountExists : reason === 'open_attempt' ? t.inviteOpenAttempt : t.inviteSwitchedOff)
+        setMessage(reason === 'account_exists' ? t.inviteAccountExists : reason === 'open_attempt' ? t.inviteOpenAttempt : reason === 'permission' ? t.invitePermission : t.inviteSwitchedOff)
         return
       }
       if (error || !data?.status || !data?.message) {

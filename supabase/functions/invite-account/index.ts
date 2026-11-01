@@ -6,6 +6,10 @@ const allowedOrigin = Deno.env.get("APP_ORIGIN") ?? "http://127.0.0.1:5173"
 const callbackUrl = `${allowedOrigin}/auth/callback`
 const uuidPattern = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i
 const emailPattern = /^[^@]+@[^@.]+(\.[^@.]+)+$/
+// "Remember this device": staff who signed in without the authenticator code on a remembered browser are accepted by
+// the database only when this header reaches it, so the function passes it on to its calls as the signed-in person.
+const deviceHeader = "x-rentbybob-device"
+const allowedHeaders = `authorization, apikey, content-type, x-client-info, ${deviceHeader}`
 const attemptStatuses = new Set<AttemptStatus>(["prepared", "dispatching", "issued", "rejected", "uncertain", "accepted"])
 
 function isAttemptStatus(value: unknown): value is AttemptStatus {
@@ -16,7 +20,7 @@ function jsonResponse(body: Record<string, string | boolean>, status: number, or
   const headers = new Headers({ "Content-Type": "application/json" })
   if (origin) {
     headers.set("Access-Control-Allow-Origin", origin)
-    headers.set("Access-Control-Allow-Headers", "authorization, apikey, content-type, x-client-info")
+    headers.set("Access-Control-Allow-Headers", allowedHeaders)
     headers.set("Access-Control-Allow-Methods", "POST, OPTIONS")
     headers.set("Vary", "Origin")
   }
@@ -36,6 +40,12 @@ function statusResponse(attemptId: string, status: AttemptStatus, origin?: strin
 }
 
 const authenticatedFetch = withSupabase({ auth: "user" }, async (request, context) => {
+  const device = request.headers.get(deviceHeader)
+  const trustedDevice = device && /^[A-Za-z0-9+/=_-]{64,512}$/.test(device) ? device : null
+  const userRpc = (fn: string, args: Record<string, unknown>) => {
+    const call = context.supabase.rpc(fn, args)
+    return trustedDevice ? call.setHeader(deviceHeader, trustedDevice) : call
+  }
   // A hosted project sends real email only after its owner has set up a mail sender (Supabase Auth SMTP) and switched
   // invitations on with the secret INVITE_EMAIL_ENABLED=true. Fail before preparing or claiming an attempt, so a project
   // without a sender never records a half-made invitation. Local development uses the local mail catcher.
@@ -82,7 +92,7 @@ const authenticatedFetch = withSupabase({ auth: "user" }, async (request, contex
     accountType = typeof data.account_type === "string" ? data.account_type : ""
     normalizedEmail = typeof data.email === "string" ? data.email : ""
     if (status !== "prepared") {
-      const { data: claim, error: claimError } = await context.supabase.rpc("claim_account_invitation_dispatch", {
+      const { data: claim, error: claimError } = await userRpc("claim_account_invitation_dispatch", {
         p_attempt_id: attemptId,
       })
       if (claimError) {
@@ -118,14 +128,14 @@ const authenticatedFetch = withSupabase({ auth: "user" }, async (request, contex
     }
     propertyId = rawPropertyId
     accountType = rawAccountType
-    const { data, error } = await context.supabase.rpc("prepare_account_invitation", {
+    const { data, error } = await userRpc("prepare_account_invitation", {
       p_property_id: propertyId,
       p_attempt_id: attemptId,
       p_account_type: accountType,
       p_email: normalizedEmail,
     })
     if (error) {
-      if (error.code === "42501") return jsonResponse({ error: "Current staff permission and MFA are required." }, 403)
+      if (error.code === "42501") return jsonResponse({ error: "Current staff permission and MFA are required.", reason: "permission" }, 403)
       if (error.code === "RB409") {
         return jsonResponse({ error: "This email already has an account. Give it access in Assign or disable access instead.", reason: "account_exists" }, 409)
       }
@@ -149,7 +159,7 @@ const authenticatedFetch = withSupabase({ auth: "user" }, async (request, contex
     workflowResult = await runInvitationWorkflow({
     prepare: async () => status,
     claim: async () => {
-      const { data, error } = await context.supabase.rpc("claim_account_invitation_dispatch", {
+      const { data, error } = await userRpc("claim_account_invitation_dispatch", {
         p_attempt_id: attemptId,
       })
       if (error || typeof data?.claimed !== "boolean" || !data?.status) {
@@ -214,7 +224,7 @@ export default {
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: origin ? {
         "Access-Control-Allow-Origin": origin,
-        "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+        "Access-Control-Allow-Headers": allowedHeaders,
         "Access-Control-Allow-Methods": "POST, OPTIONS",
         "Vary": "Origin",
       } : undefined })

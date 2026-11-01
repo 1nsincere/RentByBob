@@ -16,6 +16,12 @@ test('device header goes only to database requests, and labels are readable', as
   await wrapped('https://x.supabase.co/auth/v1/token?grant_type=password')
   assert.equal(seen[1].header, secret)
   assert.equal(seen[2].header, null, 'Auth endpoints never receive the device secret')
+  // The invitation function passes it on to its own database calls; other functions never receive it.
+  await wrapped('https://x.supabase.co/functions/v1/invite-account', { method: 'POST' })
+  await wrapped('https://x.supabase.co/functions/v1/some-other-function', { method: 'POST' })
+  assert.equal(seen.at(-2)?.header, secret)
+  assert.equal(seen.at(-1)?.header, null)
+  seen.splice(3)
   store.set('rentbybob:trusted-device', JSON.stringify({ userId: 'u', secret, expiresAt: new Date(Date.now() - 1000).toISOString(), id: 'd' }))
   await wrapped('https://x.supabase.co/rest/v1/tenants')
   assert.equal(seen[3].header, null, 'an expired device is not sent')
