@@ -2016,3 +2016,21 @@ html .paid-rent-document .doc-optional h2 { font-size: 14pt; }
 @media (max-width: 30rem) { .profile-dialog .photo-cropper-frame { width: min(100%, 15rem); } }
 @media (max-height: 44rem) { .profile-dialog .photo-cropper-frame, .profile-dialog .photo-cropper-zoom { width: min(100%, 11.5rem); } .profile-dialog .photo-cropper-help { font-size: .9rem; } .profile-dialog .profile-card { gap: .45rem; } }
 @media (max-width: 30rem) { .photo-cropper .profile-card-buttons .button { flex: 1 1 40%; } .photo-cropper .profile-card-buttons .button--primary { flex-basis: 100%; } }
+/* Tenant picker: the chosen tenant wraps on phones so the Change button never covers the name. */
+.tenant-picker-chosen { flex-wrap: wrap; }
+.tenant-picker-chosen > span:nth-child(2) { flex: 1 1 10rem; }
+.tenant-picker-chosen > .button { flex: 0 0 auto; width: auto; min-width: 0; margin-left: auto; }
+@media (max-width: 36rem) { .tenant-picker-chosen > .button { flex-basis: 100%; margin-left: 0; } }
+/* Tenant page: Account settings (name, picture, password) folded away until opened. */
+.renter-settings { margin-top: 1.25rem; padding: 0; overflow: hidden; }
+.renter-settings > summary { display: grid; gap: .15rem; min-height: 2.75rem; padding: 1rem 3rem 1rem 1.25rem; cursor: pointer; list-style: none; position: relative; }
+.renter-settings > summary::-webkit-details-marker { display: none; }
+.renter-settings > summary::after { content: "▾"; position: absolute; right: 1.25rem; top: 50%; translate: 0 -50%; transition: rotate 200ms ease; color: var(--text-secondary); }
+.renter-settings[open] > summary::after { rotate: 180deg; }
+.renter-settings > summary:focus-visible { outline: 3px solid var(--focus, var(--brand)); outline-offset: -3px; }
+.renter-settings-title { font-weight: 750; font-size: 1.1rem; }
+.renter-settings > summary small { color: var(--text-secondary); }
+.renter-settings-body { display: grid; gap: 1rem; padding: 0 1.25rem 1.25rem; border-top: 1px solid var(--border); }
+.renter-settings-body > .card { margin: 1rem 0 0; padding: 0; border: 0; box-shadow: none; background: transparent; }
+.renter-settings-body > .card + .card { padding-top: 1rem; border-top: 1px solid var(--border); border-radius: 0; }
+@media (prefers-reduced-motion: reduce) { .renter-settings > summary::after { transition: none; } }

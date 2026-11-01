@@ -522,8 +522,14 @@ export function App() {
                         <DeferredBoundary loadingLabel={translate('Loading your rent record…', 'Nilo-load ang talaan ng iyong upa…')} rows={4} language={language} shape="rent" reset={RenterPortal.reset}>
                           <RenterPortal.Screen language={language} greetingName={profile?.preferredName ?? undefined} />
                         </DeferredBoundary>
-                        {session.user.email && <ChangePassword email={session.user.email} language={language} />}
-                        {supabase && profile?.welcomed && <ProfileCard client={supabase} profile={profile} onSaved={setProfile} language={language} email={session.user.email ?? ''} mode="edit" />}
+                        {/* Name, picture and password stay folded away until the tenant opens them. */}
+                        <details className="card renter-settings">
+                          <summary><span className="renter-settings-title">{translate('Account settings', 'Mga setting ng account')}</span><small>{translate('Your name, picture and password', 'Iyong pangalan, larawan at password')}</small></summary>
+                          <div className="renter-settings-body">
+                            {supabase && profile?.welcomed && <ProfileCard client={supabase} profile={profile} onSaved={setProfile} language={language} email={session.user.email ?? ''} mode="edit" />}
+                            {session.user.email && <ChangePassword email={session.user.email} language={language} />}
+                          </div>
+                        </details>
                       </>}
               </>}
       </main>

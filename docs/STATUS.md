@@ -1,5 +1,9 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Tenant picker on phones; tenant Account settings folded - 1 Nov 2026
+
+**Owner feedback:** on a phone the chosen tenant in Assign or disable access showed the name one word per line with the Change button over it, and the tenant page showed the profile form open all the time. Now the chosen tenant wraps (name and details full width, Change below at 576 px and narrower), and the tenant page has one closed "Account settings" section (Your profile and Change password) that opens on tap. CSS checked with the same markup at 390 and 1100 px (no overlap, button inside the box, no sideways scroll); the live screens need a signed-in account and were not opened. Unit 123/123, build passes. Needs: merge to `main`.
+
 ## Expired or used invite links offer a new link - 1 Nov 2026
 
 **Owner report:** a friend opened his invite, closed the page before choosing a password, and the same link then said "expired". Cause: invite and reset links work once; opening it confirmed the email and used the link, and the "Set your password" session lived only in that tab. The account was confirmed (so assigning access worked) but had no password. Change: a failed invite or reset link now shows "This link was already used or has expired" with an email field and "Send me a new link" (a password-reset email, which also lets an invited account with no password choose one; same reply whether or not the email exists), plus Return to sign-in. Heading "Your sign-in link". Workaround that already worked: Forgot password on the sign-in page, or Supabase > Users > Send password recovery.
