@@ -881,3 +881,9 @@
 :root[data-perf="lite"] .xm-bulb ellipse, :root[data-perf="lite"] .hw-spider { animation: none; }
 :root[data-perf="lite"] .xm-bulb ellipse { filter: none; }
 @media (prefers-reduced-motion: reduce) { .xm-bulb ellipse, .hw-spider { animation: none; } }
+/* The photo column can be narrow even on a wide screen (two-column card on tablets and phones held sideways), so the
+   hint moves by the photo's own width, not the screen's, and never sits on the tenant tag. */
+.dev-photo { container-type: inline-size; }
+.dev-photo figcaption { max-width: calc(100% - 1.8rem); }
+.dev-tag { max-width: 100%; line-height: 1.3; }
+@container (max-width: 34rem) { .dev-photo-hint { top: .8rem; left: .8rem; right: auto; bottom: auto; } }
