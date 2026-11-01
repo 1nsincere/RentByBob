@@ -14,11 +14,12 @@ export function readDevice(): TrustedDevice | null {
 export function saveDevice(device: TrustedDevice) { try { localStorage.setItem(key, JSON.stringify(device)) } catch { /* storage blocked: device is simply not remembered */ } }
 export function clearDevice() { try { localStorage.removeItem(key) } catch { /* nothing stored */ } }
 
-// Adds the device header to Supabase database (REST) requests only; Auth and other endpoints never receive it.
+// Adds the device header to Supabase database (REST) requests and to the invitation function, which passes it on to
+// its own database calls as the signed-in person; Auth and other endpoints never receive it.
 export function withDeviceHeader(fetcher: typeof fetch): typeof fetch {
   return (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
-    const device = url.includes('/rest/v1/') ? readDevice() : null
+    const device = url.includes('/rest/v1/') || url.includes('/functions/v1/invite-account') ? readDevice() : null
     if (!device) return fetcher(input, init)
     const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined))
     headers.set('x-rentbybob-device', device.secret)
