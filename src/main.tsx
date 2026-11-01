@@ -56,6 +56,22 @@ async function startApp() {
   root.render(<React.StrictMode><App /></React.StrictMode>)
 }
 
+// After an update, a page opened before it may ask for an app file under its old name, which no longer exists (the
+// server answers with the page itself, so the import fails). Reload once to get the new version; the time guard stops a
+// reload loop when the real cause is a lost connection.
+const RELOAD_KEY = 'rentbybob-update-reload'
+function reloadForUpdate() {
+  try {
+    const last = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0)
+    if (Date.now() - last < 30_000) return false
+    sessionStorage.setItem(RELOAD_KEY, String(Date.now()))
+  } catch { return false }
+  window.location.reload()
+  return true
+}
+// Screens opened later (Payments, Maintenance, ...) are separate files too: the same applies when one of them fails.
+window.addEventListener('vite:preloadError', event => { if (reloadForUpdate()) event.preventDefault() })
+
 // Shown without the i18n bundle, which may be what failed to download.
 function StartupFailure() {
   return <main className="card" style={{ maxWidth: '40rem', margin: '2rem auto' }}>
@@ -69,5 +85,6 @@ function StartupFailure() {
 
 startApp().catch((error: unknown) => {
   console.error('RentByBob could not start.', error)
+  if (reloadForUpdate()) return
   root.render(<StartupFailure />)
 }).finally(finishIntro)

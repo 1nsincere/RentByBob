@@ -1,5 +1,9 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## "The app did not open" after an update - 1 Nov 2026
+
+**Owner report:** the live sign-in page showed "The app did not open" after a deploy. Cause: a page opened before the update asked for the app file under its old hashed name; Cloudflare answers missing files with the page itself (`/assets/App-OLD.js` returns `200 text/html`), so the import failed. The live site itself loaded without errors in a fresh browser. Fix in `src/main.tsx`: when the app or a later screen fails to load, the page reloads once by itself (guarded: at most once per 30 seconds per tab, so a real outage still shows the message). Simulated with the production build and the App file removed: one automatic reload, then the message, no loop. Unit 123/123, build and artifact checks pass. Possible later hardening: make missing `/assets/*` return 404 instead of the page (needs a Worker rule). Needs: merge to `main`.
+
 ## Tenant picker on phones; tenant Account settings folded - 1 Nov 2026
 
 **Owner feedback:** on a phone the chosen tenant in Assign or disable access showed the name one word per line with the Change button over it, and the tenant page showed the profile form open all the time. Now the chosen tenant wraps (name and details full width, Change below at 576 px and narrower), and the tenant page has one closed "Account settings" section (Your profile and Change password) that opens on tap. CSS checked with the same markup at 390 and 1100 px (no overlap, button inside the box, no sideways scroll); the live screens need a signed-in account and were not opened. Unit 123/123, build passes. Needs: merge to `main`.
