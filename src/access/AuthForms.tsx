@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, LoadingSkeleton } from '../components/atoms'
-import { hostedDevelopment, supabase } from './client'
+import { hostedDevelopment, remember, supabase } from './client'
 import { deviceLabel, saveDevice } from './trusted-device'
 import { copy, text, type Language } from '../i18n'
 import { LogoMark } from '../components/Logo'
@@ -85,18 +85,23 @@ export function SignIn({ language = 'en' }: { language?: Language }) {
           if (result.error) throw result.error
           setError(false); setMessage(tr('If this address is eligible, a reset link will arrive. In local development, check Mailpit. Password reset does not remove staff MFA.', 'Kung kwalipikado ang email na ito, ipapadala ang reset link. Sa local development, tingnan ang Mailpit. Hindi inaalis ng pagpapalit ng password ang MFA ng staff.'))
         } else {
+          // Decide where this sign-in is kept before it is created (see remember.ts).
+          remember.setRemember(form.get('remember') === 'on', email)
           const result = await supabase!.auth.signInWithPassword({ email, password: String(form.get('password')) })
           if (result.error) throw result.error
         }
       } catch { setError(true); setMessage(recovery ? tr('The request could not be completed. Wait and try again, or contact the owner.', 'Hindi natapos ang kahilingan. Maghintay at subukan ulit, o kontakin ang may-ari.') : tr('Sign-in failed. Check your email and password, or try again when connected.', 'Hindi ka makapasok. Suriin ang email at password o subukan ulit kapag may koneksyon na.')) }
       finally { setBusy(false) }
     }}>
-      <label htmlFor="email">{t.email}</label><input id="email" name="email" type="email" autoComplete="username" required maxLength={320} aria-describedby="email-help" />
+      <label htmlFor="email">{t.email}</label><input id="email" name="email" type="email" autoComplete="username" required maxLength={320} aria-describedby="email-help" defaultValue={remember.rememberedEmail()} />
       <p className="field-help" id="email-help">{t.invitationEmail}</p>
       {!recovery && <>      <label htmlFor="password">{t.password}</label><div className="password-field">
         <input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required />
         <EyeToggle shown={showPassword} label={showPassword ? t.hidePassword : t.showPassword} onToggle={() => setShowPassword(value => !value)} />
-      </div></>}
+      </div>
+      <label className="remember-me"><input type="checkbox" name="remember" defaultChecked={remember.remembering()} aria-describedby="remember-help" />
+        <span>{tr('Keep me signed in on this device', 'Panatilihin akong naka-sign in sa device na ito')}<small id="remember-help">{tr('For 30 days, on your own phone or computer only. Your password is not stored by RentByBob.', 'Sa loob ng 30 araw, sa sarili mong phone o computer lang. Hindi itinatabi ng RentByBob ang iyong password.')}</small></span>
+      </label></>}
       <Button className="primary" disabled={busy}>{busy ? t.pleaseWait : recovery ? t.sendResetLink : t.signIn}</Button>
     </form>
     {hostedDevelopment ? <p className="field-help">{language === 'fil' ? 'Hindi magagamit ang email recovery sa hosted development. Humingi ng tulong sa development administrator.' : 'Email recovery is unavailable in hosted development. Ask the development administrator for help.'}</p> : <Button className="quiet-button recovery-link" onClick={() => { setRecovery(!recovery); setMessage(''); setError(false) }}>{recovery ? (language === 'fil' ? 'Bumalik sa pag-sign in' : 'Back to sign-in') : (language === 'fil' ? 'Nakalimutan ang password?' : 'Forgot password?')}</Button>}

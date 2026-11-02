@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { connectionAllowed, hostedDevelopmentUrl } from './connection'
 import { withDeviceHeader } from './trusted-device'
 import { trackRequests } from '../components/requests'
+import { createRememberStorage } from './remember'
 
 const env = import.meta.env
 const url = env.VITE_SUPABASE_URL
@@ -12,9 +13,13 @@ export const preview = import.meta.env.DEV && dashboardPreview ? await import('.
 export const hostedDevelopment = url === hostedDevelopmentUrl
 // Which online project a production-style build was made for (shown in the top note), or null for local development.
 export const liveTarget = env.VITE_SUPABASE_TARGET === 'production' || env.VITE_SUPABASE_TARGET === 'staging' ? env.VITE_SUPABASE_TARGET as 'production' | 'staging' : null
+// "Keep me signed in on this device": the session lives in localStorage for 30 days when chosen, else sessionStorage.
+const blankStore = { getItem: () => null, setItem: () => undefined, removeItem: () => undefined }
+const store = (pick: () => Storage) => { try { return pick() } catch { return blankStore } }
+export const remember = createRememberStorage(store(() => window.localStorage), store(() => window.sessionStorage))
 // Hosted access is explicit, project-bound and unavailable in production builds.
 export const supabase = preview ? preview.previewClient : connectionAllowed(url, env.VITE_SUPABASE_TARGET, env.DEV) && key
-  ? createClient(url, key, { auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storage: window.sessionStorage }, global: { fetch: withDeviceHeader(trackRequests((...args) => fetch(...args))) } })
+  ? createClient(url, key, { auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, storage: remember.storage }, global: { fetch: withDeviceHeader(trackRequests((...args) => fetch(...args))) } })
   : null
 
 export const stateLabels: Record<string, string> = {
