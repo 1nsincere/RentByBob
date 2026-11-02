@@ -1,5 +1,11 @@
 # Persisted local cash workflow - 19 Oct 2026
 
+## Street map standing still on some devices - 1 Nov 2026
+
+**Owner report:** on other devices the landing street map does not move. Causes found: (1) devices set to reduce motion (iPhone Reduce Motion, Android Remove animations, Windows animation effects off, some battery savers) get a still street on purpose, by three layers of rules (street rules in `landing.css`, a landing catch-all, and a site-wide rule in `styles.css` that shortens every animation to 0.01 ms); (2) on touch screens a tap on Sir Bob or the student left `:hover` stuck, and hover paused the whole street. Fixes: hover pauses the street only with a mouse (a tapped-open card or keyboard focus still pauses it); reduced-motion devices still start with a still street but see "The street is still because this device asks for less motion" and a "Play the street" / "Stop the motion" button under the map (remembered per device in `rentbybob-street-motion`); pressing Play sets `data-street-motion="on"` on the landing root, which lifts those rules for the street map only (the rest of the page stays still). Lite mode (slow phones) never stopped the street; it only hides extra traffic.
+
+**Validation (1 Nov 2026):** browser checks: reduced motion: street still and note shown; after Play 52 street animations run and the student walks; Stop returns to still; normal devices unchanged (60 s loops); touch phone: street keeps moving after tapping Sir Bob. Unit 123/123, build and artifact checks pass (built CSS keeps the complex `:not()`). Needs: merge to `main`.
+
 ## Tenant greeting shows the profile picture - 1 Nov 2026
 
 **Owner request:** emphasise the tenant's profile picture. The tenant page greeting ("Hello, <name>") now shows their own picture beside it (about 6.8rem on laptops, 4.4rem on small phones, ringed), passed from the profile like the preferred name; no picture, no change. Checked in the renter preview with a sample picture at 390 and 1366 px (no sideways scroll). Unit 123/123, build passes. Needs: merge to `main`.

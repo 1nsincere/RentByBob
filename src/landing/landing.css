@@ -248,7 +248,7 @@
 @keyframes lp-step { from { transform: translateX(-2.2px); } to { transform: translateX(2.2px); } }
 @keyframes lp-stroll { 0%, 3% { translate: 0 0; } 25%, 33% { translate: 426% 0; } 50%, 100% { translate: 0 0; } }
 @keyframes lp-turn { 0%, 25% { transform: rotate(0deg); } 28%, 97% { transform: rotate(180deg); } 99.5%, 100% { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .lp-bob { left: 82%; } .lp-bob svg { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .lp:not([data-street-motion="on"]) .lp-bob { left: 82%; } .lp:not([data-street-motion="on"]) .lp-bob svg { animation: none; } }
 /* Roaming cast: the student (the developer, a tenant), Bantay the dog, Bob and the malunggay pandesal cart share one 60 s
    loop. The student and the dog are full-size layers whose translate is in percent of the street plan, so positions read
    as map coordinates and only the compositor moves them. Their paths keep to sidewalks and yards; only the cart uses the
@@ -265,7 +265,9 @@
 .lp-student svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-face-student 60s linear infinite both; }
 .lp-dog { position: absolute; left: 0; top: 0; width: 3.3cqw; transform: translate(-50%, -50%); }
 .lp-dog svg { display: block; width: 100%; height: auto; overflow: visible; animation: lp-face-dog 60s linear infinite both; }
-.lp-plan:has(.lp-student:hover, .lp-student:focus-visible, .lp-student.is-open, .lp-bob:hover, .lp-bob:focus-visible) :is(.lp-roam, .lp-roam svg, .lp-bob, .lp-bob svg, .lp-say, .lp-lane--stop, .lp-car, .lp-car svg) { animation-play-state: paused; }
+.lp-plan:has(.lp-student:focus-visible, .lp-student.is-open, .lp-bob:focus-visible) :is(.lp-roam, .lp-roam svg, .lp-bob, .lp-bob svg, .lp-say, .lp-lane--stop, .lp-car, .lp-car svg) { animation-play-state: paused; }
+/* On touch screens a tap leaves :hover stuck, which used to freeze the street; hover pauses it only with a mouse. */
+@media (hover: hover) and (pointer: fine) { .lp-plan:has(.lp-student:hover, .lp-bob:hover) :is(.lp-roam, .lp-roam svg, .lp-bob, .lp-bob svg, .lp-say, .lp-lane--stop, .lp-car, .lp-car svg) { animation-play-state: paused; } }
 .dog-body { fill: #b97a43; }
 .dog-back { fill: #8a5730; }
 .dog-ear { fill: #6e4325; }
@@ -370,11 +372,11 @@
 .lp-legend-dev:focus-visible, .lp-legend summary:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: .3rem; }
 @media (max-width: 47.99rem) { .lp-legend { max-width: 92%; padding: .25rem .4rem .3rem; } .lp-legend ul { grid-template-columns: 1fr; gap: .15rem; } }
 @media (prefers-reduced-motion: reduce) {
-  .lp-roam--student, .lp-roam--dog, .lp-student svg, .lp-dog svg, .dog-tail, .lp-say, .lp-lane--stop { animation: none; }
-  .lp-lane--e.lp-lane--stop { transform: translateX(45.5%); }
-  .lp-roam--student { translate: 53cqw 69cqh; } .lp-roam--dog { translate: 57.5cqw 70.5cqh; }
-  .lp-dog svg { transform: rotate(180deg); }
-  .lp-say { display: none; }
+  .lp:not([data-street-motion="on"]) .lp-roam--student, .lp:not([data-street-motion="on"]) .lp-roam--dog, .lp:not([data-street-motion="on"]) .lp-student svg, .lp:not([data-street-motion="on"]) .lp-dog svg, .lp:not([data-street-motion="on"]) .dog-tail, .lp:not([data-street-motion="on"]) .lp-say, .lp:not([data-street-motion="on"]) .lp-lane--stop { animation: none; }
+  .lp:not([data-street-motion="on"]) .lp-lane--e.lp-lane--stop { transform: translateX(45.5%); }
+  .lp:not([data-street-motion="on"]) .lp-roam--student { translate: 53cqw 69cqh; } .lp:not([data-street-motion="on"]) .lp-roam--dog { translate: 57.5cqw 70.5cqh; }
+  .lp:not([data-street-motion="on"]) .lp-dog svg { transform: rotate(180deg); }
+  .lp:not([data-street-motion="on"]) .lp-say { display: none; }
 }
 /* Homes on the plan */
 .lp-plot { cursor: pointer; position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: .3rem; color: #fff; text-decoration: none; transition: transform 260ms var(--ease); }
@@ -538,7 +540,9 @@
 }
 @media (pointer: coarse) { .lp-cursor { display: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .lp *, .lp *::before, .lp *::after { animation: none !important; transition: none !important; }
+  .lp:not([data-street-motion="on"]) *, .lp:not([data-street-motion="on"]) *::before, .lp:not([data-street-motion="on"]) *::after,
+  .lp[data-street-motion="on"] *:not(.lp-plan-wrap, .lp-plan-wrap *), .lp[data-street-motion="on"] *:not(.lp-plan-wrap, .lp-plan-wrap *)::before,
+  .lp[data-street-motion="on"] *:not(.lp-plan-wrap, .lp-plan-wrap *)::after { animation: none !important; transition: none !important; }
   .lp-word > span { transform: none; }
   .lp-reveal, .lp-receipt.lp-reveal .lp-receipt-row { opacity: 1; transform: none; }
   .lp-grain { display: none; }
@@ -614,7 +618,7 @@
 :root[data-perf="lite"] .lp-lane svg, :root[data-perf="lite"] .lp-facade { filter: none; }
 :root[data-perf="lite"] .lp-plan-frame { box-shadow: none; }
 :root[data-perf="lite"] .bob-foot, :root[data-perf="lite"] .lp-legend, :root[data-perf="lite"] .lp-plot-tag { backdrop-filter: none; }
-@media (prefers-reduced-motion: reduce) { .lp-tree, .lp[data-phase="day"] .lp-cloud { animation: none; } .lp-cloud { display: none; } }
+@media (prefers-reduced-motion: reduce) { .lp:not([data-street-motion="on"]) .lp-tree, .lp:not([data-street-motion="on"])[data-phase="day"] .lp-cloud { animation: none; } .lp:not([data-street-motion="on"]) .lp-cloud { display: none; } }
 
 /* Developer card, after the landonorris.com hero. At rest: the first photo with a faint, slowly breathing ghost of the second
    one over it. Moving the pointer paints the second photo along its path (canvas, useTrailReveal in street.tsx) and a gold
@@ -740,9 +744,9 @@
 @keyframes lp-face-jake { 0%, 6% { transform: rotate(180deg); } 7%, 8.5% { transform: rotate(90deg); } 9.5%, 10.5% { transform: rotate(180deg); } 10.6%, 78% { transform: rotate(0deg); } 79%, 79.5% { transform: rotate(0deg); } 80%, 82% { transform: rotate(-90deg); } 83%, 96.5% { transform: rotate(0deg); } 97.5%, 100% { transform: rotate(180deg); } }
 .helper-photo img { object-fit: cover; }
 @media (prefers-reduced-motion: reduce) {
-  .lp-car, .lp-car svg, .lp-roam--james, .lp-roam--jake, .lp-roam--james .lp-student svg, .lp-roam--jake .lp-student svg { animation: none; }
-  .lp-car { translate: 26.5cqw 84cqh; }
-  .lp-roam--james { translate: 64cqw 67.4cqh; } .lp-roam--jake { translate: 64.8cqw 75cqh; }
+  .lp:not([data-street-motion="on"]) .lp-car, .lp:not([data-street-motion="on"]) .lp-car svg, .lp:not([data-street-motion="on"]) .lp-roam--james, .lp:not([data-street-motion="on"]) .lp-roam--jake, .lp:not([data-street-motion="on"]) .lp-roam--james .lp-student svg, .lp:not([data-street-motion="on"]) .lp-roam--jake .lp-student svg { animation: none; }
+  .lp:not([data-street-motion="on"]) .lp-car { translate: 26.5cqw 84cqh; }
+  .lp:not([data-street-motion="on"]) .lp-roam--james { translate: 64cqw 67.4cqh; } .lp:not([data-street-motion="on"]) .lp-roam--jake { translate: 64.8cqw 75cqh; }
 }
 @media (min-width: 60rem) { .lp-legend { max-width: 70%; } .lp-legend ul { grid-template-columns: repeat(3, auto); } }
 
@@ -785,7 +789,7 @@
 @keyframes lp-lamps { from { opacity: 0; } }
 :root[data-perf="lite"] .lp-cloud-sky, :root[data-perf="lite"] .lp-stars { animation: none; }
 :root[data-perf="lite"] .lp-cloud-sky { display: none; }
-@media (prefers-reduced-motion: reduce) { .lp-cloud-sky, .lp-stars, .lp-hero-lamps { animation: none; } .lp-cloud-sky--a { transform: translateX(10vw); } .lp-cloud-sky--b { transform: translateX(55vw); } }
+@media (prefers-reduced-motion: reduce) { .lp:not([data-street-motion="on"]) .lp-cloud-sky, .lp:not([data-street-motion="on"]) .lp-stars, .lp:not([data-street-motion="on"]) .lp-hero-lamps { animation: none; } .lp:not([data-street-motion="on"]) .lp-cloud-sky--a { transform: translateX(10vw); } .lp:not([data-street-motion="on"]) .lp-cloud-sky--b { transform: translateX(55vw); } }
 
 /* Halloween season (Oct 24 - Nov 23, Cebu date; see season.ts): purple-orange sky tint, bats crossing the hero, glowing
    jack-o'-lanterns on the porches and on the street map, a witch hat for Bob and a pumpkin hat for Bantay. Cute, not
@@ -844,7 +848,7 @@
 .xm-hat-fur { fill: #fffdf4; } .xm-hat-red { fill: #d8302a; stroke: #8c1813; stroke-width: .4; }
 .xm-bow path { fill: #d8302a; } .xm-bow circle { fill: #ffcf3a; }
 :root[data-perf="lite"] .lp-xm-sparkles, :root[data-perf="lite"] .lp-xm-strand, :root[data-perf="lite"] .lp-xm-lights, :root[data-perf="lite"] .lp-xm-porch, :root[data-perf="lite"] .lp-xm-map { animation: none; }
-@media (prefers-reduced-motion: reduce) { .lp-xm-sparkles, .lp-xm-strand, .lp-xm-lights, .lp-xm-porch, .lp-xm-map { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .lp:not([data-street-motion="on"]) .lp-xm-sparkles, .lp:not([data-street-motion="on"]) .lp-xm-strand, .lp:not([data-street-motion="on"]) .lp-xm-lights, .lp:not([data-street-motion="on"]) .lp-xm-porch, .lp:not([data-street-motion="on"]) .lp-xm-map { animation: none; } }
 .lp[data-season] .lp-hero { padding-top: 8.2rem; }
 @media (max-width: 40rem) { .lp[data-season] .lp-hero { padding-top: 7.4rem; } }
 
@@ -880,7 +884,7 @@
 @media (max-width: 40rem) { .lp .lp-decor-toggle, .lp:not([data-season]) .lp-decor-toggle { top: auto; bottom: .8rem; right: .8rem; height: auto; } .lp-hw-web { width: 4.2rem; } }
 :root[data-perf="lite"] .xm-bulb ellipse, :root[data-perf="lite"] .hw-spider { animation: none; }
 :root[data-perf="lite"] .xm-bulb ellipse { filter: none; }
-@media (prefers-reduced-motion: reduce) { .xm-bulb ellipse, .hw-spider { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .lp:not([data-street-motion="on"]) .xm-bulb ellipse, .lp:not([data-street-motion="on"]) .hw-spider { animation: none; } }
 /* The photo column can be narrow even on a wide screen (two-column card on tablets and phones held sideways), so the
    hint moves by the photo's own width, not the screen's, and never sits on the tenant tag. */
 .dev-photo { container-type: inline-size; }
@@ -894,3 +898,8 @@
   .lp-hero .lp-moon { width: 2.6rem; box-shadow: 0 0 26px 6px rgb(255 245 205 / 20%), inset -6px -4px 0 rgb(0 0 0 / 8%); }
   .lp[data-season] .lp-hero .lp-moon, .lp[data-season] .lp-hero .lp-sun { top: 8.3rem; }
 }
+/* Reduced-motion devices: a note and a button under the street map to watch it move anyway. */
+.lp-motion-note { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem .8rem; margin: .7rem 0 0; padding: .55rem .6rem .55rem 1rem; border: 1px solid rgb(255 255 255 / 16%); border-radius: 1rem; background: rgb(10 22 16 / 55%); color: #dfe9e2; font-size: .9rem; }
+.lp-motion-toggle { min-height: 2.75rem; padding: .4rem 1.1rem; border: 1px solid var(--amber, #ffbf1f); border-radius: 999px; background: transparent; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.lp-motion-toggle[aria-pressed="true"] { background: var(--amber, #ffbf1f); color: #10201a; }
+.lp-motion-toggle:focus-visible { outline: 3px solid var(--amber, #ffbf1f); outline-offset: 2px; }

@@ -700,6 +700,24 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language,
   const [profile, setProfile] = useState(false)
   const [helper, setHelper] = useState<HelperId | null>(null)
   const planRef = useRef<HTMLDivElement>(null)
+  // A device set to reduce motion (iPhone Reduce Motion, Android Remove animations, some battery savers) sees the street
+  // standing still, as it should; a button lets that person choose to watch it move (remembered on this device). The
+  // choice sets data-street-motion on the landing root, which lifts the reduced-motion rules for the street only.
+  const [reduceMotion, setReduceMotion] = useState(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false)
+  const [streetMotion, setStreetMotion] = useState(() => { try { return localStorage.getItem('rentbybob-street-motion') === 'on' } catch { return false } })
+  useEffect(() => {
+    const query = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+    if (!query) return
+    const change = () => setReduceMotion(query.matches)
+    query.addEventListener?.('change', change)
+    return () => query.removeEventListener?.('change', change)
+  }, [])
+  useEffect(() => {
+    const root = planRef.current?.closest('.lp')
+    if (!root) return
+    if (streetMotion) root.setAttribute('data-street-motion', 'on'); else root.removeAttribute('data-street-motion')
+    try { localStorage.setItem('rentbybob-street-motion', streetMotion ? 'on' : 'off') } catch { /* not remembered */ }
+  }, [streetMotion])
   // Everything on the plan stands still while it is scrolled out of view (saves battery and work on phones).
   useEffect(() => {
     const plan = planRef.current
@@ -758,6 +776,12 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language,
     <span className="lp-compass" aria-hidden="true">N</span>
     </div>
     </div>
+    {reduceMotion && <p className="lp-motion-note">
+      <span>{streetMotion ? tr('The street is moving.', 'Gumagalaw ang kalye.') : tr('The street is still because this device asks for less motion.', 'Nakatigil ang kalye dahil humihingi ang device na ito ng mas kaunting galaw.')}</span>
+      <button type="button" className="lp-motion-toggle" aria-pressed={streetMotion} onClick={() => setStreetMotion(value => !value)}>
+        {streetMotion ? tr('Stop the motion', 'Itigil ang galaw') : tr('Play the street', 'Patakbuhin ang kalye')}
+      </button>
+    </p>}
   </div>
 }
 

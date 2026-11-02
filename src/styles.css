@@ -334,7 +334,10 @@ dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+  /* The landing street is exempt only after its visitor presses "Play the street" (landing/street.tsx). */
+  :not(.lp[data-street-motion="on"] .lp-plan-wrap *), :not(.lp[data-street-motion="on"] .lp-plan-wrap *)::before,
+  :not(.lp[data-street-motion="on"] .lp-plan-wrap *)::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
 
 /* Focused workspace and welcoming mobile entry, 17 Oct 2026. */
@@ -2039,3 +2042,8 @@ html .paid-rent-document .doc-optional h2 { font-size: 14pt; }
 .renter-hero-text { min-width: 0; }
 .renter-hero-photo { width: clamp(5rem, 9vw, 6.8rem); height: clamp(5rem, 9vw, 6.8rem); border-color: var(--surface); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 30%, transparent), 0 12px 28px -10px rgb(15 61 45 / 45%); }
 @media (max-width: 26rem) { .renter-hero--photo { align-items: flex-start; } .renter-hero-photo { width: 4.4rem; height: 4.4rem; } }
+/* Sign-in: "Keep me signed in on this device". */
+.remember-me { display: flex; align-items: flex-start; gap: .6rem; margin: .2rem 0 .4rem; cursor: pointer; font-weight: 650; }
+.remember-me input { flex: none; width: 1.35rem; height: 1.35rem; margin-top: .15rem; accent-color: var(--brand); }
+.remember-me span { display: grid; gap: .15rem; }
+.remember-me small { color: var(--text-secondary); font-weight: 400; }

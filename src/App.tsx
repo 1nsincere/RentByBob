@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { Button, LoadingSkeleton } from './components/atoms'
 import { WorkspaceIcon } from './components/WorkspaceIcon'
 import { DeferredBoundary, deferredScreen } from './components/DeferredScreen'
-import { dashboardPreview, hostedDevelopment, liveTarget, preview, initialized, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
+import { dashboardPreview, hostedDevelopment, liveTarget, preview, initialized, remember, supabase, stateLabels, type AccessState, type Membership, type Property, type Tenant } from './access/client'
 import { ChangePassword, Feedback, Mfa, NewLinkRequest, PasswordSetup, SignIn } from './access/AuthForms'
 import { LogoMark, Wordmark } from './components/Logo'
 import { NetworkStatus } from './components/Network'
@@ -37,7 +37,7 @@ type NavigationItem = { id: string; label: string; badge?: string }
 const translateText = (language: Language, english: string, bisaya: string) => language === 'fil' ? bisaya : english
 
 // While the session loads, use the sign-in layout unless a saved session exists, so the first screen does not jump.
-const savedSessionAtBoot = (() => { try { return Object.keys(sessionStorage).some(key => /^sb-.+-auth-token$/.test(key)) } catch { return false } })()
+const savedSessionAtBoot = (() => { try { return [...Object.keys(sessionStorage), ...(remember.remembering() ? Object.keys(localStorage) : [])].some(key => /^sb-.+-auth-token$/.test(key)) } catch { return false } })()
 
 export function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -242,6 +242,7 @@ export function App() {
       setError('sign-out')
       return
     }
+    remember.setRemember(false) // signing out also stops keeping this device signed in
     setSession(null)
     setSetup(false)
     setCallbackError('')
