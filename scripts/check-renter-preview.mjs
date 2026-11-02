@@ -46,11 +46,11 @@ try {
   await page.screenshot({ path: `${screenshotDir}/renter-view-desktop.png`, fullPage: true })
 
   // Language switch translates app copy and keeps names, rooms and amounts unchanged.
-  await page.getByRole('button', { name: 'English · Bisaya' }).click()
+  await page.getByRole('button', { name: 'English · Filipino' }).click()
   await page.getByRole('heading', { name: 'Kumusta, Sample Alex Santos' }).waitFor()
-  await page.getByText('Nabilin nga abang', { exact: true }).waitFor()
+  await page.getByText('Natitirang upa', { exact: true }).first().waitFor()
   assert.equal(await page.locator('.renter-balance-card strong').textContent(), '₱1,000.00')
-  await page.getByRole('button', { name: 'Bisaya · English' }).click()
+  await page.getByRole('button', { name: 'Filipino · English' }).click()
 
   // Narrow screens, enlarged text and touch targets.
   for (const width of [390, 320]) {
@@ -66,7 +66,7 @@ try {
 
   assert.deepEqual(external, [])
   assert.deepEqual(errors, [])
-  console.log('PASS: renter view shows confirmed balance, separate pending cash, month statuses, cleared check and cash acknowledgment; Bisaya switch; 390/320px and 200% text reflow; 44px targets; no external requests or errors.')
+  console.log('PASS: renter view shows confirmed balance, separate pending cash, month statuses, cleared check and cash acknowledgment; Filipino switch; 390/320px and 200% text reflow; 44px targets; no external requests or errors.')
 } finally {
   await browser.close()
 }
