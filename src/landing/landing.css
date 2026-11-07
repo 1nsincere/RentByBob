@@ -613,7 +613,20 @@
 .lp-chip:hover, .lp-chip.is-active { background: rgb(255 191 31 / 12%); border-color: var(--amber); }
 .lp-chip:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 /* Lite mode (set by src/perf.ts on phones that may struggle): no filters, no endless ambient motion, fewer riders. */
+:root[data-perf="lite"] .lp *, :root[data-perf="lite"] .lp *::before, :root[data-perf="lite"] .lp *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 :root[data-perf="lite"] .lp-lane--extra, :root[data-perf="lite"] .lp-cloud { display: none; }
+:root[data-perf="lite"] .lp-grain { display: none; }
+:root[data-perf="lite"] .lp-hero-light { display: none; }
+:root[data-perf="lite"] .lp-sun, :root[data-perf="lite"] .lp-moon { box-shadow: none; }
+:root[data-perf="lite"] .lp-skyline, :root[data-perf="lite"] .lp-street-stage, :root[data-perf="lite"] .lp-street[data-step="0"] .lp-plan-frame { filter: none; }
+:root[data-perf="lite"] .lp-nav, :root[data-perf="lite"] .lp-decor-toggle { backdrop-filter: none; }
+:root[data-perf="lite"] .lp-word > span { animation: none; transform: none; }
+:root[data-perf="lite"] .lp-dot { animation: none; }
+:root[data-perf="lite"] .lp-cloud-sky, :root[data-perf="lite"] .lp-stars, :root[data-perf="lite"] .lp-hero-lamps,
+:root[data-perf="lite"] .lp-bat, :root[data-perf="lite"] .lp-hw-porch, :root[data-perf="lite"] .lp-xm-sparkles,
+:root[data-perf="lite"] .lp-xm-strand, :root[data-perf="lite"] .lp-xm-lights, :root[data-perf="lite"] .lp-xm-porch,
+:root[data-perf="lite"] .lp-xm-map { animation: none; }
+:root[data-perf="lite"] .lp-plan *, :root[data-perf="lite"] .lp-plan *::before, :root[data-perf="lite"] .lp-plan *::after { animation-play-state: paused !important; }
 :root[data-perf="lite"] .lp-tree { animation: none; }
 :root[data-perf="lite"] .lp-lane svg, :root[data-perf="lite"] .lp-facade { filter: none; }
 :root[data-perf="lite"] .lp-plan-frame { box-shadow: none; }
