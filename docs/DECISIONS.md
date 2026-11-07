@@ -244,3 +244,7 @@ Owner direction: invite tenants by their real email (Gmail) after setting up a d
 - **When:** a new attempt for the same address is allowed only when no earlier attempt for it is open (prepared, dispatching) or uncertain. Uncertain attempts still need an owner review first; no waiting period otherwise.
 - **Provider behaviour:** Supabase Auth re-sends the invitation to an existing unconfirmed account and refuses a confirmed one. The database refuses confirmed accounts before saving anything, with a note to use Assign access.
 - **Switch:** hosted projects send nothing unless the secret `INVITE_EMAIL_ENABLED=true` is set; that secret means "a mail sender is configured". Recipient addresses stay in the restricted attempt table (retention still unconfirmed by the owner).
+## Landing page lite mode on budget phones - 6 Nov 2026
+
+Owner reported lag on lower-end phones. Keep the full landing-page experience for capable devices, but enable lite mode from broader device hints and an early median frame-pacing probe. Lite mode removes ambient decoration and expensive glow/backdrop effects and disables pinned cinematic scrolling; the content and interactive street remain. This is a reversible presentation-only choice, with local `rentbybob-perf=full|lite` overrides for diagnosis. Lab evidence: 390 px / 4x CPU / slow 4G median LCP 2.0 s, FCP 0.87 s, CLS 0, 214 KB; physical-device confirmation remains outstanding.
+

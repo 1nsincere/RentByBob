@@ -2047,3 +2047,4 @@ html .paid-rent-document .doc-optional h2 { font-size: 14pt; }
 .remember-me input { flex: none; width: 1.35rem; height: 1.35rem; margin-top: .15rem; accent-color: var(--brand); }
 .remember-me span { display: grid; gap: .15rem; }
 .remember-me small { color: var(--text-secondary); font-weight: 400; }
+.site-header .brand { min-height: 2.75rem; display: inline-flex; align-items: center; } /* responsive sweep: 44 px tap target for the home link */

@@ -613,7 +613,20 @@
 .lp-chip:hover, .lp-chip.is-active { background: rgb(255 191 31 / 12%); border-color: var(--amber); }
 .lp-chip:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 /* Lite mode (set by src/perf.ts on phones that may struggle): no filters, no endless ambient motion, fewer riders. */
+:root[data-perf="lite"] .lp *, :root[data-perf="lite"] .lp *::before, :root[data-perf="lite"] .lp *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 :root[data-perf="lite"] .lp-lane--extra, :root[data-perf="lite"] .lp-cloud { display: none; }
+:root[data-perf="lite"] .lp-grain { display: none; }
+:root[data-perf="lite"] .lp-hero-light { display: none; }
+:root[data-perf="lite"] .lp-sun, :root[data-perf="lite"] .lp-moon { box-shadow: none; }
+:root[data-perf="lite"] .lp-skyline, :root[data-perf="lite"] .lp-street-stage, :root[data-perf="lite"] .lp-street[data-step="0"] .lp-plan-frame { filter: none; }
+:root[data-perf="lite"] .lp-nav, :root[data-perf="lite"] .lp-decor-toggle { backdrop-filter: none; }
+:root[data-perf="lite"] .lp-word > span { animation: none; transform: none; }
+:root[data-perf="lite"] .lp-dot { animation: none; }
+:root[data-perf="lite"] .lp-cloud-sky, :root[data-perf="lite"] .lp-stars, :root[data-perf="lite"] .lp-hero-lamps,
+:root[data-perf="lite"] .lp-bat, :root[data-perf="lite"] .lp-hw-porch, :root[data-perf="lite"] .lp-xm-sparkles,
+:root[data-perf="lite"] .lp-xm-strand, :root[data-perf="lite"] .lp-xm-lights, :root[data-perf="lite"] .lp-xm-porch,
+:root[data-perf="lite"] .lp-xm-map { animation: none; }
+:root[data-perf="lite"] .lp-plan *, :root[data-perf="lite"] .lp-plan *::before, :root[data-perf="lite"] .lp-plan *::after { animation-play-state: paused !important; }
 :root[data-perf="lite"] .lp-tree { animation: none; }
 :root[data-perf="lite"] .lp-lane svg, :root[data-perf="lite"] .lp-facade { filter: none; }
 :root[data-perf="lite"] .lp-plan-frame { box-shadow: none; }
@@ -903,3 +916,21 @@
 .lp-motion-toggle { min-height: 2.75rem; padding: .4rem 1.1rem; border: 1px solid var(--amber, #ffbf1f); border-radius: 999px; background: transparent; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
 .lp-motion-toggle[aria-pressed="true"] { background: var(--amber, #ffbf1f); color: #10201a; }
 .lp-motion-toggle:focus-visible { outline: 3px solid var(--amber, #ffbf1f); outline-offset: 2px; }
+/* Responsive sweep (2 Nov 2026): the "Who is who" legend sat on top of the map, covering Building 1, Building 2 and
+   House 1, with 10-20 px tall tap targets. It now sits below the map as its own panel with readable text and 44 px
+   targets; the map stays fully visible and every home can be tapped. */
+.lp-plan-wrap { display: flex; flex-direction: column; }
+.lp-plan-wrap > .lp-legend { order: 2; }
+.lp-plan-wrap > .lp-motion-note { order: 3; }
+.lp-plan-wrap > .lp-legend { position: static; max-width: none; width: 100%; margin: .8rem 0 0; padding: .3rem 1rem .6rem; border-radius: 1rem; font-size: .92rem; }
+.lp-legend summary { display: flex; align-items: center; min-height: 2.75rem; font-size: .78rem; }
+.lp-plan-wrap > .lp-legend ul { grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); gap: .1rem 1.2rem; margin-top: .2rem; }
+.lp-legend li { min-height: 2.75rem; white-space: normal; }
+.lp-legend-dev { min-height: 2.75rem; }
+.lp-legend-icon { flex: none; width: 2rem; }
+.lp-decor-toggle { min-height: 2.75rem; }
+.lp-legend summary { list-style: none; gap: .5rem; }
+.lp-legend summary::-webkit-details-marker { display: none; }
+.lp-legend summary::before { content: "▸"; font-size: 1rem; transition: rotate 180ms ease; }
+.lp-legend[open] summary::before { rotate: 90deg; }
+@media (prefers-reduced-motion: reduce) { .lp-legend summary::before { transition: none; } }

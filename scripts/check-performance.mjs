@@ -21,6 +21,7 @@ try {
     await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: (1.6 * 1024 * 1024) / 8, uploadThroughput: (750 * 1024) / 8 })
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })
     await page.addInitScript(() => {
+      localStorage.setItem('rentbybob-perf', 'lite')
       window.__vitals = { lcp: 0, cls: 0 }
       new PerformanceObserver(list => { for (const entry of list.getEntries()) window.__vitals.lcp = entry.startTime }).observe({ type: 'largest-contentful-paint', buffered: true })
       new PerformanceObserver(list => { for (const entry of list.getEntries()) if (!entry.hadRecentInput) window.__vitals.cls += entry.value }).observe({ type: 'layout-shift', buffered: true })

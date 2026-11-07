@@ -29,7 +29,7 @@ const matches = (query: string) => { try { return window.matchMedia(query).match
 function useReveal() {
   useEffect(() => {
     const items = [...document.querySelectorAll<HTMLElement>('.lp-reveal')]
-    if (matches('(prefers-reduced-motion: reduce)') || !('IntersectionObserver' in window)) { items.forEach(item => item.classList.add('is-in')); return }
+    if (document.documentElement.dataset.perf === 'lite' || matches('(prefers-reduced-motion: reduce)') || !('IntersectionObserver' in window)) { items.forEach(item => item.classList.add('is-in')); return }
     const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-in'); observer.unobserve(entry.target) } }), { threshold: 0.18 })
     items.forEach(item => observer.observe(item))
     return () => observer.disconnect()
@@ -41,8 +41,9 @@ function useReveal() {
 function useScrollScenes(root: RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     let frame = 0
+    const lite = () => document.documentElement.dataset.perf === 'lite'
     const layout = () => {
-      const cinematic = matches(CINEMATIC)
+      const cinematic = !lite() && matches(CINEMATIC)
       document.querySelectorAll<HTMLElement>('[data-hscroll]').forEach(section => {
         const track = section.querySelector<HTMLElement>('[data-track]')
         const overflow = track ? Math.max(0, track.scrollWidth - (track.parentElement?.clientWidth ?? 0)) : 0
@@ -52,10 +53,21 @@ function useScrollScenes(root: RefObject<HTMLDivElement | null>) {
     }
     const update = () => {
       frame = 0
+      if (lite()) {
+        root.current?.style.setProperty('--lp-progress', '0')
+        root.current?.classList.remove('is-scrolled')
+        document.querySelectorAll<HTMLElement>('[data-scene]').forEach(scene => {
+          scene.style.removeProperty('--p')
+          scene.dataset.step = '2'
+          const track = scene.querySelector<HTMLElement>('[data-track]')
+          if (track) track.style.transform = ''
+        })
+        return
+      }
       const max = document.documentElement.scrollHeight - window.innerHeight
       root.current?.style.setProperty('--lp-progress', (max > 0 ? window.scrollY / max : 0).toFixed(4))
       root.current?.classList.toggle('is-scrolled', window.scrollY > 40)
-      const cinematic = matches(CINEMATIC)
+      const cinematic = !lite() && matches(CINEMATIC)
       document.querySelectorAll<HTMLElement>('[data-scene]').forEach(scene => {
         const box = scene.getBoundingClientRect()
         const span = Math.max(1, box.height - window.innerHeight)
@@ -72,7 +84,14 @@ function useScrollScenes(root: RefObject<HTMLDivElement | null>) {
     resize()
     window.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', resize)
-    return () => { cancelAnimationFrame(frame); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', resize) }
+    const performanceMode = new MutationObserver(() => {
+      resize()
+      // Once lite mode is active, page progress and sticky nav state are intentionally disabled.
+      if (lite()) { window.removeEventListener('scroll', schedule); window.removeEventListener('resize', resize) }
+      else { window.addEventListener('scroll', schedule, { passive: true }); window.addEventListener('resize', resize) }
+    })
+    performanceMode.observe(document.documentElement, { attributes: true, attributeFilter: ['data-perf'] })
+    return () => { cancelAnimationFrame(frame); performanceMode.disconnect(); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', resize) }
   }, [root])
 }
 
@@ -119,10 +138,10 @@ function Words({ children, start = 0 }: { children: string; start?: number }) {
 // A number that counts up once when it scrolls into view (shown at once with reduced motion).
 function CountUp({ value }: { value: number }) {
   const element = useRef<HTMLSpanElement>(null)
-  const [shown, setShown] = useState(() => matches('(prefers-reduced-motion: reduce)') ? value : 0)
+  const [shown, setShown] = useState(() => document.documentElement.dataset.perf === 'lite' || matches('(prefers-reduced-motion: reduce)') ? value : 0)
   useEffect(() => {
     const node = element.current
-    if (!node || matches('(prefers-reduced-motion: reduce)') || !('IntersectionObserver' in window)) { setShown(value); return }
+    if (!node || document.documentElement.dataset.perf === 'lite' || matches('(prefers-reduced-motion: reduce)') || !('IntersectionObserver' in window)) { setShown(value); return }
     let frame = 0
     const observer = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) return

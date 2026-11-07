@@ -85,10 +85,12 @@ export function SignIn({ language = 'en' }: { language?: Language }) {
           if (result.error) throw result.error
           setError(false); setMessage(tr('If this address is eligible, a reset link will arrive. In local development, check Mailpit. Password reset does not remove staff MFA.', 'Kung kwalipikado ang email na ito, ipapadala ang reset link. Sa local development, tingnan ang Mailpit. Hindi inaalis ng pagpapalit ng password ang MFA ng staff.'))
         } else {
-          // Decide where this sign-in is kept before it is created (see remember.ts).
+          // Decide where this sign-in is kept before it is created (see remember.ts). A failed sign-in puts the previous
+          // choice back, so a wrong password never leaves a typed email remembered on a shared phone.
+          const before = { on: remember.remembering(), email: remember.rememberedEmail() }
           remember.setRemember(form.get('remember') === 'on', email)
           const result = await supabase!.auth.signInWithPassword({ email, password: String(form.get('password')) })
-          if (result.error) throw result.error
+          if (result.error) { remember.setRemember(before.on, before.email); throw result.error }
         }
       } catch { setError(true); setMessage(recovery ? tr('The request could not be completed. Wait and try again, or contact the owner.', 'Hindi natapos ang kahilingan. Maghintay at subukan ulit, o kontakin ang may-ari.') : tr('Sign-in failed. Check your email and password, or try again when connected.', 'Hindi ka makapasok. Suriin ang email at password o subukan ulit kapag may koneksyon na.')) }
       finally { setBusy(false) }

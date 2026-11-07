@@ -46,8 +46,8 @@ try {
 
   await page.getByRole('link', { name: 'Skip to rooms', exact: true }).focus()
   assert.ok(await page.getByRole('link', { name: 'Skip to rooms', exact: true }).evaluate(element => element.getBoundingClientRect().top >= 0), 'keyboard-focused skip link should be visible')
-  await page.getByRole('button', { name: 'English · Bisaya', exact: true }).click()
-  await page.getByRole('heading', { name: 'Mga kwarto nga paabangan', exact: true }).waitFor()
+  await page.getByRole('button', { name: 'English · Filipino', exact: true }).click()
+  await page.getByRole('heading', { name: 'Mga kuwartong paupahan', exact: true }).waitFor()
 
   for (const width of [320, 390, 768]) {
     await page.setViewportSize({ width, height: 900 })
@@ -57,7 +57,7 @@ try {
   assert.ok(!requests.some(url => /\/(rest|auth)\/v1\//.test(url)), 'sample must not call Supabase APIs')
   assert.ok(!requests.some(url => url.includes('/src/App.tsx') || url.includes('/src/access/client.ts')), 'sample must not load the authenticated app or Supabase client')
   assert.deepEqual(pageErrors, [], 'sample should not produce runtime errors')
-  console.log('PASS: public rooms sample: building tabs (mouse and arrow keys), room cards, inquiry dialog with simulated send and focus return, Bisaya switch, 320/390/768px reflow, no network or app code.')
+  console.log('PASS: public rooms sample: building tabs (mouse and arrow keys), room cards, inquiry dialog with simulated send and focus return, Filipino switch, 320/390/768px reflow, no network or app code.')
 } finally {
   await browser.close()
 }
