@@ -613,7 +613,13 @@
 .lp-chip:hover, .lp-chip.is-active { background: rgb(255 191 31 / 12%); border-color: var(--amber); }
 .lp-chip:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 /* Lite mode (set by src/perf.ts on phones that may struggle): no filters, no endless ambient motion, fewer riders. */
-:root[data-perf="lite"] .lp *, :root[data-perf="lite"] .lp *::before, :root[data-perf="lite"] .lp *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+:root[data-perf="lite"] .lp *:not(.lp-plan-wrap, .lp-plan-wrap *), :root[data-perf="lite"] .lp *:not(.lp-plan-wrap, .lp-plan-wrap *)::before, :root[data-perf="lite"] .lp *:not(.lp-plan-wrap, .lp-plan-wrap *)::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+/* The street keeps moving in lite mode (walkers, dog and cart are compositor-only translates); only decorative loops stop. */
+:root[data-perf="lite"] .lp-plan *, :root[data-perf="lite"] .lp-plan *::before, :root[data-perf="lite"] .lp-plan *::after { transition: none !important; }
+:root[data-perf="lite"] .lp-plan :is(.lp-tree, .lp-cloud, .bob-foot, .dog-tail, .xm-bulb, .hw-spider, .lp-hw-map, .lp-xm-map, .lp-xm-sparkles, .lp-xm-lights, .lp-xm-porch, .lp-hw-porch, .fx-glass, .fx-door-room, .fx-curtain) { animation: none !important; }
+.lp-roam, .lp-lane--stop, .lp-car { will-change: transform, translate; }
+/* Browsers without container units cannot place the cast; hide it rather than leave it stuck in the top-left corner. */
+@supports not (width: 1cqw) { .lp-roam, .lp-say, .lp-car { display: none; } }
 :root[data-perf="lite"] .lp-lane--extra, :root[data-perf="lite"] .lp-cloud { display: none; }
 :root[data-perf="lite"] .lp-grain { display: none; }
 :root[data-perf="lite"] .lp-hero-light { display: none; }
@@ -626,7 +632,6 @@
 :root[data-perf="lite"] .lp-bat, :root[data-perf="lite"] .lp-hw-porch, :root[data-perf="lite"] .lp-xm-sparkles,
 :root[data-perf="lite"] .lp-xm-strand, :root[data-perf="lite"] .lp-xm-lights, :root[data-perf="lite"] .lp-xm-porch,
 :root[data-perf="lite"] .lp-xm-map { animation: none; }
-:root[data-perf="lite"] .lp-plan *, :root[data-perf="lite"] .lp-plan *::before, :root[data-perf="lite"] .lp-plan *::after { animation-play-state: paused !important; }
 :root[data-perf="lite"] .lp-tree { animation: none; }
 :root[data-perf="lite"] .lp-lane svg, :root[data-perf="lite"] .lp-facade { filter: none; }
 :root[data-perf="lite"] .lp-plan-frame { box-shadow: none; }
@@ -934,3 +939,15 @@
 .lp-legend summary::before { content: "▸"; font-size: 1rem; transition: rotate 180ms ease; }
 .lp-legend[open] summary::before { rotate: 90deg; }
 @media (prefers-reduced-motion: reduce) { .lp-legend summary::before { transition: none; } }
+
+/* Street responsiveness: speech bubbles stay readable on phones, the plan never forces sideways scrolling, and the
+   cast keeps its size relative to the map at every width. */
+.lp-say { font-size: clamp(.62rem, 1.4vw, .78rem); }
+.lp-say--heart { font-size: clamp(.9rem, 1.8vw, 1.2rem); }
+.lp-plan-wrap, .lp-plan-scroll, .lp-plan { max-width: 100%; }
+.lp-plan-scroll { overflow-x: hidden; }
+@media (max-width: 40rem) {
+  .lp-plan-road b { font-size: .55rem; letter-spacing: .08em; }
+  .lp-compass { width: 1.8rem; height: 1.8rem; font-size: .65rem; }
+  .lp-say { padding: .15rem .4rem; }
+}
