@@ -290,7 +290,8 @@
 .lp-say--vendor { animation: lp-say-vendor 60s linear infinite both; }
 .lp-say--hello { animation: lp-say-hello 60s linear infinite both; }
 .lp-say--bob { animation: lp-say-bob 60s linear infinite both; }
-.lp-say--bark { animation: lp-say-bark 60s linear infinite both; }
+.lp-say--bark { transform: translate(-50%, 1.4em); animation: lp-say-bark 60s linear infinite both; }
+.lp-say--bark::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #fffdf4; }
 @keyframes lp-say-pet { 0%, 15.9% { opacity: 0; } 16%, 21% { opacity: 1; } 21.1%, 100% { opacity: 0; } }
 @keyframes lp-say-heart { 0%, 16.9% { opacity: 0; translate: 0 0; } 17% { opacity: 1; } 21% { opacity: 1; translate: 0 -60%; } 21.1%, 100% { opacity: 0; translate: 0 -80%; } }
 @keyframes lp-say-buy { 0%, 29.9% { opacity: 0; } 30%, 35% { opacity: 1; } 35.1%, 100% { opacity: 0; } }
@@ -492,7 +493,9 @@
    then the open rooms), and the homes gallery slides sideways as you scroll down. */
 @media (min-width: 60rem) and (prefers-reduced-motion: no-preference) {
   .lp-street { height: 300vh; padding: 0 var(--pad); }
-  .lp-street-pin { position: sticky; top: 0; height: 100vh; padding-top: 4.5rem; }
+  /* At least one screen tall; when the map and its legend need more, the pin grows and the script sticks it by its
+     bottom edge (negative top) so the "Who is who" list is never cut off by the next section. */
+  .lp-street-pin { position: sticky; top: 0; min-height: 100vh; padding-top: 4.5rem; padding-bottom: 1.5rem; }
   .lp-plan-frame { transform: scale(calc(1.06 - var(--p, 1) * .06)) rotate(calc(-1deg + var(--p, 1) * 1deg)); }
   /* Steps not playing are dimmed by colour (still 5:1 contrast), not opacity. */
   .lp-steps li, .lp-steps li p, .lp-steps li .lp-step-no { color: #7f9488; }
@@ -626,6 +629,7 @@
 :root[data-perf="lite"] .lp-sun, :root[data-perf="lite"] .lp-moon { box-shadow: none; }
 :root[data-perf="lite"] .lp-skyline, :root[data-perf="lite"] .lp-street-stage, :root[data-perf="lite"] .lp-street[data-step="0"] .lp-plan-frame { filter: none; }
 :root[data-perf="lite"] .lp-nav, :root[data-perf="lite"] .lp-decor-toggle { backdrop-filter: none; }
+:root[data-perf="lite"] .lp.is-scrolled .lp-nav { background: rgb(12 22 18); }
 :root[data-perf="lite"] .lp-word > span { animation: none; transform: none; }
 :root[data-perf="lite"] .lp-dot { animation: none; }
 :root[data-perf="lite"] .lp-cloud-sky, :root[data-perf="lite"] .lp-stars, :root[data-perf="lite"] .lp-hero-lamps,
