@@ -15,7 +15,8 @@ function weakDevice() {
 
 // Counts frames for 700 ms once the page has settled slightly; low frame rate triggers the lighter landing style.
 function probeFrameRate() {
-  window.setTimeout(() => {
+  // Wait for the page to finish loading so a slow first paint on a good device is not mistaken for a weak device.
+  const begin = () => window.setTimeout(() => {
     if (document.documentElement.dataset.perf === 'lite') return
     const samples: number[] = []
     let previous = performance.now()
@@ -28,7 +29,8 @@ function probeFrameRate() {
       if (median > 38) setLite()
     }
     requestAnimationFrame(step)
-  }, 250)
+  }, 1500)
+  if (document.readyState === 'complete') begin(); else window.addEventListener('load', begin, { once: true })
 }
 
 // Testing: localStorage 'rentbybob-perf' = 'lite' or 'full' overrides the detection above.

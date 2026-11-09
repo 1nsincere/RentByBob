@@ -1035,3 +1035,8 @@ Next step for the owner: run `npx.cmd supabase db push` against the hosted proje
 
 **Next:** try the landing page on the phones that felt slow, compare with `localStorage.setItem('rentbybob-perf','lite')` (reload), and report whether scrolling and the street feel responsive. If they still lag, capture a browser performance profile before removing further visual detail. No deployment performed.
 
+
+## Street map fix (9 Nov 2026)
+- Cause: lite mode (set by perf.ts, including false positives from the frame probe) switched off every animation inside the street map, freezing the walkers, dog and cart at the top-left corner and the map never ran.
+- Fix (landing.css): lite mode now keeps the street cast moving (compositor-only translates) and stops only decorative loops; browsers without container units hide the cast instead of showing it stuck; bubbles and road labels stay readable on phones; no sideways scroll.
+- Evidence: tsc clean; full offline browser suite (10 checks, axe) passes. Not verified: real low-end phones. Next: owner test on a budget Android.
