@@ -951,3 +951,5 @@
   .lp-compass { width: 1.8rem; height: 1.8rem; font-size: .65rem; }
   .lp-say { padding: .15rem .4rem; }
 }
+/* Old browsers that cannot read :not() lists get the plain lite rule (they cannot place the street cast either, which is hidden above). */
+@supports not selector(:not(a, b)) { :root[data-perf="lite"] .lp *, :root[data-perf="lite"] .lp *::before, :root[data-perf="lite"] .lp *::after { animation: none !important; transition: none !important; } }

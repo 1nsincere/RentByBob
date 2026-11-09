@@ -738,7 +738,7 @@ export function StreetPlan({ openByBuilding, known, active, setActive, language,
     <Legend tr={tr} onDeveloper={() => setProfile(true)} onHelper={setHelper} />
     {helper && <HelperCard who={helper} onClose={() => setHelper(null)} tr={tr} language={language} />}
     {profile && <ProfileCard onClose={() => setProfile(false)} tr={tr} language={language} />}
-    <div className="lp-plan-scroll" tabIndex={0} role="region" aria-label={tr('Street map. Scroll sideways to see all of it on a small screen.', 'Mapa ng kalye. I-scroll pakanan para makita lahat sa maliit na screen.')}>
+    <div className="lp-plan-scroll">
     <div ref={planRef} className={`lp-plan${profile ? ' has-profile' : ''}`} role="group" aria-label={tr('Site plan on B. Zubiri St and Mariano Abella St. Glowing doors and windows are spaces open now. Choose a home to see rooms.', 'Plano ng B. Zubiri St at Mariano Abella St. Bakante ngayon ang umiilaw na pinto at bintana. Piliin ang bahay para makita ang kuwarto.')}>
     <span className="lp-plan-road lp-plan-road--main" aria-hidden="true"><b>B. ZUBIRI ST.</b></span>
     <span className="lp-plan-road lp-plan-road--side" aria-hidden="true"><b><span className="lp-road-long">MARIANO ABELLA ST.</span><span className="lp-road-short">M. ABELLA ST.</span></b></span>
