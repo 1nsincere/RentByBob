@@ -20,6 +20,7 @@ const ownerEmail = process.env.CASH_TEST_OWNER_EMAIL
 const clerkEmail = process.env.CASH_TEST_CLERK_EMAIL
 const otherEmail = process.env.CASH_TEST_OTHER_EMAIL
 const uiUrl = process.env.CASH_TEST_UI_URL
+const backToSignIn = async target => { await target.getByRole('link', { name: 'Sign in', exact: true }).first().waitFor(); await target.goto(`${uiUrl}/sign-in`) } // sign-out lands on the public page
 
 process.on('uncaughtException', error => {
   console.error(`Cash API integration error (${error.name}): ${error.message}`)
@@ -186,6 +187,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
   assert.ok(uiUrl, 'Missing isolated cash UI address')
   const browser = await chromium.launch({ channel: 'msedge', headless: true })
   const page = await browser.newPage()
+  await page.addLocatorHandler(page.getByRole('button', { name: 'Maybe later', exact: true }), async button => { await button.click() }) // first-sign-in welcome dialog
   const cashRecordRequests = []
   const browserErrors = []
   page.on('pageerror', error => browserErrors.push(`page: ${error.message}`))
@@ -534,7 +536,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     pass('Authenticated owner UI saves cash as pending without lowering the balance')
 
     await page.getByRole('button', { name: 'Sign out', exact: true }).click()
-    await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
+    await backToSignIn(page)
     await page.getByLabel('Email address', { exact: true }).fill(clerkEmail)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Sign in', exact: true }).click()
@@ -650,7 +652,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await axeScan(page, 'payments checks')
 
     await page.getByRole('button', { name: 'Sign out', exact: true }).click()
-    await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
+    await backToSignIn(page)
     await page.getByLabel('Email address', { exact: true }).fill(ownerEmail)
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Sign in', exact: true }).click()
@@ -833,7 +835,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await expect(devicePage.locator('.trusted-device-list li').filter({ hasText: 'This device' })).toHaveCount(1)
     await axeScan(devicePage, 'remembered devices')
     await devicePage.getByRole('button', { name: 'Sign out', exact: true }).click()
-    await expect(devicePage.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
+    await backToSignIn(devicePage)
     await signInOwner()
     await expect(devicePage.getByRole('heading', { name: 'Owner workspace' })).toBeVisible()
     assert.equal(await devicePage.getByRole('heading', { name: 'Staff security check' }).count(), 0, 'remembered device skips the authenticator')
@@ -844,6 +846,7 @@ async function verifySavedCashBrowserFlow(ownerSecret, clerkSecret, agreementId)
     await devicePage.getByRole('button', { name: 'Forget this device', exact: true }).click()
     await expect(devicePage.getByRole('status').filter({ hasText: 'This device is forgotten.' })).toBeVisible()
     await devicePage.getByRole('button', { name: 'Sign out', exact: true }).click()
+    await backToSignIn(devicePage)
     await signInOwner()
     await expect(devicePage.getByRole('heading', { name: 'Staff security check' })).toBeVisible()
     await devicePage.close()
@@ -1190,6 +1193,7 @@ if (process.argv[2] === 'create-users') {
   const renterBrowser = await chromium.launch({ channel: 'msedge', headless: true })
   try {
     const renterPage = await renterBrowser.newPage()
+    await renterPage.addLocatorHandler(renterPage.getByRole('button', { name: 'Maybe later', exact: true }), async button => { await button.click() })
     await renterPage.goto(`${uiUrl}/sign-in`)
     await renterPage.getByLabel('Email address', { exact: true }).fill(otherEmail)
     await renterPage.getByLabel('Password', { exact: true }).fill(password)
@@ -1239,6 +1243,7 @@ if (process.argv[2] === 'create-users') {
 
     // Password change requires the current password; a wrong one changes nothing.
     const newRenterPassword = `${password}-Renter2`
+    await renterPage.locator('.renter-settings > summary').click()
     await renterPage.getByRole('button', { name: 'Change password', exact: true }).click()
     await renterPage.getByLabel('Current password', { exact: true }).fill('not-the-current-password')
     await renterPage.getByLabel('New password (at least 12 characters)', { exact: true }).fill(newRenterPassword)
@@ -1249,6 +1254,7 @@ if (process.argv[2] === 'create-users') {
     await renterPage.getByRole('button', { name: 'Save new password', exact: true }).click()
     await renterPage.getByRole('status').filter({ hasText: 'Password changed.' }).waitFor()
     await renterPage.getByRole('button', { name: 'Sign out', exact: true }).click()
+    await backToSignIn(renterPage)
     await renterPage.getByLabel('Password', { exact: true }).fill(password)
     await renterPage.getByLabel('Email address', { exact: true }).fill(otherEmail)
     await renterPage.getByRole('button', { name: 'Sign in', exact: true }).click()

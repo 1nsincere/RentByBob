@@ -69,7 +69,10 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
     const floors = toDrawn(building, units, language).floors
     setEntered(building.id); setFloorIndex(Math.max(0, floors.findIndex(floor => floor.rooms.some(room => room.id === unit.id)))); selectRoom(unit.id)
   }, [locate, state, units, buildings])
-  function selectRoom(unitId: string) { setSelected(unitId); setRenaming(false); requestAnimationFrame(() => panelHeading.current?.focus()) }
+  // Focus moves to the room heading after React has drawn it (a frame callback could run before the heading existed).
+  const [focusTick, setFocusTick] = useState(0)
+  useEffect(() => { if (focusTick) panelHeading.current?.focus() }, [focusTick])
+  function selectRoom(unitId: string) { setSelected(unitId); setRenaming(false); setFocusTick(tick => tick + 1) }
   async function rename(unitId: string) {
     if (!newLabel.trim() || !renameReason.trim()) { setMessage({ text: tr('Enter the new room name and a reason.', 'Ilagay ang bagong pangalan ng kuwarto at dahilan.'), error: true }); return }
     setBusy(true); setMessage(null)
@@ -77,7 +80,7 @@ export function RealPropertyMap({ propertyId, owner, startAgreement, locate = nu
     setBusy(false)
     if (error) { setMessage({ text: error.code === '23505' ? tr('Another room in this building already has that name. Nothing changed.', 'May ibang kuwarto na sa gusaling ito na ganoon ang pangalan. Walang nabago.') : error.code === '42501' ? tr('Only staff with an active authenticator session can rename rooms.', 'Ang staff lang na may aktibong authenticator ang makapagbabago ng pangalan.') : tr('The room could not be renamed. Nothing changed.', 'Hindi nabago ang pangalan ng kuwarto. Walang nabago.'), error: true }); return }
     setRenaming(false); setMessage({ text: `${tr('Room renamed to', 'Pinalitan ang pangalan ng kuwarto ng')} ${newLabel.trim()}.`, error: false })
-    await load(); requestAnimationFrame(() => panelHeading.current?.focus())
+    await load(); setFocusTick(tick => tick + 1)
   }
 
   async function runSetup() {
