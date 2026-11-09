@@ -50,12 +50,15 @@ function useScrollScenes(root: RefObject<HTMLDivElement | null>) {
         section.style.height = cinematic && overflow ? `${window.innerHeight + overflow}px` : ''
         if (!cinematic && track) track.style.transform = ''
       })
+      // A pinned section taller than the screen sticks by its bottom edge so nothing below the map is hidden.
+      document.querySelectorAll<HTMLElement>('.lp-street-pin').forEach(pin => {
+        pin.style.top = cinematic ? `${Math.min(0, window.innerHeight - pin.offsetHeight)}px` : ''
+      })
     }
     const update = () => {
       frame = 0
       if (lite()) {
         root.current?.style.setProperty('--lp-progress', '0')
-        root.current?.classList.remove('is-scrolled')
         document.querySelectorAll<HTMLElement>('[data-scene]').forEach(scene => {
           scene.style.removeProperty('--p')
           scene.dataset.step = '2'
@@ -66,7 +69,6 @@ function useScrollScenes(root: RefObject<HTMLDivElement | null>) {
       }
       const max = document.documentElement.scrollHeight - window.innerHeight
       root.current?.style.setProperty('--lp-progress', (max > 0 ? window.scrollY / max : 0).toFixed(4))
-      root.current?.classList.toggle('is-scrolled', window.scrollY > 40)
       const cinematic = !lite() && matches(CINEMATIC)
       document.querySelectorAll<HTMLElement>('[data-scene]').forEach(scene => {
         const box = scene.getBoundingClientRect()
@@ -81,17 +83,24 @@ function useScrollScenes(root: RefObject<HTMLDivElement | null>) {
     }
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
     const resize = () => { layout(); schedule() }
+    // The fixed header needs its solid background once the page scrolls, in lite mode too, or content shows through it.
+    const navState = () => { root.current?.classList.toggle('is-scrolled', window.scrollY > 40) }
+    navState()
+    window.addEventListener('scroll', navState, { passive: true })
     resize()
     window.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', resize)
     const performanceMode = new MutationObserver(() => {
       resize()
-      // Once lite mode is active, page progress and sticky nav state are intentionally disabled.
+      // Once lite mode is active, page progress is intentionally disabled (the header state keeps its own listener).
       if (lite()) { window.removeEventListener('scroll', schedule); window.removeEventListener('resize', resize) }
       else { window.addEventListener('scroll', schedule, { passive: true }); window.addEventListener('resize', resize) }
     })
     performanceMode.observe(document.documentElement, { attributes: true, attributeFilter: ['data-perf'] })
-    return () => { cancelAnimationFrame(frame); performanceMode.disconnect(); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', resize) }
+    // Opening or closing the legend, fonts loading or the language changing all change the pin's height.
+    const pinSize = 'ResizeObserver' in window ? new ResizeObserver(() => layout()) : null
+    document.querySelectorAll('.lp-street-pin').forEach(pin => pinSize?.observe(pin))
+    return () => { cancelAnimationFrame(frame); performanceMode.disconnect(); pinSize?.disconnect(); window.removeEventListener('scroll', navState); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', resize) }
   }, [root])
 }
 
