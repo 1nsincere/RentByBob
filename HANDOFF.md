@@ -144,3 +144,4 @@ Record the decision in `docs/DECISIONS.md`.
 - Seasonal touches in the app (`src/components/Seasonal.tsx`), Halloween 24 Oct to 23 Nov, Christmas 1 Dec to 6 Jan,
   switchable in Account security and on the landing page.
 - Phone layout fixes: developer card hint, landing decorations button, sun and moon position, signed-in app bar.
+ 
